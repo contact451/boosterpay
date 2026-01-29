@@ -989,6 +989,14 @@ const LogoCarousel = () => {
     { name: "Menuiserie Martin", sector: "Artisans" },
     { name: "Garage Central", sector: "Auto" },
     { name: "Plomberie Express", sector: "Artisans" },
+    { name: "Ferme du Soleil", sector: "Agriculture" },
+    { name: "Maçonnerie Dupont", sector: "Construction" },
+    { name: "Auto Pièces 33", sector: "Auto" },
+    { name: "Caves Bordelaises", sector: "Viticulteurs" },
+    { name: "Charpentes Bois", sector: "Artisans" },
+    { name: "Transport Express", sector: "Logistique" },
+    { name: "Électricité Plus", sector: "Artisans" },
+    { name: "Mécanique Générale", sector: "Auto" },
   ];
 
   return (
@@ -1000,7 +1008,7 @@ const LogoCarousel = () => {
         <div className="relative overflow-hidden">
           {/* CSS Animation - GPU accelerated, works smoothly on mobile */}
           <div className="animate-scroll-left flex gap-6 md:gap-8 whitespace-nowrap">
-            {[...logos, ...logos].map((logo, index) => (
+            {[...logos, ...logos, ...logos].map((logo, index) => (
               <div
                 key={index}
                 className="flex flex-col items-center justify-center px-6 md:px-8 py-3 md:py-4 min-w-[140px] md:min-w-[180px]"
@@ -1224,7 +1232,8 @@ const HowItWorksSection = () => {
             className="inline-block mb-4"
           >
             <span className="px-4 py-2 rounded-full bg-green-500/10 text-green-400 text-sm font-medium border border-green-500/20">
-              ✨ Accessible à tous, même sans compétences techniques
+              <span className="hidden md:inline">✨ Accessible à tous, même sans compétences techniques</span>
+              <span className="md:hidden">✨ Simple, sans compétences techniques</span>
             </span>
           </motion.div>
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">

@@ -106,13 +106,19 @@ body {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-66.666%);
   }
 }
 
 .animate-scroll-left {
-  animation: scroll-left 25s linear infinite;
+  animation: scroll-left 12s linear infinite;
   will-change: transform;
+}
+
+@media (min-width: 768px) {
+  .animate-scroll-left {
+    animation: scroll-left 25s linear infinite;
+  }
 }
 
 /* Pause animation on hover (desktop only) */
