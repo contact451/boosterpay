@@ -980,7 +980,6 @@ const UrgencyBanner = () => {
 
 // Logo Carousel
 const LogoCarousel = () => {
-  const isMobile = useIsMobile();
   const logos = [
     { name: "Terravigne", sector: "Viticulteurs" },
     { name: "BTP Alliance", sector: "Construction" },
@@ -993,27 +992,24 @@ const LogoCarousel = () => {
   ];
 
   return (
-    <section className="py-16 overflow-hidden">
+    <section className="py-12 md:py-16 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4">
-        <p className="text-center text-gray-500 text-sm mb-10 uppercase tracking-wider">
+        <p className="text-center text-gray-500 text-sm mb-8 md:mb-10 uppercase tracking-wider">
           Ils nous font confiance
         </p>
-        <div className="relative">
-          <motion.div
-            animate={isMobile ? {} : { x: ['0%', '-50%'] }}
-            transition={isMobile ? {} : { duration: 30, repeat: Infinity, ease: 'linear' }}
-            className="flex gap-8 whitespace-nowrap"
-          >
+        <div className="relative overflow-hidden">
+          {/* CSS Animation - GPU accelerated, works smoothly on mobile */}
+          <div className="animate-scroll-left flex gap-6 md:gap-8 whitespace-nowrap">
             {[...logos, ...logos].map((logo, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center justify-center px-8 py-4 min-w-[180px]"
+                className="flex flex-col items-center justify-center px-6 md:px-8 py-3 md:py-4 min-w-[140px] md:min-w-[180px]"
               >
-                <span className="text-white font-semibold text-lg tracking-tight">{logo.name}</span>
+                <span className="text-white font-semibold text-base md:text-lg tracking-tight">{logo.name}</span>
                 <span className="text-gray-500 text-xs mt-1">{logo.sector}</span>
               </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -99,3 +99,25 @@ body {
     box-shadow: 0 0 60px rgba(249, 115, 22, 0.5);
   }
 }
+
+/* Logo Carousel Animation - GPU Optimized */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 25s linear infinite;
+  will-change: transform;
+}
+
+/* Pause animation on hover (desktop only) */
+@media (hover: hover) {
+  .animate-scroll-left:hover {
+    animation-play-state: paused;
+  }
+}
