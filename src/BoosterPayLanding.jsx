@@ -32,6 +32,23 @@ import {
 } from 'lucide-react';
 
 // ============================================
+// MOBILE DETECTION HOOK
+// ============================================
+
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile;
+};
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
@@ -172,6 +189,7 @@ const ScrollProgress = () => {
 
 // Sticky Top Bar
 const StickyTopBar = () => {
+  const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { count, ref } = useCountUp(15847, 2500);
@@ -195,7 +213,7 @@ const StickyTopBar = () => {
           animate={{ y: 0 }}
           exit={{ y: -100 }}
           transition={{ duration: 0.3 }}
-          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600/90 to-cyan-500/90 backdrop-blur-md border-b border-white/10"
+          className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600/90 to-cyan-500/90 ${isMobile ? '' : 'backdrop-blur-md'} border-b border-white/10`}
         >
           <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm md:text-base">
             <span className="text-yellow-300 animate-pulse">🔥</span>
@@ -219,6 +237,7 @@ const StickyTopBar = () => {
 
 // Navigation
 const Navigation = ({ onOpenDemo }) => {
+  const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -242,7 +261,7 @@ const Navigation = ({ onOpenDemo }) => {
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
         className={`fixed top-10 left-0 right-0 z-40 transition-all duration-300 ${
-          isScrolled ? 'bg-[#0a0f1a]/95 backdrop-blur-lg border-b border-white/5' : ''
+          isScrolled ? `bg-[#0a0f1a]/95 ${isMobile ? '' : 'backdrop-blur-lg'} border-b border-white/5` : ''
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -254,11 +273,13 @@ const Navigation = ({ onOpenDemo }) => {
           >
             <div className="relative">
               <Phone className="w-8 h-8 text-blue-500" />
-              <motion.div
-                animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 bg-blue-500 rounded-full blur-md"
-              />
+              {!isMobile && (
+                <motion.div
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute inset-0 bg-blue-500 rounded-full blur-md"
+                />
+              )}
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
               Booster<span className="text-blue-500">Pay</span>
@@ -308,7 +329,7 @@ const Navigation = ({ onOpenDemo }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-[#0a0f1a]/98 backdrop-blur-lg"
+            className={`fixed inset-0 z-50 bg-[#0a0f1a]/98 ${isMobile ? '' : 'backdrop-blur-lg'}`}
           >
             <motion.div
               initial={{ x: '100%' }}
@@ -416,11 +437,13 @@ const MagneticButton = ({ children, className = '', onClick }) => {
 
 // Glow Button Component
 const GlowButton = ({ children, className = '', secondary = false, onClick, disabled = false }) => {
+  const isMobile = useIsMobile();
+
   return (
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={{ scale: 1.02, y: -2 }}
+      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       className={`relative px-8 py-4 font-bold rounded-xl overflow-hidden group ${
         secondary
@@ -429,7 +452,7 @@ const GlowButton = ({ children, className = '', secondary = false, onClick, disa
       } ${disabled ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
     >
       <span className="relative z-10 flex items-center justify-center gap-2">{children}</span>
-      {!secondary && (
+      {!secondary && !isMobile && (
         <>
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600"
@@ -452,17 +475,23 @@ const GlowButton = ({ children, className = '', secondary = false, onClick, disa
 
 // Glassmorphism Card Component
 const GlassCard = ({ children, className = '', hover = true, onClick }) => {
+  const isMobile = useIsMobile();
+
   return (
     <motion.div
       onClick={onClick}
-      whileHover={hover ? { y: -8, scale: 1.02 } : {}}
+      whileHover={hover && !isMobile ? { y: -8, scale: 1.02 } : {}}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`relative p-6 rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] overflow-hidden group ${className}`}
+      className={`relative p-6 rounded-2xl ${isMobile ? 'bg-white/[0.05]' : 'bg-white/[0.03] backdrop-blur-xl'} border border-white/[0.08] overflow-hidden group ${className}`}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{ boxShadow: 'inset 0 0 40px rgba(59,130,246,0.15), inset 0 0 80px rgba(6,182,212,0.08)' }}
-      />
+      {!isMobile && (
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      )}
+      {!isMobile && (
+        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{ boxShadow: 'inset 0 0 40px rgba(59,130,246,0.15), inset 0 0 80px rgba(6,182,212,0.08)' }}
+        />
+      )}
       <div className="relative z-10">{children}</div>
     </motion.div>
   );
@@ -702,6 +731,7 @@ const PhoneAnimationV2 = ({ onStepChange }) => {
 
 // Hero Section
 const HeroSection = ({ onOpenDemo }) => {
+  const isMobile = useIsMobile();
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 50]);
   const [phoneStep, setPhoneStep] = useState(1);
@@ -737,8 +767,8 @@ const HeroSection = ({ onOpenDemo }) => {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 mb-8"
         >
           <motion.span
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            animate={isMobile ? {} : { scale: [1, 1.2, 1] }}
+            transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
             className="w-2 h-2 rounded-full bg-green-400"
           />
           <span className="text-sm text-blue-300">+127 entreprises inscrites cette semaine</span>
@@ -768,8 +798,8 @@ const HeroSection = ({ onOpenDemo }) => {
           {displayedText}
           {!isComplete && (
             <motion.span
-              animate={{ opacity: [1, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity }}
+              animate={isMobile ? {} : { opacity: [1, 0] }}
+              transition={isMobile ? {} : { duration: 0.5, repeat: Infinity }}
               className="inline-block w-0.5 h-5 bg-blue-400 ml-1 align-middle"
             />
           )}
@@ -822,13 +852,15 @@ const HeroSection = ({ onOpenDemo }) => {
           className="mt-20 relative"
         >
           {/* Glow behind phone */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-72 h-72 bg-blue-500/30 rounded-full blur-[60px]" />
-          </div>
+          {!isMobile && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-72 h-72 bg-blue-500/30 rounded-full blur-[60px]" />
+            </div>
+          )}
 
           <motion.div
-            animate={{ y: [-15, 15, -15] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            animate={isMobile ? {} : { y: [-15, 15, -15] }}
+            transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
             className="relative mx-auto w-64 md:w-72 lg:w-80"
           >
             {/* Badge gauche - Notification paiement */}
@@ -881,7 +913,7 @@ const HeroSection = ({ onOpenDemo }) => {
               transition={{ delay: 3.2 }}
               className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-20"
             >
-              <div className="bg-[#0a0f1a]/80 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 shadow-lg">
+              <div className="bg-[#0a0f1a]/90 md:bg-[#0a0f1a]/80 md:backdrop-blur-md border border-white/10 rounded-full px-4 py-2 shadow-lg">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span className="text-white text-xs font-medium">+12 847€ ce mois</span>
@@ -948,6 +980,7 @@ const UrgencyBanner = () => {
 
 // Logo Carousel
 const LogoCarousel = () => {
+  const isMobile = useIsMobile();
   const logos = [
     { name: "Terravigne", sector: "Viticulteurs" },
     { name: "BTP Alliance", sector: "Construction" },
@@ -967,8 +1000,8 @@ const LogoCarousel = () => {
         </p>
         <div className="relative">
           <motion.div
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+            animate={isMobile ? {} : { x: ['0%', '-50%'] }}
+            transition={isMobile ? {} : { duration: 30, repeat: Infinity, ease: 'linear' }}
             className="flex gap-8 whitespace-nowrap"
           >
             {[...logos, ...logos].map((logo, index) => (
@@ -1605,6 +1638,7 @@ const TestimonialsSection = () => {
 
 // Pricing Section - ULTRA CONVERSION
 const PricingSection = () => {
+  const isMobile = useIsMobile();
   const features = [
     { text: "Appels illimités", highlight: true },
     { text: "Voix IA indiscernable", highlight: true },
@@ -1618,15 +1652,17 @@ const PricingSection = () => {
     <section id="pricing" className="py-24 relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-950/20 to-transparent" />
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-30"
-      >
-        <div className="absolute inset-0 rounded-full border border-blue-500/20" />
-        <div className="absolute inset-8 rounded-full border border-cyan-500/20" />
-        <div className="absolute inset-16 rounded-full border border-blue-500/20" />
-      </motion.div>
+      {!isMobile && (
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-30"
+        >
+          <div className="absolute inset-0 rounded-full border border-blue-500/20" />
+          <div className="absolute inset-8 rounded-full border border-cyan-500/20" />
+          <div className="absolute inset-16 rounded-full border border-blue-500/20" />
+        </motion.div>
+      )}
 
       <div className="max-w-lg mx-auto px-4 relative z-10">
         <motion.div
@@ -1666,10 +1702,10 @@ const PricingSection = () => {
               background: 'linear-gradient(90deg, #3B82F6, #22D3EE, #8B5CF6, #3B82F6)',
               backgroundSize: '300% 100%',
             }}
-            animate={{
+            animate={isMobile ? {} : {
               backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
             }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+            transition={isMobile ? {} : { duration: 4, repeat: Infinity, ease: 'linear' }}
           />
           <div className="absolute -inset-[3px] rounded-3xl blur-md opacity-50"
             style={{
@@ -1678,12 +1714,12 @@ const PricingSection = () => {
             }}
           />
 
-          <div className="relative bg-[#0a0f1a]/90 backdrop-blur-xl rounded-3xl p-8 md:p-10">
+          <div className="relative bg-[#0a0f1a]/95 md:bg-[#0a0f1a]/90 md:backdrop-blur-xl rounded-3xl p-8 md:p-10">
             {/* Badge */}
             <div className="absolute -top-5 left-1/2 -translate-x-1/2">
               <motion.div
-                animate={{ y: [-3, 3, -3], scale: [1, 1.02, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                animate={isMobile ? {} : { y: [-3, 3, -3], scale: [1, 1.02, 1] }}
+                transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
                 className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full text-white font-bold shadow-lg shadow-blue-500/30"
               >
                 10 JOURS GRATUITS
@@ -1869,6 +1905,7 @@ const FAQSection = () => {
 
 // Final CTA Section
 const FinalCTASection = () => {
+  const isMobile = useIsMobile();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1930,23 +1967,27 @@ const FinalCTASection = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-violet-600/20" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-30" />
 
-      {/* Floating Orbs */}
-      <motion.div
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0]
-        }}
-        transition={{ duration: 20, repeat: Infinity }}
-        className="absolute top-20 left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[100px]"
-      />
-      <motion.div
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 50, 0]
-        }}
-        transition={{ duration: 25, repeat: Infinity }}
-        className="absolute bottom-20 right-20 w-64 h-64 bg-violet-500/20 rounded-full blur-[100px]"
-      />
+      {/* Floating Orbs - Desktop only */}
+      {!isMobile && (
+        <>
+          <motion.div
+            animate={{
+              x: [0, 100, 0],
+              y: [0, -50, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity }}
+            className="absolute top-20 left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[100px]"
+          />
+          <motion.div
+            animate={{
+              x: [0, -100, 0],
+              y: [0, 50, 0]
+            }}
+            transition={{ duration: 25, repeat: Infinity }}
+            className="absolute bottom-20 right-20 w-64 h-64 bg-violet-500/20 rounded-full blur-[100px]"
+          />
+        </>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 relative z-10">
         <motion.div
@@ -2114,18 +2155,39 @@ const Footer = () => {
 // ============================================
 
 const AnimatedBackground = () => {
+  const isMobile = useIsMobile();
   const { scrollYProgress } = useScroll();
 
   const blueOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.5, 0.3, 0.1]);
-  const cyanOpacity = useTransform(scrollYProgress, [0, 0.3, 0.7], [0.4, 0.5, 0.2]);
   const violetOpacity = useTransform(scrollYProgress, [0, 0.4, 0.8], [0.1, 0.4, 0.5]);
   const emeraldOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.2, 0.4, 0.6]);
 
+  // VERSION MOBILE : Fond statique simple, pas d'animations
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a] via-[#0a0f1a] to-[#050608]" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(59,130,246,0.3) 0%, transparent 50%)',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(16,185,129,0.25) 0%, transparent 40%)',
+          }}
+        />
+      </div>
+    );
+  }
+
+  // VERSION DESKTOP : Animations complètes
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a] via-[#0a0f1a] to-[#050608]" />
 
-      {/* ZONE HAUTE - Dominante BLEUE (Hero) */}
       <motion.div
         className="absolute inset-0"
         style={{
@@ -2134,109 +2196,41 @@ const AnimatedBackground = () => {
         }}
       />
 
-      {/* ZONE HAUTE-MILIEU - CYAN qui pulse */}
-      <motion.div
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse 80% 50% at 70% 25%, rgba(6,182,212,0.45) 0%, transparent 60%)',
-          opacity: cyanOpacity,
-        }}
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      {/* ZONE MILIEU - VIOLET qui apparaît au scroll */}
       <motion.div
         className="absolute inset-0"
         style={{
           background: 'radial-gradient(ellipse 90% 50% at 20% 50%, rgba(139,92,246,0.4) 0%, transparent 55%)',
           opacity: violetOpacity,
         }}
-        animate={{ x: [0, 30, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* ZONE MILIEU-DROITE - VIOLET secondaire */}
-      <motion.div
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse 70% 60% at 85% 55%, rgba(167,139,250,0.35) 0%, transparent 60%)',
-          opacity: violetOpacity,
-        }}
-        animate={{ y: [0, -20, 0] }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
-      />
-
-      {/* ZONE BASSE - EMERALD dominant (CTA, conversion) */}
       <motion.div
         className="absolute inset-0"
         style={{
           background: 'radial-gradient(ellipse 100% 50% at 50% 85%, rgba(16,185,129,0.45) 0%, transparent 50%)',
           opacity: emeraldOpacity,
         }}
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* ZONE BASSE - Touches de CYAN */}
+      {/* Orbes avec blur - DESKTOP SEULEMENT */}
       <motion.div
-        className="absolute inset-0"
+        className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full"
         style={{
-          background: 'radial-gradient(ellipse 60% 40% at 80% 90%, rgba(6,182,212,0.3) 0%, transparent 50%)',
-          opacity: emeraldOpacity,
-        }}
-      />
-
-      {/* Orbe bleu - haut gauche */}
-      <motion.div
-        className="absolute -top-32 -left-32 w-[700px] h-[700px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 60%)',
-          filter: 'blur(80px)',
-        }}
-        animate={{ x: [0, 60, 0], y: [0, 30, 0] }}
-        transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      {/* Orbe violet - milieu */}
-      <motion.div
-        className="absolute top-1/3 right-0 w-[600px] h-[600px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 60%)',
-          filter: 'blur(70px)',
-        }}
-        animate={{ x: [0, -50, 0], y: [0, 40, 0], scale: [1, 1.1, 1] }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      {/* Orbe emerald - bas */}
-      <motion.div
-        className="absolute -bottom-32 left-1/4 w-[800px] h-[500px] rounded-full"
-        style={{
-          background: 'radial-gradient(ellipse, rgba(16,185,129,0.4) 0%, transparent 60%)',
-          filter: 'blur(90px)',
-        }}
-        animate={{ x: [0, 80, 0], scale: [1, 1.15, 1] }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      {/* Orbe cyan - bas droite */}
-      <motion.div
-        className="absolute -bottom-20 -right-20 w-[500px] h-[500px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(6,182,212,0.35) 0%, transparent 60%)',
+          background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 60%)',
           filter: 'blur(60px)',
         }}
-        animate={{ y: [0, -40, 0], opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+        animate={{ x: [0, 40, 0], y: [0, 20, 0] }}
+        transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Grain subtil */}
-      <div
-        className="absolute inset-0 opacity-[0.012]"
+      <motion.div
+        className="absolute -bottom-32 -right-32 w-[400px] h-[400px] rounded-full"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          background: 'radial-gradient(circle, rgba(16,185,129,0.3) 0%, transparent 60%)',
+          filter: 'blur(50px)',
         }}
+        animate={{ x: [0, -30, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
       />
     </div>
   );
@@ -2247,10 +2241,12 @@ const AnimatedBackground = () => {
 // ============================================
 
 const Loader = ({ onComplete }) => {
+  const isMobile = useIsMobile();
+
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2000);
+    const timer = setTimeout(onComplete, isMobile ? 1000 : 2000);
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, [onComplete, isMobile]);
 
   return (
     <motion.div
