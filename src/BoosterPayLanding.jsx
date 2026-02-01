@@ -68,6 +68,92 @@ const scrollToSection = (e, href) => {
   }
 };
 
+// === GOOGLE CALENDAR POPUP ===
+const openCalendarPopup = () => {
+  const url = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true';
+  const width = 600;
+  const height = 700;
+  const left = (window.innerWidth - width) / 2 + window.screenX;
+  const top = (window.innerHeight - height) / 2 + window.screenY;
+  const popup = window.open(
+    url,
+    'GoogleCalendarBooking',
+    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+  );
+  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    window.open(url, '_blank');
+  }
+};
+
+// === COMPOSANT BOOKING BUTTON ===
+const BookingButton = ({ variant = 'default', className = '' }) => {
+  const variants = {
+    compact: (
+      <button
+        onClick={openCalendarPopup}
+        className={`flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400 transition-all text-sm font-medium ${className}`}
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        {"Parler \u00e0 un expert"}
+      </button>
+    ),
+    default: (
+      <motion.button
+        onClick={openCalendarPopup}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400 transition-all font-medium ${className}`}
+      >
+        <motion.span
+          className="absolute inset-0 rounded-xl bg-purple-500/20"
+          animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <svg className="relative w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span className="relative">{"R\u00e9server un audit gratuit"}</span>
+      </motion.button>
+    ),
+    large: (
+      <motion.button
+        onClick={openCalendarPopup}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        className={`relative group w-full ${className}`}
+      >
+        <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 opacity-50 blur-lg group-hover:opacity-75 transition-opacity" />
+        <div className="relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg">
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          {"R\u00e9server mon audit gratuit (15 min)"}
+        </div>
+      </motion.button>
+    ),
+    text: (
+      <button
+        onClick={openCalendarPopup}
+        className={`text-purple-400 hover:text-purple-300 underline underline-offset-2 transition-colors ${className}`}
+      >
+        {"Parler \u00e0 un expert \u2192"}
+      </button>
+    )
+  };
+  return variants[variant] || variants.default;
+};
+
 // ============================================
 // UTILITY HOOKS
 // ============================================
@@ -221,7 +307,7 @@ const StickyTopBar = () => {
               Rejoignez <span className="font-bold text-yellow-300">{count.toLocaleString()}+</span> entreprises qui ont déjà accéléré leur trésorerie
             </span>
             <motion.button
-              onClick={(e) => scrollToSection(e, '#cta-form')}
+              onClick={(e) => scrollToSection(e, '#pricing')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="hidden md:inline-flex items-center gap-1 bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-semibold hover:bg-yellow-300 transition-colors"
@@ -301,9 +387,10 @@ const Navigation = ({ onOpenDemo }) => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="hidden md:block">
-            <MagneticButton onClick={(e) => scrollToSection(e, '#cta-form')}>
+          {/* CTA Buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <BookingButton variant="compact" />
+            <MagneticButton onClick={(e) => scrollToSection(e, '#pricing')}>
               <span className="flex items-center gap-2">
                 <Gift className="w-4 h-4" />
                 Essai Gratuit
@@ -379,7 +466,7 @@ const Navigation = ({ onOpenDemo }) => {
                 <GlowButton
                   className="w-full"
                   onClick={(e) => {
-                    scrollToSection(e, '#cta-form');
+                    scrollToSection(e, '#pricing');
                     setIsMobileMenuOpen(false);
                   }}
                 >
@@ -814,15 +901,11 @@ const HeroSection = ({ onOpenDemo }) => {
         >
           <GlowButton
             className="text-lg"
-            onClick={(e) => scrollToSection(e, '#cta-form')}
+            onClick={(e) => scrollToSection(e, '#pricing')}
           >
-            <Gift className="w-5 h-5" />
-            DÉMARRER MES 10 JOURS GRATUITS
+            {"\u{1F680}"} 10 jours d'essai gratuit
           </GlowButton>
-          <GlowButton secondary onClick={onOpenDemo} className="text-lg">
-            <Play className="w-5 h-5" />
-            Écouter une démo d'appel
-          </GlowButton>
+          <BookingButton variant="default" />
         </motion.div>
 
         {/* Trust Badges */}
@@ -1644,168 +1727,395 @@ const TestimonialsSection = () => {
 // Pricing Section - ULTRA CONVERSION
 const PricingSection = () => {
   const isMobile = useIsMobile();
-  const features = [
-    { text: "Appels illimités", highlight: true },
-    { text: "Voix IA indiscernable", highlight: true },
-    { text: "Dashboard temps réel", highlight: false },
-    { text: "Intégrations (Sage, QuickBooks...)", highlight: false },
-    { text: "Support prioritaire 7j/7", highlight: false },
-    { text: "Sans engagement - Annulez quand vous voulez", highlight: true }
+  const [isAnnual, setIsAnnual] = useState(false);
+  const { count: companiesCount, ref: companiesRef } = useCountUp(847, 2000);
+
+  const plans = [
+    {
+      name: "STARTER",
+      tagline: "L'essentiel pour automatiser",
+      monthlyPrice: 49,
+      annualPrice: 39,
+      highlight: "LE PLUS SIMPLE",
+      icon: "\u{1F680}",
+      features: [
+        "Jusqu'\u00e0 20 factures/mois",
+        "IA Vocale + SMS + Email",
+        "Relances automatiques 24/7",
+        "Tableau de bord temps r\u00e9el",
+        "Support par email"
+      ],
+      cta: "Essayer 10 jours gratuit",
+      ctaSubtext: "Sans CB \u2022 Sans engagement",
+      popular: false,
+      gradient: "from-slate-600 to-slate-700",
+      commission: null
+    },
+    {
+      name: "PRO",
+      tagline: "La machine \u00e0 cash",
+      monthlyPrice: 129,
+      annualPrice: 103,
+      highlight: "LE PLUS RENTABLE",
+      icon: "\u2B50",
+      features: [
+        "Jusqu'\u00e0 100 factures/mois",
+        "IA Vocale + SMS + Email",
+        "Synchronisation comptable auto",
+        "Statistiques avanc\u00e9es",
+        "Support prioritaire"
+      ],
+      cta: "\u{1F4B0} Essayer 10 jours gratuit",
+      ctaSubtext: "Sans CB \u2022 Sans engagement",
+      popular: true,
+      badge: "\u2B50 LE PLUS POPULAIRE",
+      gradient: "from-blue-600 to-cyan-500",
+      commission: {
+        percent: "0,5%",
+        context: "sur montants r\u00e9cup\u00e9r\u00e9s"
+      }
+    },
+    {
+      name: "BUSINESS",
+      tagline: "L'arsenal complet",
+      monthlyPrice: 299,
+      annualPrice: 239,
+      highlight: "LE PLUS PUISSANT",
+      icon: "\u{1F48E}",
+      features: [
+        "Jusqu'\u00e0 500 factures/mois",
+        "IA Vocale + SMS + Email",
+        "Account Manager d\u00e9di\u00e9",
+        "Int\u00e9grations illimit\u00e9es",
+        "Support VIP 7j/7"
+      ],
+      cta: "Essayer 10 jours gratuit",
+      ctaSubtext: "Sans CB \u2022 Sans engagement",
+      popular: false,
+      gradient: "from-purple-600 to-pink-500",
+      commission: {
+        percent: "0,3%",
+        context: "sur montants r\u00e9cup\u00e9r\u00e9s"
+      }
+    }
   ];
 
   return (
     <section id="pricing" className="py-24 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-950/20 to-transparent" />
+      {/* Orbes lumineuses flottantes */}
       {!isMobile && (
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] opacity-30"
-        >
-          <div className="absolute inset-0 rounded-full border border-blue-500/20" />
-          <div className="absolute inset-8 rounded-full border border-cyan-500/20" />
-          <div className="absolute inset-16 rounded-full border border-blue-500/20" />
-        </motion.div>
+        <>
+          <motion.div
+            className="absolute top-20 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3],
+              x: [0, 50, 0],
+              y: [0, 30, 0]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl"
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.4, 0.6, 0.4],
+              x: [0, -40, 0],
+              y: [0, -20, 0]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.1, 1],
+              rotate: [0, 180, 360]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          />
+        </>
       )}
 
-      <div className="max-w-lg mx-auto px-4 relative z-10">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={fadeInUp}
-          className="text-center mb-12"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            className="inline-block mb-4"
-          >
-            <span className="px-4 py-2 rounded-full bg-green-500/20 text-green-400 text-sm font-semibold border border-green-500/30">
-              Rentabilisé dès le 1er mois
-            </span>
-          </motion.div>
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-            Un tarif simple.<br/><span className="text-cyan-400">Zéro surprise.</span>
-          </h2>
-          <p className="text-gray-400">
-            Pas de frais cachés. Pas d'engagement. Résiliez quand vous voulez.
-          </p>
-        </motion.div>
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-950/10 to-transparent" />
 
+      <div className="max-w-6xl mx-auto px-4 relative z-10">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative"
+          className="text-center mb-12"
         >
-          {/* Animated border glow */}
-          <motion.div
-            className="absolute -inset-[3px] rounded-3xl opacity-75"
-            style={{
-              background: 'linear-gradient(90deg, #3B82F6, #22D3EE, #8B5CF6, #3B82F6)',
-              backgroundSize: '300% 100%',
-            }}
-            animate={isMobile ? {} : {
-              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-            }}
-            transition={isMobile ? {} : { duration: 4, repeat: Infinity, ease: 'linear' }}
-          />
-          <div className="absolute -inset-[3px] rounded-3xl blur-md opacity-50"
-            style={{
-              background: 'linear-gradient(90deg, #3B82F6, #22D3EE, #8B5CF6, #3B82F6)',
-              backgroundSize: '300% 100%',
-            }}
-          />
-
-          <div className="relative bg-[#0a0f1a]/95 md:bg-[#0a0f1a]/90 md:backdrop-blur-xl rounded-3xl p-8 md:p-10">
-            {/* Badge */}
-            <div className="absolute -top-5 left-1/2 -translate-x-1/2">
-              <motion.div
-                animate={isMobile ? {} : { y: [-3, 3, -3], scale: [1, 1.02, 1] }}
-                transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
-                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full text-white font-bold shadow-lg shadow-blue-500/30"
-              >
-                10 JOURS GRATUITS
-              </motion.div>
-            </div>
-
-            <div className="text-center pt-6">
-              {/* Price */}
-              <div className="mb-2">
-                <span className="text-gray-500 text-lg line-through mr-2">99€</span>
-                <span className="text-green-400 text-sm font-semibold">-50%</span>
-              </div>
-              <div className="mb-1">
-                <span className="relative text-7xl md:text-8xl font-bold text-white">
-                  <span className="absolute inset-0 blur-lg text-white/40">50</span>
-                  50
-                </span>
-                <span className="text-3xl text-white font-bold">€</span>
-                <span className="text-gray-400 text-xl">/mois HT</span>
-              </div>
-              <p className="text-gray-500 text-sm mb-8">Soit moins de 2€/jour</p>
-
-              {/* Features */}
-              <ul className="space-y-4 mb-8 text-left">
-                {features.map((feature, index) => (
-                  <motion.li
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.08 }}
-                    className="flex items-center gap-3"
-                  >
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      feature.highlight
-                        ? 'bg-green-500/30 border border-green-500/50'
-                        : 'bg-white/10 border border-white/20'
-                    }`}>
-                      <Check className={`w-3.5 h-3.5 ${feature.highlight ? 'text-green-400' : 'text-gray-400'}`} />
-                    </div>
-                    <span className={feature.highlight ? 'text-white font-medium' : 'text-gray-400'}>
-                      {feature.text}
-                    </span>
-                  </motion.li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              <GlowButton
-                className="w-full text-lg py-5"
-                onClick={(e) => scrollToSection(e, '#cta-form')}
-              >
-                <Gift className="w-5 h-5" />
-                DÉMARRER MON ESSAI GRATUIT
-              </GlowButton>
-
-              {/* Trust */}
-              <div className="flex items-center justify-center gap-4 mt-6 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Lock className="w-4 h-4" /> Paiement sécurisé
-                </span>
-                <span className="flex items-center gap-1">
-                  <Shield className="w-4 h-4" /> Sans CB pour l'essai
-                </span>
-              </div>
-            </div>
-          </div>
+          <h2 className="text-4xl md:text-6xl font-black text-white mb-4">
+            {"Transformez vos impay\u00e9s en "}
+            <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              cash.
+            </span>
+          </h2>
+          <p className="text-gray-400 text-xl max-w-2xl mx-auto">
+            {"Pendant que vous vous concentrez sur votre m\u00e9tier,"}
+            <br/>
+            <span className="text-white font-medium">{"l'IA r\u00e9cup\u00e8re ce qu'on vous doit."}</span>
+          </p>
         </motion.div>
 
-        {/* Social proof under pricing */}
+        {/* Toggle mensuel/annuel */}
+        <div className="flex items-center justify-center gap-4 mb-12">
+          <span className={`font-medium transition-all ${!isAnnual ? 'text-white' : 'text-gray-500'}`}>
+            Mensuel
+          </span>
+          <button
+            onClick={() => setIsAnnual(!isAnnual)}
+            className="relative w-16 h-8 bg-slate-700 rounded-full p-1"
+          >
+            <motion.div
+              className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+              animate={{ x: isAnnual ? 32 : 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            />
+          </button>
+          <span className={`font-medium transition-all ${isAnnual ? 'text-white' : 'text-gray-500'}`}>
+            Annuel
+            <span className="ml-2 px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded-full">
+              -20%
+            </span>
+          </span>
+        </div>
+
+        {/* Grille des 3 cartes */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+          {plans.map((plan, index) => (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.15, duration: 0.5 }}
+              whileHover={!isMobile ? { y: -12, scale: 1.02, transition: { duration: 0.3, ease: "easeOut" } } : {}}
+              className={`relative group ${plan.popular ? 'md:scale-[1.05] md:z-20 order-first md:order-none' : 'md:z-10'}`}
+            >
+              {/* Badge 10 jours gratuits */}
+              <motion.div
+                className={`absolute -top-3 z-20 ${plan.popular ? 'left-4' : 'right-4'}`}
+                animate={isMobile ? {} : { y: [-2, 2, -2] }}
+                transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
+              >
+                <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full text-white text-xs font-bold shadow-lg shadow-emerald-500/30 whitespace-nowrap">
+                  {"\u{1F381} 10 JOURS GRATUITS"}
+                </span>
+              </motion.div>
+
+              {/* Glow PRO */}
+              {plan.popular && (
+                <>
+                  <motion.div
+                    className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-blue-500 via-cyan-400 to-purple-500 opacity-75 blur-lg"
+                    animate={isMobile ? {} : {
+                      opacity: [0.5, 0.8, 0.5],
+                      scale: [1, 1.02, 1]
+                    }}
+                    transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
+                  />
+                  <motion.div
+                    className="absolute -inset-[2px] rounded-3xl"
+                    style={{
+                      background: 'linear-gradient(90deg, #3B82F6, #06B6D4, #8B5CF6, #3B82F6)',
+                      backgroundSize: '300% 100%',
+                    }}
+                    animate={isMobile ? {} : { backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                    transition={isMobile ? {} : { duration: 4, repeat: Infinity, ease: 'linear' }}
+                  />
+
+                  {/* Badge flottant */}
+                  <motion.div
+                    className="absolute -top-5 left-1/2 -translate-x-1/2 z-30"
+                    animate={isMobile ? {} : { y: [-3, 3, -3] }}
+                    transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
+                  >
+                    <span className="px-6 py-2 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 rounded-full text-white font-bold shadow-xl shadow-cyan-500/50 whitespace-nowrap">
+                      {plan.badge}
+                    </span>
+                  </motion.div>
+                </>
+              )}
+
+              {/* Reflet lumineux au hover */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none" />
+
+              {/* Bordure gradient subtile (non-PRO) */}
+              {!plan.popular && (
+                <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-b from-white/20 to-white/5">
+                  <div className="h-full w-full rounded-3xl bg-slate-900/90 backdrop-blur-xl" />
+                </div>
+              )}
+
+              {/* Carte */}
+              <div className={`relative h-full rounded-3xl p-8 ${
+                plan.popular ? 'bg-slate-900/95 backdrop-blur-xl' : ''
+              }`}>
+
+                {/* Header carte */}
+                <div className="text-center mb-6">
+                  <motion.span
+                    className="text-4xl mb-3 block"
+                    animate={isMobile ? {} : { rotate: [0, 10, -10, 0] }}
+                    transition={isMobile ? {} : { duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  >
+                    {plan.icon}
+                  </motion.span>
+
+                  <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-wider bg-gradient-to-r ${plan.gradient} text-white mb-3`}>
+                    {plan.highlight}
+                  </span>
+
+                  <h3 className="text-2xl font-bold text-white mb-1">{plan.name}</h3>
+                  <p className="text-gray-400 text-sm">{plan.tagline}</p>
+                </div>
+
+                {/* Prix */}
+                <div className="text-center mb-6">
+                  <motion.div
+                    key={isAnnual ? `${plan.name}-annual` : `${plan.name}-monthly`}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="relative inline-block"
+                  >
+                    <div className={`absolute inset-0 blur-2xl opacity-30 bg-gradient-to-r ${plan.gradient}`} />
+                    <span className="relative text-5xl md:text-6xl font-bold text-white">
+                      {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                    </span>
+                    <span className="text-2xl text-white font-bold">{"\u20AC"}</span>
+                    <span className="text-gray-400">/mois HT</span>
+                  </motion.div>
+
+                  {isAnnual && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-green-400 text-sm mt-2 font-medium"
+                    >
+                      {"-20% sur l'ann\u00e9e"}
+                    </motion.p>
+                  )}
+                </div>
+
+                {/* Badge sans carte bancaire */}
+                <div className="flex justify-center mt-3 mb-4">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="1" y="4" width="22" height="16" rx="2"/>
+                      <line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                    <span className="text-emerald-400 text-xs font-medium">Sans carte bancaire</span>
+                  </div>
+                </div>
+
+                {/* Badge sans engagement */}
+                <div className="text-center mb-6">
+                  <motion.span
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 text-xs font-semibold border border-green-500/30"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Sans engagement
+                  </motion.span>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <motion.li
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.08 }}
+                      className="flex items-start gap-3"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-3 h-3 text-green-400" />
+                      </div>
+                      <span className="text-gray-300 text-sm">{feature}</span>
+                    </motion.li>
+                  ))}
+
+                  {/* Commission comme dernière feature stylée */}
+                  {plan.commission && (
+                    <li className="flex items-start gap-3 pt-2 mt-2 border-t border-white/10">
+                      <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-emerald-400 text-xs">%</span>
+                      </div>
+                      <span className="text-emerald-300 text-sm">
+                        +{plan.commission.percent} {plan.commission.context}
+                      </span>
+                    </li>
+                  )}
+                </ul>
+
+                {/* CTA */}
+                {plan.popular ? (
+                  <motion.div className="relative">
+                    <motion.div
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400"
+                      animate={isMobile ? {} : {
+                        boxShadow: [
+                          '0 0 20px 0 rgba(59,130,246,0.5)',
+                          '0 0 40px 10px rgba(6,182,212,0.3)',
+                          '0 0 20px 0 rgba(59,130,246,0.5)'
+                        ]
+                      }}
+                      transition={isMobile ? {} : { duration: 1.5, repeat: Infinity }}
+                    />
+                    <button
+                      onClick={(e) => scrollToSection(e, '#pricing')}
+                      className="relative w-full py-5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-lg font-bold hover:from-blue-500 hover:to-cyan-400 transition-all"
+                    >
+                      {plan.cta}
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    onClick={(e) => scrollToSection(e, '#pricing')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full py-4 rounded-xl bg-white/5 border border-white/20 text-white font-semibold hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+                  >
+                    {plan.cta}
+                  </motion.button>
+                )}
+
+                {/* Sous-texte CTA */}
+                <p className="text-gray-500 text-xs mt-3 text-center flex items-center justify-center gap-1">
+                  <span className="text-green-400">{"\u2713"}</span> {plan.ctaSubtext}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Social proof animée */}
         <motion.div
+          ref={companiesRef}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 text-center"
+          transition={{ delay: 0.3 }}
+          className="mt-10 text-center"
         >
           <p className="text-gray-500 text-sm">
-            Rejoint par <span className="text-white font-semibold">+200 entreprises</span> ce mois-ci
+            {"\u2713"} Rejoint par <span className="text-white font-bold">{companiesCount}</span> entreprises ce mois-ci
           </p>
         </motion.div>
+
+        {/* Booking CTA sous les cartes */}
+        <div className="mt-12 text-center">
+          <p className="text-gray-400 mb-4">{"Besoin d'aide pour choisir la bonne formule ?"}</p>
+          <BookingButton variant="default" className="mx-auto" />
+        </div>
       </div>
     </section>
   );
@@ -1908,189 +2218,65 @@ const FAQSection = () => {
   );
 };
 
-// Final CTA Section
-const FinalCTASection = () => {
-  const isMobile = useIsMobile();
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const trustElements = [
-    { icon: Lock, text: "Données sécurisées" },
-    { icon: Zap, text: "Activation en 2 min" },
-    { icon: Shield, text: "Pas de CB requise" }
-  ];
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Email invalide';
-    }
-    if (!phone || phone.replace(/\s/g, '').length < 10) {
-      newErrors.phone = 'Téléphone invalide';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    // Simule un envoi
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-  };
-
-  if (isSubmitted) {
-    return (
-      <section id="cta-form" className="py-24 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="w-24 h-24 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center"
-          >
-            <Check className="w-12 h-12 text-green-400" />
-          </motion.div>
-          <h2 className="text-3xl font-bold text-white mb-4">Merci ! 🎉</h2>
-          <p className="text-gray-400 text-lg">
-            Nous vous contactons dans les 24h pour activer votre essai gratuit.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
+// Need Help Section
+const NeedHelpSection = () => {
   return (
-    <section id="cta-form" className="py-24 relative overflow-hidden">
-      {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 via-transparent to-violet-600/20" />
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-30" />
+    <section className="py-20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950" />
+      <motion.div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl"
+        animate={{ scale: [1, 1.1, 1] }}
+        transition={{ duration: 8, repeat: Infinity }}
+      />
 
-      {/* Floating Orbs - Desktop only */}
-      {!isMobile && (
-        <>
-          <motion.div
-            animate={{
-              x: [0, 100, 0],
-              y: [0, -50, 0]
-            }}
-            transition={{ duration: 20, repeat: Infinity }}
-            className="absolute top-20 left-20 w-64 h-64 bg-blue-500/20 rounded-full blur-[100px]"
-          />
-          <motion.div
-            animate={{
-              x: [0, -100, 0],
-              y: [0, 50, 0]
-            }}
-            transition={{ duration: 25, repeat: Infinity }}
-            className="absolute bottom-20 right-20 w-64 h-64 bg-violet-500/20 rounded-full blur-[100px]"
-          />
-        </>
-      )}
-
-      <div className="max-w-4xl mx-auto px-4 relative z-10">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={fadeInUp}
-          className="text-center"
-        >
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-            Prêt à récupérer <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">votre argent</span> ?
-          </h2>
-          <p className="text-gray-400 text-lg mb-12">
-            Vos 10 premiers jours sont 100% gratuits. Sans engagement. Sans CB.
-          </p>
-        </motion.div>
-
+      <div className="max-w-4xl mx-auto px-6 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
+          className="text-center"
         >
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-violet-500/20 to-emerald-500/20 rounded-3xl blur-xl" />
-            <GlassCard className="relative p-8 md:p-12">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Email professionnel</label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="votre@email.com"
-                      className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                        errors.email ? 'border-red-500' : 'border-white/10 focus:border-blue-500'
-                      }`}
-                    />
-                  </div>
-                  {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Téléphone</label>
-                  <div className="relative">
-                    <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="06 12 34 56 78"
-                      className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none transition-colors ${
-                        errors.phone ? 'border-red-500' : 'border-white/10 focus:border-blue-500'
-                      }`}
-                    />
-                  </div>
-                  {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
-                </div>
-              </div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-6">
+            <span className="text-purple-400 text-sm font-medium">{"💬 Besoin d'aide avant de vous lancer ?"}</span>
+          </div>
 
-              <GlowButton className="w-full text-lg py-5" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                    />
-                    ENVOI EN COURS...
-                  </>
-                ) : (
-                  <>
-                    DÉMARRER MAINTENANT
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </GlowButton>
-            </form>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            {"L'IA vous impressionne mais vous avez des "}
+            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              {"questions ?"}
+            </span>
+          </h2>
 
-            {/* Trust Elements */}
-            <div className="flex flex-wrap justify-center gap-6 mt-8 pt-8 border-t border-white/10">
-              {trustElements.map((element, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 + 0.5 }}
-                  className="flex items-center gap-2 text-gray-400"
-                >
-                  <element.icon className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">{element.text}</span>
-                </motion.div>
-              ))}
-            </div>
-          </GlassCard>
+          <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto">
+            {"R\u00e9servez 15 minutes avec un expert BoosterPay. 100% gratuit, sans engagement."}
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {[
+              { icon: "\u{1F50C}", title: "Compatibilit\u00e9", desc: "V\u00e9rifiez l'int\u00e9gration avec vos outils" },
+              { icon: "\u{1F4CA}", title: "Simulation", desc: "Estimez votre gain de tr\u00e9sorerie" },
+              { icon: "\u2699\uFE0F", title: "Configuration", desc: "Param\u00e9trez votre premi\u00e8re relance" }
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-slate-800/50 rounded-xl p-5 border border-white/5 hover:border-purple-500/30 transition-colors"
+              >
+                <span className="text-3xl mb-3 block">{item.icon}</span>
+                <h4 className="text-white font-semibold mb-1">{item.title}</h4>
+                <p className="text-gray-400 text-sm">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="max-w-md mx-auto">
+            <BookingButton variant="large" />
+            <p className="text-gray-500 text-sm mt-4 flex items-center justify-center gap-2">
+              <span className="text-emerald-400">{"\u2728"}</span>
+              {"Cr\u00e9neaux disponibles sous 24h"}
+            </p>
           </div>
         </motion.div>
       </div>
@@ -2132,8 +2318,9 @@ const Footer = () => {
             ))}
           </div>
 
-          {/* Social */}
+          {/* Social + Booking */}
           <div className="flex items-center gap-4">
+            <BookingButton variant="compact" />
             <a href="#" className="text-gray-400 hover:text-white transition-colors">
               <Globe className="w-5 h-5" />
             </a>
@@ -2319,12 +2506,21 @@ const BoosterPayLanding = () => {
           <ProblemSection />
           <SolutionSection />
           <HowItWorksSection />
+
+          {/* CTA après How It Works */}
+          <div className="py-8 border-y border-white/5">
+            <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-gray-400">{"🤔 Des questions sur le fonctionnement ?"}</p>
+              <BookingButton variant="default" />
+            </div>
+          </div>
+
           <AudioDemoSection isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
           <StatisticsSection />
           <TestimonialsSection />
           <PricingSection />
           <FAQSection />
-          <FinalCTASection />
+          <NeedHelpSection />
         </main>
 
         {/* Footer */}
