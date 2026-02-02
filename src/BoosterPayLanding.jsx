@@ -93,6 +93,85 @@ const BookingModal = ({ isOpen, onClose }) => {
     { icon: "🔒", text: "Données sécurisées" },
   ];
 
+  // MOBILE VERSION
+  if (isMobile) {
+    return (
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 z-[300] bg-black/90"
+            />
+
+            {/* Modal Mobile - Bottom sheet style */}
+            <motion.div
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="fixed bottom-0 left-0 right-0 z-[301] bg-[#0f172a] rounded-t-3xl border-t border-x border-blue-500/30"
+              style={{ maxHeight: '85vh' }}
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-white/10 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-t-3xl">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                      <span>🚀</span>
+                      <span>Prêt à automatiser votre trésorerie ?</span>
+                    </h2>
+                    <p className="text-gray-300 text-xs mt-1">
+                      Échangez 15 min avec un expert pour configurer votre IA.
+                    </p>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-full bg-white/10"
+                  >
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Calendar iframe */}
+              <div className="p-3" style={{ height: '55vh' }}>
+                <div className="rounded-xl overflow-hidden bg-white h-full">
+                  <iframe
+                    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
+                    className="w-full h-full border-0"
+                    title="Réserver un appel"
+                  />
+                </div>
+              </div>
+
+              {/* Footer badges */}
+              <div className="p-3 border-t border-white/10 bg-[#0a0f1a]">
+                <div className="grid grid-cols-2 gap-2">
+                  {badges.map((badge) => (
+                    <div
+                      key={badge.text}
+                      className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1.5"
+                    >
+                      <span className="text-sm">{badge.icon}</span>
+                      <span className="text-gray-200 text-xs">{badge.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // DESKTOP VERSION
   return (
     <AnimatePresence>
       {isOpen && (
@@ -102,72 +181,74 @@ const BookingModal = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/80"
+            className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-sm"
           />
 
-          {/* Modal - Optimisé Mobile */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ type: "spring", damping: 30, stiffness: 400 }}
-            onClick={(e) => e.stopPropagation()}
-            className={`fixed z-[101] bg-[#0a0f1a] border border-blue-500/30 shadow-[0_0_60px_rgba(59,130,246,0.2)] overflow-hidden
-              ${isMobile
-                ? 'inset-x-2 top-16 bottom-4 rounded-2xl'
-                : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] rounded-3xl'
-              }`}
-          >
-            {/* Header - Compact sur mobile */}
-            <div className={`border-b border-white/10 bg-gradient-to-r from-blue-500/5 to-purple-500/5 ${isMobile ? 'p-3' : 'p-5'}`}>
-              <div className="flex justify-between items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <h2 className={`font-bold text-white flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
-                    <span>🚀</span>
-                    <span>Prêt à automatiser votre trésorerie ?</span>
-                  </h2>
-                  <p className={`text-gray-400 mt-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                    Échangez 15 min avec un expert pour configurer votre IA.
-                  </p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="flex-shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
-                >
-                  <X className={`text-gray-400 hover:text-white ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
-                </button>
-              </div>
-            </div>
-
-            {/* Calendar iframe - Prend tout l'espace disponible */}
-            <div className={`overflow-hidden ${isMobile ? 'p-2' : 'p-4'}`} style={{ height: isMobile ? 'calc(100% - 130px)' : 'auto' }}>
-              <div className="rounded-xl overflow-hidden bg-white h-full">
-                <iframe
-                  src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
-                  className="w-full h-full border-0"
-                  style={{ minHeight: isMobile ? '100%' : '450px' }}
-                  title="Réserver un appel"
-                />
-              </div>
-            </div>
-
-            {/* Footer badges - Compact sur mobile */}
-            <div className={`border-t border-white/10 bg-white/[0.02] ${isMobile ? 'p-2' : 'p-4'}`}>
-              <div className={`flex flex-wrap justify-center ${isMobile ? 'gap-x-3 gap-y-1' : 'gap-x-5 gap-y-2'}`}>
-                {badges.map((badge) => (
-                  <span
-                    key={badge.text}
-                    className={`flex items-center gap-1 text-gray-300 ${isMobile ? 'text-[10px]' : 'text-xs'}`}
+          {/* Modal Desktop - Centered with flexbox */}
+          <div className="fixed inset-0 z-[301] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl bg-[#0f172a] rounded-3xl border border-blue-500/30 shadow-[0_0_60px_rgba(59,130,246,0.2)] overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-white/10 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                      <span>🚀</span>
+                      <span>Prêt à automatiser votre trésorerie ?</span>
+                    </h2>
+                    <p className="text-gray-300 mt-2">
+                      Échangez 15 min avec un expert pour configurer votre IA.
+                    </p>
+                  </div>
+                  <motion.button
+                    onClick={onClose}
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   >
-                    <span>{badge.icon}</span>
-                    <span>{badge.text}</span>
-                  </span>
-                ))}
+                    <X className="w-6 h-6 text-white" />
+                  </motion.button>
+                </div>
               </div>
-            </div>
-          </motion.div>
+
+              {/* Calendar iframe */}
+              <div className="p-5">
+                <div className="rounded-xl overflow-hidden bg-white">
+                  <iframe
+                    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
+                    className="w-full border-0"
+                    style={{ height: '450px' }}
+                    title="Réserver un appel"
+                  />
+                </div>
+              </div>
+
+              {/* Footer badges */}
+              <div className="px-6 pb-6">
+                <div className="flex flex-wrap justify-center gap-6">
+                  {badges.map((badge, index) => (
+                    <motion.div
+                      key={badge.text}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 + index * 0.05 }}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-lg">{badge.icon}</span>
+                      <span className="text-gray-200 text-sm">{badge.text}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
@@ -189,37 +270,59 @@ const BookingButton = ({ variant = 'default', className = '', openModal, icon, l
 
   const variants = {
     'nav-compact': (
-      <button
+      <motion.button
         onClick={openModal}
-        className={`flex items-center gap-2 px-5 py-2.5 rounded-full bg-purple-500/20 border-2 border-purple-400/70 text-white hover:bg-purple-500/30 hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all text-sm font-semibold ${className}`}
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.95 }}
+        className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full bg-purple-500/20 border-2 border-purple-400/70 text-white overflow-hidden group hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all text-sm font-semibold ${className}`}
       >
-        <span className="text-base">{cta.icon}</span>
-        <span>{cta.text}</span>
-      </button>
+        <motion.div
+          className="absolute inset-0 bg-purple-500/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+        />
+        <motion.span
+          className="text-base relative z-10"
+          animate={{ rotate: [0, -10, 10, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+        >
+          {cta.icon}
+        </motion.span>
+        <span className="relative z-10">{cta.text}</span>
+      </motion.button>
     ),
     'hero': (
       <motion.button
         onClick={openModal}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        className={`relative group w-full sm:w-auto ${className}`}
+        whileHover={{ scale: 1.05, y: -3 }}
+        whileTap={{ scale: 0.95 }}
+        className={`relative group w-full sm:w-auto overflow-hidden ${className}`}
       >
         {/* Glow pulsant */}
         <motion.div
-          className="absolute -inset-1 rounded-xl bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 opacity-70 blur-lg"
-          animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.05, 1] }}
+          className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 opacity-70 blur-xl"
+          animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.1, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
-        {/* Bordure animée */}
+        {/* Bordure animée arc-en-ciel */}
         <motion.div
-          className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500"
+          className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-cyan-500"
           animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
           transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
           style={{ backgroundSize: '200% 200%' }}
         />
-        <div className="relative flex items-center justify-center gap-3 px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-base sm:text-lg whitespace-nowrap">
-          <span>{cta.icon}</span>
-          <span>{cta.text}</span>
+        <div className="relative flex items-center justify-center gap-3 px-8 sm:px-12 py-4 sm:py-5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg sm:text-xl">
+          <motion.span
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          >
+            ✨
+          </motion.span>
+          <span>Réserver mon audit gratuit</span>
+          <motion.span
+            animate={{ x: [0, 5, 0] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            →
+          </motion.span>
         </div>
       </motion.button>
     ),
@@ -388,17 +491,6 @@ const staggerContainer = {
   }
 };
 
-const floatingAnimation = {
-  animate: {
-    y: [-5, 5, -5],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  }
-};
-
 // ============================================
 // COMPONENTS
 // ============================================
@@ -558,29 +650,31 @@ const Navigation = ({ onOpenDemo, onOpenBooking }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`fixed inset-0 z-50 bg-[#0a0f1a]/98 ${isMobile ? '' : 'backdrop-blur-lg'}`}
+            className="fixed inset-0 z-[9999] bg-[#0a0f1a]"
           >
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25 }}
-              className="h-full flex flex-col p-6"
-            >
-              <div className="flex justify-between items-center mb-12">
-                <span className="text-2xl font-bold text-white">
-                  Booster<span className="text-blue-500">Pay</span>
-                </span>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-white"
-                >
-                  <X className="w-6 h-6" />
-                </motion.button>
-              </div>
+            {/* Header avec bouton X */}
+            <div className="flex justify-between items-center p-6 border-b border-white/10">
+              <span className="text-2xl font-bold text-white">
+                Booster<span className="text-blue-500">Pay</span>
+              </span>
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-3 rounded-full bg-white/10 text-white active:bg-white/20 touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
+                <X className="w-6 h-6" />
+              </motion.button>
+            </div>
 
-              <div className="flex flex-col gap-6">
+            {/* Navigation Links */}
+            <div className="flex-1 flex flex-col justify-center px-6 py-8">
+              <div className="space-y-2">
                 {navLinks.map((link, index) => (
                   <motion.a
                     key={link.href}
@@ -589,41 +683,64 @@ const Navigation = ({ onOpenDemo, onOpenBooking }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                     onClick={(e) => {
+                      e.preventDefault();
                       scrollToSection(e, link.href);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="text-2xl text-white font-medium py-3 border-b border-white/10"
+                    className="block text-3xl text-white font-semibold py-4 border-b border-white/10 hover:text-blue-400 transition-colors active:text-blue-400"
                   >
                     {link.label}
                   </motion.a>
                 ))}
               </div>
+            </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="mt-auto space-y-3"
+            {/* CTA Buttons */}
+            <div className="p-6 space-y-3 border-t border-white/10">
+              {/* Bouton Parler à un expert - Effet pulse */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onOpenBooking();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="relative w-full py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg flex items-center justify-center gap-2 overflow-hidden touch-manipulation"
               >
-                <GlowButton
-                  className="w-full"
-                  onClick={() => { onOpenBooking(); setIsMobileMenuOpen(false); }}
-                >
-                  📞 Parler à un expert
-                </GlowButton>
-                <GlowButton
-                  secondary
-                  className="w-full"
-                  onClick={(e) => {
-                    scrollToSection(e, '#pricing');
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <Gift className="w-5 h-5" />
-                  🎁 Essai Gratuit 10 Jours
-                </GlowButton>
-              </motion.div>
-            </motion.div>
+                <motion.div
+                  className="absolute inset-0 bg-white/20"
+                  animate={{ scale: [1, 1.5], opacity: [0.3, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <span className="relative z-10 flex items-center gap-2">
+                  <span>📞</span> Parler à un expert
+                </span>
+              </motion.button>
+
+              {/* Bouton Essai Gratuit - Effet shimmer */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  scrollToSection(e, '#pricing');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="relative w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-lg flex items-center justify-center gap-2 overflow-hidden touch-manipulation"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
+                  animate={{ x: ['-200%', '200%'] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5 }}
+                />
+                <span className="relative z-10 flex items-center gap-2">
+                  <span>🎁</span> Essai Gratuit 10 Jours
+                </span>
+              </motion.button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -679,8 +796,8 @@ const GlowButton = ({ children, className = '', secondary = false, onClick, disa
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={isMobile ? {} : { scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={isMobile ? {} : { scale: 1.03, y: -3 }}
+      whileTap={{ scale: 0.97 }}
       className={`relative px-8 py-4 font-bold rounded-xl overflow-hidden group ${
         secondary
           ? 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
@@ -690,19 +807,24 @@ const GlowButton = ({ children, className = '', secondary = false, onClick, disa
       <span className="relative z-10 flex items-center justify-center gap-2">{children}</span>
       {!secondary && !isMobile && (
         <>
+          {/* Shimmer effect */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600"
-            animate={{
-              x: ['-100%', '100%'],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: 'linear'
-            }}
-            style={{ opacity: 0.3 }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            animate={{ x: ['-100%', '100%'] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
           />
-          <div className="absolute inset-0 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.6)] group-hover:shadow-[0_0_50px_rgba(34,211,238,0.8)] transition-all duration-300" />
+          {/* Glow */}
+          <motion.div
+            className="absolute inset-0 rounded-xl"
+            animate={{
+              boxShadow: [
+                "0 0 20px rgba(59,130,246,0.5)",
+                "0 0 40px rgba(34,211,238,0.6)",
+                "0 0 20px rgba(59,130,246,0.5)"
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
         </>
       )}
     </motion.button>
@@ -1041,20 +1163,46 @@ const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
           )}
         </motion.p>
 
-        {/* CTAs */}
+        {/* Hero CTA Buttons - Version Clean */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center mb-12"
+          transition={{ delay: 1.2 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 mt-10 mb-12"
         >
-          <GlowButton
-            className="text-lg"
+          {/* Bouton 1 - Essai Gratuit */}
+          <motion.button
             onClick={(e) => scrollToSection(e, '#pricing')}
+            whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(59,130,246,0.6)' }}
+            whileTap={{ scale: 0.97 }}
+            className="relative w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-xl text-white font-bold text-lg shadow-lg shadow-blue-500/40 flex items-center justify-center gap-3 overflow-hidden"
           >
-            {"\u{1F680}"} 10 jours d'essai gratuit
-          </GlowButton>
-          <BookingButton variant="hero" openModal={onOpenBooking} />
+            {/* Shimmer */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
+              animate={{ x: ['-150%', '150%'] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5 }}
+            />
+            <span className="relative z-10">🚀</span>
+            <span className="relative z-10">10 jours d'essai gratuit</span>
+          </motion.button>
+
+          {/* Bouton 2 - Appel Expert */}
+          <motion.button
+            onClick={onOpenBooking}
+            whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(168,85,247,0.6)' }}
+            whileTap={{ scale: 0.97 }}
+            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 rounded-xl text-white font-bold text-lg shadow-lg shadow-purple-500/40 flex items-center justify-center gap-3"
+          >
+            <span>📞</span>
+            <span>Appel expert · 15 min</span>
+            <motion.span
+              animate={{ x: [0, 4, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              →
+            </motion.span>
+          </motion.button>
         </motion.div>
 
         {/* Trust Badges */}
@@ -1196,17 +1344,42 @@ const UrgencyBanner = () => {
   }, []);
 
   return (
-    <section className="py-4 bg-gradient-to-r from-orange-600/20 via-red-600/20 to-orange-600/20">
-      <div className="max-w-4xl mx-auto px-4 text-center">
-        <p className="text-white text-sm md:text-base">
-          <span className="font-bold text-orange-400">Offre de lancement</span> :
-          Essai gratuit étendu à 10 jours (au lieu de 7) — Expire dans{' '}
-          <span className="font-mono font-bold text-white bg-white/10 px-2 py-1 rounded">
-            {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+    <motion.section
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="py-4 bg-gradient-to-r from-orange-600/20 via-red-600/20 to-orange-600/20 relative overflow-hidden"
+    >
+      {/* Animated background pulse */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-red-500/20 to-orange-500/10"
+        animate={{ opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+
+      <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
+        <p className="text-white text-sm md:text-base flex flex-wrap items-center justify-center gap-2">
+          <motion.span
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+            className="text-lg"
+          >
+            🔥
+          </motion.span>
+          <span className="font-bold text-orange-400">Offre de lancement</span>
+          <span>: Essai gratuit étendu à 10 jours —</span>
+          <span className="font-mono font-bold text-white bg-white/10 px-3 py-1 rounded-lg border border-white/20">
+            <motion.span
+              key={timeLeft.seconds}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-block"
+            >
+              {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+            </motion.span>
           </span>
         </p>
       </div>
-    </section>
+    </motion.section>
   );
 };
 
@@ -1306,11 +1479,18 @@ const ProblemSection = () => {
           className="grid md:grid-cols-3 gap-6 mb-16"
         >
           {painPoints.map((point, index) => (
-            <motion.div key={index} variants={fadeInUp}>
-              <GlassCard className="text-center border-red-500/20 hover:border-red-500/40">
-                <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl bg-red-500/20 flex items-center justify-center`}>
+            <motion.div
+              key={index}
+              variants={fadeInUp}
+              whileHover={{ scale: 1.03, transition: { type: "spring", stiffness: 300 } }}
+            >
+              <GlassCard className="text-center border-red-500/20 hover:border-red-500/40 hover:shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                <motion.div
+                  className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-red-500/20 flex items-center justify-center"
+                  whileHover={{ rotate: [0, -10, 10, 0], transition: { duration: 0.5 } }}
+                >
                   <point.icon className="w-8 h-8 text-red-400" />
-                </div>
+                </motion.div>
                 <h3 className="text-xl font-bold text-white mb-3">{point.title}</h3>
                 <p className="text-gray-400">{point.description}</p>
               </GlassCard>
@@ -1380,13 +1560,21 @@ const SolutionSection = () => {
             {comparisons.map((item, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-3 p-4 rounded-xl bg-red-500/5 border border-red-500/20"
+                transition={{ delay: index * 0.1, type: "spring" }}
+                whileHover={{ x: 5 }}
+                className="flex items-center gap-3 p-4 rounded-xl bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-colors"
               >
-                <X className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
+                >
+                  <X className="w-5 h-5 text-red-400 flex-shrink-0" />
+                </motion.div>
                 <span className="text-gray-400 line-through">{item.before}</span>
               </motion.div>
             ))}
@@ -1407,13 +1595,21 @@ const SolutionSection = () => {
             {comparisons.map((item, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 + 0.3 }}
-                className="flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20"
+                transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
+                whileHover={{ x: -5, scale: 1.02 }}
+                className="flex items-center gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 hover:border-green-500/40 hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] transition-all"
               >
-                <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  whileInView={{ scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 + 0.5, type: "spring", stiffness: 200 }}
+                >
+                  <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                </motion.div>
                 <span className="text-white font-medium">{item.after}</span>
               </motion.div>
             ))}
@@ -1477,8 +1673,16 @@ const HowItWorksSection = () => {
         </motion.div>
 
         <div className="relative">
-          {/* Connection Line */}
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent -translate-y-1/2" />
+          {/* Connection Line - Animated */}
+          <motion.div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 overflow-hidden">
+            <motion.div
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+              className="h-full bg-gradient-to-r from-transparent via-blue-500 to-transparent origin-left"
+            />
+          </motion.div>
 
           <motion.div
             variants={staggerContainer}
@@ -1491,22 +1695,26 @@ const HowItWorksSection = () => {
               <motion.div
                 key={index}
                 variants={fadeInUp}
+                whileHover={{ y: -10 }}
+                transition={{ type: "spring", stiffness: 300 }}
               >
-                <GlassCard className="text-center relative">
-                  {/* Step Number Badge */}
+                <GlassCard className="text-center relative hover:shadow-[0_0_40px_rgba(59,130,246,0.2)]">
+                  {/* Step Number Badge - Animated */}
                   <motion.div
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.2, type: "spring" }}
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                    transition={{ delay: index * 0.2 + 0.3, type: "spring", stiffness: 200 }}
+                    whileHover={{ scale: 1.2 }}
+                    className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-blue-500/50"
                   >
                     {step.number}
                   </motion.div>
 
                   <motion.div
-                    {...floatingAnimation}
-                    className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-500/20 flex items-center justify-center mt-4"
+                    animate={{ y: [-3, 3, -3] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-blue-500/20 flex items-center justify-center mt-6"
                   >
                     <step.icon className="w-8 h-8 text-blue-400" />
                   </motion.div>
@@ -1838,24 +2046,39 @@ const TestimonialsSection = () => {
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
-              variants={fadeInUp}
+              initial={{ opacity: 0, y: 30, rotateX: -10 }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: index * 0.1, type: "spring" }}
+              whileHover={{ y: -8, scale: 1.02 }}
             >
-              <GlassCard className="h-full">
+              <GlassCard className="h-full hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] transition-shadow">
                 {/* Author with Initials */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 via-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-blue-500/30"
+                  >
                     <span className="text-white font-bold text-sm">{testimonial.initials}</span>
-                  </div>
+                  </motion.div>
                   <div>
                     <h4 className="text-white font-semibold">{testimonial.name}</h4>
                     <p className="text-gray-500 text-sm">{testimonial.role}</p>
                   </div>
                 </div>
 
-                {/* Rating */}
+                {/* Stars animées */}
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, scale: 0 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1, type: "spring" }}
+                    >
+                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    </motion.div>
                   ))}
                 </div>
 
@@ -2332,17 +2555,20 @@ const FAQSection = () => {
               <GlassCard
                 className="cursor-pointer"
                 hover={false}
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-white font-medium pr-4">{faq.question}</h3>
+                <motion.button
+                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
+                  className="w-full flex items-center justify-between text-left rounded-xl transition-colors min-h-[48px]"
+                >
+                  <span className="text-white font-semibold pr-4">{faq.question}</span>
                   <motion.div
                     animate={{ rotate: openIndex === index ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.3, type: "spring" }}
                   >
                     <ChevronDown className="w-5 h-5 text-blue-400 flex-shrink-0" />
                   </motion.div>
-                </div>
+                </motion.button>
 
                 <AnimatePresence>
                   {openIndex === index && (
@@ -2350,10 +2576,10 @@ const FAQSection = () => {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <p className="text-gray-400 mt-4 pt-4 border-t border-white/10">
+                      <p className="text-gray-400 mt-4 pt-4 border-t border-white/10 leading-relaxed">
                         {faq.answer}
                       </p>
                     </motion.div>
