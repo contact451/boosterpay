@@ -104,71 +104,70 @@ const BookingModal = ({ isOpen, onClose }) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] bg-black/80"
           />
 
-          {/* Modal Container - Centré avec flexbox */}
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-3xl border border-blue-500/30 bg-[#0a0f1a] shadow-[0_0_80px_rgba(59,130,246,0.25)]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="p-4 md:p-6 border-b border-white/10 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xl md:text-2xl font-bold text-white mb-1 flex items-center gap-2">
-                      <span>🚀</span>
-                      <span>Prêt à automatiser votre trésorerie ?</span>
-                    </h2>
-                    <p className="text-gray-400 text-sm md:text-base">
-                      Échangez 15 min avec un expert pour configurer votre IA.
-                    </p>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="flex-shrink-0 p-2 rounded-full hover:bg-white/10 transition-colors"
+          {/* Modal - Optimisé Mobile */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ type: "spring", damping: 30, stiffness: 400 }}
+            onClick={(e) => e.stopPropagation()}
+            className={`fixed z-[101] bg-[#0a0f1a] border border-blue-500/30 shadow-[0_0_60px_rgba(59,130,246,0.2)] overflow-hidden
+              ${isMobile
+                ? 'inset-x-2 top-16 bottom-4 rounded-2xl'
+                : 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] rounded-3xl'
+              }`}
+          >
+            {/* Header - Compact sur mobile */}
+            <div className={`border-b border-white/10 bg-gradient-to-r from-blue-500/5 to-purple-500/5 ${isMobile ? 'p-3' : 'p-5'}`}>
+              <div className="flex justify-between items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <h2 className={`font-bold text-white flex items-center gap-2 ${isMobile ? 'text-lg' : 'text-xl'}`}>
+                    <span>🚀</span>
+                    <span>Prêt à automatiser votre trésorerie ?</span>
+                  </h2>
+                  <p className={`text-gray-400 mt-1 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                    Échangez 15 min avec un expert pour configurer votre IA.
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="flex-shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <X className={`text-gray-400 hover:text-white ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Calendar iframe - Prend tout l'espace disponible */}
+            <div className={`overflow-hidden ${isMobile ? 'p-2' : 'p-4'}`} style={{ height: isMobile ? 'calc(100% - 130px)' : 'auto' }}>
+              <div className="rounded-xl overflow-hidden bg-white h-full">
+                <iframe
+                  src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
+                  className="w-full h-full border-0"
+                  style={{ minHeight: isMobile ? '100%' : '450px' }}
+                  title="Réserver un appel"
+                />
+              </div>
+            </div>
+
+            {/* Footer badges - Compact sur mobile */}
+            <div className={`border-t border-white/10 bg-white/[0.02] ${isMobile ? 'p-2' : 'p-4'}`}>
+              <div className={`flex flex-wrap justify-center ${isMobile ? 'gap-x-3 gap-y-1' : 'gap-x-5 gap-y-2'}`}>
+                {badges.map((badge) => (
+                  <span
+                    key={badge.text}
+                    className={`flex items-center gap-1 text-gray-300 ${isMobile ? 'text-[10px]' : 'text-xs'}`}
                   >
-                    <X className="w-5 h-5 md:w-6 md:h-6 text-gray-400 hover:text-white" />
-                  </button>
-                </div>
+                    <span>{badge.icon}</span>
+                    <span>{badge.text}</span>
+                  </span>
+                ))}
               </div>
-
-              {/* Calendar iframe - avec scroll interne */}
-              <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
-                <div className="p-3 md:p-5">
-                  <div className="rounded-xl overflow-hidden bg-white">
-                    <iframe
-                      src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
-                      className="w-full border-0"
-                      style={{ height: isMobile ? '400px' : '480px' }}
-                      title="Réserver un appel"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer badges */}
-              <div className="p-3 md:p-4 border-t border-white/10 bg-white/[0.02]">
-                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
-                  {badges.map((badge) => (
-                    <span
-                      key={badge.text}
-                      className="flex items-center gap-1.5 text-gray-300 text-xs md:text-sm"
-                    >
-                      <span>{badge.icon}</span>
-                      <span>{badge.text}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </>
       )}
     </AnimatePresence>
@@ -2011,30 +2010,30 @@ const PricingSection = ({ onOpenBooking }) => {
         </motion.div>
 
         {/* Toggle mensuel/annuel */}
-        <div className="flex items-center justify-center gap-4 mb-12">
-          <span className={`font-medium transition-all ${!isAnnual ? 'text-white' : 'text-gray-500'}`}>
+        <div className="flex items-center justify-center gap-2 md:gap-4 mb-8 md:mb-12">
+          <span className={`text-sm md:text-base font-medium transition-colors ${!isAnnual ? 'text-white' : 'text-gray-500'}`}>
             Mensuel
           </span>
           <button
             onClick={() => setIsAnnual(!isAnnual)}
-            className="relative w-16 h-8 bg-slate-700 rounded-full p-1"
+            className={`relative w-14 md:w-16 h-7 md:h-8 rounded-full transition-colors ${isAnnual ? 'bg-blue-600' : 'bg-gray-700'}`}
           >
             <motion.div
-              className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
-              animate={{ x: isAnnual ? 32 : 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="absolute top-1 w-5 md:w-6 h-5 md:h-6 bg-white rounded-full shadow-md"
+              animate={{ left: isAnnual ? 'calc(100% - 24px)' : '4px' }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           </button>
-          <span className={`font-medium transition-all ${isAnnual ? 'text-white' : 'text-gray-500'}`}>
+          <span className={`text-sm md:text-base font-medium transition-colors ${isAnnual ? 'text-white' : 'text-gray-500'}`}>
             Annuel
-            <span className="ml-2 px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-bold rounded-full">
-              -20%
-            </span>
+          </span>
+          <span className="ml-1 px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] md:text-xs font-bold rounded-full">
+            -20%
           </span>
         </div>
 
         {/* Grille des 3 cartes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto px-2 md:px-4 items-stretch">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
@@ -2083,9 +2082,10 @@ const PricingSection = ({ onOpenBooking }) => {
                     animate={isMobile ? {} : { y: [-3, 3, -3] }}
                     transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
                   >
-                    <span className="px-6 py-2 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 rounded-full text-white font-bold shadow-xl shadow-cyan-500/50 whitespace-nowrap">
-                      {plan.badge}
-                    </span>
+                    <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full text-black text-[10px] md:text-xs font-bold whitespace-nowrap shadow-lg">
+                      <Star className="w-3 h-3 fill-current" />
+                      <span>LE PLUS POPULAIRE</span>
+                    </div>
                   </motion.div>
                 </>
               )}
@@ -2101,7 +2101,7 @@ const PricingSection = ({ onOpenBooking }) => {
               )}
 
               {/* Carte */}
-              <div className={`relative h-full rounded-3xl p-8 ${
+              <div className={`relative h-full rounded-3xl p-4 md:p-8 ${
                 plan.popular ? 'bg-slate-900/95 backdrop-blur-xl' : ''
               }`}>
 
@@ -2133,11 +2133,11 @@ const PricingSection = ({ onOpenBooking }) => {
                     className="relative inline-block"
                   >
                     <div className={`absolute inset-0 blur-2xl opacity-30 bg-gradient-to-r ${plan.gradient}`} />
-                    <span className="relative text-5xl md:text-6xl font-bold text-white">
+                    <span className="relative text-4xl md:text-5xl font-bold text-white">
                       {isAnnual ? plan.annualPrice : plan.monthlyPrice}
                     </span>
-                    <span className="text-2xl text-white font-bold">{"\u20AC"}</span>
-                    <span className="text-gray-400">/mois HT</span>
+                    <span className="text-lg md:text-xl text-gray-400">{"\u20AC"}</span>
+                    <span className="text-gray-500 text-sm md:text-base">/mois HT</span>
                   </motion.div>
 
                   {isAnnual && (
