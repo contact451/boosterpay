@@ -68,43 +68,165 @@ const scrollToSection = (e, href) => {
   }
 };
 
-// === GOOGLE CALENDAR POPUP ===
-const openCalendarPopup = () => {
-  const url = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true';
-  const width = 600;
-  const height = 700;
-  const left = (window.innerWidth - width) / 2 + window.screenX;
-  const top = (window.innerHeight - height) / 2 + window.screenY;
-  const popup = window.open(
-    url,
-    'GoogleCalendarBooking',
-    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+// === BOOKING MODAL COMPONENT ===
+const BookingModal = ({ isOpen, onClose }) => {
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  const badges = [
+    { icon: "✅", text: "100% Gratuit" },
+    { icon: "⚡️", text: "Dispo aujourd'hui" },
+    { icon: "🤝", text: "Sans engagement" },
+    { icon: "🔒", text: "Données sécurisées" },
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"
+          />
+
+          {/* Modal Container - Centré avec flexbox */}
+          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-3xl border border-blue-500/30 bg-[#0a0f1a] shadow-[0_0_80px_rgba(59,130,246,0.25)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="p-4 md:p-6 border-b border-white/10 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl md:text-2xl font-bold text-white mb-1 flex items-center gap-2">
+                      <span>🚀</span>
+                      <span>Prêt à automatiser votre trésorerie ?</span>
+                    </h2>
+                    <p className="text-gray-400 text-sm md:text-base">
+                      Échangez 15 min avec un expert pour configurer votre IA.
+                    </p>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="flex-shrink-0 p-2 rounded-full hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-5 h-5 md:w-6 md:h-6 text-gray-400 hover:text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Calendar iframe - avec scroll interne */}
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
+                <div className="p-3 md:p-5">
+                  <div className="rounded-xl overflow-hidden bg-white">
+                    <iframe
+                      src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
+                      className="w-full border-0"
+                      style={{ height: isMobile ? '400px' : '480px' }}
+                      title="Réserver un appel"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer badges */}
+              <div className="p-3 md:p-4 border-t border-white/10 bg-white/[0.02]">
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+                  {badges.map((badge) => (
+                    <span
+                      key={badge.text}
+                      className="flex items-center gap-1.5 text-gray-300 text-xs md:text-sm"
+                    >
+                      <span>{badge.icon}</span>
+                      <span>{badge.text}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </AnimatePresence>
   );
-  if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-    window.open(url, '_blank');
-  }
 };
 
 // === COMPOSANT BOOKING BUTTON ===
-const BookingButton = ({ variant = 'default', className = '' }) => {
+const BookingButton = ({ variant = 'default', className = '', openModal, icon, label }) => {
+  const ctaMap = {
+    'nav-compact': { icon: "📞", text: "Parler à un expert" },
+    'hero': { icon: "📅", text: "Réserver mon audit gratuit (15 min)" },
+    'how-it-works': { icon: "📞", text: "Des questions ? On vous rappelle" },
+    'pricing': { icon: "📅", text: "Configurer mon IA avec un expert" },
+    'footer-compact': { icon: "📞", text: "Discuter avec l'équipe" },
+    'need-help': { icon: "📅", text: "Booker mon audit gratuit" },
+  };
+
+  const cta = ctaMap[variant] || { icon: icon || "📅", text: label || "Réserver un audit gratuit" };
+
   const variants = {
-    compact: (
+    'nav-compact': (
       <button
-        onClick={openCalendarPopup}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400 transition-all text-sm font-medium ${className}`}
+        onClick={openModal}
+        className={`flex items-center gap-2 px-5 py-2.5 rounded-full bg-purple-500/20 border-2 border-purple-400/70 text-white hover:bg-purple-500/30 hover:border-purple-400 hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all text-sm font-semibold ${className}`}
       >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        {"Parler \u00e0 un expert"}
+        <span className="text-base">{cta.icon}</span>
+        <span>{cta.text}</span>
       </button>
     ),
-    default: (
+    'hero': (
       <motion.button
-        onClick={openCalendarPopup}
+        onClick={openModal}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        className={`relative group w-full sm:w-auto ${className}`}
+      >
+        {/* Glow pulsant */}
+        <motion.div
+          className="absolute -inset-1 rounded-xl bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 opacity-70 blur-lg"
+          animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        {/* Bordure animée */}
+        <motion.div
+          className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500"
+          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          style={{ backgroundSize: '200% 200%' }}
+        />
+        <div className="relative flex items-center justify-center gap-3 px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-base sm:text-lg whitespace-nowrap">
+          <span>{cta.icon}</span>
+          <span>{cta.text}</span>
+        </div>
+      </motion.button>
+    ),
+    'how-it-works': (
+      <motion.button
+        onClick={openModal}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         className={`relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400 transition-all font-medium ${className}`}
@@ -114,44 +236,65 @@ const BookingButton = ({ variant = 'default', className = '' }) => {
           animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
-        <svg className="relative w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-        <span className="relative">{"R\u00e9server un audit gratuit"}</span>
+        <span className="relative">{cta.icon}</span>
+        <span className="relative">{cta.text}</span>
       </motion.button>
     ),
-    large: (
+    'pricing': (
       <motion.button
-        onClick={openCalendarPopup}
+        onClick={openModal}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className={`relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 hover:border-purple-400 transition-all font-medium ${className}`}
+      >
+        <motion.span
+          className="absolute inset-0 rounded-xl bg-purple-500/20"
+          animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <span className="relative">{cta.icon}</span>
+        <span className="relative">{cta.text}</span>
+      </motion.button>
+    ),
+    'footer-compact': (
+      <button
+        onClick={openModal}
+        className={`flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400 transition-all text-sm font-medium ${className}`}
+      >
+        <span>{cta.icon}</span>
+        <span>{cta.text}</span>
+      </button>
+    ),
+    'need-help': (
+      <motion.button
+        onClick={openModal}
         whileHover={{ scale: 1.02, y: -2 }}
         whileTap={{ scale: 0.98 }}
         className={`relative group w-full ${className}`}
       >
         <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 opacity-50 blur-lg group-hover:opacity-75 transition-opacity" />
         <div className="relative flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-lg">
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          {"R\u00e9server mon audit gratuit (15 min)"}
+          <span>{cta.icon}</span>
+          <span>{cta.text}</span>
         </div>
       </motion.button>
     ),
-    text: (
-      <button
-        onClick={openCalendarPopup}
-        className={`text-purple-400 hover:text-purple-300 underline underline-offset-2 transition-colors ${className}`}
-      >
-        {"Parler \u00e0 un expert \u2192"}
-      </button>
-    )
   };
-  return variants[variant] || variants.default;
+
+  // Fallback for legacy variant names
+  if (variant === 'compact') return variants['nav-compact'];
+  if (variant === 'default') return variants['how-it-works'];
+  if (variant === 'large') return variants['need-help'];
+  if (variant === 'text') return (
+    <button
+      onClick={openModal}
+      className={`text-purple-400 hover:text-purple-300 underline underline-offset-2 transition-colors ${className}`}
+    >
+      {"Parler à un expert →"}
+    </button>
+  );
+
+  return variants[variant] || variants['how-it-works'];
 };
 
 // ============================================
@@ -322,7 +465,7 @@ const StickyTopBar = () => {
 };
 
 // Navigation
-const Navigation = ({ onOpenDemo }) => {
+const Navigation = ({ onOpenDemo, onOpenBooking }) => {
   const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -389,7 +532,7 @@ const Navigation = ({ onOpenDemo }) => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
-            <BookingButton variant="compact" />
+            <BookingButton variant="nav-compact" openModal={onOpenBooking} />
             <MagneticButton onClick={(e) => scrollToSection(e, '#pricing')}>
               <span className="flex items-center gap-2">
                 <Gift className="w-4 h-4" />
@@ -461,9 +604,16 @@ const Navigation = ({ onOpenDemo }) => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="mt-auto"
+                className="mt-auto space-y-3"
               >
                 <GlowButton
+                  className="w-full"
+                  onClick={() => { onOpenBooking(); setIsMobileMenuOpen(false); }}
+                >
+                  📞 Parler à un expert
+                </GlowButton>
+                <GlowButton
+                  secondary
                   className="w-full"
                   onClick={(e) => {
                     scrollToSection(e, '#pricing');
@@ -471,7 +621,7 @@ const Navigation = ({ onOpenDemo }) => {
                   }}
                 >
                   <Gift className="w-5 h-5" />
-                  Essai Gratuit 10 Jours
+                  🎁 Essai Gratuit 10 Jours
                 </GlowButton>
               </motion.div>
             </motion.div>
@@ -817,7 +967,7 @@ const PhoneAnimationV2 = ({ onStepChange }) => {
 };
 
 // Hero Section
-const HeroSection = ({ onOpenDemo }) => {
+const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
   const isMobile = useIsMobile();
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 50]);
@@ -905,7 +1055,7 @@ const HeroSection = ({ onOpenDemo }) => {
           >
             {"\u{1F680}"} 10 jours d'essai gratuit
           </GlowButton>
-          <BookingButton variant="default" />
+          <BookingButton variant="hero" openModal={onOpenBooking} />
         </motion.div>
 
         {/* Trust Badges */}
@@ -1725,7 +1875,7 @@ const TestimonialsSection = () => {
 };
 
 // Pricing Section - ULTRA CONVERSION
-const PricingSection = () => {
+const PricingSection = ({ onOpenBooking }) => {
   const isMobile = useIsMobile();
   const [isAnnual, setIsAnnual] = useState(false);
   const { count: companiesCount, ref: companiesRef } = useCountUp(847, 2000);
@@ -2114,7 +2264,7 @@ const PricingSection = () => {
         {/* Booking CTA sous les cartes */}
         <div className="mt-12 text-center">
           <p className="text-gray-400 mb-4">{"Besoin d'aide pour choisir la bonne formule ?"}</p>
-          <BookingButton variant="default" className="mx-auto" />
+          <BookingButton variant="pricing" openModal={onOpenBooking} className="mx-auto" />
         </div>
       </div>
     </section>
@@ -2219,7 +2369,7 @@ const FAQSection = () => {
 };
 
 // Need Help Section
-const NeedHelpSection = () => {
+const NeedHelpSection = ({ onOpenBooking }) => {
   return (
     <section className="py-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950" />
@@ -2272,7 +2422,7 @@ const NeedHelpSection = () => {
           </div>
 
           <div className="max-w-md mx-auto">
-            <BookingButton variant="large" />
+            <BookingButton variant="need-help" openModal={onOpenBooking} />
             <p className="text-gray-500 text-sm mt-4 flex items-center justify-center gap-2">
               <span className="text-emerald-400">{"\u2728"}</span>
               {"Cr\u00e9neaux disponibles sous 24h"}
@@ -2285,7 +2435,7 @@ const NeedHelpSection = () => {
 };
 
 // Footer
-const Footer = () => {
+const Footer = ({ onOpenBooking }) => {
   const links = [
     { label: "Mentions légales", href: "#" },
     { label: "CGV", href: "#" },
@@ -2320,7 +2470,7 @@ const Footer = () => {
 
           {/* Social + Booking */}
           <div className="flex items-center gap-4">
-            <BookingButton variant="compact" />
+            <BookingButton variant="footer-compact" openModal={onOpenBooking} />
             <a href="#" className="text-gray-400 hover:text-white transition-colors">
               <Globe className="w-5 h-5" />
             </a>
@@ -2478,6 +2628,8 @@ const Loader = ({ onComplete }) => {
 const BoosterPayLanding = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const openBooking = () => setIsBookingModalOpen(true);
 
   return (
     <>
@@ -2496,11 +2648,11 @@ const BoosterPayLanding = () => {
         <StickyTopBar />
 
         {/* Navigation */}
-        <Navigation onOpenDemo={() => setIsAudioModalOpen(true)} />
+        <Navigation onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} />
 
         {/* Main Content */}
         <main>
-          <HeroSection onOpenDemo={() => setIsAudioModalOpen(true)} />
+          <HeroSection onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} />
           <UrgencyBanner />
           <LogoCarousel />
           <ProblemSection />
@@ -2511,20 +2663,23 @@ const BoosterPayLanding = () => {
           <div className="py-8 border-y border-white/5">
             <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-gray-400">{"🤔 Des questions sur le fonctionnement ?"}</p>
-              <BookingButton variant="default" />
+              <BookingButton variant="how-it-works" openModal={openBooking} />
             </div>
           </div>
 
           <AudioDemoSection isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
           <StatisticsSection />
           <TestimonialsSection />
-          <PricingSection />
+          <PricingSection onOpenBooking={openBooking} />
           <FAQSection />
-          <NeedHelpSection />
+          <NeedHelpSection onOpenBooking={openBooking} />
         </main>
 
         {/* Footer */}
-        <Footer />
+        <Footer onOpenBooking={openBooking} />
+
+        {/* Booking Modal */}
+        <BookingModal isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} />
       </div>
     </>
   );
