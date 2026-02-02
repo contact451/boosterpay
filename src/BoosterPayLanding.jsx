@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Phone,
   Menu,
@@ -28,7 +29,14 @@ import {
   Gift,
   Headphones,
   BarChart3,
-  Heart
+  Heart,
+  Upload,
+  ChevronUp,
+  Loader2,
+  Euro,
+  Calendar,
+  User,
+  HelpCircle
 } from 'lucide-react';
 
 // ============================================
@@ -1322,6 +1330,826 @@ const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
         </motion.div>
       </motion.div>
     </section>
+  );
+};
+
+// ============================================
+// TEST AI SECTION
+// ============================================
+
+const TestAISection = ({ onOpenBooking }) => {
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+
+  const [formData, setFormData] = useState({ name: '', amount: '', dueDate: '' });
+  const [isManualScanning, setIsManualScanning] = useState(false);
+  const [manualScanText, setManualScanText] = useState('');
+  const [isImportScanning, setIsImportScanning] = useState(false);
+  const [importScanText, setImportScanText] = useState('');
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [importMessage, setImportMessage] = useState('');
+  const [importedFile, setImportedFile] = useState(null);
+  const [simulatedCount, setSimulatedCount] = useState(0);
+  const fileInputRef = useRef(null);
+
+  const isFormValid = formData.name && formData.amount && formData.dueDate;
+
+  // Lock scroll quand modal ouvert
+  useEffect(() => {
+    if (showResultModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [showResultModal]);
+
+  const sanitizeInput = (value, type = 'text') => {
+    let sanitized = value.replace(/<[^>]*>/g, '').replace(/[<>"'&]/g, '');
+    if (type === 'name') {
+      sanitized = sanitized.replace(/[^a-zA-ZÀ-ÿ\s\-']/g, '').slice(0, 100);
+    } else if (type === 'amount') {
+      sanitized = sanitized.replace(/[^0-9.]/g, '').slice(0, 10);
+      const parts = sanitized.split('.');
+      if (parts.length > 2) sanitized = parts[0] + '.' + parts.slice(1).join('');
+    }
+    return sanitized;
+  };
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    if (!isFormValid) return;
+
+    setIsManualScanning(true);
+    setImportedFile(null);
+    const steps = [
+      'Analyse des données...',
+      'Calcul du script optimal...',
+      'Vérification des informations...',
+      '✓ Prêt !'
+    ];
+
+    for (const step of steps) {
+      setManualScanText(step);
+      await new Promise((r) => setTimeout(r, 750));
+    }
+
+    setIsManualScanning(false);
+    setShowResultModal(true);
+  }, [isFormValid]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => setIsDragging(false), []);
+
+  const runFileScan = useCallback(async (file) => {
+    const validExtensions = ['.csv', '.xls', '.xlsx'];
+    const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+
+    if (!hasValidExtension) {
+      setImportMessage('❌ Format non supporté. Utilisez un fichier CSV ou Excel.');
+      setTimeout(() => setImportMessage(''), 3000);
+      return;
+    }
+
+    setImportedFile({ name: file.name, size: file.size });
+    setSimulatedCount(Math.floor(Math.random() * 21) + 5);
+
+    setIsImportScanning(true);
+    const steps = [
+      'Lecture du fichier...',
+      'Analyse des données...',
+      'Extraction des factures...',
+      '✓ Import terminé !'
+    ];
+
+    for (const step of steps) {
+      setImportScanText(step);
+      await new Promise((r) => setTimeout(r, 750));
+    }
+
+    setIsImportScanning(false);
+    setShowResultModal(true);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) runFileScan(file);
+  }, [runFileScan]);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileSelect = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (file) runFileScan(file);
+    e.target.value = '';
+  }, [runFileScan]);
+
+  const closeModal = useCallback(() => {
+    setShowResultModal(false);
+    setImportedFile(null);
+    setSimulatedCount(0);
+    setFormData({ name: '', amount: '', dueDate: '' });
+  }, []);
+
+  const exportGuides = [
+    { name: 'Pennylane', steps: 'Ventes > Factures > Tout sélectionner > Exporter CSV' },
+    { name: 'QuickBooks', steps: 'Ventes > Toutes les ventes > Icône Export > Excel' },
+    { name: 'Sage / Cegid', steps: 'Journal des ventes > Actions > Exportation > CSV/Excel' },
+    { name: 'Excel / Sheets', steps: 'Fichier > Enregistrer sous > .csv (Colonnes : Nom, Tel, Montant, Échéance)' },
+  ];
+
+  // Contenu partagé du modal résultat
+  const resultContent = (
+    <div className="p-6 space-y-5">
+      {/* Icône succès */}
+      <div className="flex justify-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+          className="w-16 h-16 rounded-full bg-green-500/20 border-2 border-green-500 flex items-center justify-center"
+        >
+          <Check className="w-8 h-8 text-green-400" />
+        </motion.div>
+      </div>
+
+      {importedFile ? (
+        <>
+          <h3 className="text-xl font-bold text-white text-center">
+            {simulatedCount} factures prêtes à être relancées ! 🚀
+          </h3>
+          <p className="text-gray-400 text-sm text-center">
+            Notre IA a analysé <span className="text-cyan-400 font-medium">{importedFile.name}</span> et préparé les scripts de relance optimisés pour chaque client.
+          </p>
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 flex items-center gap-2"><FileText className="w-3.5 h-3.5" /> Fichier</span>
+              <span className="text-white font-medium truncate max-w-[180px]">{importedFile.name}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 flex items-center gap-2"><Users className="w-3.5 h-3.5" /> Factures détectées</span>
+              <span className="text-white font-medium">{simulatedCount}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 flex items-center gap-2"><Zap className="w-3.5 h-3.5" /> Scripts générés</span>
+              <span className="text-green-400 font-medium">✓ {simulatedCount} prêts</span>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <h3 className="text-xl font-bold text-white text-center">
+            {formData.amount}€ prêts à être récupérés ! 🚀
+          </h3>
+          <p className="text-gray-400 text-sm text-center">
+            Notre IA a préparé un script de relance optimisé pour {formData.name}. Elle est prête à passer l&apos;appel maintenant pour sécuriser votre paiement.
+          </p>
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 flex items-center gap-2"><User className="w-3.5 h-3.5" /> Nom</span>
+              <span className="text-white font-medium">{formData.name}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 flex items-center gap-2"><Euro className="w-3.5 h-3.5" /> Montant</span>
+              <span className="text-white font-medium">{formData.amount}€</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400 flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> Échéance</span>
+              <span className="text-white font-medium">{new Date(formData.dueDate).toLocaleDateString('fr-FR')}</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* CTAs */}
+      <button
+        onClick={() => { closeModal(); navigate('/onboarding/import'); }}
+        className="w-full py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all active:scale-[0.98]"
+      >
+        {importedFile ? 'Lancer les appels IA maintenant' : 'Lancer l\'appel IA gratuitement'}
+      </button>
+      <button
+        onClick={() => { closeModal(); onOpenBooking(); }}
+        className="w-full py-3.5 rounded-xl font-semibold text-violet-400 border border-violet-500/50 hover:bg-violet-500/10 transition-all active:scale-[0.98]"
+      >
+        Parler à un expert (15 min)
+      </button>
+
+      {/* Badge réassurance */}
+      <p className="text-center text-xs text-gray-500">
+        🔒 Sans engagement • Essai 10 jours gratuit
+      </p>
+    </div>
+  );
+
+  // Variantes pour entrées staggerées
+  const cardVariants = {
+    hidden: { opacity: 0, y: 40, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+  };
+
+  return (
+    <>
+      <section id="test-ai" ref={sectionRef} className="relative py-20 md:py-28 px-4 overflow-hidden">
+        {/* Fond spectaculaire */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {isMobile ? (
+            <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/30 via-transparent to-violet-950/20" />
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/20 to-transparent" />
+
+              {/* Grille perspective */}
+              <div
+                className="absolute inset-0 opacity-[0.15]"
+                style={{
+                  backgroundImage: 'linear-gradient(rgba(6,182,212,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.3) 1px, transparent 1px)',
+                  backgroundSize: '60px 60px',
+                  transform: 'perspective(500px) rotateX(60deg)',
+                  transformOrigin: 'center top',
+                  maskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)',
+                  WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 20%, black 80%, transparent)',
+                }}
+              />
+
+              {/* Orbe cyan */}
+              <motion.div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+                style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }}
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+              />
+
+              {/* Orbe violet */}
+              <motion.div
+                className="absolute -top-20 -right-20 w-[400px] h-[400px] rounded-full"
+                style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)', filter: 'blur(50px)' }}
+                animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
+                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+              />
+
+              {/* Ligne lumineuse */}
+              <motion.div
+                className="absolute top-1/2 left-0 right-0 h-[1px]"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(6,182,212,0.5), transparent)' }}
+                animate={{ opacity: [0, 1, 0], scaleX: [0.5, 1, 0.5] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              />
+
+              {/* Particules */}
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={`p-${i}`}
+                  className="absolute w-1 h-1 rounded-full bg-cyan-400"
+                  style={{ left: `${10 + (i * 4.2) % 80}%`, top: `${5 + (i * 7.3) % 90}%`, opacity: 0.3 + (i % 5) * 0.08 }}
+                  animate={{ y: [0, -30, 0], opacity: [0.2, 0.6, 0.2], scale: [1, 1.5, 1] }}
+                  transition={{ duration: 3 + (i % 4), repeat: Infinity, delay: (i % 7) * 0.3, ease: 'easeInOut' }}
+                />
+              ))}
+            </>
+          )}
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto">
+          {/* Titre section */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-14"
+          >
+            <motion.span
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400 text-sm font-semibold mb-6"
+              animate={{ boxShadow: ['0 0 20px rgba(6,182,212,0.2)', '0 0 40px rgba(6,182,212,0.4)', '0 0 20px rgba(6,182,212,0.2)'] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <motion.span animate={{ rotate: [0, 360] }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}>⚡</motion.span>
+              Testez maintenant — 100% gratuit
+            </motion.span>
+
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+              Testez l&apos;IA en{' '}
+              <span className="relative inline-block">
+                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">30 secondes</span>
+                <motion.span
+                  className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 to-violet-400 rounded-full"
+                  initial={{ scaleX: 0 }}
+                  animate={isInView ? { scaleX: 1 } : {}}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                />
+              </span>
+            </h2>
+
+            <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
+              Entrez une facture impayée et voyez la <span className="text-white font-medium">magie</span> opérer
+            </p>
+          </motion.div>
+
+          {/* Grille 2 colonnes */}
+          <motion.div
+            className="grid md:grid-cols-2 gap-8"
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.2 } } }}
+            initial="hidden"
+            animate={isInView ? 'visible' : 'hidden'}
+          >
+            {/* Colonne gauche : Formulaire / Scan */}
+            <motion.div variants={cardVariants}>
+              <div className="relative rounded-2xl p-[2px] overflow-hidden group">
+                {/* Bordure gradient animée */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: 'linear-gradient(135deg, #06B6D4, #3B82F6, #8B5CF6, #EC4899, #06B6D4)',
+                    backgroundSize: '400% 400%',
+                  }}
+                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                />
+
+                {/* Glow externe au hover */}
+                <div
+                  className="absolute -inset-4 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.3) 0%, transparent 70%)', filter: 'blur(20px)' }}
+                />
+
+                <div className="relative bg-[#0a0f1a]/90 backdrop-blur-xl rounded-2xl p-6 min-h-[350px]">
+                  {/* Reflet interne */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.08] via-transparent to-transparent pointer-events-none" />
+
+                  <AnimatePresence mode="wait">
+                    {isManualScanning ? (
+                      /* Animation de scan MANUEL améliorée */
+                      <motion.div
+                        key="manual-scan"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="relative flex flex-col items-center justify-center h-full py-12 gap-8"
+                      >
+                        <div className="relative">
+                          {/* Cercles concentriques */}
+                          {[0, 1, 2].map((i) => (
+                            <motion.div
+                              key={i}
+                              className="absolute rounded-full border-2 border-cyan-500/30"
+                              style={{ width: 96 + i * 40, height: 96 + i * 40, left: -(i * 20), top: -(i * 20) }}
+                              animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                            />
+                          ))}
+                          {/* Cercle principal */}
+                          <motion.div
+                            className="relative w-24 h-24 rounded-full border-4 border-cyan-500 flex items-center justify-center bg-cyan-500/10"
+                            animate={{
+                              boxShadow: [
+                                '0 0 20px rgba(6,182,212,0.3), inset 0 0 20px rgba(6,182,212,0.1)',
+                                '0 0 50px rgba(6,182,212,0.6), inset 0 0 30px rgba(6,182,212,0.2)',
+                                '0 0 20px rgba(6,182,212,0.3), inset 0 0 20px rgba(6,182,212,0.1)',
+                              ]
+                            }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          >
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
+                              <Loader2 className="w-10 h-10 text-cyan-400" />
+                            </motion.div>
+                          </motion.div>
+                        </div>
+
+                        <div className="text-center">
+                          <motion.p
+                            key={manualScanText}
+                            initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+                            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                            className="text-white font-semibold text-lg"
+                          >
+                            {manualScanText}
+                          </motion.p>
+                          <div className="mt-4 w-48 h-1 bg-white/10 rounded-full overflow-hidden mx-auto">
+                            <motion.div
+                              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
+                              initial={{ width: '0%' }}
+                              animate={{ width: '100%' }}
+                              transition={{ duration: 3, ease: 'linear' }}
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      /* Formulaire */
+                      <motion.div
+                        key="manual-form"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="relative"
+                      >
+                        <div className="flex items-center gap-3 mb-5">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-bold text-white">Ajout rapide</h3>
+                            <p className="text-xs text-gray-400">Entrez une facture pour tester</p>
+                          </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                          <div className="relative group/input">
+                            <label htmlFor="tai-name" className="block text-sm text-gray-300 mb-1.5 group-focus-within/input:text-cyan-400 transition-colors">Nom du client</label>
+                            <div className="relative">
+                              <div className="absolute -inset-1 bg-cyan-500/20 rounded-xl blur-md opacity-0 group-focus-within/input:opacity-100 transition-opacity" />
+                              <input
+                                id="tai-name"
+                                type="text"
+                                placeholder="Ex : Société Dupont"
+                                value={formData.name}
+                                onChange={(e) => setFormData((f) => ({ ...f, name: sanitizeInput(e.target.value, 'name') }))}
+                                maxLength={100}
+                                required
+                                className="relative w-full h-[56px] bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:bg-white/[0.08] transition-all duration-300"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="relative group/input">
+                              <label htmlFor="tai-amount" className="block text-sm text-gray-300 mb-1.5 group-focus-within/input:text-cyan-400 transition-colors">Montant €</label>
+                              <div className="relative">
+                                <div className="absolute -inset-1 bg-cyan-500/20 rounded-xl blur-md opacity-0 group-focus-within/input:opacity-100 transition-opacity" />
+                                <input
+                                  id="tai-amount"
+                                  type="text"
+                                  inputMode="decimal"
+                                  placeholder="1500"
+                                  value={formData.amount}
+                                  onChange={(e) => setFormData((f) => ({ ...f, amount: sanitizeInput(e.target.value, 'amount') }))}
+                                  maxLength={10}
+                                  required
+                                  className="relative w-full h-[56px] bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:bg-white/[0.08] transition-all duration-300"
+                                />
+                              </div>
+                            </div>
+                            <div className="relative group/input">
+                              <label htmlFor="tai-duedate" className="block text-sm text-gray-300 mb-1.5 group-focus-within/input:text-cyan-400 transition-colors">Échéance</label>
+                              <div className="relative">
+                                <div className="absolute -inset-1 bg-cyan-500/20 rounded-xl blur-md opacity-0 group-focus-within/input:opacity-100 transition-opacity" />
+                                <div
+                                  className="relative cursor-pointer"
+                                  onClick={() => document.getElementById('tai-duedate').showPicker?.()}
+                                >
+                                  <input
+                                    id="tai-duedate"
+                                    type="date"
+                                    value={formData.dueDate}
+                                    onChange={(e) => setFormData((f) => ({ ...f, dueDate: e.target.value }))}
+                                    required
+                                    className="w-full h-[56px] bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:bg-white/[0.08] transition-all duration-300 cursor-pointer [color-scheme:dark]"
+                                  />
+                                  <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Bouton CTA spectaculaire */}
+                          <motion.button
+                            type="submit"
+                            disabled={!isFormValid}
+                            whileHover={isFormValid ? { scale: 1.02, y: -2 } : {}}
+                            whileTap={isFormValid ? { scale: 0.98 } : {}}
+                            className={`relative w-full h-[56px] rounded-xl font-bold text-white overflow-hidden transition-all duration-300 ${
+                              isFormValid ? 'cursor-pointer' : 'bg-gray-800/50 opacity-50 cursor-not-allowed'
+                            }`}
+                          >
+                            {isFormValid && (
+                              <>
+                                <motion.div
+                                  className="absolute inset-0"
+                                  style={{ background: 'linear-gradient(90deg, #06B6D4, #3B82F6, #8B5CF6, #3B82F6, #06B6D4)', backgroundSize: '200% 100%' }}
+                                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                                />
+                                <motion.div
+                                  className="absolute inset-0"
+                                  style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)', transform: 'skewX(-20deg)' }}
+                                  animate={{ x: ['-200%', '200%'] }}
+                                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                                />
+                                <motion.div
+                                  className="absolute -inset-1 rounded-xl"
+                                  style={{ background: 'linear-gradient(90deg, #06B6D4, #8B5CF6)', filter: 'blur(15px)' }}
+                                  animate={{ opacity: [0.4, 0.7, 0.4] }}
+                                  transition={{ duration: 2, repeat: Infinity }}
+                                />
+                              </>
+                            )}
+                            <span className="relative z-10 flex items-center justify-center gap-2">
+                              Lancer l&apos;Analyse IA
+                              <motion.span
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                              >
+                                ⚡
+                              </motion.span>
+                            </span>
+                          </motion.button>
+                        </form>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Colonne droite : Import CSV */}
+            <motion.div variants={cardVariants}>
+              <div className="relative bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 h-full min-h-[350px] group hover:border-violet-500/30 transition-all duration-500">
+                {/* Glow au hover */}
+                <div
+                  className="absolute -inset-4 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%)', filter: 'blur(25px)' }}
+                />
+                {/* Reflet interne */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.05] via-transparent to-transparent pointer-events-none" />
+
+                <AnimatePresence mode="wait">
+                  {isImportScanning ? (
+                    /* Animation de scan IMPORT améliorée */
+                    <motion.div
+                      key="import-scan"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="relative flex-1 flex flex-col items-center justify-center gap-8 h-full"
+                    >
+                      <div className="relative">
+                        {[0, 1, 2].map((i) => (
+                          <motion.div
+                            key={i}
+                            className="absolute rounded-full border-2 border-violet-500/30"
+                            style={{ width: 96 + i * 40, height: 96 + i * 40, left: -(i * 20), top: -(i * 20) }}
+                            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                          />
+                        ))}
+                        <motion.div
+                          className="relative w-24 h-24 rounded-full border-4 border-violet-500 flex items-center justify-center bg-violet-500/10"
+                          animate={{
+                            boxShadow: [
+                              '0 0 20px rgba(139,92,246,0.3), inset 0 0 20px rgba(139,92,246,0.1)',
+                              '0 0 50px rgba(139,92,246,0.6), inset 0 0 30px rgba(139,92,246,0.2)',
+                              '0 0 20px rgba(139,92,246,0.3), inset 0 0 20px rgba(139,92,246,0.1)',
+                            ]
+                          }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
+                            <Loader2 className="w-10 h-10 text-violet-400" />
+                          </motion.div>
+                        </motion.div>
+                      </div>
+
+                      <div className="text-center">
+                        <motion.p
+                          key={importScanText}
+                          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+                          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                          className="text-white font-semibold text-lg"
+                        >
+                          {importScanText}
+                        </motion.p>
+                        {importedFile && (
+                          <p className="text-violet-400 text-sm mt-2 truncate max-w-[250px] mx-auto">📄 {importedFile.name}</p>
+                        )}
+                        <div className="mt-4 w-48 h-1 bg-white/10 rounded-full overflow-hidden mx-auto">
+                          <motion.div
+                            className="h-full bg-gradient-to-r from-violet-500 to-pink-500 rounded-full"
+                            initial={{ width: '0%' }}
+                            animate={{ width: '100%' }}
+                            transition={{ duration: 3, ease: 'linear' }}
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    /* Zone d'import normale */
+                    <motion.div
+                      key="import-zone"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="relative flex flex-col h-full"
+                    >
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-bold text-white">Import en masse</h3>
+                          <p className="text-xs text-gray-400">Importez toutes vos factures d&apos;un coup</p>
+                        </div>
+                      </div>
+
+                      {/* Zone Drag & Drop améliorée */}
+                      <motion.div
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={handleImportClick}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleImportClick(); }}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Importer un fichier CSV ou Excel"
+                        whileHover={{ scale: 1.02, y: -4 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`relative flex-1 min-h-[160px] md:min-h-[180px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 overflow-hidden ${
+                          isDragging
+                            ? 'border-violet-400 bg-violet-500/20'
+                            : 'border-violet-500/30 hover:border-violet-400/50 hover:bg-violet-500/5'
+                        }`}
+                      >
+                        {/* Effet vagues drag */}
+                        {isDragging && (
+                          <motion.div className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            {[0, 1, 2].map((i) => (
+                              <motion.div
+                                key={i}
+                                className="absolute inset-0 border-2 border-violet-400/30 rounded-xl"
+                                animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.5 }}
+                              />
+                            ))}
+                          </motion.div>
+                        )}
+
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".csv,.xls,.xlsx"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          aria-hidden="true"
+                        />
+
+                        <motion.div
+                          className="w-14 h-14 rounded-full bg-violet-500/20 flex items-center justify-center"
+                          animate={isDragging ? { y: [0, -10, 0] } : {}}
+                          transition={{ duration: 0.5, repeat: isDragging ? Infinity : 0 }}
+                        >
+                          <Upload className={`w-7 h-7 transition-colors duration-300 ${isDragging ? 'text-violet-300' : 'text-violet-400'}`} />
+                        </motion.div>
+
+                        <div className="text-center px-4">
+                          <p className={`text-sm font-medium transition-colors ${isDragging ? 'text-violet-200' : 'text-gray-300'}`}>
+                            {isDragging ? 'Lâchez pour analyser !' : 'Glissez votre fichier CSV ou Excel'}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">.csv, .xlsx, .xls</p>
+                        </div>
+                      </motion.div>
+
+                      {/* Message feedback */}
+                      <AnimatePresence>
+                        {importMessage && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="mt-3 text-sm text-center text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-lg py-2 px-3"
+                          >
+                            {importMessage}
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Accordéon aide export */}
+                      <div className="mt-4">
+                        <button
+                          onClick={() => setIsHelpOpen((o) => !o)}
+                          className="flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors w-full justify-start"
+                          aria-expanded={isHelpOpen}
+                        >
+                          <HelpCircle className="w-4 h-4" />
+                          <span>Comment exporter mes factures ?</span>
+                          {isHelpOpen ? <ChevronUp className="w-4 h-4 ml-auto" /> : <ChevronDown className="w-4 h-4 ml-auto" />}
+                        </button>
+
+                        <AnimatePresence>
+                          {isHelpOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-3 space-y-2">
+                                {exportGuides.map((g) => (
+                                  <div key={g.name} className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.06]">
+                                    <p className="text-sm font-semibold text-white">{g.name}</p>
+                                    <p className="text-xs text-gray-400 font-mono mt-0.5">{g.steps}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Modal résultat — Desktop */}
+      <AnimatePresence>
+        {showResultModal && !isMobile && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+              className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-0 z-[201] flex items-center justify-center p-4"
+              onClick={closeModal}
+            >
+              <div
+                className="bg-[#0f172a] rounded-2xl border border-cyan-500/30 w-full max-w-md shadow-[0_0_60px_rgba(6,182,212,0.2)] relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                  aria-label="Fermer"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+                {resultContent}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Drawer résultat — Mobile */}
+      <AnimatePresence>
+        {showResultModal && isMobile && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+              className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-[201] bg-[#0f172a] rounded-t-3xl border-t border-cyan-500/30"
+              style={{ maxHeight: '85vh' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="pt-3 pb-1 flex justify-center">
+                <div className="w-12 h-1 bg-gray-600 rounded-full" />
+              </div>
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label="Fermer"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(85vh - 32px)' }}>
+                {resultContent}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -2879,6 +3707,7 @@ const BoosterPayLanding = () => {
         {/* Main Content */}
         <main>
           <HeroSection onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} />
+          <TestAISection onOpenBooking={openBooking} />
           <UrgencyBanner />
           <LogoCarousel />
           <ProblemSection />
