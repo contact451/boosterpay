@@ -39,6 +39,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import DeferredLeadCapture from './components/DeferredLeadCapture';
+import MobileStickyCTA from './components/MobileStickyCTA';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -3709,17 +3710,27 @@ const BoosterPayLanding = () => {
         {/* Navigation */}
         <Navigation onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} />
 
-        {/* Main Content */}
+        {/* Main Content - Ordre optimisé PAS + AIDA */}
         <main>
+          {/* 1. Hook immédiat */}
           <HeroSection onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} />
-          <TestAISection onOpenBooking={openBooking} />
-          <UrgencyBanner />
+
+          {/* 2. Social proof dès le début (crédibilité) */}
           <LogoCarousel />
+
+          {/* 3. Créer la douleur / le malaise */}
           <ProblemSection />
+
+          {/* 4. Amplifier l'urgence APRÈS les problèmes */}
+          <UrgencyBanner />
+
+          {/* 5. La lumière au bout du tunnel */}
           <SolutionSection />
+
+          {/* 6. C'est simple, en 3 étapes */}
           <HowItWorksSection />
 
-          {/* CTA après How It Works */}
+          {/* 7. CTA intermédiaire - Point de contact */}
           <div className="py-8 border-y border-white/5">
             <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-gray-400">{"🤔 Des questions sur le fonctionnement ?"}</p>
@@ -3727,11 +3738,25 @@ const BoosterPayLanding = () => {
             </div>
           </div>
 
+          {/* 8. Preuve tangible AVANT l'engagement */}
           <AudioDemoSection isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
+
+          {/* 9. Engagement interactif (utilisateur "chaud") */}
+          <TestAISection onOpenBooking={openBooking} />
+
+          {/* 10. Crédibilité chiffrée */}
           <StatisticsSection />
+
+          {/* 11. Validation sociale */}
           <TestimonialsSection />
+
+          {/* 12. L'offre */}
           <PricingSection onOpenBooking={openBooking} />
+
+          {/* 13. Lever les objections */}
           <FAQSection />
+
+          {/* 14. Filet de sécurité final */}
           <NeedHelpSection onOpenBooking={openBooking} />
         </main>
 
@@ -3740,6 +3765,17 @@ const BoosterPayLanding = () => {
 
         {/* Booking Modal */}
         <BookingModal isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} />
+
+        {/* Mobile Sticky CTA */}
+        <MobileStickyCTA
+          onOpenBooking={openBooking}
+          onScrollToPricing={() => {
+            const element = document.querySelector('#pricing');
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
+        />
       </div>
     </>
   );
