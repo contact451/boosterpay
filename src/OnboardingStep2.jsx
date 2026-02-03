@@ -6,6 +6,7 @@ import {
   CheckCircle, AlertCircle, X, HelpCircle, ArrowLeft
 } from 'lucide-react';
 import Papa from 'papaparse';
+import DeferredLeadCapture from './components/DeferredLeadCapture';
 
 // === ANIMATIONS ===
 const fadeInUp = {
@@ -479,6 +480,31 @@ export default function OnboardingStep2() {
           </p>
         </motion.div>
 
+        {/* Social proof */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex items-center justify-center gap-3 mb-8"
+        >
+          <div className="flex -space-x-2">
+            {['👨‍💼', '👩‍💻', '👨‍🔧', '👩‍💼'].map((emoji, i) => (
+              <div
+                key={i}
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/30 to-pink-500/30 border-2 border-[#0a0f1a] flex items-center justify-center text-sm"
+              >
+                {emoji}
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-gray-400 text-sm">
+              <span className="text-green-400 font-semibold">127 entreprises</span> utilisent BoosterPay ce mois
+            </span>
+          </div>
+        </motion.div>
+
         {/* Compteur dynamique */}
         {invoices.length > 0 && (
           <motion.div
@@ -513,7 +539,7 @@ export default function OnboardingStep2() {
             <motion.div
               animate={formError ? shake : {}}
               ref={formRef}
-              className="bg-white/[0.03] backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(6,182,212,0.15)]"
+              className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 hover:border-cyan-500/30 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all duration-300 group"
             >
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
@@ -524,6 +550,28 @@ export default function OnboardingStep2() {
                   <p className="text-xs text-gray-400">Ajoutez une facture à la fois</p>
                 </div>
               </div>
+
+              {/* Progress indicator */}
+              {(() => {
+                const fieldsCompleted = [formData.name, formData.phone, formData.amount, formData.dueDate].filter(Boolean).length;
+                const progressPercent = (fieldsCompleted / 4) * 100;
+                return (
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs text-gray-500">Progression</span>
+                      <span className="text-xs text-cyan-400 font-medium">{fieldsCompleted}/4 champs</span>
+                    </div>
+                    <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressPercent}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
 
               <form onSubmit={handleAddInvoice} className="space-y-4">
                 <div>
@@ -577,23 +625,46 @@ export default function OnboardingStep2() {
                     <label htmlFor="invoice-due-date" className="block text-sm text-gray-300 mb-1">
                       Échéance
                     </label>
-                    <input
-                      id="invoice-due-date"
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={(e) => setFormData((f) => ({ ...f, dueDate: e.target.value }))}
-                      className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
-                      required
-                    />
+                    <div
+                      className="relative cursor-pointer"
+                      onClick={() => document.getElementById('invoice-due-date')?.showPicker?.()}
+                    >
+                      <input
+                        id="invoice-due-date"
+                        type="date"
+                        value={formData.dueDate}
+                        onChange={(e) => setFormData((f) => ({ ...f, dueDate: e.target.value }))}
+                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                        required
+                      />
+                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg hover:shadow-cyan-500/25 active:scale-[0.98]"
-                >
-                  Ajouter à ma liste de relance ✨
-                </button>
+                {(() => {
+                  const isFormValid = formData.name && formData.phone && formData.amount && formData.dueDate;
+                  return (
+                    <motion.button
+                      type="submit"
+                      disabled={!isFormValid}
+                      animate={isFormValid ? { scale: [1, 1.02, 1] } : {}}
+                      transition={isFormValid ? { duration: 2, repeat: Infinity } : {}}
+                      className={`
+                        w-full py-3 rounded-xl font-semibold text-white transition-all
+                        ${isFormValid
+                          ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40'
+                          : 'bg-gray-700 cursor-not-allowed opacity-50'
+                        }
+                      `}
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <Plus className="w-4 h-4" />
+                        Ajouter à ma liste de relance ✨
+                      </span>
+                    </motion.button>
+                  );
+                })()}
               </form>
             </motion.div>
           </motion.div>
@@ -605,7 +676,7 @@ export default function OnboardingStep2() {
             animate="visible"
             transition={{ delay: 0.3 }}
           >
-            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 h-full flex flex-col">
+            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 h-full flex flex-col hover:border-violet-500/30 hover:shadow-[0_0_30px_rgba(124,58,237,0.15)] transition-all duration-300 group">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center">
                   <Upload className="w-5 h-5 text-white" />
@@ -616,7 +687,7 @@ export default function OnboardingStep2() {
                 </div>
               </div>
 
-              {/* Zone Drag & Drop */}
+              {/* Zone Drag & Drop avec bordure animée */}
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -627,17 +698,20 @@ export default function OnboardingStep2() {
                 aria-label="Zone de dépôt de fichier CSV"
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
                 className={`
-                  flex-1 min-h-[180px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-all
+                  flex-1 min-h-[180px] rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer transition-all relative
                   ${isDragging
-                    ? 'border-violet-500 bg-violet-500/10 shadow-[0_0_40px_rgba(124,58,237,0.3)]'
+                    ? 'bg-violet-500/20 shadow-[0_0_40px_rgba(124,58,237,0.4)] border-2 border-violet-400'
                     : uploadState === 'success'
-                      ? 'border-green-500/50 bg-green-500/5'
+                      ? 'border-2 border-green-500/50 bg-green-500/5'
                       : uploadState === 'error'
-                        ? 'border-red-500/50 bg-red-500/5'
-                        : 'border-violet-500/30 hover:border-violet-500/50 hover:bg-violet-500/5'
+                        ? 'border-2 border-red-500/50 bg-red-500/5'
+                        : 'animated-border-dashed hover:bg-violet-500/5'
                   }
                 `}
               >
+                {/* Inner glow effect */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-500/5 via-transparent to-pink-500/5 pointer-events-none" />
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -649,7 +723,11 @@ export default function OnboardingStep2() {
 
                 {uploadState === 'uploading' ? (
                   <>
-                    <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                    <motion.div
+                      className="w-10 h-10 border-3 border-violet-500 border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    />
                     <p className="text-sm text-gray-300">{uploadMessage}</p>
                   </>
                 ) : uploadState === 'success' ? (
@@ -664,10 +742,14 @@ export default function OnboardingStep2() {
                   </>
                 ) : (
                   <>
-                    <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-violet-400" />
-                    </div>
-                    <div className="text-center">
+                    <motion.div
+                      className="w-14 h-14 rounded-full bg-violet-500/20 flex items-center justify-center"
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <FileText className="w-7 h-7 text-violet-400" />
+                    </motion.div>
+                    <div className="text-center relative z-10">
                       <p className="text-sm text-gray-300">Plusieurs factures ?</p>
                       <p className="text-sm text-violet-400 font-semibold">Glissez votre fichier ici</p>
                       <p className="text-xs text-gray-500 mt-1">.csv, .xlsx, .xls</p>
@@ -681,6 +763,17 @@ export default function OnboardingStep2() {
             </div>
           </motion.div>
         </div>
+
+        {/* Capture lead différée */}
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.6 }}
+          className="mt-6"
+        >
+          <DeferredLeadCapture variant="default" />
+        </motion.div>
 
         {/* Liste des factures */}
         <AnimatePresence>

@@ -38,6 +38,7 @@ import {
   User,
   HelpCircle
 } from 'lucide-react';
+import DeferredLeadCapture from './components/DeferredLeadCapture';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -1974,10 +1975,10 @@ const TestAISection = ({ onOpenBooking }) => {
                         aria-label="Importer un fichier CSV ou Excel"
                         whileHover={{ scale: 1.02, y: -4 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`relative flex-1 min-h-[160px] md:min-h-[180px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 overflow-hidden ${
+                        className={`relative flex-1 min-h-[160px] md:min-h-[180px] rounded-xl flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 overflow-hidden ${
                           isDragging
-                            ? 'border-violet-400 bg-violet-500/20'
-                            : 'border-violet-500/30 hover:border-violet-400/50 hover:bg-violet-500/5'
+                            ? 'bg-violet-500/20 shadow-[0_0_40px_rgba(124,58,237,0.4)] border-2 border-violet-400'
+                            : 'animated-border-dashed hover:bg-violet-500/5'
                         }`}
                       >
                         {/* Effet vagues drag */}
@@ -2071,6 +2072,16 @@ const TestAISection = ({ onOpenBooking }) => {
                 </AnimatePresence>
               </div>
             </motion.div>
+          </motion.div>
+
+          {/* Capture lead différée - sous le simulateur */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ delay: 0.8 }}
+            className="mt-8"
+          >
+            <DeferredLeadCapture variant="compact" />
           </motion.div>
         </div>
       </section>
