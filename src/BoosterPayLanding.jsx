@@ -3691,6 +3691,11 @@ const BoosterPayLanding = () => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const openBooking = () => setIsBookingModalOpen(true);
 
+  // Fix: Force page to start at top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <>
       <AnimatePresence>

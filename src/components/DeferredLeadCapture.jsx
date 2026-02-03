@@ -77,16 +77,6 @@ const DeferredLeadCapture = ({ variant = 'default', className = '' }) => {
   const inputRef = useRef(null);
   const totalSteps = STEPS.length;
 
-  // Auto-focus sur l'input actif après transition
-  useEffect(() => {
-    if (status === 'idle' && status !== 'success') {
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, status]);
-
   // Fermer dropdown si clic ailleurs
   useEffect(() => {
     const handleClickOutside = () => setIsDropdownOpen(false);
