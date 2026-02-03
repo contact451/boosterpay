@@ -326,11 +326,11 @@ const DeferredLeadCapture = ({ variant = 'default', className = '' }) => {
             Pas le temps maintenant ?
           </h3>
           <p className="text-gray-400 text-xs">
-            On vous envoie votre accès VIP par SMS &amp; Email
+            Recevez votre lien et finalisez tranquillement depuis votre bureau ☕
           </p>
         </div>
         <span className="hidden md:inline-flex items-center gap-1 text-[10px] text-gray-500">
-          <span>⏱️</span> Prêt en 8 sec
+          <span>⏱️</span> 10 secondes
         </span>
       </div>
 

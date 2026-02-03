@@ -125,10 +125,10 @@ const BookingModal = ({ isOpen, onClose }) => {
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
               className="fixed bottom-0 left-0 right-0 z-[301] bg-[#0f172a] rounded-t-3xl border-t border-x border-blue-500/30"
-              style={{ maxHeight: '85vh' }}
+              style={{ maxHeight: '95vh' }}
             >
               {/* Header */}
-              <div className="p-4 border-b border-white/10 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-t-3xl">
+              <div className="p-3 border-b border-white/10 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-t-3xl">
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -149,7 +149,7 @@ const BookingModal = ({ isOpen, onClose }) => {
               </div>
 
               {/* Calendar iframe */}
-              <div className="p-3" style={{ height: '55vh' }}>
+              <div className="p-2" style={{ height: '70vh' }}>
                 <div className="rounded-xl overflow-hidden bg-white h-full">
                   <iframe
                     src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
@@ -159,18 +159,12 @@ const BookingModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Footer badges */}
-              <div className="p-3 border-t border-white/10 bg-[#0a0f1a]">
-                <div className="grid grid-cols-2 gap-2">
-                  {badges.map((badge) => (
-                    <div
-                      key={badge.text}
-                      className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2 py-1.5"
-                    >
-                      <span className="text-sm">{badge.icon}</span>
-                      <span className="text-gray-200 text-xs">{badge.text}</span>
-                    </div>
-                  ))}
+              {/* Footer badges - compact */}
+              <div className="p-2 border-t border-white/10 bg-[#0a0f1a]">
+                <div className="flex justify-center gap-4 text-[10px] text-gray-400">
+                  <span>✅ Gratuit</span>
+                  <span>⚡️ Dispo aujourd&apos;hui</span>
+                  <span>🔒 Sécurisé</span>
                 </div>
               </div>
             </motion.div>
