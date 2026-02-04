@@ -57,7 +57,7 @@ const RainbowBorder = ({ children }) => (
 );
 
 // Mode Compact
-const CompactMode = ({ onExpand, onOpenBooking, onScrollToPricing }) => (
+const CompactMode = ({ onExpand, onOpenBooking, onOpenLeadForm }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -83,7 +83,7 @@ const CompactMode = ({ onExpand, onOpenBooking, onScrollToPricing }) => (
     <div className="flex gap-3">
       {/* Bouton principal - 10 jours gratuits */}
       <motion.button
-        onClick={onScrollToPricing}
+        onClick={() => onOpenLeadForm()}
         className="relative flex-1 py-3.5 rounded-xl font-semibold text-white overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #06b6d4 100%)',
@@ -140,7 +140,7 @@ const CompactMode = ({ onExpand, onOpenBooking, onScrollToPricing }) => (
 );
 
 // Mode Expanded
-const ExpandedMode = ({ onCollapse, onOpenBooking, onScrollToPricing }) => (
+const ExpandedMode = ({ onCollapse, onOpenBooking, onOpenLeadForm }) => (
   <motion.div
     initial={{ opacity: 0, height: 0 }}
     animate={{ opacity: 1, height: 'auto' }}
@@ -176,7 +176,7 @@ const ExpandedMode = ({ onCollapse, onOpenBooking, onScrollToPricing }) => (
         Récupérez votre argent maintenant
       </h3>
       <p className="text-sm text-gray-400 mt-1">
-        Rejoignez +200 entreprises qui récupèrent leurs créances
+        Rejoignez 13 469+ entreprises qui récupèrent leurs créances
       </p>
     </div>
 
@@ -214,7 +214,7 @@ const ExpandedMode = ({ onCollapse, onOpenBooking, onScrollToPricing }) => (
     {/* CTA Principal avec Rainbow Border */}
     <RainbowBorder>
       <motion.button
-        onClick={onScrollToPricing}
+        onClick={() => onOpenLeadForm()}
         className="relative w-full py-4 rounded-[10px] font-bold text-white overflow-hidden"
         style={{
           background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #06b6d4 100%)',
@@ -254,7 +254,7 @@ const ExpandedMode = ({ onCollapse, onOpenBooking, onScrollToPricing }) => (
   </motion.div>
 );
 
-const MobileStickyCTA = ({ onOpenBooking, onScrollToPricing }) => {
+const MobileStickyCTA = ({ onOpenBooking, onOpenLeadForm }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -305,14 +305,14 @@ const MobileStickyCTA = ({ onOpenBooking, onScrollToPricing }) => {
                   key="compact"
                   onExpand={() => setIsExpanded(true)}
                   onOpenBooking={onOpenBooking}
-                  onScrollToPricing={onScrollToPricing}
+                  onOpenLeadForm={onOpenLeadForm}
                 />
               ) : (
                 <ExpandedMode
                   key="expanded"
                   onCollapse={() => setIsExpanded(false)}
                   onOpenBooking={onOpenBooking}
-                  onScrollToPricing={onScrollToPricing}
+                  onOpenLeadForm={onOpenLeadForm}
                 />
               )}
             </AnimatePresence>

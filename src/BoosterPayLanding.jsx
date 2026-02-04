@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import {
   Phone,
   Menu,
@@ -38,8 +37,11 @@ import {
   User,
   HelpCircle
 } from 'lucide-react';
-import DeferredLeadCapture from './components/DeferredLeadCapture';
 import MobileStickyCTA from './components/MobileStickyCTA';
+import LeadFormModal from './components/LeadFormModal';
+import SocialProofToast from './components/SocialProofToast';
+import ExitIntentPopup from './components/ExitIntentPopup';
+import RecoverySimulatorSection from './components/RecoverySimulatorSection';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -516,7 +518,7 @@ const StickyTopBar = () => {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const { count, ref } = useCountUp(15847, 2500);
+  const { count, ref } = useCountUp(13469, 2500);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1092,11 +1094,13 @@ const PhoneAnimationV2 = ({ onStepChange }) => {
 };
 
 // Hero Section
-const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
+const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
   const isMobile = useIsMobile();
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 50]);
   const [phoneStep, setPhoneStep] = useState(1);
+  const [heroEmail, setHeroEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const phoneGlow = phoneStep === 1
     ? '0 0 80px rgba(249, 115, 22, 0.4), 0 0 120px rgba(249, 115, 22, 0.2)'
@@ -1133,7 +1137,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
             transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
             className="w-2 h-2 rounded-full bg-green-400"
           />
-          <span className="text-sm text-blue-300">+127 entreprises inscrites cette semaine</span>
+          <span className="text-sm text-blue-300">+847 entreprises inscrites ce mois</span>
         </motion.div>
 
         {/* Main Title */}
@@ -1167,46 +1171,89 @@ const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
           )}
         </motion.p>
 
-        {/* Hero CTA Buttons - Version Clean */}
+        {/* Hero CTA - One Field First Email Capture */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.2 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 mt-10 mb-12"
+          className="mt-10 mb-8"
         >
-          {/* Bouton 1 - Essai Gratuit */}
-          <motion.button
-            onClick={(e) => scrollToSection(e, '#pricing')}
-            whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(59,130,246,0.6)' }}
-            whileTap={{ scale: 0.97 }}
-            className="relative w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-xl text-white font-bold text-lg shadow-lg shadow-blue-500/40 flex items-center justify-center gap-3 overflow-hidden"
-          >
-            {/* Shimmer */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -skew-x-12"
-              animate={{ x: ['-150%', '150%'] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5 }}
-            />
-            <span className="relative z-10">🚀</span>
-            <span className="relative z-10">10 jours d'essai gratuit</span>
-          </motion.button>
-
-          {/* Bouton 2 - Appel Expert */}
-          <motion.button
-            onClick={onOpenBooking}
-            whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(168,85,247,0.6)' }}
-            whileTap={{ scale: 0.97 }}
-            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 rounded-xl text-white font-bold text-lg shadow-lg shadow-purple-500/40 flex items-center justify-center gap-3"
-          >
-            <span>📞</span>
-            <span>Appel expert · 15 min</span>
-            <motion.span
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+          {/* Email Capture Form */}
+          <div className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+            <div className="relative flex-1">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="email"
+                value={heroEmail}
+                onChange={(e) => {
+                  setHeroEmail(e.target.value);
+                  setEmailError('');
+                }}
+                placeholder="votre@email.fr"
+                className={`w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 border ${
+                  emailError ? 'border-red-500/50' : 'border-white/20'
+                } text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all`}
+              />
+            </div>
+            <motion.button
+              onClick={() => {
+                if (!heroEmail) {
+                  setEmailError('Email requis');
+                  return;
+                }
+                if (!heroEmail.includes('@') || !heroEmail.includes('.')) {
+                  setEmailError('Email invalide');
+                  return;
+                }
+                onOpenLeadForm(heroEmail);
+              }}
+              whileHover={{ scale: 1.02, boxShadow: '0 0 35px rgba(59,130,246,0.5)' }}
+              whileTap={{ scale: 0.98 }}
+              className="relative px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(59,130,246,0.4)] overflow-hidden"
             >
-              →
-            </motion.span>
-          </motion.button>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                animate={{ x: ['-150%', '150%'] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5 }}
+              />
+              <span className="relative z-10">Démarrer gratuit</span>
+              <ArrowRight className="w-5 h-5 relative z-10" />
+            </motion.button>
+          </div>
+          {emailError && (
+            <p className="text-red-400 text-sm mt-2 text-center">{emailError}</p>
+          )}
+          <p className="text-sm text-gray-400 mt-4 flex items-center justify-center gap-4 flex-wrap">
+            <span className="flex items-center gap-1"><Check className="w-4 h-4 text-emerald-400" /> Sans carte bancaire</span>
+            <span className="flex items-center gap-1"><Check className="w-4 h-4 text-emerald-400" /> 10 jours gratuits</span>
+            <span className="flex items-center gap-1"><Check className="w-4 h-4 text-emerald-400" /> Prêt en 2 min</span>
+          </p>
+
+          {/* Secondary CTA - Demo Audio (scroll to section) */}
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <button
+              onClick={() => {
+                const element = document.querySelector('#audio-demo');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
+            >
+              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                <Play className="w-4 h-4 text-blue-400" />
+              </div>
+              <span className="text-sm">Écouter la démo audio</span>
+            </button>
+            <span className="text-gray-600">•</span>
+            <button
+              onClick={onOpenBooking}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <Phone className="w-4 h-4" />
+              <span className="text-sm">Parler à un expert</span>
+            </button>
+          </div>
         </motion.div>
 
         {/* Trust Badges */}
@@ -1333,9 +1380,8 @@ const HeroSection = ({ onOpenDemo, onOpenBooking }) => {
 // TEST AI SECTION
 // ============================================
 
-const TestAISection = ({ onOpenBooking }) => {
+const TestAISection = ({ onOpenBooking, onOpenLeadForm }) => {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
 
@@ -1531,7 +1577,7 @@ const TestAISection = ({ onOpenBooking }) => {
 
       {/* CTAs */}
       <button
-        onClick={() => { closeModal(); navigate('/onboarding/import'); }}
+        onClick={() => { closeModal(); onOpenLeadForm && onOpenLeadForm(); }}
         className="w-full py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all active:scale-[0.98]"
       >
         {importedFile ? 'Lancer les appels IA maintenant' : 'Lancer l\'appel IA gratuitement'}
@@ -2069,15 +2115,6 @@ const TestAISection = ({ onOpenBooking }) => {
             </motion.div>
           </motion.div>
 
-          {/* Capture lead différée - sous le simulateur */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.8 }}
-            className="mt-8"
-          >
-            <DeferredLeadCapture variant="compact" />
-          </motion.div>
         </div>
       </section>
 
@@ -2218,7 +2255,7 @@ const UrgencyBanner = () => {
 };
 
 // Logo Carousel
-const LogoCarousel = () => {
+const LogoCarousel = ({ onScrollToSimulator }) => {
   const logos = [
     { name: "Terravigne", sector: "Viticulteurs" },
     { name: "BTP Alliance", sector: "Construction" },
@@ -2258,6 +2295,22 @@ const LogoCarousel = () => {
             ))}
           </div>
         </div>
+
+        {/* Mini CTA */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mt-8"
+        >
+          <button
+            onClick={onScrollToSimulator}
+            className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group"
+          >
+            <span className="text-sm font-medium">Combien puis-je récupérer ?</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
+        </motion.div>
       </div>
     </section>
   );
@@ -2641,7 +2694,7 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
   };
 
   return (
-    <section id="demo" className="py-24 relative">
+    <section id="audio-demo" className="py-24 relative">
       <div className="max-w-4xl mx-auto px-4">
         <motion.div
           initial="hidden"
@@ -2809,7 +2862,7 @@ const StatCard = ({ stat, index }) => {
 };
 
 // Testimonials Section
-const TestimonialsSection = () => {
+const TestimonialsSection = ({ onOpenLeadForm }) => {
   const testimonials = [
     {
       name: "Jean-Pierre M.",
@@ -2925,13 +2978,33 @@ const TestimonialsSection = () => {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* CTA Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="text-center mt-12"
+        >
+          <motion.button
+            onClick={() => onOpenLeadForm && onOpenLeadForm()}
+            whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(59,130,246,0.4)' }}
+            whileTap={{ scale: 0.98 }}
+            className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold text-lg flex items-center justify-center gap-3 mx-auto shadow-lg shadow-blue-500/30"
+          >
+            <Users className="w-5 h-5" />
+            Rejoindre 13 469+ entreprises
+            <ArrowRight className="w-5 h-5" />
+          </motion.button>
+        </motion.div>
       </div>
     </section>
   );
 };
 
 // Pricing Section - ULTRA CONVERSION
-const PricingSection = ({ onOpenBooking }) => {
+const PricingSection = ({ onOpenBooking, onOpenLeadForm }) => {
   const isMobile = useIsMobile();
   const [isAnnual, setIsAnnual] = useState(false);
   const { count: companiesCount, ref: companiesRef } = useCountUp(847, 2000);
@@ -2952,7 +3025,7 @@ const PricingSection = ({ onOpenBooking }) => {
         "Support par email"
       ],
       cta: "Essayer 10 jours gratuit",
-      ctaSubtext: "Sans CB \u2022 Sans engagement",
+      ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
       popular: false,
       gradient: "from-slate-600 to-slate-700",
       commission: null
@@ -2972,7 +3045,7 @@ const PricingSection = ({ onOpenBooking }) => {
         "Support prioritaire"
       ],
       cta: "\u{1F4B0} Essayer 10 jours gratuit",
-      ctaSubtext: "Sans CB \u2022 Sans engagement",
+      ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
       popular: true,
       badge: "\u2B50 LE PLUS POPULAIRE",
       gradient: "from-blue-600 to-cyan-500",
@@ -2996,7 +3069,7 @@ const PricingSection = ({ onOpenBooking }) => {
         "Support VIP 7j/7"
       ],
       cta: "Essayer 10 jours gratuit",
-      ctaSubtext: "Sans CB \u2022 Sans engagement",
+      ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
       popular: false,
       gradient: "from-purple-600 to-pink-500",
       commission: {
@@ -3278,7 +3351,7 @@ const PricingSection = ({ onOpenBooking }) => {
                       transition={isMobile ? {} : { duration: 1.5, repeat: Infinity }}
                     />
                     <button
-                      onClick={(e) => scrollToSection(e, '#pricing')}
+                      onClick={() => onOpenLeadForm && onOpenLeadForm()}
                       className="relative w-full py-5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-lg font-bold hover:from-blue-500 hover:to-cyan-400 transition-all"
                     >
                       {plan.cta}
@@ -3286,7 +3359,7 @@ const PricingSection = ({ onOpenBooking }) => {
                   </motion.div>
                 ) : (
                   <motion.button
-                    onClick={(e) => scrollToSection(e, '#pricing')}
+                    onClick={() => onOpenLeadForm && onOpenLeadForm()}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full py-4 rounded-xl bg-white/5 border border-white/20 text-white font-semibold hover:bg-white/10 hover:border-white/30 transition-all duration-300"
@@ -3329,7 +3402,7 @@ const PricingSection = ({ onOpenBooking }) => {
 };
 
 // FAQ Section
-const FAQSection = () => {
+const FAQSection = ({ onOpenBooking }) => {
   const [openIndex, setOpenIndex] = useState(null);
 
   const faqs = [
@@ -3423,6 +3496,24 @@ const FAQSection = () => {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Contact CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="text-center mt-12"
+        >
+          <p className="text-gray-400 mb-4">Une question qui n'est pas listée ?</p>
+          <button
+            onClick={onOpenBooking}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+          >
+            <HelpCircle className="w-5 h-5 text-purple-400" />
+            <span>Contactez-nous</span>
+          </button>
+        </motion.div>
       </div>
     </section>
   );
@@ -3495,7 +3586,7 @@ const NeedHelpSection = ({ onOpenBooking }) => {
 };
 
 // Footer
-const Footer = ({ onOpenBooking }) => {
+const Footer = ({ onOpenBooking, onOpenLeadForm }) => {
   const links = [
     { label: "Mentions légales", href: "#" },
     { label: "CGV", href: "#" },
@@ -3537,6 +3628,29 @@ const Footer = ({ onOpenBooking }) => {
             <a href="#" className="text-gray-400 hover:text-white transition-colors">
               <Mail className="w-5 h-5" />
             </a>
+          </div>
+        </div>
+
+        {/* Secondary CTA Section */}
+        <div className="mt-10 pt-8 border-t border-white/5">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+            <motion.button
+              onClick={() => onOpenLeadForm && onOpenLeadForm()}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold flex items-center gap-2 shadow-lg shadow-blue-500/20"
+            >
+              Démarrer maintenant
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
+            <span className="text-gray-600 hidden md:block">ou</span>
+            <button
+              onClick={() => onOpenLeadForm && onOpenLeadForm()}
+              className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              Pas encore prêt ? Recevoir les infos par email
+            </button>
           </div>
         </div>
 
@@ -3689,7 +3803,24 @@ const BoosterPayLanding = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
+  const [capturedEmail, setCapturedEmail] = useState('');
+
   const openBooking = () => setIsBookingModalOpen(true);
+  const openLeadForm = (emailParam = '') => {
+    // Safeguard: ensure email is a string, not an event object
+    const email = typeof emailParam === 'string' ? emailParam : '';
+    if (email) setCapturedEmail(email);
+    setIsLeadFormOpen(true);
+  };
+
+  // Handle email captured from exit intent
+  const handleExitIntentEmail = (email) => {
+    setCapturedEmail(email);
+  };
+
+  // Check if any modal is open (for social proof toast)
+  const isAnyModalOpen = isAudioModalOpen || isBookingModalOpen || isLeadFormOpen;
 
   // Fix: Force page to start at top
   useEffect(() => {
@@ -3718,10 +3849,15 @@ const BoosterPayLanding = () => {
         {/* Main Content - Ordre optimisé PAS + AIDA */}
         <main>
           {/* 1. Hook immédiat */}
-          <HeroSection onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} />
+          <HeroSection onOpenDemo={() => setIsAudioModalOpen(true)} onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
 
           {/* 2. Social proof dès le début (crédibilité) */}
-          <LogoCarousel />
+          <LogoCarousel onScrollToSimulator={() => {
+            const element = document.querySelector('#simulateur');
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }} />
 
           {/* 3. Créer la douleur / le malaise */}
           <ProblemSection />
@@ -3739,47 +3875,73 @@ const BoosterPayLanding = () => {
           <div className="py-8 border-y border-white/5">
             <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-gray-400">{"🤔 Des questions sur le fonctionnement ?"}</p>
-              <BookingButton variant="how-it-works" openModal={openBooking} />
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <motion.button
+                  onClick={() => openLeadForm()}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold flex items-center gap-2 shadow-lg shadow-blue-500/25"
+                >
+                  Démarrer mon essai gratuit
+                  <ArrowRight className="w-4 h-4" />
+                </motion.button>
+                <BookingButton variant="how-it-works" openModal={openBooking} />
+              </div>
             </div>
           </div>
+
+          {/* 7.5. ROI Calculator - Interactive engagement */}
+          <RecoverySimulatorSection onOpenLeadForm={openLeadForm} prefilledEmail={capturedEmail} />
 
           {/* 8. Preuve tangible AVANT l'engagement */}
           <AudioDemoSection isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
 
           {/* 9. Engagement interactif (utilisateur "chaud") */}
-          <TestAISection onOpenBooking={openBooking} />
+          <TestAISection onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
 
           {/* 10. Crédibilité chiffrée */}
           <StatisticsSection />
 
           {/* 11. Validation sociale */}
-          <TestimonialsSection />
+          <TestimonialsSection onOpenLeadForm={openLeadForm} />
 
           {/* 12. L'offre */}
-          <PricingSection onOpenBooking={openBooking} />
+          <PricingSection onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
 
           {/* 13. Lever les objections */}
-          <FAQSection />
+          <FAQSection onOpenBooking={openBooking} />
 
           {/* 14. Filet de sécurité final */}
           <NeedHelpSection onOpenBooking={openBooking} />
         </main>
 
         {/* Footer */}
-        <Footer onOpenBooking={openBooking} />
+        <Footer onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
 
         {/* Booking Modal */}
         <BookingModal isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} />
 
+        {/* Lead Form Modal */}
+        <LeadFormModal
+          isOpen={isLeadFormOpen}
+          onClose={() => setIsLeadFormOpen(false)}
+          prefilledEmail={capturedEmail}
+          source="modal"
+        />
+
+        {/* Exit Intent Popup */}
+        <ExitIntentPopup
+          onEmailCapture={handleExitIntentEmail}
+          isLeadFormOpen={isLeadFormOpen}
+        />
+
+        {/* Social Proof Toast */}
+        <SocialProofToast isModalOpen={isAnyModalOpen} />
+
         {/* Mobile Sticky CTA */}
         <MobileStickyCTA
           onOpenBooking={openBooking}
-          onScrollToPricing={() => {
-            const element = document.querySelector('#pricing');
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }}
+          onOpenLeadForm={openLeadForm}
         />
       </div>
     </>
