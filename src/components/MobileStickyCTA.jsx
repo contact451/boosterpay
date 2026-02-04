@@ -254,7 +254,7 @@ const ExpandedMode = ({ onCollapse, onOpenBooking, onOpenLeadForm }) => (
   </motion.div>
 );
 
-const MobileStickyCTA = ({ onOpenBooking, onOpenLeadForm }) => {
+const MobileStickyCTA = ({ onOpenBooking, onOpenLeadForm, isHidden = false }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -281,8 +281,8 @@ const MobileStickyCTA = ({ onOpenBooking, onOpenLeadForm }) => {
     lastScrollY.current = latest;
   });
 
-  // Ne pas afficher sur desktop
-  if (!isMobile) return null;
+  // Ne pas afficher sur desktop ou si un modal est ouvert
+  if (!isMobile || isHidden) return null;
 
   return (
     <AnimatePresence>

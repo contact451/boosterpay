@@ -3938,10 +3938,11 @@ const BoosterPayLanding = () => {
         {/* Social Proof Toast */}
         <SocialProofToast isModalOpen={isAnyModalOpen} />
 
-        {/* Mobile Sticky CTA */}
+        {/* Mobile Sticky CTA - Hidden when modals are open */}
         <MobileStickyCTA
           onOpenBooking={openBooking}
           onOpenLeadForm={openLeadForm}
+          isHidden={isLeadFormOpen || isBookingModalOpen}
         />
       </div>
     </>

@@ -480,7 +480,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
               </span>
               <span className="flex items-center gap-2">
                 <Euro className="w-4 h-4 text-blue-500" />
-                +8,7M € récupérés en 2024
+                +8,7M € récupérés en 2025
               </span>
             </motion.div>
           </motion.div>
