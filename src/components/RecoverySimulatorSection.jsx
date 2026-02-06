@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { Banknote, TrendingUp, Mail, ArrowRight, Check, Loader2, Minus, Plus, Euro, Sparkles } from 'lucide-react';
+import { Banknote, TrendingUp, Mail, ArrowRight, Loader2, Minus, Plus, Euro, Sparkles } from 'lucide-react';
+import InlinePhoneCapture from './InlinePhoneCapture';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -150,8 +151,10 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
   const [avgAmount, setAvgAmount] = useState(2000);
   const [email, setEmail] = useState(prefilledEmail);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [showPhoneCapture, setShowPhoneCapture] = useState(false);
   const isMobile = useIsMobile();
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
@@ -186,7 +189,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
   };
 
   const handleReveal = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
 
     if (!email) {
       setError('Email requis');
@@ -198,34 +201,16 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
       return;
     }
 
-    setStatus('loading');
     setError('');
+    // Open the phone capture popup instead of revealing directly
+    setShowPhoneCapture(true);
+  };
 
-    try {
-      // Log for testing
-      console.log('📊 SIMULATEUR - Contact capturé:', {
-        email,
-        source: 'simulator',
-        donnees: {
-          facturesParMois: invoices,
-          montantMoyen: avgAmount,
-          recuperationAnnuelle: recovery.recovered,
-          recuperationMensuelle: recovery.monthly
-        },
-        timestamp: new Date().toISOString()
-      });
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      setStatus('success');
-      setIsRevealed(true);
-
-    } catch (err) {
-      console.error('Error:', err);
-      setStatus('error');
-      setError('Une erreur est survenue');
-    }
+  // Callback when phone capture is successful
+  const handlePhoneSuccess = () => {
+    setShowPhoneCapture(false);
+    setIsRevealed(true);
+    setIsSubmitted(true);
   };
 
   // Animation variants
@@ -375,6 +360,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                 {/* Email capture or revealed state */}
                 <AnimatePresence mode="wait">
                   {!isRevealed ? (
+                    <>
                     <motion.form
                       key="form"
                       initial={{ opacity: 0, y: 10 }}
@@ -428,6 +414,22 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                         Recevez votre estimation détaillée par email
                       </p>
                     </motion.form>
+
+                    {/* Inline Phone Capture Popup - EN DEHORS du form */}
+                    <InlinePhoneCapture
+                      isVisible={showPhoneCapture}
+                      email={email}
+                      source="simulateur"
+                      onClose={() => setShowPhoneCapture(false)}
+                      onSuccess={handlePhoneSuccess}
+                      enrichmentData={{
+                        estimation: recovery.recovered,
+                        factures_mois: invoices,
+                        montant_moyen: avgAmount
+                      }}
+                      submitLabel="Voir mon estimation"
+                    />
+                    </>
                   ) : (
                     <motion.div
                       key="revealed"
@@ -437,8 +439,8 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                     >
                       {/* Success badge */}
                       <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm">
-                        <Check className="w-4 h-4" />
-                        Estimation envoyée à {email}
+                        <Sparkles className="w-4 h-4" />
+                        {isSubmitted ? "C'est parti ! Notre équipe vous contacte sous 48h" : `Estimation envoyée à ${email}`}
                       </div>
 
                       {/* Additional stats */}
@@ -453,16 +455,18 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                         </div>
                       </div>
 
-                      {/* CTA */}
-                      <motion.button
-                        onClick={() => onOpenLeadForm && onOpenLeadForm(email)}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="mt-6 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold text-lg flex items-center justify-center gap-2 mx-auto shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-shadow"
-                      >
-                        <Sparkles className="w-5 h-5" />
-                        Activer mon essai gratuit
-                      </motion.button>
+                      {/* CTA - Only show if not submitted via phone capture */}
+                      {!isSubmitted && (
+                        <motion.button
+                          onClick={() => onOpenLeadForm && onOpenLeadForm(email)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="mt-6 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold text-lg flex items-center justify-center gap-2 mx-auto shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-shadow"
+                        >
+                          <Sparkles className="w-5 h-5" />
+                          Activer mon essai gratuit
+                        </motion.button>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>

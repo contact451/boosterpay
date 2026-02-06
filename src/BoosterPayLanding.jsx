@@ -42,6 +42,7 @@ import LeadFormModal from './components/LeadFormModal';
 import SocialProofToast from './components/SocialProofToast';
 import ExitIntentPopup from './components/ExitIntentPopup';
 import RecoverySimulatorSection from './components/RecoverySimulatorSection';
+import InlinePhoneCapture from './components/InlinePhoneCapture';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -1101,6 +1102,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
   const [phoneStep, setPhoneStep] = useState(1);
   const [heroEmail, setHeroEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [showPhoneCapture, setShowPhoneCapture] = useState(false);
 
   const phoneGlow = phoneStep === 1
     ? '0 0 80px rgba(249, 115, 22, 0.4), 0 0 120px rgba(249, 115, 22, 0.2)'
@@ -1205,7 +1207,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
                   setEmailError('Email invalide');
                   return;
                 }
-                onOpenLeadForm(heroEmail);
+                setShowPhoneCapture(true);
               }}
               whileHover={{ scale: 1.02, boxShadow: '0 0 35px rgba(59,130,246,0.5)' }}
               whileTap={{ scale: 0.98 }}
@@ -1223,6 +1225,19 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
           {emailError && (
             <p className="text-red-400 text-sm mt-2 text-center">{emailError}</p>
           )}
+
+          {/* Inline Phone Capture Popup */}
+          <InlinePhoneCapture
+            isVisible={showPhoneCapture}
+            email={heroEmail}
+            source="hero"
+            onClose={() => setShowPhoneCapture(false)}
+            onSuccess={() => {
+              setShowPhoneCapture(false);
+              setHeroEmail('');
+            }}
+          />
+
           <p className="text-sm text-gray-400 mt-4 flex items-center justify-center gap-4 flex-wrap">
             <span className="flex items-center gap-1"><Check className="w-4 h-4 text-emerald-400" /> Sans carte bancaire</span>
             <span className="flex items-center gap-1"><Check className="w-4 h-4 text-emerald-400" /> 10 jours gratuits</span>
@@ -1380,7 +1395,76 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
 // TEST AI SECTION
 // ============================================
 
-const TestAISection = ({ onOpenBooking, onOpenLeadForm }) => {
+// Phone formatting for TestAI section
+const formatTestAIPhone = (value) => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
+};
+
+// VALIDATION STRICTE pour TestAI - Mobile français UNIQUEMENT
+const validateTestAIPhone = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  return /^0[67]\d{8}$/.test(digits);
+};
+
+const getTestAIPhoneErrorMessage = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return 'Numéro requis';
+  if (digits.length < 10) return `Encore ${10 - digits.length} chiffre${10 - digits.length > 1 ? 's' : ''}`;
+  if (!digits.startsWith('06') && !digits.startsWith('07')) return 'Mobile uniquement (06 ou 07)';
+  if (digits.length > 10) return 'Maximum 10 chiffres';
+  return '';
+};
+
+const getTestAIPhoneStatus = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return 'empty';
+  if (digits.length < 10) return 'incomplete';
+  if (!digits.startsWith('06') && !digits.startsWith('07')) return 'invalid';
+  if (digits.length === 10 && /^0[67]\d{8}$/.test(digits)) return 'valid';
+  return 'invalid';
+};
+
+// Confetti for TestAI success
+const TestAIConfetti = ({ isMobile }) => {
+  const confettiColors = ['#8B5CF6', '#EC4899', '#10B981', '#3B82F6', '#F59E0B'];
+  const count = isMobile ? 12 : 20;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {[...Array(count)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: confettiColors[i % confettiColors.length],
+            left: `${Math.random() * 100}%`,
+            top: '50%',
+          }}
+          initial={{ y: 0, opacity: 1, scale: 1 }}
+          animate={{
+            y: [0, -80 - Math.random() * 60, 150],
+            x: (Math.random() - 0.5) * 150,
+            opacity: [1, 1, 0],
+            scale: [1, 1.2, 0.5],
+            rotate: Math.random() * 720,
+          }}
+          transition={{
+            duration: 1.2 + Math.random() * 0.4,
+            ease: 'easeOut',
+            delay: Math.random() * 0.15,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+const TestAISection = ({ onOpenBooking }) => {
   const isMobile = useIsMobile();
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
@@ -1397,6 +1481,65 @@ const TestAISection = ({ onOpenBooking, onOpenLeadForm }) => {
   const [importedFile, setImportedFile] = useState(null);
   const [simulatedCount, setSimulatedCount] = useState(0);
   const fileInputRef = useRef(null);
+
+  // Lead capture states
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadPhone, setLeadPhone] = useState('');
+  const [leadPhoneStatus, setLeadPhoneStatus] = useState('empty'); // empty | incomplete | invalid | valid
+  const [leadStatus, setLeadStatus] = useState('idle'); // idle | loading | success
+  const [leadError, setLeadError] = useState('');
+  const leadEmailRef = useRef(null);
+  const leadPhoneRef = useRef(null);
+
+  // Auto-scroll input into view on mobile focus
+  const handleLeadFocus = (ref) => {
+    if (isMobile && ref.current) {
+      setTimeout(() => {
+        ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  };
+
+  const handleTestAISubmit = async () => {
+    // Validate email
+    if (!leadEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadEmail)) {
+      setLeadError('Email invalide');
+      return;
+    }
+    // Validation STRICTE du téléphone
+    const digits = leadPhone.replace(/\D/g, '');
+    if (!validateTestAIPhone(leadPhone)) {
+      const errorMsg = getTestAIPhoneErrorMessage(leadPhone);
+      setLeadError(errorMsg);
+      // Animation shake sur l'input
+      if (leadPhoneRef.current) {
+        leadPhoneRef.current.classList.add('animate-shake');
+        setTimeout(() => leadPhoneRef.current?.classList.remove('animate-shake'), 500);
+      }
+      return;
+    }
+
+    setLeadStatus('loading');
+    setLeadError('');
+
+    const payload = {
+      email: leadEmail.trim().toLowerCase(),
+      telephone: digits,
+      source: 'test_ai',
+      score: 30, // Lead très chaud
+      timestamp: new Date().toISOString(),
+      debiteur_test: formData.name,
+      montant_test: formData.amount,
+      nb_factures_test: importedFile ? simulatedCount : 1,
+    };
+
+    console.log('🤖 TEST AI - Lead qualifié:', payload);
+
+    await new Promise(r => setTimeout(r, 1000));
+    setLeadStatus('success');
+
+    setTimeout(() => closeModal(), 2500);
+  };
 
   const isFormValid = formData.name && formData.amount && formData.dueDate;
 
@@ -1503,6 +1646,11 @@ const TestAISection = ({ onOpenBooking, onOpenLeadForm }) => {
     setImportedFile(null);
     setSimulatedCount(0);
     setFormData({ name: '', amount: '', dueDate: '' });
+    // Reset lead form
+    setLeadEmail('');
+    setLeadPhone('');
+    setLeadStatus('idle');
+    setLeadError('');
   }, []);
 
   const exportGuides = [
@@ -1575,24 +1723,133 @@ const TestAISection = ({ onOpenBooking, onOpenLeadForm }) => {
         </>
       )}
 
-      {/* CTAs */}
-      <button
-        onClick={() => { closeModal(); onOpenLeadForm && onOpenLeadForm(); }}
-        className="w-full py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all active:scale-[0.98]"
-      >
-        {importedFile ? 'Lancer les appels IA maintenant' : 'Lancer l\'appel IA gratuitement'}
-      </button>
-      <button
-        onClick={() => { closeModal(); onOpenBooking(); }}
-        className="w-full py-3.5 rounded-xl font-semibold text-violet-400 border border-violet-500/50 hover:bg-violet-500/10 transition-all active:scale-[0.98]"
-      >
-        Parler à un expert (15 min)
-      </button>
+      {/* Lead capture form */}
+      {leadStatus === 'success' ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative text-center py-4"
+        >
+          <TestAIConfetti isMobile={isMobile} />
+          <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center mx-auto mb-3">
+            <Check className="w-6 h-6 text-emerald-400" />
+          </div>
+          <p className="text-white font-semibold">IA activée ! 🎉</p>
+          <p className="text-gray-400 text-sm">Notre équipe vous contacte sous 24h</p>
+        </motion.div>
+      ) : (
+        <div className="space-y-3 pt-2 border-t border-white/10">
+          <p className="text-white font-semibold text-center pt-2">
+            {importedFile ? 'Activez vos appels IA :' : 'Activez votre appel IA :'}
+          </p>
 
-      {/* Badge réassurance */}
-      <p className="text-center text-xs text-gray-500">
-        🔒 Sans engagement • Essai 10 jours gratuit
-      </p>
+          {/* Email */}
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              ref={leadEmailRef}
+              type="email"
+              value={leadEmail}
+              onChange={(e) => { setLeadEmail(e.target.value); setLeadError(''); }}
+              onFocus={() => handleLeadFocus(leadEmailRef)}
+              placeholder="votre@email.fr"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white text-base placeholder-gray-500 focus:outline-none focus:border-violet-500/50"
+              disabled={leadStatus === 'loading'}
+            />
+          </div>
+
+          {/* Téléphone */}
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              ref={leadPhoneRef}
+              type="tel"
+              inputMode="numeric"
+              value={leadPhone}
+              onChange={(e) => {
+                const formatted = formatTestAIPhone(e.target.value);
+                setLeadPhone(formatted);
+                setLeadPhoneStatus(getTestAIPhoneStatus(formatted));
+                setLeadError('');
+              }}
+              onFocus={() => handleLeadFocus(leadPhoneRef)}
+              placeholder="06 __ __ __ __"
+              className={`w-full pl-10 pr-10 py-3 rounded-lg bg-white/5 border transition-all text-base ${
+                leadPhoneStatus === 'valid'
+                  ? 'border-emerald-500/50 focus:border-emerald-500'
+                  : leadPhoneStatus === 'invalid'
+                  ? 'border-red-500/50 focus:border-red-500'
+                  : 'border-white/20 focus:border-violet-500/50'
+              } text-white placeholder-gray-500 focus:outline-none`}
+              disabled={leadStatus === 'loading'}
+              autoComplete="tel"
+            />
+
+            {/* Indicateur de validité à droite */}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {leadPhoneStatus === 'valid' && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
+                >
+                  <Check className="w-3 h-3 text-white" />
+                </motion.div>
+              )}
+              {leadPhoneStatus === 'invalid' && leadPhone.replace(/\D/g, '').length > 0 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </motion.div>
+              )}
+              {leadPhoneStatus === 'incomplete' && (
+                <span className="text-xs text-gray-500 font-medium">
+                  {10 - leadPhone.replace(/\D/g, '').length}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Message d'aide en temps réel */}
+          {leadPhoneStatus === 'invalid' && leadPhone.replace(/\D/g, '').length > 0 && (
+            <motion.p
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-400 text-xs -mt-1"
+            >
+              {getTestAIPhoneErrorMessage(leadPhone)}
+            </motion.p>
+          )}
+
+          {leadError && <p className="text-red-400 text-xs">{leadError}</p>}
+
+          <button
+            onClick={handleTestAISubmit}
+            disabled={leadStatus === 'loading'}
+            className="w-full py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all active:scale-[0.98] disabled:opacity-70"
+          >
+            {leadStatus === 'loading' ? (
+              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+            ) : (
+              importedFile ? 'Lancer les appels IA maintenant' : "Lancer l'appel IA gratuitement"
+            )}
+          </button>
+
+          <button
+            onClick={() => { closeModal(); onOpenBooking(); }}
+            className="w-full py-3.5 rounded-xl font-semibold text-violet-400 border border-violet-500/50 hover:bg-violet-500/10 transition-all active:scale-[0.98]"
+          >
+            Parler à un expert (15 min)
+          </button>
+
+          <p className="text-center text-xs text-gray-500">
+            Sans engagement • Résultats sous 48h
+          </p>
+        </div>
+      )}
     </div>
   );
 
@@ -2862,7 +3119,9 @@ const StatCard = ({ stat, index }) => {
 };
 
 // Testimonials Section
-const TestimonialsSection = ({ onOpenLeadForm }) => {
+const TestimonialsSection = () => {
+  const [showCapture, setShowCapture] = useState(false);
+
   const testimonials = [
     {
       name: "Jean-Pierre M.",
@@ -2988,7 +3247,7 @@ const TestimonialsSection = ({ onOpenLeadForm }) => {
           className="text-center mt-12"
         >
           <motion.button
-            onClick={() => onOpenLeadForm && onOpenLeadForm()}
+            onClick={() => setShowCapture(true)}
             whileHover={{ scale: 1.02, boxShadow: '0 0 40px rgba(59,130,246,0.4)' }}
             whileTap={{ scale: 0.98 }}
             className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold text-lg flex items-center justify-center gap-3 mx-auto shadow-lg shadow-blue-500/30"
@@ -2997,6 +3256,20 @@ const TestimonialsSection = ({ onOpenLeadForm }) => {
             Rejoindre 13 469+ entreprises
             <ArrowRight className="w-5 h-5" />
           </motion.button>
+
+          {/* InlinePhoneCapture */}
+          {showCapture && (
+            <div className="mt-4 max-w-md mx-auto">
+              <InlinePhoneCapture
+                isVisible={showCapture}
+                email=""
+                source="testimonials"
+                onClose={() => setShowCapture(false)}
+                onSuccess={() => setShowCapture(false)}
+                showEmailField={true}
+              />
+            </div>
+          )}
         </motion.div>
       </div>
     </section>
@@ -3004,10 +3277,28 @@ const TestimonialsSection = ({ onOpenLeadForm }) => {
 };
 
 // Pricing Section - ULTRA CONVERSION
-const PricingSection = ({ onOpenBooking, onOpenLeadForm }) => {
+const PricingSection = ({ onOpenBooking }) => {
   const isMobile = useIsMobile();
   const [isAnnual, setIsAnnual] = useState(false);
   const { count: companiesCount, ref: companiesRef } = useCountUp(847, 2000);
+  const [activePlan, setActivePlan] = useState(null); // 'STARTER' | 'PRO' | 'BUSINESS'
+
+  const handlePricingCTA = (planName) => {
+    setActivePlan(planName);
+    // Auto-scroll to form on mobile
+    if (isMobile) {
+      setTimeout(() => {
+        const cardEl = document.querySelector(`[data-plan="${planName}"]`);
+        if (cardEl) {
+          cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  };
+
+  const handlePricingSuccess = () => {
+    setActivePlan(null);
+  };
 
   const plans = [
     {
@@ -3167,6 +3458,7 @@ const PricingSection = ({ onOpenBooking, onOpenLeadForm }) => {
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
+              data-plan={plan.name}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -3351,7 +3643,7 @@ const PricingSection = ({ onOpenBooking, onOpenLeadForm }) => {
                       transition={isMobile ? {} : { duration: 1.5, repeat: Infinity }}
                     />
                     <button
-                      onClick={() => onOpenLeadForm && onOpenLeadForm()}
+                      onClick={() => handlePricingCTA(plan.name)}
                       className="relative w-full py-5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-lg font-bold hover:from-blue-500 hover:to-cyan-400 transition-all"
                     >
                       {plan.cta}
@@ -3359,7 +3651,7 @@ const PricingSection = ({ onOpenBooking, onOpenLeadForm }) => {
                   </motion.div>
                 ) : (
                   <motion.button
-                    onClick={() => onOpenLeadForm && onOpenLeadForm()}
+                    onClick={() => handlePricingCTA(plan.name)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="w-full py-4 rounded-xl bg-white/5 border border-white/20 text-white font-semibold hover:bg-white/10 hover:border-white/30 transition-all duration-300"
@@ -3368,10 +3660,28 @@ const PricingSection = ({ onOpenBooking, onOpenLeadForm }) => {
                   </motion.button>
                 )}
 
+                {/* InlinePhoneCapture under the CTA */}
+                {activePlan === plan.name && (
+                  <div className="mt-4">
+                    <InlinePhoneCapture
+                      isVisible={true}
+                      email=""
+                      source={`pricing_${plan.name.toLowerCase()}`}
+                      onClose={() => setActivePlan(null)}
+                      onSuccess={handlePricingSuccess}
+                      enrichmentData={{ plan: plan.name, price: isAnnual ? plan.annualPrice : plan.monthlyPrice }}
+                      submitLabel={`Activer ${plan.name}`}
+                      showEmailField={true}
+                    />
+                  </div>
+                )}
+
                 {/* Sous-texte CTA */}
-                <p className="text-gray-500 text-xs mt-3 text-center flex items-center justify-center gap-1">
-                  <span className="text-green-400">{"\u2713"}</span> {plan.ctaSubtext}
-                </p>
+                {activePlan !== plan.name && (
+                  <p className="text-gray-500 text-xs mt-3 text-center flex items-center justify-center gap-1">
+                    <span className="text-green-400">{"\u2713"}</span> {plan.ctaSubtext}
+                  </p>
+                )}
               </div>
             </motion.div>
           ))}
@@ -3586,7 +3896,52 @@ const NeedHelpSection = ({ onOpenBooking }) => {
 };
 
 // Footer
-const Footer = ({ onOpenBooking, onOpenLeadForm }) => {
+// Phone formatting for Footer
+const formatFooterPhone = (value) => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
+};
+
+const Footer = ({ onOpenBooking }) => {
+  const [footerEmail, setFooterEmail] = useState('');
+  const [footerPhone, setFooterPhone] = useState('');
+  const [footerStatus, setFooterStatus] = useState('idle'); // idle | loading | success
+  const [footerError, setFooterError] = useState('');
+
+  const handleFooterSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate email
+    if (!footerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(footerEmail)) {
+      setFooterError('Email invalide');
+      return;
+    }
+    // Validate phone
+    const digits = footerPhone.replace(/\D/g, '');
+    if (!/^0[67]\d{8}$/.test(digits)) {
+      setFooterError('Téléphone invalide');
+      return;
+    }
+
+    setFooterStatus('loading');
+    setFooterError('');
+
+    console.log('🦶 FOOTER - Lead qualifié:', {
+      email: footerEmail.trim().toLowerCase(),
+      telephone: digits,
+      source: 'footer',
+      score: 10,
+      timestamp: new Date().toISOString(),
+    });
+
+    await new Promise(r => setTimeout(r, 1000));
+    setFooterStatus('success');
+  };
+
   const links = [
     { label: "Mentions légales", href: "#" },
     { label: "CGV", href: "#" },
@@ -3631,26 +3986,64 @@ const Footer = ({ onOpenBooking, onOpenLeadForm }) => {
           </div>
         </div>
 
-        {/* Secondary CTA Section */}
+        {/* Inline CTA Form */}
         <div className="mt-10 pt-8 border-t border-white/5">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
-            <motion.button
-              onClick={() => onOpenLeadForm && onOpenLeadForm()}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold flex items-center gap-2 shadow-lg shadow-blue-500/20"
-            >
-              Démarrer maintenant
-              <ArrowRight className="w-4 h-4" />
-            </motion.button>
-            <span className="text-gray-600 hidden md:block">ou</span>
-            <button
-              onClick={() => onOpenLeadForm && onOpenLeadForm()}
-              className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2"
-            >
-              <Mail className="w-4 h-4" />
-              Pas encore prêt ? Recevoir les infos par email
-            </button>
+          <div className="max-w-md mx-auto">
+            <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-2xl p-6 border border-white/10">
+              <h3 className="text-xl font-bold text-white mb-2 text-center">
+                Prêt à récupérer votre argent ?
+              </h3>
+              <p className="text-gray-400 text-sm mb-4 text-center">
+                10 jours gratuits • Sans carte bancaire
+              </p>
+
+              {footerStatus === 'success' ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-4"
+                >
+                  <Check className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                  <p className="text-white font-semibold">C'est parti !</p>
+                  <p className="text-gray-400 text-sm">Notre équipe vous contacte sous 48h</p>
+                </motion.div>
+              ) : (
+                <form onSubmit={handleFooterSubmit} className="space-y-3">
+                  <input
+                    type="email"
+                    value={footerEmail}
+                    onChange={(e) => { setFooterEmail(e.target.value); setFooterError(''); }}
+                    placeholder="votre@email.fr"
+                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    disabled={footerStatus === 'loading'}
+                  />
+                  <input
+                    type="tel"
+                    value={footerPhone}
+                    onChange={(e) => { setFooterPhone(formatFooterPhone(e.target.value)); setFooterError(''); }}
+                    placeholder="06 __ __ __ __"
+                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    disabled={footerStatus === 'loading'}
+                    autoComplete="tel"
+                  />
+                  {footerError && <p className="text-red-400 text-xs">{footerError}</p>}
+                  <button
+                    type="submit"
+                    disabled={footerStatus === 'loading'}
+                    className="w-full py-3 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
+                  >
+                    {footerStatus === 'loading' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        Démarrer gratuit
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
 
@@ -3805,6 +4198,7 @@ const BoosterPayLanding = () => {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
   const [capturedEmail, setCapturedEmail] = useState('');
+  const [showIntermediateCTA, setShowIntermediateCTA] = useState(false);
 
   const openBooking = () => setIsBookingModalOpen(true);
   const openLeadForm = (emailParam = '') => {
@@ -3873,20 +4267,37 @@ const BoosterPayLanding = () => {
 
           {/* 7. CTA intermédiaire - Point de contact */}
           <div className="py-8 border-y border-white/5">
-            <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-gray-400">{"🤔 Des questions sur le fonctionnement ?"}</p>
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <motion.button
-                  onClick={() => openLeadForm()}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold flex items-center gap-2 shadow-lg shadow-blue-500/25"
-                >
-                  Démarrer mon essai gratuit
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-                <BookingButton variant="how-it-works" openModal={openBooking} />
+            <div className="max-w-4xl mx-auto px-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <p className="text-gray-400">{"🤔 Des questions sur le fonctionnement ?"}</p>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <motion.button
+                    onClick={() => setShowIntermediateCTA(true)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold flex items-center gap-2 shadow-lg shadow-blue-500/25"
+                  >
+                    Démarrer mon essai gratuit
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                  <BookingButton variant="how-it-works" openModal={openBooking} />
+                </div>
               </div>
+
+              {/* InlinePhoneCapture */}
+              {showIntermediateCTA && (
+                <div className="mt-4 max-w-md mx-auto">
+                  <InlinePhoneCapture
+                    isVisible={showIntermediateCTA}
+                    email=""
+                    source="intermediate_cta"
+                    onClose={() => setShowIntermediateCTA(false)}
+                    onSuccess={() => setShowIntermediateCTA(false)}
+                    showEmailField={true}
+                    submitLabel="Démarrer maintenant"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -3897,16 +4308,16 @@ const BoosterPayLanding = () => {
           <AudioDemoSection isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
 
           {/* 9. Engagement interactif (utilisateur "chaud") */}
-          <TestAISection onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
+          <TestAISection onOpenBooking={openBooking} />
 
           {/* 10. Crédibilité chiffrée */}
           <StatisticsSection />
 
           {/* 11. Validation sociale */}
-          <TestimonialsSection onOpenLeadForm={openLeadForm} />
+          <TestimonialsSection />
 
           {/* 12. L'offre */}
-          <PricingSection onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
+          <PricingSection onOpenBooking={openBooking} />
 
           {/* 13. Lever les objections */}
           <FAQSection onOpenBooking={openBooking} />
@@ -3916,7 +4327,7 @@ const BoosterPayLanding = () => {
         </main>
 
         {/* Footer */}
-        <Footer onOpenBooking={openBooking} onOpenLeadForm={openLeadForm} />
+        <Footer onOpenBooking={openBooking} />
 
         {/* Booking Modal */}
         <BookingModal isOpen={isBookingModalOpen} onClose={() => setIsBookingModalOpen(false)} />
@@ -3941,7 +4352,6 @@ const BoosterPayLanding = () => {
         {/* Mobile Sticky CTA - Hidden when modals are open */}
         <MobileStickyCTA
           onOpenBooking={openBooking}
-          onOpenLeadForm={openLeadForm}
           isHidden={isLeadFormOpen || isBookingModalOpen}
         />
       </div>

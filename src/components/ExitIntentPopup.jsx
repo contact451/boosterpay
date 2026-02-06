@@ -1,6 +1,99 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, Mail, ArrowRight, Check, Loader2, FileText } from 'lucide-react';
+import { X, Gift, Mail, ArrowRight, Check, Loader2, FileText, Phone } from 'lucide-react';
+
+// Hook to detect if keyboard is open (via visualViewport)
+const useKeyboardOpen = () => {
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+
+    const viewport = window.visualViewport;
+    const initialHeight = viewport.height;
+
+    const handleResize = () => {
+      // Keyboard is considered open if viewport shrinks significantly
+      setIsKeyboardOpen(viewport.height < initialHeight * 0.75);
+    };
+
+    viewport.addEventListener('resize', handleResize);
+    return () => viewport.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isKeyboardOpen;
+};
+
+// VALIDATION STRICTE - Mobile français UNIQUEMENT
+const validateFrenchMobile = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  return /^0[67]\d{8}$/.test(digits);
+};
+
+// Message d'erreur contextuel
+const getPhoneErrorMessage = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return 'Numéro requis';
+  if (digits.length < 10) return `Encore ${10 - digits.length} chiffre${10 - digits.length > 1 ? 's' : ''}`;
+  if (!digits.startsWith('06') && !digits.startsWith('07')) return 'Mobile uniquement (06 ou 07)';
+  if (digits.length > 10) return 'Maximum 10 chiffres';
+  return '';
+};
+
+// Statut visuel
+const getPhoneStatus = (phone) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return 'empty';
+  if (digits.length < 10) return 'incomplete';
+  if (!digits.startsWith('06') && !digits.startsWith('07')) return 'invalid';
+  if (digits.length === 10 && /^0[67]\d{8}$/.test(digits)) return 'valid';
+  return 'invalid';
+};
+
+// Auto-format phone number as user types
+const formatPhoneNumber = (value) => {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
+};
+
+// Confetti animation component
+const SuccessConfetti = ({ isMobile }) => {
+  const confettiColors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899'];
+  const count = isMobile ? 12 : 20;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {[...Array(count)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: confettiColors[i % confettiColors.length],
+            left: `${Math.random() * 100}%`,
+            top: '50%',
+          }}
+          initial={{ y: 0, opacity: 1, scale: 1 }}
+          animate={{
+            y: [0, -80 - Math.random() * 60, 150],
+            x: (Math.random() - 0.5) * 150,
+            opacity: [1, 1, 0],
+            scale: [1, 1.2, 0.5],
+            rotate: Math.random() * 720,
+          }}
+          transition={{
+            duration: 1.2 + Math.random() * 0.4,
+            ease: 'easeOut',
+            delay: Math.random() * 0.15,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -86,12 +179,18 @@ const useExitIntent = (onExit, options = {}) => {
 
 const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [step, setStep] = useState(1); // 1 = email, 2 = phone
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [phoneStatus, setPhoneStatus] = useState('empty'); // empty | incomplete | invalid | valid
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [hasShown, setHasShown] = useState(false);
   const isMobile = useIsMobile();
-  const inputRef = useRef(null);
+  const isKeyboardOpen = useKeyboardOpen();
+  const emailInputRef = useRef(null);
+  const phoneInputRef = useRef(null);
 
   // Check if popup was already shown in this session
   useEffect(() => {
@@ -116,14 +215,22 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     mobileTimeout: 60000
   });
 
-  // Auto-focus input when popup opens
+  // Auto-focus input when popup opens or step changes (with scroll on mobile)
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen) {
+      const delay = isMobile ? 400 : 300;
       setTimeout(() => {
-        inputRef.current?.focus();
-      }, 300);
+        const targetRef = step === 1 ? emailInputRef : phoneInputRef;
+        if (targetRef.current) {
+          targetRef.current.focus();
+          // Scroll input into view on mobile
+          if (isMobile) {
+            targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, delay);
     }
-  }, [isOpen]);
+  }, [isOpen, step, isMobile]);
 
   // Handle escape key
   useEffect(() => {
@@ -140,7 +247,8 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  const handleSubmit = async (e) => {
+  // Step 1: Validate email → move to step 2
+  const handleEmailSubmit = (e) => {
     e.preventDefault();
 
     if (!email) {
@@ -153,19 +261,44 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
       return;
     }
 
-    setStatus('loading');
     setError('');
+    setStep(2); // Move to phone step
+  };
+
+  // Step 2: Validate phone → final submit
+  const handlePhoneSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation STRICTE du téléphone
+    if (!validateFrenchMobile(phone)) {
+      const errorMsg = getPhoneErrorMessage(phone);
+      setPhoneError(errorMsg);
+      // Animation shake sur l'input
+      if (phoneInputRef.current) {
+        phoneInputRef.current.classList.add('animate-shake');
+        setTimeout(() => phoneInputRef.current?.classList.remove('animate-shake'), 500);
+      }
+      return;
+    }
+
+    setStatus('loading');
+    setPhoneError('');
 
     try {
-      // Log for testing
-      console.log('📧 POPUP SORTIE - Contact capturé:', {
-        email,
+      const payload = {
+        email: email.trim().toLowerCase(),
+        telephone: phone.replace(/\D/g, ''),
         source: 'exit_intent',
-        timestamp: new Date().toISOString()
-      });
+        score: 5, // Lead froid
+        timestamp: new Date().toISOString(),
+        appareil: window.innerWidth < 768 ? 'mobile' : 'desktop',
+      };
+
+      // Log for testing
+      console.log('📧 EXIT INTENT - Lead qualifié:', payload);
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       setStatus('success');
 
@@ -182,7 +315,7 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     } catch (err) {
       console.error('Error:', err);
       setStatus('error');
-      setError('Une erreur est survenue');
+      setPhoneError('Une erreur est survenue');
     }
   };
 
@@ -254,14 +387,17 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                 <X className="w-5 h-5 text-gray-400" />
               </button>
 
-              <div className="p-6 md:p-8">
+              <div className={`${isMobile && isKeyboardOpen ? 'p-4' : 'p-6 md:p-8'}`}>
                 {status === 'success' ? (
-                  // Success state
+                  // Success state with confetti
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-4"
+                    className="relative text-center py-4"
                   >
+                    {/* Confetti animation */}
+                    <SuccessConfetti isMobile={isMobile} />
+
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -271,7 +407,7 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                       <Check className="w-8 h-8 text-white" />
                     </motion.div>
                     <h3 className="text-xl font-bold text-white mb-2">
-                      C'est envoyé !
+                      Guide envoyé ! 📚
                     </h3>
                     <p className="text-gray-400 text-sm">
                       Vérifiez votre boîte mail<br/>
@@ -280,56 +416,146 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                   </motion.div>
                 ) : (
                   <>
-                    {/* Header */}
-                    <div className="text-center mb-6">
-                      {/* Gift icon */}
-                      <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: 'spring', damping: 15, delay: 0.1 }}
-                        className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30"
-                      >
-                        <Gift className="w-8 h-8 text-white" />
-                      </motion.div>
+                    {/* Header - compact when keyboard open */}
+                    <div className={`text-center ${isMobile && isKeyboardOpen ? 'mb-3' : 'mb-6'}`}>
+                      {/* Gift icon - hidden when keyboard open on mobile */}
+                      {!(isMobile && isKeyboardOpen) && (
+                        <motion.div
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: 'spring', damping: 15, delay: 0.1 }}
+                          className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30"
+                        >
+                          <Gift className="w-8 h-8 text-white" />
+                        </motion.div>
+                      )}
 
-                      <h2 className="text-2xl font-bold text-white mb-2">
+                      <h2 className={`font-bold text-white ${isMobile && isKeyboardOpen ? 'text-lg mb-1' : 'text-2xl mb-2'}`}>
                         Attendez !
                       </h2>
                       <p className="text-gray-400 text-sm md:text-base">
                         Recevez notre guide gratuit :
                       </p>
-                      <p className="text-white font-semibold mt-1 flex items-center justify-center gap-2">
-                        <FileText className="w-4 h-4 text-blue-400" />
-                        5 techniques pour récupérer vos factures impayées
-                      </p>
+                      {!(isMobile && isKeyboardOpen) && (
+                        <p className="text-white font-semibold mt-1 flex items-center justify-center gap-2">
+                          <FileText className="w-4 h-4 text-blue-400" />
+                          5 techniques pour récupérer vos factures impayées
+                        </p>
+                      )}
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                        <input
-                          ref={inputRef}
-                          type="email"
-                          value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value);
-                            setError('');
-                          }}
-                          placeholder="votre@email.fr"
-                          className={`w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border ${
-                            error
-                              ? 'border-red-500/50 focus:border-red-500'
-                              : 'border-white/10 focus:border-blue-500/50'
-                          } text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
-                            error ? 'focus:ring-red-500/20' : 'focus:ring-blue-500/20'
-                          } transition-all text-base`}
-                          disabled={status === 'loading'}
-                        />
-                        {error && (
-                          <p className="text-red-400 text-xs mt-1.5 pl-1">{error}</p>
-                        )}
-                      </div>
+                    <form onSubmit={step === 1 ? handleEmailSubmit : handlePhoneSubmit} className="space-y-4">
+                      {/* Step 1: Email input */}
+                      {step === 1 && (
+                        <div className="relative">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                          <input
+                            ref={emailInputRef}
+                            type="email"
+                            value={email}
+                            onChange={(e) => {
+                              setEmail(e.target.value);
+                              setError('');
+                            }}
+                            placeholder="votre@email.fr"
+                            className={`w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border ${
+                              error
+                                ? 'border-red-500/50 focus:border-red-500'
+                                : 'border-white/10 focus:border-blue-500/50'
+                            } text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
+                              error ? 'focus:ring-red-500/20' : 'focus:ring-blue-500/20'
+                            } transition-all text-base`}
+                            disabled={status === 'loading'}
+                          />
+                          {error && (
+                            <p className="text-red-400 text-xs mt-1.5 pl-1">{error}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Step 2: Phone input (slides in after email validation) */}
+                      {step === 2 && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        >
+                          <p className="text-emerald-400 text-sm mb-3 flex items-center gap-2">
+                            <Check className="w-4 h-4" /> Email validé !
+                          </p>
+                          <p className="text-white font-medium mb-3">
+                            Dernière étape pour recevoir le guide :
+                          </p>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                            <input
+                              ref={phoneInputRef}
+                              type="tel"
+                              inputMode="numeric"
+                              value={phone}
+                              onChange={(e) => {
+                                const formatted = formatPhoneNumber(e.target.value);
+                                setPhone(formatted);
+                                setPhoneStatus(getPhoneStatus(formatted));
+                                setPhoneError('');
+                              }}
+                              placeholder="06 __ __ __ __"
+                              className={`w-full pl-12 pr-12 py-4 rounded-xl bg-white/5 border transition-all text-base ${
+                                phoneStatus === 'valid'
+                                  ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                  : phoneStatus === 'invalid'
+                                  ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
+                                  : 'border-white/10 focus:border-blue-500/50 focus:ring-blue-500/20'
+                              } text-white placeholder-gray-500 focus:outline-none focus:ring-2`}
+                              disabled={status === 'loading'}
+                              autoComplete="tel"
+                            />
+
+                            {/* Indicateur de validité à droite */}
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                              {phoneStatus === 'valid' && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
+                                >
+                                  <Check className="w-4 h-4 text-white" />
+                                </motion.div>
+                              )}
+                              {phoneStatus === 'invalid' && phone.replace(/\D/g, '').length > 0 && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"
+                                >
+                                  <X className="w-4 h-4 text-white" />
+                                </motion.div>
+                              )}
+                              {phoneStatus === 'incomplete' && (
+                                <span className="text-xs text-gray-500 font-medium">
+                                  {10 - phone.replace(/\D/g, '').length}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Message d'aide en temps réel */}
+                          {phoneStatus === 'invalid' && phone.replace(/\D/g, '').length > 0 && (
+                            <motion.p
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="text-red-400 text-xs mt-1.5 pl-1"
+                            >
+                              {getPhoneErrorMessage(phone)}
+                            </motion.p>
+                          )}
+
+                          {phoneError && (
+                            <p className="text-red-400 text-xs mt-1.5 pl-1">{phoneError}</p>
+                          )}
+                        </motion.div>
+                      )}
 
                       <motion.button
                         type="submit"
@@ -343,6 +569,11 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                             <Loader2 className="w-5 h-5 animate-spin" />
                             Envoi...
                           </>
+                        ) : step === 1 ? (
+                          <>
+                            Continuer
+                            <ArrowRight className="w-5 h-5" />
+                          </>
                         ) : (
                           <>
                             Recevoir le guide
@@ -351,9 +582,11 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                         )}
                       </motion.button>
 
-                      <p className="text-center text-xs text-gray-500">
-                        Pas de spam • Désabonnement en 1 clic
-                      </p>
+                      {!(isMobile && isKeyboardOpen) && (
+                        <p className="text-center text-xs text-gray-500">
+                          Pas de spam • Désabonnement en 1 clic
+                        </p>
+                      )}
                     </form>
                   </>
                 )}
