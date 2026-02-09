@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Loader2, Check, Shield, Clock, Sparkles, X, Mail, ArrowRight } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { submitLead } from '../services/leadService';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -139,8 +140,6 @@ const SuccessConfetti = ({ isMobile }) => {
   );
 };
 
-// Placeholder webhook URL - replace with real Make webhook
-const WEBHOOK_URL = 'https://hook.eu2.make.com/XXXXXXXXXX';
 
 const InlinePhoneCapture = ({
   isVisible,
@@ -278,19 +277,12 @@ const InlinePhoneCapture = ({
     };
 
     try {
-      // Log for testing
-      console.log('📱 LEAD QUALIFIÉ:', payload);
-
-      // TODO: Uncomment when webhook is ready
-      // const response = await fetch(WEBHOOK_URL, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(payload)
-      // });
-      // if (!response.ok) throw new Error('Webhook failed');
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await submitLead({
+        email: emailToUse.trim().toLowerCase(),
+        phone: phone.replace(/\D/g, ''),
+        source: source,
+        ...enrichmentData
+      });
 
       setStatus('success');
 

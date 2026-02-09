@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Phone, ChevronUp, Gift, ArrowRight, Shield, Check, Sparkles, Mail, Loader2, X } from 'lucide-react';
+import { submitLead } from '../services/leadService';
 
 // VALIDATION STRICTE - Mobile français UNIQUEMENT
 const validateFrenchMobile = (phone) => {
@@ -233,19 +234,19 @@ const ExpandedMode = ({ onCollapse, onOpenBooking }) => {
     setStatus('loading');
     setError('');
 
-    const payload = {
-      email: email.trim().toLowerCase(),
-      telephone: phone.replace(/\D/g, ''),
-      source: 'mobile_cta',
-      score: 10,
-      timestamp: new Date().toISOString(),
-      appareil: 'mobile',
-    };
+    try {
+      await submitLead({
+        email: email.trim().toLowerCase(),
+        phone: phone.replace(/\D/g, ''),
+        source: 'mobile_cta'
+      });
 
-    console.log('📱 MOBILE CTA - Lead qualifié:', payload);
-
-    await new Promise(r => setTimeout(r, 1000));
-    setStatus('success');
+      setStatus('success');
+    } catch (err) {
+      console.error('Error submitting lead:', err);
+      setError('Une erreur est survenue. Réessayez.');
+      setStatus('idle');
+    }
   };
 
   const digits = phone.replace(/\D/g, '');

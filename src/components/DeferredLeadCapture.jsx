@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Send, Check, AlertCircle, ChevronDown, ChevronLeft, User, Mail, Phone, Sparkles } from 'lucide-react';
+import { submitLead } from '../services/leadService';
 
 // Liste des pays avec indicatifs
 const COUNTRY_CODES = [
@@ -206,20 +207,12 @@ const DeferredLeadCapture = ({ variant = 'default', className = '' }) => {
     setStatus('loading');
 
     try {
-      // TODO: Remplacer par ton API réelle
-      // await fetch('/api/deferred-lead', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     firstName: formData.firstName,
-      //     email: formData.email,
-      //     phone: selectedCountry.code + formData.phone.replace(/\D/g, '').replace(/^0/, ''),
-      //     source: window.location.pathname,
-      //     timestamp: new Date().toISOString()
-      //   })
-      // });
+      await submitLead({
+        email: formData.email,
+        phone: formData.phone.replace(/\D/g, ''),
+        source: 'deferred'
+      });
 
-      await new Promise(r => setTimeout(r, 1500));
       setStatus('success');
 
     } catch (err) {

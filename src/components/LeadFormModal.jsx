@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Gift, Check, Loader2, Mail, Phone, Sparkles } from 'lucide-react';
+import { submitLead } from '../services/leadService';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -176,18 +177,12 @@ const LeadFormModal = ({
 
     setStatus('loading');
 
-    // Simulate API call
     try {
-      // Log for testing (webhook will be connected later)
-      console.log('📧 CONTACT CAPTURÉ:', {
+      await submitLead({
         email,
-        telephone: phone.replace(/\s/g, ''),
-        source,
-        timestamp: new Date().toISOString()
+        phone: phone.replace(/\s/g, ''),
+        source
       });
-
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
 
       setStatus('success');
 

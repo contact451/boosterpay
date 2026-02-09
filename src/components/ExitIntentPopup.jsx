@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Gift, Mail, ArrowRight, Check, Loader2, FileText, Phone } from 'lucide-react';
+import { submitLead } from '../services/leadService';
 
 // Hook to detect if keyboard is open (via visualViewport)
 const useKeyboardOpen = () => {
@@ -285,20 +286,11 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     setPhoneError('');
 
     try {
-      const payload = {
+      await submitLead({
         email: email.trim().toLowerCase(),
-        telephone: phone.replace(/\D/g, ''),
-        source: 'exit_intent',
-        score: 5, // Lead froid
-        timestamp: new Date().toISOString(),
-        appareil: window.innerWidth < 768 ? 'mobile' : 'desktop',
-      };
-
-      // Log for testing
-      console.log('📧 EXIT INTENT - Lead qualifié:', payload);
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        phone: phone.replace(/\D/g, ''),
+        source: 'exit_intent'
+      });
 
       setStatus('success');
 
