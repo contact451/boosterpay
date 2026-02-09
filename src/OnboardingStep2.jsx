@@ -3,26 +3,45 @@ import { motion, AnimatePresence, useMotionValue, useTransform, animate } from '
 import {
   FileText, Upload, Plus, Trash2, Phone, Calendar,
   Euro, ChevronDown, ChevronUp, Headphones, Rocket,
-  CheckCircle, AlertCircle, X, HelpCircle, ArrowLeft
+  CheckCircle, AlertCircle, X, HelpCircle, User, Check,
+  Smartphone
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
-import DeferredLeadCapture from './components/DeferredLeadCapture';
 
 // === ANIMATIONS ===
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
 };
 
 const shake = {
   x: [0, -10, 10, -10, 10, 0],
   transition: { duration: 0.4 }
 };
+
+// === SECTEURS ===
+const SECTEURS = [
+  'Électricien',
+  'Plombier',
+  'BTP / Construction',
+  'Menuiserie / Charpente',
+  'Peinture / Décoration',
+  'Chauffage / Climatisation',
+  'Commerce',
+  'Services',
+  'Transport / Logistique',
+  'Agriculture',
+  'Santé',
+  'Restauration',
+  'Consulting / Freelance',
+  'Autre'
+];
 
 // === HOOK : COMPTEUR ANIMÉ ===
 function useCountUp(target, duration = 600) {
@@ -51,11 +70,98 @@ function useIsMobile() {
   return isMobile;
 }
 
+// === VALIDATION TÉLÉPHONE FRANÇAIS ===
+function validateFrenchPhone(phone) {
+  const digits = phone.replace(/\D/g, '');
+  return /^0[1-79]\d{8}$/.test(digits);
+}
+
+function isMobilePhone(phone) {
+  const digits = phone.replace(/\D/g, '');
+  return /^0[67]\d{8}$/.test(digits);
+}
+
+function isFixedPhone(phone) {
+  const digits = phone.replace(/\D/g, '');
+  return /^0[1-59]\d{8}$/.test(digits);
+}
+
+function formatPhoneInput(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
+  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
+}
+
+function getPhoneStatus(phone) {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return 'empty';
+  if (digits.length < 10) return 'incomplete';
+  if (isMobilePhone(phone)) return 'mobile';
+  if (isFixedPhone(phone)) return 'fixed';
+  return 'invalid';
+}
+
+function getPhoneMessage(phone) {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return '';
+  if (digits.length < 10) return `Encore ${10 - digits.length} chiffre${10 - digits.length > 1 ? 's' : ''}`;
+  if (isMobilePhone(phone)) return 'Mobile — Idéal pour les appels IA';
+  if (isFixedPhone(phone)) return 'Fixe accepté — Mobile recommandé';
+  return 'Numéro invalide';
+}
+
 // === MASQUER TÉLÉPHONE ===
 function maskPhone(phone) {
   const digits = phone.replace(/\D/g, '');
   if (digits.length < 4) return phone;
   return digits.slice(0, 2) + ' ** ** ' + digits.slice(-2);
+}
+
+// === SÉCURITÉ FICHIERS ===
+function validateFileSecure(file) {
+  const MAX_SIZE = 10 * 1024 * 1024; // 10 Mo
+  if (file.size > MAX_SIZE) {
+    return { valid: false, message: `Fichier trop volumineux (${(file.size / 1024 / 1024).toFixed(1)} Mo). Maximum : 10 Mo` };
+  }
+
+  const allowedExtensions = ['csv', 'xlsx', 'xls'];
+  const parts = file.name.split('.');
+  const ext = parts.pop().toLowerCase();
+
+  if (!allowedExtensions.includes(ext)) {
+    return { valid: false, message: `Extension .${ext} non autorisée. Formats acceptés : .csv, .xlsx, .xls` };
+  }
+
+  // Double extension (ex: factures.exe.csv)
+  if (parts.length > 1) {
+    const suspiciousExts = ['exe', 'bat', 'cmd', 'scr', 'pif', 'js', 'vbs', 'ps1', 'sh', 'php', 'html', 'htm'];
+    for (const part of parts.slice(1)) {
+      if (suspiciousExts.includes(part.toLowerCase())) {
+        return { valid: false, message: 'Fichier suspect détecté (double extension). Veuillez vérifier votre fichier.' };
+      }
+    }
+  }
+
+  // Caractères dangereux dans le nom
+  const dangerousChars = /[<>:"|?*\\]/;
+  if (dangerousChars.test(file.name)) {
+    return { valid: false, message: 'Le nom du fichier contient des caractères non autorisés.' };
+  }
+
+  return { valid: true };
+}
+
+function sanitizeCSVValue(value) {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  // Bloque les formules injectées (CSV injection)
+  if (/^[=+\-@]/.test(trimmed)) {
+    return trimmed.replace(/^[=+\-@]+/, '');
+  }
+  return trimmed;
 }
 
 // === CONFETTI SIMPLE ===
@@ -85,27 +191,296 @@ function ConfettiEffect({ trigger }) {
   );
 }
 
+// === FOND ANIMÉ ===
+function AnimatedBackground() {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a] via-[#0a0f1a] to-[#050608]" />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, rgba(59,130,246,0.25) 0%, transparent 50%)' }} />
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 100% 60% at 50% 100%, rgba(139,92,246,0.2) 0%, transparent 40%)' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a] via-[#0a0f1a] to-[#050608]" />
+
+      {/* Orbe cyan/bleu en haut */}
+      <motion.div
+        className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 60%)', filter: 'blur(60px)' }}
+        animate={{ x: [0, 40, 0], y: [0, 20, 0] }}
+        transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Orbe violet au centre */}
+      <motion.div
+        className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 60%)', filter: 'blur(50px)' }}
+        animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Orbe cyan en bas */}
+      <motion.div
+        className="absolute -bottom-32 left-1/4 w-[350px] h-[350px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 60%)', filter: 'blur(50px)' }}
+        animate={{ x: [0, 50, 0] }}
+        transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut' }}
+      />
+    </div>
+  );
+}
+
 // === BARRE DE PROGRESSION ===
 function ProgressBar() {
-  const steps = ['Inscription', 'Import factures', 'Lancement IA'];
+  const steps = [
+    { label: 'Inscription', done: true },
+    { label: 'Import factures', active: true },
+    { label: 'Lancement IA', done: false },
+  ];
+
   return (
-    <div className="flex items-center gap-2 w-full max-w-md mx-auto mb-8">
-      {steps.map((label, i) => (
-        <div key={label} className="flex-1 flex flex-col items-center gap-1">
+    <div className="flex items-center gap-1 md:gap-2 w-full max-w-md mx-auto mb-8">
+      {steps.map((step, i) => (
+        <div key={step.label} className="flex-1 flex flex-col items-center gap-1.5">
           <div className="w-full h-2 rounded-full overflow-hidden bg-white/10">
             <motion.div
               className={`h-full rounded-full ${
-                i < 1 ? 'bg-green-500' : i === 1 ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 'bg-white/10'
+                step.done
+                  ? 'bg-green-500'
+                  : step.active
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500'
+                    : 'bg-white/10'
               }`}
               initial={{ width: 0 }}
-              animate={{ width: i <= 1 ? '100%' : '0%' }}
+              animate={{ width: step.done || step.active ? '100%' : '0%' }}
               transition={{ duration: 0.8, delay: i * 0.2 }}
             />
           </div>
-          <span className={`text-xs ${i <= 1 ? 'text-cyan-400' : 'text-gray-500'}`}>{label}</span>
+          <span className={`text-[11px] flex items-center gap-1 ${
+            step.done ? 'text-green-400' : step.active ? 'text-cyan-400' : 'text-gray-500'
+          }`}>
+            {step.done && <Check className="w-3 h-3" />}
+            {step.label}
+          </span>
         </div>
       ))}
     </div>
+  );
+}
+
+// === SECTION PROFIL ===
+function ProfileSection({ profile, setProfile, isCollapsed, setIsCollapsed }) {
+  const isComplete = profile.prenom.trim() && profile.nom.trim() && profile.entreprise.trim() && profile.secteur;
+
+  const handleValidate = () => {
+    if (isComplete) setIsCollapsed(true);
+  };
+
+  return (
+    <motion.div
+      variants={fadeInUp}
+      initial="hidden"
+      animate="visible"
+      transition={{ delay: 0.15 }}
+      className="mb-8"
+    >
+      <div
+        className={`bg-white/[0.03] backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
+          isCollapsed
+            ? 'border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.1)]'
+            : 'border-white/[0.06] hover:border-cyan-500/20'
+        }`}
+      >
+        {/* Header cliquable quand collapsé */}
+        <button
+          type="button"
+          onClick={() => { if (isCollapsed) setIsCollapsed(false); }}
+          className={`w-full flex items-center gap-3 p-5 md:p-6 text-left ${
+            isCollapsed ? 'cursor-pointer' : 'cursor-default'
+          }`}
+          aria-expanded={!isCollapsed}
+        >
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+            isCollapsed
+              ? 'bg-green-500/20'
+              : 'bg-gradient-to-br from-cyan-500 to-blue-600'
+          }`}>
+            {isCollapsed ? (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+              >
+                <CheckCircle className="w-5 h-5 text-green-400" />
+              </motion.div>
+            ) : (
+              <User className="w-5 h-5 text-white" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-white">Complétez votre profil</h2>
+            {isCollapsed ? (
+              <p className="text-sm text-green-400 truncate">
+                {profile.prenom} {profile.nom} — {profile.entreprise} — {profile.secteur}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400">Nécessaire avant d&apos;ajouter vos factures</p>
+            )}
+          </div>
+          {isCollapsed && (
+            <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
+          )}
+        </button>
+
+        {/* Formulaire */}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="px-5 pb-5 md:px-6 md:pb-6 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Prénom */}
+                  <div>
+                    <label htmlFor="profile-prenom" className="block text-sm text-gray-300 mb-1.5">
+                      Prénom
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="profile-prenom"
+                        type="text"
+                        placeholder="Jean"
+                        value={profile.prenom}
+                        onChange={(e) => setProfile((p) => ({ ...p, prenom: e.target.value }))}
+                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors pr-10"
+                      />
+                      {profile.prenom.trim() && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        >
+                          <Check className="w-4 h-4 text-green-400" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Nom */}
+                  <div>
+                    <label htmlFor="profile-nom" className="block text-sm text-gray-300 mb-1.5">
+                      Nom
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="profile-nom"
+                        type="text"
+                        placeholder="Dupont"
+                        value={profile.nom}
+                        onChange={(e) => setProfile((p) => ({ ...p, nom: e.target.value }))}
+                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors pr-10"
+                      />
+                      {profile.nom.trim() && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        >
+                          <Check className="w-4 h-4 text-green-400" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Entreprise */}
+                  <div>
+                    <label htmlFor="profile-entreprise" className="block text-sm text-gray-300 mb-1.5">
+                      Entreprise
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="profile-entreprise"
+                        type="text"
+                        placeholder="BoosterPay SAS"
+                        value={profile.entreprise}
+                        onChange={(e) => setProfile((p) => ({ ...p, entreprise: e.target.value }))}
+                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors pr-10"
+                      />
+                      {profile.entreprise.trim() && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        >
+                          <Check className="w-4 h-4 text-green-400" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Secteur */}
+                  <div>
+                    <label htmlFor="profile-secteur" className="block text-sm text-gray-300 mb-1.5">
+                      Secteur d&apos;activité
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="profile-secteur"
+                        value={profile.secteur}
+                        onChange={(e) => setProfile((p) => ({ ...p, secteur: e.target.value }))}
+                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors appearance-none cursor-pointer pr-10"
+                      >
+                        <option value="" disabled className="bg-[#0a0f1a] text-gray-400">Sélectionnez...</option>
+                        {SECTEURS.map((s) => (
+                          <option key={s} value={s} className="bg-[#0a0f1a] text-white">{s}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      {profile.secteur && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="absolute right-9 top-1/2 -translate-y-1/2"
+                        >
+                          <Check className="w-4 h-4 text-green-400" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bouton valider profil */}
+                <motion.button
+                  type="button"
+                  onClick={handleValidate}
+                  disabled={!isComplete}
+                  whileHover={isComplete ? { scale: 1.02 } : {}}
+                  whileTap={isComplete ? { scale: 0.98 } : {}}
+                  className={`w-full md:w-auto md:ml-auto md:flex py-3 px-6 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                    isComplete
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40'
+                      : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Valider mon profil
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
 
@@ -267,21 +642,38 @@ function InvoiceCard({ invoice, onDelete, index }) {
       whileHover={{ scale: 1.02, y: -2 }}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold text-sm truncate">{invoice.name}</p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
-          <span className="flex items-center gap-1">
-            <Phone className="w-3 h-3" />
-            {maskPhone(invoice.phone)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Euro className="w-3 h-3" />
-            {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
-          </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
-          </span>
+        <div className="flex items-center gap-2">
+          <p className="text-white font-semibold text-sm truncate">{invoice.name || 'Sans nom'}</p>
+          {invoice.imported && (
+            <span className="px-2 py-0.5 text-[10px] font-medium bg-violet-500/20 text-violet-400 rounded-full shrink-0">
+              Importé
+            </span>
+          )}
         </div>
+
+        {/* Afficher les détails UNIQUEMENT si pas importé */}
+        {!invoice.imported && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
+            <span className="flex items-center gap-1">
+              {invoice.phoneType === 'mobile' ? (
+                <Smartphone className="w-3 h-3 text-cyan-400" />
+              ) : (
+                <Phone className="w-3 h-3 text-orange-400" />
+              )}
+              {maskPhone(invoice.phone)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Euro className="w-3 h-3" />
+              {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
+            </span>
+            {invoice.dueDate && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {confirmDelete ? (
@@ -289,7 +681,6 @@ function InvoiceCard({ invoice, onDelete, index }) {
           <button
             onClick={() => onDelete(index)}
             className="px-3 py-1 rounded-lg bg-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/30 transition-colors"
-            aria-label="Confirmer la suppression"
           >
             Supprimer
           </button>
@@ -315,6 +706,11 @@ function InvoiceCard({ invoice, onDelete, index }) {
 
 // === COMPOSANT PRINCIPAL ===
 export default function OnboardingStep2() {
+  // Profile state
+  const [profile, setProfile] = useState({ prenom: '', nom: '', entreprise: '', secteur: '' });
+  const [profileCollapsed, setProfileCollapsed] = useState(false);
+
+  // Invoice state
   const [invoices, setInvoices] = useState([]);
   const [formData, setFormData] = useState({ name: '', phone: '', amount: '', dueDate: '' });
   const [isDragging, setIsDragging] = useState(false);
@@ -322,54 +718,69 @@ export default function OnboardingStep2() {
   const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
   const [formError, setFormError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [uploadState, setUploadState] = useState('default'); // default | uploading | success | error
+  const [uploadState, setUploadState] = useState('default');
   const [uploadMessage, setUploadMessage] = useState('');
+  const [hasImportedInvoices, setHasImportedInvoices] = useState(false);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const totalAmount = invoices.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
-  const canLaunch = invoices.length > 0;
+  const canLaunch = invoices.length > 0 && profileCollapsed;
   const animatedCount = useCountUp(invoices.length);
   const animatedTotal = useCountUp(totalAmount);
 
-  // Validation et ajout d'une facture
+  // Champs remplis dans le formulaire facture
+  const fieldsCompleted = [formData.name, formData.phone, formData.amount, formData.dueDate].filter(Boolean).length;
+
+  // Ajout facture
   const handleAddInvoice = useCallback((e) => {
     e.preventDefault();
     const { name, phone, amount, dueDate } = formData;
 
-    if (!name.trim() || !phone.trim() || !amount || !dueDate) {
+    if (!name.trim() || !validateFrenchPhone(phone) || !amount || !dueDate) {
       setFormError(true);
       setTimeout(() => setFormError(false), 500);
       return;
     }
 
-    setInvoices((prev) => [...prev, { ...formData, id: Date.now() }]);
+    setInvoices((prev) => [...prev, {
+      ...formData,
+      id: Date.now(),
+      phoneType: isMobilePhone(phone) ? 'mobile' : 'fixed',
+    }]);
     setFormData({ name: '', phone: '', amount: '', dueDate: '' });
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 1200);
   }, [formData]);
 
-  // Suppression d'une facture
+  // Suppression facture
   const handleDeleteInvoice = useCallback((index) => {
-    setInvoices((prev) => prev.filter((_, i) => i !== index));
+    setInvoices((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 0) setHasImportedInvoices(false);
+      return updated;
+    });
   }, []);
 
-  // Parse CSV
+  // Parse CSV — mapping intelligent et permissif
   const processFile = useCallback((file) => {
     if (!file) return;
 
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (!['csv', 'xlsx', 'xls'].includes(ext)) {
+    // Validation sécurité
+    const security = validateFileSecure(file);
+    if (!security.valid) {
       setUploadState('error');
-      setUploadMessage('Format non supporté. Utilisez .csv, .xlsx ou .xls');
-      setTimeout(() => setUploadState('default'), 3000);
+      setUploadMessage(security.message);
+      setTimeout(() => setUploadState('default'), 4000);
       return;
     }
 
+    const ext = file.name.split('.').pop().toLowerCase();
     if (ext === 'xlsx' || ext === 'xls') {
       setUploadState('error');
-      setUploadMessage('Pour les fichiers Excel, exportez d\'abord en CSV depuis votre logiciel');
+      setUploadMessage("Pour les fichiers Excel, exportez d'abord en CSV");
       setTimeout(() => setUploadState('default'), 4000);
       return;
     }
@@ -382,26 +793,68 @@ export default function OnboardingStep2() {
       skipEmptyLines: true,
       complete: (results) => {
         const imported = [];
-        for (const row of results.data) {
-          const name = row.Nom || row.nom || row.Client || row.client || row.Name || row.name || '';
-          const phone = row.Tel || row.tel || row.Téléphone || row.téléphone || row.Phone || row.phone || '';
-          const amount = row.Montant || row.montant || row.Amount || row.amount || '';
-          const dueDate = row.Échéance || row.échéance || row.Echeance || row.echeance || row.Date || row.date || row.DueDate || '';
 
-          if (name && phone && amount) {
-            imported.push({ name: name.trim(), phone: phone.trim(), amount: String(amount).trim(), dueDate: dueDate.trim(), id: Date.now() + Math.random() });
+        const normalize = (str) => str?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') || '';
+
+        const findColumn = (row, patterns) => {
+          for (const key of Object.keys(row)) {
+            const normalizedKey = normalize(key);
+            for (const pattern of patterns) {
+              if (normalizedKey.includes(normalize(pattern))) {
+                return row[key];
+              }
+            }
+          }
+          return '';
+        };
+
+        for (const row of results.data) {
+          const rawName = findColumn(row, ['nom', 'client', 'name', 'société', 'societe', 'entreprise', 'raison', 'destinataire', 'debiteur', 'contact']) ||
+                       Object.values(row).find(v => v && typeof v === 'string' && v.length > 2 && !/^\d+$/.test(v)) || '';
+
+          const rawPhone = findColumn(row, ['tel', 'telephone', 'phone', 'mobile', 'portable', 'gsm', 'numero', 'num']) ||
+                        Object.values(row).find(v => v && /^0[1-9]/.test(String(v).replace(/\D/g, ''))) || '';
+
+          const rawAmount = findColumn(row, ['montant', 'amount', 'somme', 'total', 'ttc', 'ht', 'prix', 'valeur', 'solde', 'reste', 'du', 'impaye']) ||
+                         Object.values(row).find(v => v && /^\d+([.,]\d+)?$/.test(String(v).replace(/\s/g, ''))) || '';
+
+          const rawDueDate = findColumn(row, ['echeance', 'date', 'due', 'limit', 'deadline', 'paiement', 'reglement']) ||
+                          Object.values(row).find(v => v && /\d{1,4}[/\-.]?\d{1,2}[/\-.]?\d{1,4}/.test(String(v))) || '';
+
+          // Sanitize contre l'injection CSV
+          const name = sanitizeCSVValue(String(rawName));
+          const phone = sanitizeCSVValue(String(rawPhone));
+          const amount = sanitizeCSVValue(String(rawAmount));
+          const dueDate = sanitizeCSVValue(String(rawDueDate));
+
+          if (name || phone || amount) {
+            imported.push({
+              name: name.trim(),
+              phone: phone.trim(),
+              amount: amount.replace(/[^\d.,]/g, '').replace(',', '.').trim() || '0',
+              dueDate: dueDate.trim(),
+              id: Date.now() + Math.random(),
+              imported: true,
+              needsReview: !name || !phone || !amount
+            });
           }
         }
 
         if (imported.length > 0) {
           setInvoices((prev) => [...prev, ...imported]);
+          setHasImportedInvoices(true);
           setUploadState('success');
-          setUploadMessage(`${imported.length} facture(s) importée(s) avec succès`);
+          const needsReviewCount = imported.filter(i => i.needsReview).length;
+          if (needsReviewCount > 0) {
+            setUploadMessage(`${imported.length} ligne(s) importée(s) — ${needsReviewCount} à compléter`);
+          } else {
+            setUploadMessage(`${imported.length} facture(s) importée(s) avec succès !`);
+          }
         } else {
           setUploadState('error');
-          setUploadMessage('Aucune facture valide trouvée. Vérifiez les colonnes : Nom, Tel, Montant, Échéance');
+          setUploadMessage('Fichier vide ou format non reconnu');
         }
-        setTimeout(() => setUploadState('default'), 3000);
+        setTimeout(() => setUploadState('default'), 4000);
       },
       error: () => {
         setUploadState('error');
@@ -411,122 +864,127 @@ export default function OnboardingStep2() {
     });
   }, []);
 
-  // Drag & Drop handlers
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
+  // Drag & Drop
+  const handleDragOver = useCallback((e) => { e.preventDefault(); setIsDragging(true); }, []);
+  const handleDragLeave = useCallback((e) => { e.preventDefault(); setIsDragging(false); }, []);
   const handleDrop = useCallback((e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    processFile(file);
+    processFile(e.dataTransfer.files[0]);
   }, [processFile]);
-
   const handleFileInput = useCallback((e) => {
-    const file = e.target.files[0];
-    processFile(file);
+    processFile(e.target.files[0]);
     e.target.value = '';
   }, [processFile]);
 
   // Lancement IA
   const handleLaunch = useCallback(() => {
-    console.log('Lancement des appels IA avec', invoices.length, 'factures pour un total de', totalAmount, '€');
-    console.log('Factures :', invoices);
-  }, [invoices, totalAmount]);
+    const payload = {
+      lead: {
+        prenom: profile.prenom,
+        nom: profile.nom,
+        entreprise: profile.entreprise,
+        secteur: profile.secteur,
+      },
+      factures: invoices.map((inv) => ({
+        clientName: inv.name,
+        phone: inv.phone,
+        amount: parseFloat(inv.amount) || 0,
+        dueDate: inv.dueDate,
+        imported: inv.imported || false,
+      })),
+      totalInvoices: invoices.length,
+      source: 'onboarding_step2',
+    };
+    console.log('=== PAYLOAD ONBOARDING STEP 2 ===');
+    console.log(JSON.stringify(payload, null, 2));
+
+    // TODO: Envoyer au backend ici
+
+    // Rediriger vers la page de succès
+    navigate('/onboarding/success');
+  }, [invoices, profile, navigate]);
 
   return (
-    <div className="min-h-screen bg-[#0a0f1a] text-white">
-      {/* Fond décoratif */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen text-white">
+      <AnimatedBackground />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-4 py-8 pb-32">
-        {/* Navigation retour */}
-        <motion.a
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+      <div className={`relative z-10 max-w-5xl mx-auto px-4 py-6 md:py-8 ${isMobile ? 'pb-28' : 'pb-16'}`}>
+        {/* Header : Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-6"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Retour
-        </motion.a>
+          <a href="/" className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
+            Booster<span className="text-blue-500">Pay</span>
+          </a>
+        </motion.div>
 
-        {/* Header */}
+        {/* Progress bar + titre */}
         <motion.div
           variants={fadeInUp}
           initial="hidden"
           animate="visible"
-          className="text-center mb-10"
+          className="text-center mb-8"
         >
           <ProgressBar />
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-4xl font-bold mb-3">
             Importez vos{' '}
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
               factures impayées
             </span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-xl mx-auto">
+          <p className="text-gray-400 md:text-lg max-w-xl mx-auto">
             Notre IA va contacter vos clients pour récupérer vos paiements
           </p>
         </motion.div>
 
-        {/* Social proof */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex items-center justify-center gap-3 mb-8"
-        >
-          <div className="flex -space-x-2">
-            {['👨‍💼', '👩‍💻', '👨‍🔧', '👩‍💼'].map((emoji, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500/30 to-pink-500/30 border-2 border-[#0a0f1a] flex items-center justify-center text-sm"
-              >
-                {emoji}
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-gray-400 text-sm">
-              <span className="text-green-400 font-semibold">127 entreprises</span> utilisent BoosterPay ce mois
-            </span>
-          </div>
-        </motion.div>
+        {/* Section Profil */}
+        <ProfileSection
+          profile={profile}
+          setProfile={setProfile}
+          isCollapsed={profileCollapsed}
+          setIsCollapsed={setProfileCollapsed}
+        />
 
         {/* Compteur dynamique */}
-        {invoices.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 text-center"
-          >
-            <div className="inline-flex items-center gap-3 bg-white/[0.03] backdrop-blur-xl border border-cyan-500/30 rounded-2xl px-6 py-3">
-              <span className="text-2xl">🎯</span>
-              <span className="text-white font-semibold">
-                {animatedCount} facture{invoices.length > 1 ? 's' : ''} ajoutée{invoices.length > 1 ? 's' : ''}
-              </span>
-              <span className="text-gray-500">—</span>
-              <span className="text-cyan-400 font-bold">
-                Total à récupérer : {animatedTotal.toLocaleString('fr-FR')} €
-              </span>
-            </div>
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {invoices.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-8 text-center"
+            >
+              <div className="inline-flex items-center gap-3 bg-white/[0.03] backdrop-blur-xl border border-cyan-500/30 rounded-2xl px-5 py-3 flex-wrap justify-center">
+                <span className="text-cyan-400 font-bold text-lg">
+                  {animatedCount} facture{invoices.length > 1 ? 's' : ''}
+                </span>
+                {hasImportedInvoices ? (
+                  <>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-orange-400 text-sm font-medium">
+                      Vérifiez les données importées
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-white font-semibold">
+                      {animatedTotal.toLocaleString('fr-FR')} € à récupérer
+                    </span>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Sections principales */}
-        <div className="grid md:grid-cols-2 gap-6 mb-10">
+        {/* 2 colonnes : Ajout manuel + Import CSV */}
+        <div className={`grid md:grid-cols-2 gap-6 mb-8 transition-opacity duration-300 ${
+          !profileCollapsed ? 'opacity-40 pointer-events-none' : ''
+        }`}>
           {/* Formulaire ajout manuel */}
           <motion.div
             variants={fadeInUp}
@@ -539,7 +997,7 @@ export default function OnboardingStep2() {
             <motion.div
               animate={formError ? shake : {}}
               ref={formRef}
-              className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 hover:border-cyan-500/30 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all duration-300 group"
+              className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-5 md:p-6 hover:border-cyan-500/30 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all duration-300"
             >
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
@@ -552,31 +1010,25 @@ export default function OnboardingStep2() {
               </div>
 
               {/* Progress indicator */}
-              {(() => {
-                const fieldsCompleted = [formData.name, formData.phone, formData.amount, formData.dueDate].filter(Boolean).length;
-                const progressPercent = (fieldsCompleted / 4) * 100;
-                return (
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs text-gray-500">Progression</span>
-                      <span className="text-xs text-cyan-400 font-medium">{fieldsCompleted}/4 champs</span>
-                    </div>
-                    <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progressPercent}%` }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs text-gray-500">Progression</span>
+                  <span className="text-xs text-cyan-400 font-medium">{fieldsCompleted}/4 champs</span>
+                </div>
+                <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(fieldsCompleted / 4) * 100}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              </div>
 
               <form onSubmit={handleAddInvoice} className="space-y-4">
                 <div>
                   <label htmlFor="client-name" className="block text-sm text-gray-300 mb-1">
-                    Nom du client
+                    Nom du client débiteur
                   </label>
                   <input
                     id="client-name"
@@ -585,23 +1037,121 @@ export default function OnboardingStep2() {
                     value={formData.name}
                     onChange={(e) => setFormData((f) => ({ ...f, name: e.target.value }))}
                     className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
-                    required
                   />
                 </div>
 
+                {/* Téléphone du client - AMÉLIORÉ */}
                 <div>
                   <label htmlFor="client-phone" className="block text-sm text-gray-300 mb-1">
-                    Téléphone
+                    Téléphone du débiteur
                   </label>
-                  <input
-                    id="client-phone"
-                    type="tel"
-                    placeholder="06 12 34 56 78"
-                    value={formData.phone}
-                    onChange={(e) => setFormData((f) => ({ ...f, phone: e.target.value }))}
-                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
-                    required
-                  />
+
+                  {/* Indication priorité */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                      <Smartphone className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="text-xs text-cyan-400 font-medium">Mobile préféré</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+                      <Phone className="w-3.5 h-3.5 text-gray-500" />
+                      <span className="text-xs text-gray-500">Fixe accepté</span>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      id="client-phone"
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="06 12 34 56 78"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        const formatted = formatPhoneInput(e.target.value);
+                        setFormData((f) => ({ ...f, phone: formatted }));
+                      }}
+                      className={`w-full bg-white/[0.05] border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all pr-12 ${
+                        getPhoneStatus(formData.phone) === 'mobile'
+                          ? 'border-cyan-500/50 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30'
+                          : getPhoneStatus(formData.phone) === 'fixed'
+                          ? 'border-orange-500/50 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30'
+                          : getPhoneStatus(formData.phone) === 'invalid'
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/[0.1] focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30'
+                      }`}
+                    />
+
+                    {/* Indicateur visuel à droite */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {getPhoneStatus(formData.phone) === 'mobile' && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center"
+                        >
+                          <Smartphone className="w-3.5 h-3.5 text-white" />
+                        </motion.div>
+                      )}
+                      {getPhoneStatus(formData.phone) === 'fixed' && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center"
+                        >
+                          <Phone className="w-3.5 h-3.5 text-white" />
+                        </motion.div>
+                      )}
+                      {getPhoneStatus(formData.phone) === 'invalid' && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"
+                        >
+                          <X className="w-3.5 h-3.5 text-white" />
+                        </motion.div>
+                      )}
+                      {getPhoneStatus(formData.phone) === 'incomplete' && (
+                        <span className="text-xs text-gray-500 font-medium">
+                          {10 - formData.phone.replace(/\D/g, '').length}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Message de feedback */}
+                  {formData.phone && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`text-xs mt-1.5 flex items-center gap-1 ${
+                        getPhoneStatus(formData.phone) === 'mobile'
+                          ? 'text-cyan-400'
+                          : getPhoneStatus(formData.phone) === 'fixed'
+                          ? 'text-orange-400'
+                          : getPhoneStatus(formData.phone) === 'invalid'
+                          ? 'text-red-400'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      {getPhoneMessage(formData.phone)}
+                    </motion.p>
+                  )}
+
+                  {/* Info supplémentaire si fixe */}
+                  {getPhoneStatus(formData.phone) === 'fixed' && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-2 p-2 rounded-lg bg-orange-500/10 border border-orange-500/20"
+                    >
+                      <p className="text-xs text-orange-300 flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                        <span>
+                          Le mobile (06/07) est recommandé pour de meilleurs résultats.
+                          L&apos;IA peut quand même appeler sur un fixe.
+                        </span>
+                      </p>
+                    </motion.div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -618,7 +1168,6 @@ export default function OnboardingStep2() {
                       value={formData.amount}
                       onChange={(e) => setFormData((f) => ({ ...f, amount: e.target.value }))}
                       className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
-                      required
                     />
                   </div>
                   <div>
@@ -635,7 +1184,6 @@ export default function OnboardingStep2() {
                         value={formData.dueDate}
                         onChange={(e) => setFormData((f) => ({ ...f, dueDate: e.target.value }))}
                         className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                        required
                       />
                       <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
@@ -643,13 +1191,13 @@ export default function OnboardingStep2() {
                 </div>
 
                 {(() => {
-                  const isFormValid = formData.name && formData.phone && formData.amount && formData.dueDate;
+                  const isFormValid = formData.name && validateFrenchPhone(formData.phone) && formData.amount && formData.dueDate;
                   return (
                     <motion.button
                       type="submit"
                       disabled={!isFormValid}
-                      animate={isFormValid ? { scale: [1, 1.02, 1] } : {}}
-                      transition={isFormValid ? { duration: 2, repeat: Infinity } : {}}
+                      whileHover={isFormValid ? { scale: 1.02 } : {}}
+                      whileTap={isFormValid ? { scale: 0.98 } : {}}
                       className={`
                         w-full py-3 rounded-xl font-semibold text-white transition-all
                         ${isFormValid
@@ -660,7 +1208,7 @@ export default function OnboardingStep2() {
                     >
                       <span className="flex items-center justify-center gap-2">
                         <Plus className="w-4 h-4" />
-                        Ajouter à ma liste de relance ✨
+                        Ajouter cette facture +
                       </span>
                     </motion.button>
                   );
@@ -676,18 +1224,18 @@ export default function OnboardingStep2() {
             animate="visible"
             transition={{ delay: 0.3 }}
           >
-            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-6 h-full flex flex-col hover:border-violet-500/30 hover:shadow-[0_0_30px_rgba(124,58,237,0.15)] transition-all duration-300 group">
+            <div className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-5 md:p-6 h-full flex flex-col hover:border-violet-500/30 hover:shadow-[0_0_30px_rgba(124,58,237,0.15)] transition-all duration-300">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-600 flex items-center justify-center">
                   <Upload className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Import CSV</h2>
+                  <h2 className="text-lg font-bold text-white">Import CSV / Excel</h2>
                   <p className="text-xs text-gray-400">Importez plusieurs factures d&apos;un coup</p>
                 </div>
               </div>
 
-              {/* Zone Drag & Drop avec bordure animée */}
+              {/* Zone Drag & Drop */}
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -704,12 +1252,11 @@ export default function OnboardingStep2() {
                     : uploadState === 'success'
                       ? 'border-2 border-green-500/50 bg-green-500/5'
                       : uploadState === 'error'
-                        ? 'border-2 border-red-500/50 bg-red-500/5'
+                        ? 'border-2 border-orange-500/50 bg-orange-500/5'
                         : 'animated-border-dashed hover:bg-violet-500/5'
                   }
                 `}
               >
-                {/* Inner glow effect */}
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-violet-500/5 via-transparent to-pink-500/5 pointer-events-none" />
 
                 <input
@@ -737,8 +1284,9 @@ export default function OnboardingStep2() {
                   </>
                 ) : uploadState === 'error' ? (
                   <>
-                    <AlertCircle className="w-8 h-8 text-red-400" />
-                    <p className="text-sm text-red-400 text-center px-4">{uploadMessage}</p>
+                    <AlertCircle className="w-8 h-8 text-orange-400" />
+                    <p className="text-sm text-orange-400 text-center px-4">{uploadMessage}</p>
+                    <p className="text-xs text-gray-500 mt-2">Essayez un autre format ou ajoutez manuellement</p>
                   </>
                 ) : (
                   <>
@@ -752,28 +1300,16 @@ export default function OnboardingStep2() {
                     <div className="text-center relative z-10">
                       <p className="text-sm text-gray-300">Plusieurs factures ?</p>
                       <p className="text-sm text-violet-400 font-semibold">Glissez votre fichier ici</p>
-                      <p className="text-xs text-gray-500 mt-1">.csv, .xlsx, .xls</p>
+                      <p className="text-xs text-gray-500 mt-1">.csv, .xlsx — On s&apos;adapte à votre format !</p>
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Panneau aide export */}
               <ExportHelpPanel isOpen={isHelpOpen} onToggle={() => setIsHelpOpen((o) => !o)} />
             </div>
           </motion.div>
         </div>
-
-        {/* Capture lead différée */}
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.6 }}
-          className="mt-6"
-        >
-          <DeferredLeadCapture variant="default" />
-        </motion.div>
 
         {/* Liste des factures */}
         <AnimatePresence>
@@ -808,33 +1344,70 @@ export default function OnboardingStep2() {
           )}
         </AnimatePresence>
 
-        {/* CTA Final */}
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.5 }}
-          className="text-center"
-        >
-          <button
+        {/* CTA Final — inline sur desktop */}
+        {!isMobile && (
+          <motion.div
+            variants={fadeInUp}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.5 }}
+            className="text-center mt-6"
+          >
+            <motion.button
+              onClick={handleLaunch}
+              disabled={!canLaunch}
+              whileHover={canLaunch ? { scale: 1.03 } : {}}
+              whileTap={canLaunch ? { scale: 0.97 } : {}}
+              className={`
+                inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all
+                ${canLaunch
+                  ? 'bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white shadow-[0_0_40px_rgba(124,58,237,0.4)] hover:shadow-[0_0_60px_rgba(124,58,237,0.6)] btn-glow'
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                }
+              `}
+            >
+              <Rocket className="w-5 h-5" />
+              Lancer les appels IA maintenant 🚀
+            </motion.button>
+            {!canLaunch && (
+              <p className="text-gray-500 text-sm mt-3">
+                {!profileCollapsed
+                  ? 'Complétez votre profil et ajoutez au moins une facture'
+                  : 'Ajoutez au moins une facture pour continuer'}
+              </p>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* CTA Sticky — mobile uniquement */}
+      {isMobile && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0f1a]/95 backdrop-blur-xl border-t border-white/[0.06] p-4 pb-safe">
+          <motion.button
             onClick={handleLaunch}
             disabled={!canLaunch}
+            whileTap={canLaunch ? { scale: 0.97 } : {}}
             className={`
-              inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all
+              w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base transition-all
               ${canLaunch
-                ? 'bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white shadow-[0_0_40px_rgba(124,58,237,0.4)] hover:shadow-[0_0_60px_rgba(124,58,237,0.6)] animate-pulse'
+                ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] btn-glow'
                 : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }
             `}
+            style={{ minHeight: '52px' }}
           >
             <Rocket className="w-5 h-5" />
-            Lancer les appels IA maintenant 🚀
-          </button>
+            Lancer les appels IA 🚀
+          </motion.button>
           {!canLaunch && (
-            <p className="text-gray-500 text-sm mt-3">Ajoutez au moins une facture pour continuer</p>
+            <p className="text-gray-500 text-xs mt-2 text-center">
+              {!profileCollapsed
+                ? 'Complétez votre profil + ajoutez une facture'
+                : 'Ajoutez au moins une facture'}
+            </p>
           )}
-        </motion.div>
-      </div>
+        </div>
+      )}
 
       {/* Bouton flottant expert */}
       <motion.button
@@ -845,16 +1418,16 @@ export default function OnboardingStep2() {
         className={`
           fixed z-50 flex items-center gap-2 bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold rounded-full shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all
           ${isMobile
-            ? 'bottom-4 left-1/2 -translate-x-1/2 px-5 py-3 text-sm'
+            ? 'bottom-[88px] left-1/2 -translate-x-1/2 px-5 py-2.5 text-sm'
             : 'bottom-6 right-6 px-6 py-3'
           }
         `}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        aria-label="Faire l'import avec un expert"
+        aria-label="Besoin d'aide ?"
       >
         <Headphones className="w-5 h-5" />
-        <span className={isMobile ? 'text-sm' : ''}>Faire l&apos;import avec un expert (15 min)</span>
+        <span>Besoin d&apos;aide ?</span>
       </motion.button>
 
       {/* Modal expert */}
