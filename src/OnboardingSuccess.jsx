@@ -357,6 +357,11 @@ export default function OnboardingSuccess() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Scroll en haut au montage
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen text-white">
       <AnimatedBackground />

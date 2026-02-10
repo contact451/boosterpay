@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Loader2, Check, Shield, Clock, Sparkles, X, Mail, ArrowRight } from 'lucide-react';
+import { Phone, Loader2, Check, Shield, Clock, X, Mail, ArrowRight } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { submitLead } from '../services/leadService';
 
@@ -148,7 +148,7 @@ const InlinePhoneCapture = ({
   onClose,
   onSuccess,
   enrichmentData = {},
-  submitLabel = 'Activer mon essai gratuit',
+  submitLabel = 'Accélérer mes paiements — Gratuit',
   showEmailField = false
 }) => {
   const [localEmail, setLocalEmail] = useState(email);
@@ -357,17 +357,12 @@ const InlinePhoneCapture = ({
                 {/* Header avec indication de rapidité */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <motion.div
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                      <Sparkles className="w-5 h-5 text-yellow-400" />
-                    </motion.div>
+                    <span className="text-lg">🎯</span>
                     <div>
-                      <span className="text-white font-semibold block">Dernière étape !</span>
+                      <span className="text-white font-semibold block">Divisez vos délais de paiement par 2</span>
                       <span className="text-gray-400 text-xs flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        10 secondes chrono
+                        Résultats dès 48h — Sans carte bancaire
                       </span>
                     </div>
                   </div>
@@ -386,18 +381,18 @@ const InlinePhoneCapture = ({
                     <span>Progression</span>
                     <span className="text-emerald-400 font-medium">
                       {showEmailField
-                        ? (localEmail && phoneStatus === 'valid' ? '100%' : localEmail ? '50%' : '0%')
-                        : (phoneStatus === 'valid' ? '100%' : '0%')}
+                        ? (localEmail && phoneStatus === 'valid' ? '100%' : localEmail ? '66%' : '33%')
+                        : (phoneStatus === 'valid' ? '100%' : '50%')}
                     </span>
                   </div>
                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full"
-                      initial={{ width: '0%' }}
+                      initial={{ width: showEmailField ? '33%' : '50%' }}
                       animate={{
                         width: showEmailField
-                          ? (localEmail && phoneStatus === 'valid' ? '100%' : localEmail ? '50%' : '0%')
-                          : (phoneStatus === 'valid' ? '100%' : digits.length > 0 ? `${Math.min(digits.length * 10, 90)}%` : '0%')
+                          ? (localEmail && phoneStatus === 'valid' ? '100%' : localEmail ? '66%' : '33%')
+                          : (phoneStatus === 'valid' ? '100%' : digits.length > 0 ? `${Math.min(50 + digits.length * 4, 90)}%` : '50%')
                       }}
                       transition={{ type: 'spring', damping: 20 }}
                     />
@@ -591,13 +586,17 @@ const InlinePhoneCapture = ({
                           className="flex items-center gap-2 relative z-10"
                         >
                           <Check className="w-5 h-5" />
-                          <span>{submitLabel}</span>
+                          <span>{submitLabel === 'Accélérer mes paiements — Gratuit' ? '⚡ Lancer mon essai gratuit' : submitLabel}</span>
                           <ArrowRight className="w-5 h-5" />
                         </motion.div>
                       ) : (
                         <span className="relative z-10 flex items-center gap-2">
                           <Phone className="w-5 h-5" />
-                          Entrez votre mobile
+                          {submitLabel === 'Accélérer mes paiements — Gratuit'
+                            ? (showEmailField && !localEmail
+                              ? '🚀 Accélérer mes paiements — Gratuit'
+                              : '📱 Plus qu\'une étape...')
+                            : submitLabel}
                         </span>
                       )}
                     </>
@@ -668,7 +667,7 @@ InlinePhoneCapture.propTypes = {
 InlinePhoneCapture.defaultProps = {
   email: '',
   enrichmentData: {},
-  submitLabel: 'Activer mon essai gratuit',
+  submitLabel: 'Accélérer mes paiements — Gratuit',
   showEmailField: false
 };
 

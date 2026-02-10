@@ -2916,6 +2916,7 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [showCapture, setShowCapture] = useState(false);
   const duration = 45; // seconds
 
   useEffect(() => {
@@ -3039,10 +3040,23 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
           transition={{ delay: 0.5 }}
           className="text-center mt-8"
         >
-          <GlowButton>
+          <GlowButton onClick={() => setShowCapture(true)}>
             Convaincu ? Testez avec VOS clients
             <ArrowRight className="w-5 h-5" />
           </GlowButton>
+
+          {showCapture && (
+            <div className="mt-4 max-w-md mx-auto">
+              <InlinePhoneCapture
+                isVisible={showCapture}
+                email=""
+                source="audio_demo"
+                onClose={() => setShowCapture(false)}
+                onSuccess={() => setShowCapture(false)}
+                showEmailField={true}
+              />
+            </div>
+          )}
         </motion.div>
       </div>
     </section>

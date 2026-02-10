@@ -4,7 +4,7 @@ import {
   FileText, Upload, Plus, Trash2, Phone, Calendar,
   Euro, ChevronDown, ChevronUp, Headphones, Rocket,
   CheckCircle, AlertCircle, X, HelpCircle, User, Check,
-  Smartphone
+  Smartphone, Mail
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
@@ -662,6 +662,22 @@ function InvoiceCard({ invoice, onDelete, index }) {
               )}
               {maskPhone(invoice.phone)}
             </span>
+            {invoice.phone2 && (
+              <span className="flex items-center gap-1">
+                {invoice.phone2Type === 'mobile' ? (
+                  <Smartphone className="w-3 h-3 text-cyan-400" />
+                ) : (
+                  <Phone className="w-3 h-3 text-orange-400" />
+                )}
+                {maskPhone(invoice.phone2)}
+              </span>
+            )}
+            {invoice.email && (
+              <span className="flex items-center gap-1">
+                <Mail className="w-3 h-3 text-green-400" />
+                <span className="truncate max-w-[140px]">{invoice.email}</span>
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <Euro className="w-3 h-3" />
               {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
@@ -712,7 +728,8 @@ export default function OnboardingStep2() {
 
   // Invoice state
   const [invoices, setInvoices] = useState([]);
-  const [formData, setFormData] = useState({ name: '', phone: '', amount: '', dueDate: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', phone2: '', email: '', amount: '', dueDate: '' });
+  const [showPhone2, setShowPhone2] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
@@ -745,12 +762,27 @@ export default function OnboardingStep2() {
       return;
     }
 
-    setInvoices((prev) => [...prev, {
-      ...formData,
+    const invoice = {
+      name: name.trim(),
+      phone,
+      amount,
+      dueDate,
       id: Date.now(),
       phoneType: isMobilePhone(phone) ? 'mobile' : 'fixed',
-    }]);
-    setFormData({ name: '', phone: '', amount: '', dueDate: '' });
+    };
+
+    // Champs optionnels
+    if (formData.phone2 && validateFrenchPhone(formData.phone2)) {
+      invoice.phone2 = formData.phone2;
+      invoice.phone2Type = isMobilePhone(formData.phone2) ? 'mobile' : 'fixed';
+    }
+    if (formData.email && formData.email.trim()) {
+      invoice.email = formData.email.trim();
+    }
+
+    setInvoices((prev) => [...prev, invoice]);
+    setFormData({ name: '', phone: '', phone2: '', email: '', amount: '', dueDate: '' });
+    setShowPhone2(false);
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 1200);
   }, [formData]);
@@ -889,6 +921,8 @@ export default function OnboardingStep2() {
       factures: invoices.map((inv) => ({
         clientName: inv.name,
         phone: inv.phone,
+        ...(inv.phone2 ? { phone2: inv.phone2 } : {}),
+        ...(inv.email ? { email: inv.email } : {}),
         amount: parseFloat(inv.amount) || 0,
         dueDate: inv.dueDate,
         imported: inv.imported || false,
@@ -1152,6 +1186,148 @@ export default function OnboardingStep2() {
                       </p>
                     </motion.div>
                   )}
+
+                  {/* Bouton toggle 2ème numéro */}
+                  <AnimatePresence>
+                    {!showPhone2 ? (
+                      <motion.button
+                        type="button"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowPhone2(true)}
+                        className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Ajouter un 2ème numéro
+                      </motion.button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-3"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <label htmlFor="client-phone2" className="text-sm text-gray-300">
+                            2ème numéro <span className="text-gray-500">(optionnel)</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowPhone2(false);
+                              setFormData((f) => ({ ...f, phone2: '' }));
+                            }}
+                            className="p-1 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors"
+                            aria-label="Retirer le 2ème numéro"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <input
+                            id="client-phone2"
+                            type="tel"
+                            inputMode="numeric"
+                            placeholder="01 23 45 67 89"
+                            value={formData.phone2}
+                            onChange={(e) => {
+                              const formatted = formatPhoneInput(e.target.value);
+                              setFormData((f) => ({ ...f, phone2: formatted }));
+                            }}
+                            className={`w-full bg-white/[0.05] border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all pr-12 ${
+                              getPhoneStatus(formData.phone2) === 'mobile'
+                                ? 'border-cyan-500/50 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30'
+                                : getPhoneStatus(formData.phone2) === 'fixed'
+                                ? 'border-orange-500/50 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/30'
+                                : getPhoneStatus(formData.phone2) === 'invalid'
+                                ? 'border-red-500/50 focus:border-red-500'
+                                : 'border-white/[0.1] focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30'
+                            }`}
+                          />
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {getPhoneStatus(formData.phone2) === 'mobile' && (
+                              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-6 h-6 rounded-full bg-cyan-500 flex items-center justify-center">
+                                <Smartphone className="w-3.5 h-3.5 text-white" />
+                              </motion.div>
+                            )}
+                            {getPhoneStatus(formData.phone2) === 'fixed' && (
+                              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+                                <Phone className="w-3.5 h-3.5 text-white" />
+                              </motion.div>
+                            )}
+                            {getPhoneStatus(formData.phone2) === 'invalid' && (
+                              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                                <X className="w-3.5 h-3.5 text-white" />
+                              </motion.div>
+                            )}
+                            {getPhoneStatus(formData.phone2) === 'incomplete' && (
+                              <span className="text-xs text-gray-500 font-medium">
+                                {10 - formData.phone2.replace(/\D/g, '').length}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {formData.phone2 && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`text-xs mt-1.5 flex items-center gap-1 ${
+                              getPhoneStatus(formData.phone2) === 'mobile' ? 'text-cyan-400'
+                                : getPhoneStatus(formData.phone2) === 'fixed' ? 'text-orange-400'
+                                : getPhoneStatus(formData.phone2) === 'invalid' ? 'text-red-400'
+                                : 'text-gray-500'
+                            }`}
+                          >
+                            {getPhoneMessage(formData.phone2)}
+                          </motion.p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Email du débiteur (optionnel) */}
+                <div>
+                  <label htmlFor="client-email" className="block text-sm text-gray-300 mb-1">
+                    Email du débiteur <span className="text-gray-500">(optionnel)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="client-email"
+                      type="email"
+                      placeholder="client@exemple.fr"
+                      value={formData.email}
+                      onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
+                      className={`w-full bg-white/[0.05] border rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none transition-all pr-12 ${
+                        formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                          ? 'border-green-500/50 focus:border-green-500 focus:ring-1 focus:ring-green-500/30'
+                          : formData.email && formData.email.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+                          ? 'border-red-500/50 focus:border-red-500'
+                          : 'border-white/[0.1] focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30'
+                      }`}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
+                        >
+                          <Check className="w-3.5 h-3.5 text-white" />
+                        </motion.div>
+                      )}
+                      {formData.email && formData.email.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"
+                        >
+                          <X className="w-3.5 h-3.5 text-white" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
