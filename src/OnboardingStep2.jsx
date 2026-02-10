@@ -4,10 +4,11 @@ import {
   FileText, Upload, Plus, Trash2, Phone, Calendar,
   Euro, ChevronDown, ChevronUp, Headphones, Rocket,
   CheckCircle, AlertCircle, X, HelpCircle, User, Check,
-  Smartphone, Mail
+  Smartphone, Mail, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
+import { submitOnboarding } from './services/leadService';
 
 // === ANIMATIONS ===
 const fadeInUp = {
@@ -738,6 +739,10 @@ export default function OnboardingStep2() {
   const [uploadState, setUploadState] = useState('default');
   const [uploadMessage, setUploadMessage] = useState('');
   const [hasImportedInvoices, setHasImportedInvoices] = useState(false);
+  const [leadEmail] = useState(() => sessionStorage.getItem('bp_lead_email') || '');
+  const [leadPhone] = useState(() => sessionStorage.getItem('bp_lead_phone') || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const isMobile = useIsMobile();
@@ -910,7 +915,10 @@ export default function OnboardingStep2() {
   }, [processFile]);
 
   // Lancement IA
-  const handleLaunch = useCallback(() => {
+  const handleLaunch = useCallback(async () => {
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const urlParams = new URLSearchParams(window.location.search);
+
     const payload = {
       lead: {
         prenom: profile.prenom,
@@ -918,6 +926,8 @@ export default function OnboardingStep2() {
         entreprise: profile.entreprise,
         secteur: profile.secteur,
       },
+      email: leadEmail,
+      telephone: leadPhone,
       factures: invoices.map((inv) => ({
         clientName: inv.name,
         phone: inv.phone,
@@ -929,15 +939,35 @@ export default function OnboardingStep2() {
       })),
       totalInvoices: invoices.length,
       source: 'onboarding_step2',
+      appareil: isMobileDevice ? 'mobile' : 'desktop',
+      utm_source: urlParams.get('utm_source') || '',
+      utm_campaign: urlParams.get('utm_campaign') || '',
     };
+
     console.log('=== PAYLOAD ONBOARDING STEP 2 ===');
     console.log(JSON.stringify(payload, null, 2));
 
-    // TODO: Envoyer au backend ici
+    setIsSubmitting(true);
+    setSubmitError('');
 
-    // Rediriger vers la page de succès
-    navigate('/onboarding/success');
-  }, [invoices, profile, navigate]);
+    try {
+      const result = await submitOnboarding(payload);
+
+      if (result.success) {
+        sessionStorage.removeItem('bp_lead_email');
+        sessionStorage.removeItem('bp_lead_phone');
+        navigate('/onboarding/success', { state: { leadId: result.leadId } });
+      } else {
+        console.error('❌ Erreur onboarding:', result.error);
+        setSubmitError(result.error || 'Une erreur est survenue. Veuillez réessayer.');
+      }
+    } catch (error) {
+      console.error('❌ Erreur réseau:', error);
+      setSubmitError('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [invoices, profile, navigate, leadEmail, leadPhone]);
 
   return (
     <div className="min-h-screen text-white">
@@ -963,6 +993,21 @@ export default function OnboardingStep2() {
           className="text-center mb-8"
         >
           <ProgressBar />
+          {(!leadEmail || !leadPhone) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 text-center"
+            >
+              <p className="text-orange-400 text-sm">
+                ⚠️ Données d&apos;inscription incomplètes.{' '}
+                <a href="/" className="underline hover:text-orange-300">
+                  Retournez à l&apos;accueil
+                </a>{' '}
+                pour vous inscrire d&apos;abord.
+              </p>
+            </motion.div>
+          )}
           <h1 className="text-2xl md:text-4xl font-bold mb-3">
             Importez vos{' '}
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
@@ -1531,20 +1576,38 @@ export default function OnboardingStep2() {
           >
             <motion.button
               onClick={handleLaunch}
-              disabled={!canLaunch}
-              whileHover={canLaunch ? { scale: 1.03 } : {}}
-              whileTap={canLaunch ? { scale: 0.97 } : {}}
+              disabled={!canLaunch || isSubmitting}
+              whileHover={canLaunch && !isSubmitting ? { scale: 1.03 } : {}}
+              whileTap={canLaunch && !isSubmitting ? { scale: 0.97 } : {}}
               className={`
                 inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all
-                ${canLaunch
+                ${canLaunch && !isSubmitting
                   ? 'bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white shadow-[0_0_40px_rgba(124,58,237,0.4)] hover:shadow-[0_0_60px_rgba(124,58,237,0.6)] btn-glow'
                   : 'bg-gray-800 text-gray-500 cursor-not-allowed'
                 }
               `}
             >
-              <Rocket className="w-5 h-5" />
-              Lancer les appels IA maintenant 🚀
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-5 h-5" />
+                  Lancer les appels IA maintenant 🚀
+                </>
+              )}
             </motion.button>
+            {submitError && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-400 text-sm mt-2 text-center"
+              >
+                {submitError}
+              </motion.p>
+            )}
             {!canLaunch && (
               <p className="text-gray-500 text-sm mt-3">
                 {!profileCollapsed
@@ -1561,20 +1624,38 @@ export default function OnboardingStep2() {
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0f1a]/95 backdrop-blur-xl border-t border-white/[0.06] p-4 pb-safe">
           <motion.button
             onClick={handleLaunch}
-            disabled={!canLaunch}
-            whileTap={canLaunch ? { scale: 0.97 } : {}}
+            disabled={!canLaunch || isSubmitting}
+            whileTap={canLaunch && !isSubmitting ? { scale: 0.97 } : {}}
             className={`
               w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base transition-all
-              ${canLaunch
+              ${canLaunch && !isSubmitting
                 ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] btn-glow'
                 : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }
             `}
             style={{ minHeight: '52px' }}
           >
-            <Rocket className="w-5 h-5" />
-            Lancer les appels IA 🚀
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Envoi en cours...
+              </>
+            ) : (
+              <>
+                <Rocket className="w-5 h-5" />
+                Lancer les appels IA 🚀
+              </>
+            )}
           </motion.button>
+          {submitError && (
+            <motion.p
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-400 text-sm mt-2 text-center"
+            >
+              {submitError}
+            </motion.p>
+          )}
           {!canLaunch && (
             <p className="text-gray-500 text-xs mt-2 text-center">
               {!profileCollapsed

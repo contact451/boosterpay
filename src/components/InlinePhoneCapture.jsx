@@ -286,6 +286,10 @@ const InlinePhoneCapture = ({
 
       setStatus('success');
 
+      // Stocker pour OnboardingStep2
+      if (emailToUse) sessionStorage.setItem('bp_lead_email', emailToUse.trim().toLowerCase());
+      if (phone) sessionStorage.setItem('bp_lead_phone', phone.replace(/\D/g, ''));
+
       // Auto-close after success
       setTimeout(() => {
         onSuccess();

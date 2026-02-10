@@ -1535,6 +1535,10 @@ const TestAISection = ({ onOpenBooking }) => {
 
     console.log('🤖 TEST AI - Lead qualifié:', payload);
 
+    // Stocker pour OnboardingStep2
+    sessionStorage.setItem('bp_lead_email', payload.email);
+    sessionStorage.setItem('bp_lead_phone', payload.telephone);
+
     await new Promise(r => setTimeout(r, 1000));
     setLeadStatus('success');
 
@@ -3951,6 +3955,10 @@ const Footer = ({ onOpenBooking }) => {
       score: 10,
       timestamp: new Date().toISOString(),
     });
+
+    // Stocker pour OnboardingStep2
+    sessionStorage.setItem('bp_lead_email', footerEmail.trim().toLowerCase());
+    sessionStorage.setItem('bp_lead_phone', digits);
 
     await new Promise(r => setTimeout(r, 1000));
     setFooterStatus('success');

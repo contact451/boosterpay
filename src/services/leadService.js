@@ -33,17 +33,21 @@ export const submitLead = async (leadData) => {
     return { success: true, warning: 'URL non configurée' };
   }
 
-  await fetch(GOOGLE_SHEET_API_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const response = await fetch(GOOGLE_SHEET_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
 
-  console.log('✅ Lead envoyé avec succès');
-  return { success: true };
+    const result = await response.json();
+    console.log('✅ Lead envoyé avec succès:', result);
+    return result;
+  } catch (error) {
+    // Fallback silencieux — la capture ne doit JAMAIS bloquer l'UX
+    console.warn('⚠️ Erreur envoi lead (non bloquant):', error.message);
+    return { success: true, warning: 'Envoi échoué silencieusement' };
+  }
 };
 
 /**
@@ -56,4 +60,40 @@ export const submitSimulatorLead = async (simulatorData) => {
     ...simulatorData,
     source: 'simulateur'
   });
+};
+
+/**
+ * Envoie les données de l'onboarding Step 2.
+ * Le Apps Script RETROUVE le lead par email et le met à jour (statut → "Converti").
+ */
+export const submitOnboarding = async (payload) => {
+  const GAS_URL = GOOGLE_SHEET_API_URL;
+
+  if (!GAS_URL) {
+    console.warn('⚠️ VITE_GOOGLE_SHEET_API_URL non configurée — onboarding non envoyé');
+    return { success: false, error: 'URL backend non configurée' };
+  }
+
+  const maxRetries = 1;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      console.log('✅ Onboarding envoyé:', result);
+      return result;
+
+    } catch (error) {
+      if (attempt === maxRetries) {
+        console.error('❌ submitOnboarding failed:', error);
+        return { success: false, error: error.message };
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
 };
