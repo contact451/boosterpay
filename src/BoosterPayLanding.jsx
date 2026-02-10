@@ -1542,7 +1542,7 @@ const TestAISection = ({ onOpenBooking }) => {
     await new Promise(r => setTimeout(r, 1000));
     setLeadStatus('success');
 
-    setTimeout(() => closeModal(), 2500);
+    setTimeout(() => closeModal(), 8000);
   };
 
   const isFormValid = formData.name && formData.amount && formData.dueDate;
@@ -1738,8 +1738,48 @@ const TestAISection = ({ onOpenBooking }) => {
           <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center mx-auto mb-3">
             <Check className="w-6 h-6 text-emerald-400" />
           </div>
-          <p className="text-white font-semibold">IA activée ! 🎉</p>
-          <p className="text-gray-400 text-sm">Notre équipe vous contacte sous 24h</p>
+          <p className="text-white font-semibold mb-1">IA activée ! 🎉</p>
+          <p className="text-gray-300 text-sm mb-3">Vérifiez vos messages (et les spams au cas où) !</p>
+
+          {/* Badges Email + SMS */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center justify-center gap-2 mb-4"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4, type: 'spring' }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30"
+            >
+              <Mail className="w-3 h-3 text-blue-400" />
+              <span className="text-blue-400 text-xs font-medium">Email envoyé</span>
+            </motion.div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.6, type: 'spring' }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30"
+            >
+              <Smartphone className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-400 text-xs font-medium">SMS envoyé</span>
+            </motion.div>
+          </motion.div>
+
+          {/* CTA vers Step 2 */}
+          <motion.a
+            href="/onboarding/step2"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white text-sm font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
+          >
+            Ajouter mes factures →
+          </motion.a>
         </motion.div>
       ) : (
         <div className="space-y-3 pt-2 border-t border-white/10">

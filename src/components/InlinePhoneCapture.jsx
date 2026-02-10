@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, Loader2, Check, Shield, Clock, X, Mail, ArrowRight } from 'lucide-react';
+import { Phone, Loader2, Check, Shield, Clock, X, Mail, ArrowRight, Smartphone } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { submitLead } from '../services/leadService';
 
@@ -52,43 +52,72 @@ const formatPhoneNumber = (value) => {
   return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
 };
 
-// Messages de succès contextualisés
+// Messages de succès contextualisés — mentionnent Email + SMS
 const SUCCESS_MESSAGES = {
   hero: {
-    title: "C'est parti ! 🚀",
-    subtitle: "Notre équipe vous contacte sous 48h pour activer votre essai."
+    title: "Inscription confirmée ! 🎉",
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Importer ma 1ère facture →"
   },
   simulateur: {
     title: "Estimation envoyée ! 📊",
-    subtitle: "Consultez votre boîte mail pour voir les détails."
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Voir mon estimation →"
   },
   test_ai: {
-    title: "Impressionnant, non ? 🤖",
-    subtitle: "Un expert vous contacte pour une démo personnalisée."
+    title: "IA activée ! 🤖",
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Ajouter mes factures →"
   },
   pricing_starter: {
-    title: "Excellent choix ! ✨",
-    subtitle: "Votre essai STARTER est en cours d'activation."
+    title: "Essai STARTER activé ! ✨",
+    subtitle: "Vérifiez vos messages pour les détails !",
+    cta: "Importer mes factures →"
   },
   pricing_pro: {
-    title: "Excellent choix ! ✨",
-    subtitle: "Votre essai PRO est en cours d'activation."
+    title: "Essai PRO activé ! ✨",
+    subtitle: "Vérifiez vos messages pour les détails !",
+    cta: "Importer mes factures →"
   },
   pricing_business: {
-    title: "Excellent choix ! ✨",
-    subtitle: "Votre essai BUSINESS est en cours d'activation."
+    title: "Essai BUSINESS activé ! ✨",
+    subtitle: "Vérifiez vos messages pour les détails !",
+    cta: "Importer mes factures →"
   },
   exit_intent: {
     title: "Guide envoyé ! 📚",
-    subtitle: "Vérifiez votre boîte mail (pensez aux spams)."
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: null
   },
   mobile_cta: {
     title: "C'est parti ! 🎉",
-    subtitle: "Notre équipe vous contacte sous 48h."
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Importer mes factures →"
   },
   booking: {
     title: "Rendez-vous confirmé ! 📅",
-    subtitle: "Vous recevrez un email de confirmation."
+    subtitle: "Confirmation envoyée par email et SMS !",
+    cta: null
+  },
+  audio_demo: {
+    title: "C'est parti ! 🎧",
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Importer mes factures →"
+  },
+  testimonials: {
+    title: "Inscription confirmée ! 🎉",
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Importer mes factures →"
+  },
+  intermediate_cta: {
+    title: "C'est parti ! 🚀",
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Importer mes factures →"
+  },
+  deferred: {
+    title: "Inscription confirmée ! ✅",
+    subtitle: "Vérifiez vos messages (et les spams au cas où) !",
+    cta: "Importer mes factures →"
   }
 };
 
@@ -290,10 +319,10 @@ const InlinePhoneCapture = ({
       if (emailToUse) sessionStorage.setItem('bp_lead_email', emailToUse.trim().toLowerCase());
       if (phone) sessionStorage.setItem('bp_lead_phone', phone.replace(/\D/g, ''));
 
-      // Auto-close after success
+      // Délai augmenté pour lire le message + cliquer le CTA
       setTimeout(() => {
         onSuccess();
-      }, 2500);
+      }, 8000);
 
     } catch (err) {
       console.error('Error submitting lead:', err);
@@ -325,7 +354,7 @@ const InlinePhoneCapture = ({
         >
           <div className={`relative bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)] ${isMobile ? 'p-4' : 'p-6'}`}>
             {status === 'success' ? (
-              // Success state with confetti
+              // Success state with confetti + SMS/Email badges
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -348,12 +377,56 @@ const InlinePhoneCapture = ({
                     <Check className="w-8 h-8 text-emerald-400" />
                   </motion.div>
                 </motion.div>
-                <h3 className="text-xl font-bold text-white mb-2">
+
+                <h3 className="text-xl font-bold text-white mb-1">
                   {successMessage.title}
                 </h3>
-                <p className="text-gray-400 text-sm">
+
+                <p className="text-gray-300 text-sm mb-3">
                   {successMessage.subtitle}
                 </p>
+
+                {/* Badges animés Email + SMS */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex items-center justify-center gap-2 mb-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.5, type: 'spring' }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/15 border border-blue-500/30"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="text-blue-400 text-xs font-medium">Email envoyé</span>
+                  </motion.div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.7, type: 'spring' }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30"
+                  >
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400 text-xs font-medium">SMS envoyé</span>
+                  </motion.div>
+                </motion.div>
+
+                {/* CTA vers Step 2 */}
+                {successMessage.cta && (
+                  <motion.a
+                    href="/onboarding/step2"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-shadow"
+                  >
+                    {successMessage.cta}
+                  </motion.a>
+                )}
               </motion.div>
             ) : (
               // Form state

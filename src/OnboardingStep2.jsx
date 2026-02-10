@@ -993,21 +993,6 @@ export default function OnboardingStep2() {
           className="text-center mb-8"
         >
           <ProgressBar />
-          {(!leadEmail || !leadPhone) && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 text-center"
-            >
-              <p className="text-orange-400 text-sm">
-                ⚠️ Données d&apos;inscription incomplètes.{' '}
-                <a href="/" className="underline hover:text-orange-300">
-                  Retournez à l&apos;accueil
-                </a>{' '}
-                pour vous inscrire d&apos;abord.
-              </p>
-            </motion.div>
-          )}
           <h1 className="text-2xl md:text-4xl font-bold mb-3">
             Importez vos{' '}
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
