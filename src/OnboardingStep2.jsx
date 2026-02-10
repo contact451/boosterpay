@@ -739,8 +739,13 @@ export default function OnboardingStep2() {
   const [uploadState, setUploadState] = useState('default');
   const [uploadMessage, setUploadMessage] = useState('');
   const [hasImportedInvoices, setHasImportedInvoices] = useState(false);
+  // Lire lid depuis l'URL (cas: lead arrive via lien SMS ou email)
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const leadIdFromUrl = urlSearchParams.get('lid') || '';
+
   const [leadEmail] = useState(() => sessionStorage.getItem('bp_lead_email') || '');
   const [leadPhone] = useState(() => sessionStorage.getItem('bp_lead_phone') || '');
+  const [leadId] = useState(leadIdFromUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const fileInputRef = useRef(null);
@@ -942,6 +947,7 @@ export default function OnboardingStep2() {
       appareil: isMobileDevice ? 'mobile' : 'desktop',
       utm_source: urlParams.get('utm_source') || '',
       utm_campaign: urlParams.get('utm_campaign') || '',
+      leadId: leadId || '',
     };
 
     console.log('=== PAYLOAD ONBOARDING STEP 2 ===');
@@ -967,7 +973,7 @@ export default function OnboardingStep2() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [invoices, profile, navigate, leadEmail, leadPhone]);
+  }, [invoices, profile, navigate, leadEmail, leadPhone, leadId]);
 
   return (
     <div className="min-h-screen text-white">
