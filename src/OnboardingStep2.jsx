@@ -165,6 +165,64 @@ function sanitizeCSVValue(value) {
   return trimmed;
 }
 
+/**
+ * Parse un montant depuis n'importe quel format (FR, EN, mixte).
+ * Gère : 1500 | 1500.50 | 1500,50 | 1 500 | 1 500,00 | 1.500,50 | 1,500.50 | €1500 | 1500€
+ * Retourne toujours un nombre >= 0 ou 0 si invalide.
+ */
+function parseAmount(raw) {
+  if (raw === null || raw === undefined) return 0;
+  let str = String(raw).trim();
+
+  // Supprimer symboles monétaires, espaces, espaces insécables, lettres
+  str = str.replace(/[€$£\s\u00A0]/g, '').replace(/EUR/gi, '').trim();
+
+  // Si vide ou aucun chiffre
+  if (!str || !/\d/.test(str)) return 0;
+
+  const hasComma = str.includes(',');
+  const hasDot = str.includes('.');
+
+  if (hasComma && hasDot) {
+    const lastComma = str.lastIndexOf(',');
+    const lastDot = str.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // Format FR : 1.500,50
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      // Format EN : 1,500.50
+      str = str.replace(/,/g, '');
+    }
+  } else if (hasComma) {
+    const parts = str.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // 1500,50 → virgule décimale
+      str = str.replace(',', '.');
+    } else if (parts.length === 2 && parts[1].length === 3) {
+      // 1,500 → virgule millier
+      str = str.replace(',', '');
+    } else {
+      // 1,500,000 → milliers
+      str = str.replace(/,/g, '');
+    }
+  } else if (hasDot) {
+    const parts = str.split('.');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      // 1500.50 → point décimal, OK
+    } else if (parts.length === 2 && parts[1].length === 3) {
+      // 1.500 → point millier
+      str = str.replace('.', '');
+    } else {
+      // 1.500.000 → milliers
+      str = str.replace(/\./g, '');
+    }
+  }
+
+  const num = parseFloat(str);
+  if (isNaN(num) || num < 0) return 0;
+  return Math.round(num * 100) / 100;
+}
+
 // === CONFETTI SIMPLE ===
 function ConfettiEffect({ trigger }) {
   if (!trigger) return null;
@@ -631,6 +689,471 @@ function ExpertModal({ isOpen, onClose }) {
   );
 }
 
+// === COLUMN HINTS POUR AUTO-MAPPING CSV ===
+const COLUMN_HINTS = {
+  name:    ['nom', 'client', 'débiteur', 'debiteur', 'société', 'societe', 'entreprise', 'raison', 'contact', 'name', 'destinataire'],
+  phone:   ['tel', 'téléphone', 'telephone', 'mobile', 'portable', 'gsm', 'phone', 'tel1', 'telephone1'],
+  amount:  ['montant', 'total', 'ttc', 'ht', 'somme', 'amount', 'prix', 'solde', 'reste', 'du', 'impaye', 'impayé'],
+  email:   ['email', 'mail', 'courriel', 'e-mail'],
+  phone2:  ['tel2', 'telephone2', 'téléphone2', 'fax', 'fixe', 'autre tel'],
+  dueDate: ['échéance', 'echeance', 'date', 'due', 'limite', 'deadline', 'date facture', 'date paiement'],
+};
+
+const normalizeHeader = (str) => str?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') || '';
+
+const REQUIRED_FIELDS = [
+  { key: 'name', label: 'Client Débiteur', description: 'Nom du client qui doit payer' },
+  { key: 'phone', label: 'Téléphone 1', description: 'Numéro principal du débiteur' },
+  { key: 'amount', label: 'Montant €', description: 'Montant de la facture' },
+];
+
+const OPTIONAL_FIELDS = [
+  { key: 'email', label: 'Email Débiteur', description: 'Email du client' },
+  { key: 'phone2', label: 'Téléphone 2', description: '2ème numéro' },
+  { key: 'dueDate', label: 'Date Échéance', description: 'Date limite de paiement' },
+];
+
+// === MODAL DE MAPPING CSV (Redesign intuitif "3 questions") ===
+function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfirm, onCancel }) {
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    const handleEscape = (e) => { if (e.key === 'Escape') onCancel(); };
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [onCancel]);
+
+  const { headers, preview, allData, fileName, rowCount } = csvMapping;
+
+  // Colonnes déjà assignées (pour éviter doublons)
+  const usedColumns = Object.values(columnMapping).filter(Boolean);
+
+  // Suggestions auto-détectées (snapshot initial)
+  const [autoDetected] = useState(() => {
+    const auto = {};
+    for (const [field, hints] of Object.entries(COLUMN_HINTS)) {
+      const match = headers.find(h =>
+        hints.some(hint => normalizeHeader(h).includes(normalizeHeader(hint)))
+      );
+      if (match) auto[field] = match;
+    }
+    return auto;
+  });
+
+  const requiredMapped = REQUIRED_FIELDS.filter(f => columnMapping[f.key]).length;
+  const canConfirm = requiredMapped === REQUIRED_FIELDS.length;
+  const allAutoDetected = REQUIRED_FIELDS.every(f =>
+    autoDetected[f.key] && columnMapping[f.key] === autoDetected[f.key]
+  );
+
+  const handleSelect = (fieldKey, headerValue) => {
+    setColumnMapping(prev => ({
+      ...prev,
+      [fieldKey]: headerValue || '',
+    }));
+  };
+
+  // Premières valeurs d'aperçu pour un champ mappé (badges)
+  const getPreviewValues = (fieldKey) => {
+    const col = columnMapping[fieldKey];
+    if (!col) return [];
+    return preview.slice(0, 3)
+      .map(row => row[col])
+      .filter(v => v && String(v).trim())
+      .map(v => String(v).substring(0, 25));
+  };
+
+  // Données d'une carte contact preview
+  const getCardData = (rowIndex) => {
+    const row = preview[rowIndex];
+    if (!row) return null;
+    return {
+      name: columnMapping.name ? String(row[columnMapping.name] || '').trim() : '',
+      phone: columnMapping.phone ? String(row[columnMapping.phone] || '').trim() : '',
+      amount: columnMapping.amount ? String(row[columnMapping.amount] || '').trim() : '',
+    };
+  };
+
+  // Texte contextuel du bouton
+  const getButtonText = () => {
+    const remaining = 3 - requiredMapped;
+    if (remaining === 3) return 'Complétez les 3 champs';
+    if (remaining === 2) return 'Encore 2 champs à compléter';
+    if (remaining === 1) return 'Encore 1 champ à compléter';
+    return `C\u2019est bon, importer mes ${rowCount} contacts !`;
+  };
+
+  const handleConfirm = () => {
+    const mapped = allData
+      .filter(row => {
+        const name = columnMapping.name ? row[columnMapping.name] : '';
+        const phone = columnMapping.phone ? row[columnMapping.phone] : '';
+        const amount = columnMapping.amount ? row[columnMapping.amount] : '';
+        return (name && String(name).trim()) && (phone && String(phone).trim()) && (amount && String(amount).trim());
+      })
+      .map(row => ({
+        name: sanitizeCSVValue(String(columnMapping.name ? row[columnMapping.name] || '' : '').trim()),
+        phone: sanitizeCSVValue(String(columnMapping.phone ? row[columnMapping.phone] || '' : '').trim()),
+        phone2: sanitizeCSVValue(String(columnMapping.phone2 ? row[columnMapping.phone2] || '' : '').trim()),
+        email: sanitizeCSVValue(String(columnMapping.email ? row[columnMapping.email] || '' : '').trim()),
+        amount: String(parseAmount(columnMapping.amount ? row[columnMapping.amount] : 0)),
+        dueDate: sanitizeCSVValue(String(columnMapping.dueDate ? row[columnMapping.dueDate] || '' : '').trim()),
+        id: Date.now() + Math.random(),
+        imported: true,
+      }));
+    onConfirm(mapped);
+  };
+
+  // Config des 3 steps obligatoires (labels humanisés)
+  const STEPS = [
+    { key: 'name', label: 'Nom du client', Icon: User, stepNum: 1 },
+    { key: 'phone', label: 'Numéro de téléphone', Icon: Phone, stepNum: 2 },
+    { key: 'amount', label: 'Montant de la facture', Icon: Euro, stepNum: 3 },
+  ];
+
+  // Labels humanisés pour les champs optionnels (basés sur OPTIONAL_FIELDS)
+  const OPTIONAL_ICONS = { email: Mail, phone2: Phone, dueDate: Calendar };
+  const OPTIONAL_LABELS = { email: 'Adresse email', phone2: '2ème numéro de téléphone', dueDate: "Date d\u2019échéance" };
+  const OPTIONALS = OPTIONAL_FIELDS.map(f => ({
+    key: f.key, label: OPTIONAL_LABELS[f.key] || f.label, Icon: OPTIONAL_ICONS[f.key] || FileText,
+  }));
+
+  // Rendu d'un step obligatoire
+  const renderStep = (step, index) => {
+    const availableHeaders = headers.filter(h =>
+      !usedColumns.includes(h) || columnMapping[step.key] === h
+    );
+    const isAutoDetected = autoDetected[step.key] && columnMapping[step.key] === autoDetected[step.key];
+    const previewValues = getPreviewValues(step.key);
+    const isMapped = !!columnMapping[step.key];
+
+    return (
+      <motion.div
+        key={step.key}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 + index * 0.15 }}
+        className="flex gap-3"
+      >
+        {/* Step number */}
+        <div className="flex flex-col items-center shrink-0">
+          <motion.div
+            animate={isMapped ? { scale: [1, 1.2, 1] } : {}}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+              isMapped
+                ? 'bg-emerald-500 text-white'
+                : 'bg-white/10 text-gray-400 border border-white/20'
+            }`}
+          >
+            {isMapped ? <Check className="w-4 h-4" /> : step.stepNum}
+          </motion.div>
+          {index < 2 && (
+            <div className={`w-0.5 flex-1 mt-1 mb-1 transition-colors ${
+              isMapped ? 'bg-emerald-500/40' : 'bg-white/10'
+            }`} />
+          )}
+        </div>
+
+        {/* Step content */}
+        <div className="flex-1 pb-5">
+          <div className="flex items-center gap-2 mb-2">
+            <step.Icon className={`w-4 h-4 ${isMapped ? 'text-emerald-400' : 'text-gray-400'}`} />
+            <span className="text-sm font-semibold text-white">{step.label}</span>
+            {isAutoDetected && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center gap-0.5">
+                <Check className="w-2.5 h-2.5" /> Auto
+              </span>
+            )}
+          </div>
+          <select
+            value={columnMapping[step.key] || ''}
+            onChange={(e) => handleSelect(step.key, e.target.value)}
+            aria-label={step.label}
+            className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/20 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all appearance-none"
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+          >
+            <option value="" className="bg-[#0f172a] text-gray-400">Choisissez la colonne...</option>
+            {availableHeaders.map(h => (
+              <option key={h} value={h} className="bg-[#0f172a] text-white">{h}</option>
+            ))}
+          </select>
+          {/* Preview values badges */}
+          <AnimatePresence mode="wait">
+            {previewValues.length > 0 && (
+              <motion.div
+                key={columnMapping[step.key]}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-wrap gap-1.5 mt-2"
+              >
+                {previewValues.map((val, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.08 }}
+                    className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10"
+                  >
+                    {val}
+                  </motion.span>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Rendu d'un champ optionnel (compact, toujours visible)
+  const renderOptional = (field) => {
+    const availableHeaders = headers.filter(h =>
+      !usedColumns.includes(h) || columnMapping[field.key] === h
+    );
+    const isAutoDetected = autoDetected[field.key] && columnMapping[field.key] === autoDetected[field.key];
+    const previewValues = getPreviewValues(field.key);
+
+    return (
+      <div key={field.key} className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <field.Icon className="w-3.5 h-3.5 text-gray-400" />
+          <span className="text-sm text-gray-300">{field.label}</span>
+          {isAutoDetected && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center gap-0.5">
+              <Check className="w-2.5 h-2.5" /> Auto
+            </span>
+          )}
+        </div>
+        <select
+          value={columnMapping[field.key] || ''}
+          onChange={(e) => handleSelect(field.key, e.target.value)}
+          aria-label={field.label}
+          className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e\")", backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+        >
+          <option value="" className="bg-[#0f172a] text-gray-400">Pas dans mon fichier</option>
+          {availableHeaders.map(h => (
+            <option key={h} value={h} className="bg-[#0f172a] text-white">{h}</option>
+          ))}
+        </select>
+        {field.key === 'email' && (
+          <p className="text-xs text-gray-500 flex items-center gap-1">
+            <Mail className="w-3 h-3 text-cyan-400/50" />
+            L&apos;email permet d&apos;envoyer un récapitulatif après l&apos;appel
+          </p>
+        )}
+        {previewValues.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {previewValues.map((val, i) => (
+              <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-300 border border-white/10">
+                {val}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Contact card preview
+  const ContactCard = ({ rowIndex, accentColor }) => {
+    const data = getCardData(rowIndex);
+    if (!data) return null;
+    const borderColor = accentColor === 'cyan' ? 'border-l-cyan-500' : 'border-l-violet-500';
+    return (
+      <div className={`bg-white/[0.03] rounded-xl border border-white/10 border-l-2 ${borderColor} p-3 min-w-[200px]`}>
+        <div className="space-y-1.5 text-sm">
+          <div className="flex items-center gap-2 text-gray-300">
+            <User className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={data.name || 'empty-name'}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={data.name ? 'text-white font-medium' : 'text-gray-600'}
+              >
+                {data.name || '\u2014'}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+          <div className="flex items-center gap-2 text-gray-300">
+            <Phone className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={data.phone || 'empty-phone'}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={data.phone ? 'text-white' : 'text-gray-600'}
+              >
+                {data.phone || '\u2014'}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+          <div className="flex items-center gap-2 text-gray-300">
+            <Euro className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={data.amount || 'empty-amount'}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={data.amount ? 'text-white' : 'text-gray-600'}
+              >
+                {data.amount ? `${data.amount} \u20AC` : '\u2014'}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const modalContent = (
+    <>
+      {/* Header */}
+      <div className={`border-b border-white/10 ${isMobile ? 'p-4 rounded-t-3xl' : 'p-6'} bg-gradient-to-r from-emerald-600/20 to-cyan-600/20`}>
+        <div className="flex justify-between items-start gap-3">
+          <div className="flex-1">
+            <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-white flex items-center gap-2.5`}>
+              <motion.div
+                initial={{ scale: 0.5, rotate: -10, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+              >
+                <FileText className="w-6 h-6 text-emerald-400" />
+              </motion.div>
+              On a trouvé {rowCount} contacts !
+            </h2>
+            <p className="text-gray-400 text-xs mt-1">{fileName}</p>
+            {allAutoDetected && (
+              <motion.p
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-emerald-400 text-xs mt-1.5 flex items-center gap-1"
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                On a repéré vos colonnes automatiquement — vérifiez et c&apos;est parti !
+              </motion.p>
+            )}
+          </div>
+          <button onClick={onCancel} className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors" aria-label="Fermer">
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className={`${isMobile ? 'px-4 pt-4' : 'px-6 pt-5'}`}>
+        <div className="flex items-center gap-1 mb-1">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="flex items-center flex-1 gap-1">
+              <div className={`w-full h-1.5 rounded-full transition-colors duration-400 ${
+                i < requiredMapped ? 'bg-emerald-500' : 'bg-white/10'
+              }`} />
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-gray-500 text-right">{requiredMapped}/3</p>
+      </div>
+
+      {/* Scrollable body */}
+      <div className={`overflow-y-auto ${isMobile ? 'p-4' : 'px-6 pb-4 pt-2'}`} style={{ maxHeight: isMobile ? '55vh' : '55vh' }}>
+
+        {/* Contact cards preview */}
+        <div className={`flex gap-3 mb-6 ${isMobile ? 'overflow-x-auto pb-2 -mx-1 px-1' : ''}`}>
+          <ContactCard rowIndex={0} accentColor="cyan" />
+          <ContactCard rowIndex={1} accentColor="violet" />
+        </div>
+
+        {/* 3 Steps obligatoires */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-500 mb-4">Aidez-nous à comprendre vos données :</p>
+          {STEPS.map((step, i) => renderStep(step, i))}
+        </div>
+
+        {/* Optionnels — toujours visibles */}
+        <div className="border-t border-white/10 pt-4">
+          <p className="text-xs text-gray-500 mb-3">Complétez pour de meilleurs résultats</p>
+          <div className="space-y-4">
+            {OPTIONALS.map(f => renderOptional(f))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer actions */}
+      <div className={`border-t border-white/10 ${isMobile ? 'p-4' : 'p-6'} flex items-center justify-between gap-3`}>
+        <button
+          onClick={onCancel}
+          className="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all text-sm font-medium"
+        >
+          Annuler
+        </button>
+        <motion.button
+          onClick={handleConfirm}
+          disabled={!canConfirm}
+          whileHover={canConfirm ? { scale: 1.03 } : {}}
+          whileTap={canConfirm ? { scale: 0.97 } : {}}
+          animate={canConfirm ? { scale: [1, 1.02, 1] } : {}}
+          transition={canConfirm ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } : {}}
+          className={`px-6 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all ${
+            canConfirm
+              ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {canConfirm ? <Rocket className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {getButtonText()}
+        </motion.button>
+      </div>
+    </>
+  );
+
+  return (
+    <AnimatePresence>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onCancel}
+        className="fixed inset-0 z-[300] bg-black/90"
+      />
+
+      {isMobile ? (
+        <motion.div
+          initial={{ opacity: 0, y: '100%' }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: '100%' }}
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          onClick={(e) => e.stopPropagation()}
+          className="fixed bottom-0 left-0 right-0 z-[301] bg-[#0f172a] rounded-t-3xl border-t border-x border-emerald-500/30"
+          style={{ maxHeight: '90vh' }}
+        >
+          {modalContent}
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-[301] flex items-center justify-center p-8"
+        >
+          <div className="bg-[#0f172a] rounded-3xl border border-emerald-500/30 w-full max-w-2xl overflow-hidden shadow-[0_0_60px_rgba(16,185,129,0.2)]">
+            {modalContent}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // === CARD FACTURE ===
 function InvoiceCard({ invoice, onDelete, index }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -652,45 +1175,42 @@ function InvoiceCard({ invoice, onDelete, index }) {
           )}
         </div>
 
-        {/* Afficher les détails UNIQUEMENT si pas importé */}
-        {!invoice.imported && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs text-gray-400">
+          <span className="flex items-center gap-1">
+            {invoice.phoneType === 'mobile' ? (
+              <Smartphone className="w-3 h-3 text-cyan-400" />
+            ) : (
+              <Phone className="w-3 h-3 text-orange-400" />
+            )}
+            {maskPhone(invoice.phone)}
+          </span>
+          {invoice.phone2 && (
             <span className="flex items-center gap-1">
-              {invoice.phoneType === 'mobile' ? (
+              {invoice.phone2Type === 'mobile' ? (
                 <Smartphone className="w-3 h-3 text-cyan-400" />
               ) : (
                 <Phone className="w-3 h-3 text-orange-400" />
               )}
-              {maskPhone(invoice.phone)}
+              {maskPhone(invoice.phone2)}
             </span>
-            {invoice.phone2 && (
-              <span className="flex items-center gap-1">
-                {invoice.phone2Type === 'mobile' ? (
-                  <Smartphone className="w-3 h-3 text-cyan-400" />
-                ) : (
-                  <Phone className="w-3 h-3 text-orange-400" />
-                )}
-                {maskPhone(invoice.phone2)}
-              </span>
-            )}
-            {invoice.email && (
-              <span className="flex items-center gap-1">
-                <Mail className="w-3 h-3 text-green-400" />
-                <span className="truncate max-w-[140px]">{invoice.email}</span>
-              </span>
-            )}
+          )}
+          {invoice.email && (
             <span className="flex items-center gap-1">
-              <Euro className="w-3 h-3" />
-              {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
+              <Mail className="w-3 h-3 text-green-400" />
+              <span className="truncate max-w-[140px]">{invoice.email}</span>
             </span>
-            {invoice.dueDate && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
-              </span>
-            )}
-          </div>
-        )}
+          )}
+          <span className="flex items-center gap-1">
+            <Euro className="w-3 h-3" />
+            {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
+          </span>
+          {invoice.dueDate && (
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
+            </span>
+          )}
+        </div>
       </div>
 
       {confirmDelete ? (
@@ -748,6 +1268,8 @@ export default function OnboardingStep2() {
   const [leadId] = useState(leadIdFromUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [csvMapping, setCsvMapping] = useState(null);
+  const [columnMapping, setColumnMapping] = useState({});
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
   const isMobile = useIsMobile();
@@ -834,69 +1356,34 @@ export default function OnboardingStep2() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const imported = [];
-
-        const normalize = (str) => str?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') || '';
-
-        const findColumn = (row, patterns) => {
-          for (const key of Object.keys(row)) {
-            const normalizedKey = normalize(key);
-            for (const pattern of patterns) {
-              if (normalizedKey.includes(normalize(pattern))) {
-                return row[key];
-              }
-            }
-          }
-          return '';
-        };
-
-        for (const row of results.data) {
-          const rawName = findColumn(row, ['nom', 'client', 'name', 'société', 'societe', 'entreprise', 'raison', 'destinataire', 'debiteur', 'contact']) ||
-                       Object.values(row).find(v => v && typeof v === 'string' && v.length > 2 && !/^\d+$/.test(v)) || '';
-
-          const rawPhone = findColumn(row, ['tel', 'telephone', 'phone', 'mobile', 'portable', 'gsm', 'numero', 'num']) ||
-                        Object.values(row).find(v => v && /^0[1-9]/.test(String(v).replace(/\D/g, ''))) || '';
-
-          const rawAmount = findColumn(row, ['montant', 'amount', 'somme', 'total', 'ttc', 'ht', 'prix', 'valeur', 'solde', 'reste', 'du', 'impaye']) ||
-                         Object.values(row).find(v => v && /^\d+([.,]\d+)?$/.test(String(v).replace(/\s/g, ''))) || '';
-
-          const rawDueDate = findColumn(row, ['echeance', 'date', 'due', 'limit', 'deadline', 'paiement', 'reglement']) ||
-                          Object.values(row).find(v => v && /\d{1,4}[/\-.]?\d{1,2}[/\-.]?\d{1,4}/.test(String(v))) || '';
-
-          // Sanitize contre l'injection CSV
-          const name = sanitizeCSVValue(String(rawName));
-          const phone = sanitizeCSVValue(String(rawPhone));
-          const amount = sanitizeCSVValue(String(rawAmount));
-          const dueDate = sanitizeCSVValue(String(rawDueDate));
-
-          if (name || phone || amount) {
-            imported.push({
-              name: name.trim(),
-              phone: phone.trim(),
-              amount: amount.replace(/[^\d.,]/g, '').replace(',', '.').trim() || '0',
-              dueDate: dueDate.trim(),
-              id: Date.now() + Math.random(),
-              imported: true,
-              needsReview: !name || !phone || !amount
-            });
-          }
-        }
-
-        if (imported.length > 0) {
-          setInvoices((prev) => [...prev, ...imported]);
-          setHasImportedInvoices(true);
-          setUploadState('success');
-          const needsReviewCount = imported.filter(i => i.needsReview).length;
-          if (needsReviewCount > 0) {
-            setUploadMessage(`${imported.length} ligne(s) importée(s) — ${needsReviewCount} à compléter`);
-          } else {
-            setUploadMessage(`${imported.length} facture(s) importée(s) avec succès !`);
-          }
-        } else {
+        if (!results.meta.fields || results.meta.fields.length === 0 || results.data.length === 0) {
           setUploadState('error');
           setUploadMessage('Fichier vide ou format non reconnu');
+          setTimeout(() => setUploadState('default'), 4000);
+          return;
         }
-        setTimeout(() => setUploadState('default'), 4000);
+
+        // Stocker les données brutes et ouvrir le modal de mapping
+        setCsvMapping({
+          headers: results.meta.fields,
+          preview: results.data.slice(0, 3),
+          allData: results.data,
+          fileName: file.name,
+          rowCount: results.data.length,
+        });
+
+        // Tenter l'auto-mapping
+        const autoMap = {};
+        for (const [field, hints] of Object.entries(COLUMN_HINTS)) {
+          const match = results.meta.fields.find(h =>
+            hints.some(hint => normalizeHeader(h).includes(normalizeHeader(hint)))
+          );
+          if (match) autoMap[field] = match;
+        }
+        setColumnMapping(autoMap);
+
+        setUploadState('default');
+        setUploadMessage('');
       },
       error: () => {
         setUploadState('error');
@@ -918,6 +1405,17 @@ export default function OnboardingStep2() {
     processFile(e.target.files[0]);
     e.target.value = '';
   }, [processFile]);
+
+  // Confirmation du mapping CSV
+  const handleMappingConfirm = useCallback((mappedInvoices) => {
+    setInvoices(prev => [...prev, ...mappedInvoices]);
+    setHasImportedInvoices(true);
+    setCsvMapping(null);
+    setColumnMapping({});
+    setUploadState('success');
+    setUploadMessage(`${mappedInvoices.length} facture(s) importée(s) avec succès !`);
+    setTimeout(() => setUploadState('default'), 4000);
+  }, []);
 
   // Lancement IA
   const handleLaunch = useCallback(async () => {
@@ -962,7 +1460,15 @@ export default function OnboardingStep2() {
       if (result.success) {
         sessionStorage.removeItem('bp_lead_email');
         sessionStorage.removeItem('bp_lead_phone');
-        navigate('/onboarding/success', { state: { leadId: result.leadId } });
+        navigate('/onboarding/success', {
+          state: {
+            leadId: result.leadId,
+            prenom: profile.prenom,
+            entreprise: profile.entreprise,
+            nbFactures: invoices.length,
+            totalAmount: totalAmount,
+          }
+        });
       } else {
         console.error('❌ Erreur onboarding:', result.error);
         setSubmitError(result.error || 'Une erreur est survenue. Veuillez réessayer.');
@@ -1677,6 +2183,17 @@ export default function OnboardingStep2() {
         <Headphones className="w-5 h-5" />
         <span>Besoin d&apos;aide ?</span>
       </motion.button>
+
+      {/* Modal mapping CSV */}
+      {csvMapping && (
+        <CSVMappingModal
+          csvMapping={csvMapping}
+          columnMapping={columnMapping}
+          setColumnMapping={setColumnMapping}
+          onConfirm={handleMappingConfirm}
+          onCancel={() => { setCsvMapping(null); setColumnMapping({}); }}
+        />
+      )}
 
       {/* Modal expert */}
       <ExpertModal isOpen={isExpertModalOpen} onClose={() => setIsExpertModalOpen(false)} />

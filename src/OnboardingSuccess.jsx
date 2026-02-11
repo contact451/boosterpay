@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import {
   CheckCircle, Phone, ArrowRight,
   Zap, MessageSquare, Mail
@@ -350,6 +351,16 @@ function NextStepsTimeline() {
 
 // Composant principal
 export default function OnboardingSuccess() {
+  const location = useLocation();
+  const {
+    prenom = '',
+    entreprise = '',
+    nbFactures = 0,
+    totalAmount = 0,
+  } = location.state || {};
+
+  const hasData = nbFactures > 0;
+
   const [showConfetti, setShowConfetti] = useState(true);
 
   useEffect(() => {
@@ -397,11 +408,21 @@ export default function OnboardingSuccess() {
         >
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-              C&apos;est parti !
+              C&apos;est parti{prenom ? ` ${prenom}` : ''} !
             </span>
           </h1>
           <p className="text-gray-400 text-lg md:text-xl max-w-lg mx-auto">
-            Vos factures sont en route vers notre IA.
+            {hasData ? (
+              <>
+                {nbFactures} facture{nbFactures > 1 ? 's' : ''} pour un total de{' '}
+                <span className="text-white font-semibold">
+                  {Math.round(totalAmount).toLocaleString('fr-FR')} &euro;
+                </span>
+                {entreprise ? ` sont en route pour ${entreprise}` : ' sont en route vers notre IA'}.
+              </>
+            ) : (
+              <>Vos factures sont en route vers notre IA.</>
+            )}
             <br className="hidden md:block" />
             On s&apos;occupe de tout.
           </p>
@@ -414,11 +435,15 @@ export default function OnboardingSuccess() {
           transition={{ delay: 0.8 }}
           className="flex justify-center gap-6 md:gap-10 mb-12"
         >
-          {[
+          {(hasData ? [
+            { value: String(nbFactures), label: nbFactures > 1 ? 'Factures importées' : 'Facture importée', highlight: false },
+            { value: Math.round(totalAmount).toLocaleString('fr-FR') + ' €', label: 'À récupérer', highlight: true },
+            { value: '24h', label: 'Premier appel', highlight: false },
+          ] : [
             { value: '24h', label: 'Premier appel', highlight: false },
             { value: '94%', label: 'Taux de succès', highlight: true },
             { value: '0€', label: 'Si pas de résultat', highlight: false },
-          ].map((stat, index) => (
+          ]).map((stat, index) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, scale: 0.8 }}
