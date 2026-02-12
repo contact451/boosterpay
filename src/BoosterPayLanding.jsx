@@ -2956,43 +2956,248 @@ const HowItWorksSection = () => {
 };
 
 // Audio Demo Section
+const WAVEFORM_BARS = 50;
+
 const AudioDemoSection = ({ isOpen, onClose }) => {
+  const audioRef = useRef(null);
+  const progressBarRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const sourceCreatedRef = useRef(false);
+  const rafRef = useRef(null);
+  const prevBarsRef = useRef(new Float32Array(WAVEFORM_BARS));
+  const waveformRef = useRef(null);
+  const isPlayingRef = useRef(false);
+  const progressRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [showCapture, setShowCapture] = useState(false);
-  const duration = 45; // seconds
 
-  useEffect(() => {
-    let interval;
-    if (isPlaying && progress < 100) {
-      interval = setInterval(() => {
-        setProgress(prev => {
-          const newProgress = prev + (100 / (duration * 10));
-          setCurrentTime(Math.floor((newProgress / 100) * duration));
-          if (newProgress >= 100) {
-            setIsPlaying(false);
-            return 100;
-          }
-          return newProgress;
-        });
-      }, 100);
+  // Lazy-load: create audio element + Web Audio analyser on first play
+  const getAudio = useCallback(() => {
+    if (!audioRef.current) {
+      const audio = new Audio('/audio/demo-appel.mp3');
+      audio.crossOrigin = 'anonymous';
+      audio.preload = 'none';
+      audio.addEventListener('loadedmetadata', () => {
+        setDuration(audio.duration);
+      });
+      audio.addEventListener('timeupdate', () => {
+        setCurrentTime(audio.currentTime);
+        if (audio.duration) {
+          const p = (audio.currentTime / audio.duration) * 100;
+          setProgress(p);
+          progressRef.current = p;
+        }
+      });
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        setProgress(100);
+        progressRef.current = 100;
+      });
+      audioRef.current = audio;
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, progress]);
+
+    // Create AudioContext + AnalyserNode once
+    if (!audioContextRef.current) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256; // 128 frequency bins
+      analyser.smoothingTimeConstant = 0.75;
+      audioContextRef.current = ctx;
+      analyserRef.current = analyser;
+    }
+
+    // Connect source once (MediaElementSource can only be created once per element)
+    if (!sourceCreatedRef.current && audioRef.current) {
+      const source = audioContextRef.current.createMediaElementSource(audioRef.current);
+      source.connect(analyserRef.current);
+      analyserRef.current.connect(audioContextRef.current.destination);
+      sourceCreatedRef.current = true;
+    }
+
+    return audioRef.current;
+  }, []);
+
+  // Continuous RAF loop: idle wave animation + real-time audio visualization
+  useEffect(() => {
+    const freqBuf = new Uint8Array(128);
+    const timeBuf = new Uint8Array(128);
+
+    const tick = (timestamp) => {
+      const container = waveformRef.current;
+      if (!container) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      const barEls = container.children;
+      const playing = isPlayingRef.current;
+      const prog = progressRef.current;
+      const playedBarCount = (prog / 100) * WAVEFORM_BARS;
+
+      if (playing && analyserRef.current) {
+        const analyser = analyserRef.current;
+        const bufLen = analyser.frequencyBinCount; // 128
+        analyser.getByteFrequencyData(freqBuf);
+        analyser.getByteTimeDomainData(timeBuf);
+
+        // Global RMS energy from time-domain
+        let rmsSum = 0;
+        for (let b = 0; b < bufLen; b++) {
+          const v = (timeBuf[b] - 128) / 128;
+          rmsSum += v * v;
+        }
+        const rms = Math.sqrt(rmsSum / bufLen);
+
+        // Logarithmic bin-to-bar mapping (more bars in bass/mids)
+        const sampleRate = audioContextRef.current?.sampleRate || 44100;
+        const nyquist = sampleRate / 2;
+        const minFreq = 80;
+        const maxFreq = Math.min(8000, nyquist);
+        const logMin = Math.log(minFreq);
+        const logMax = Math.log(maxFreq);
+
+        for (let i = 0; i < WAVEFORM_BARS; i++) {
+          const logStart = logMin + (i / WAVEFORM_BARS) * (logMax - logMin);
+          const logEnd = logMin + ((i + 1) / WAVEFORM_BARS) * (logMax - logMin);
+          const binStart = Math.max(0, Math.floor((Math.exp(logStart) / nyquist) * bufLen));
+          const binEnd = Math.min(Math.ceil((Math.exp(logEnd) / nyquist) * bufLen), bufLen - 1);
+
+          // Average frequency bins for this bar
+          let sum = 0;
+          let count = 0;
+          for (let b = binStart; b <= binEnd; b++) {
+            sum += freqBuf[b];
+            count++;
+          }
+          let val = count > 0 ? sum / count / 255 : 0;
+
+          // Frequency-dependent gain: boost voice range (200-2000Hz)
+          const centerFreq = Math.exp((logStart + logEnd) / 2);
+          const gain = centerFreq < 200 ? 2.0 : centerFreq < 2000 ? 3.0 : 1.5;
+          val = Math.min(1, val * gain);
+
+          // Blend in time-domain RMS for global liveliness
+          val = Math.max(val, rms * 1.5);
+
+          // Micro-movement floor: subtle random-ish motion (2-8px equiv)
+          const floor = 0.02 + 0.04 * (Math.sin(timestamp * 0.004 + i * 0.7) * 0.5 + 0.5);
+          val = Math.max(val, floor);
+
+          // Smoothing: fast attack (0.7), slow decay (0.15) — VU-meter gravity
+          const prev = prevBarsRef.current[i];
+          val = val >= prev ? prev * 0.3 + val * 0.7 : prev * 0.85 + val * 0.15;
+          prevBarsRef.current[i] = val;
+
+          // Direct DOM update (no React re-render)
+          const el = barEls[i];
+          if (!el) continue;
+          const h = Math.max(8, val * 88);
+          const isCyan = i < playedBarCount;
+          el.style.height = h + 'px';
+          el.style.opacity = 0.5 + val * 0.5;
+          el.style.backgroundColor = isCyan ? '#22D3EE' : '#3B82F6';
+          if (val > 0.5) {
+            const glow = (val - 0.5) * 2;
+            el.style.filter = 'brightness(' + (1 + glow * 0.6) + ')';
+            el.style.boxShadow = '0 0 ' + (glow * 10) + 'px ' + (isCyan ? 'rgba(34,211,238,0.6)' : 'rgba(59,130,246,0.6)');
+          } else {
+            el.style.filter = '';
+            el.style.boxShadow = '';
+          }
+        }
+      } else {
+        // Idle: gentle sinusoidal wave (6-12px oscillation)
+        for (let i = 0; i < WAVEFORM_BARS; i++) {
+          const wave = Math.sin(timestamp * 0.002 + i * 0.2);
+          const targetNorm = (3 + wave * 3) / 88; // maps ~0-6px range into 0-1 normalized
+          // Smooth transition from playing values toward idle
+          const prev = prevBarsRef.current[i];
+          const smoothed = prev * 0.92 + targetNorm * 0.08;
+          prevBarsRef.current[i] = smoothed;
+
+          const h = Math.max(6, 6 + smoothed * 88);
+          const el = barEls[i];
+          if (!el) continue;
+          el.style.height = h + 'px';
+          el.style.opacity = '0.5';
+          el.style.backgroundColor = i < playedBarCount ? '#22D3EE' : '#3B82F6';
+          el.style.filter = '';
+          el.style.boxShadow = '';
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const togglePlay = () => {
-    if (progress >= 100) {
-      setProgress(0);
-      setCurrentTime(0);
+    const audio = getAudio();
+    // Resume AudioContext if suspended (browser autoplay policy)
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
     }
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+    } else {
+      if (progress >= 100) {
+        audio.currentTime = 0;
+        setProgress(0);
+        progressRef.current = 0;
+        setCurrentTime(0);
+      }
+      audio.play();
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+    }
+  };
+
+  const handleSeek = (e) => {
+    const audio = getAudio();
+    if (!audio.duration) return;
+    const bar = progressBarRef.current;
+    const rect = bar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    audio.currentTime = ratio * audio.duration;
+    const p = ratio * 100;
+    setProgress(p);
+    progressRef.current = p;
+    setCurrentTime(audio.currentTime);
   };
 
   return (
@@ -3020,22 +3225,13 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
           variants={fadeInScale}
         >
           <GlassCard className="p-8 md:p-12">
-            {/* Waveform Visualization */}
-            <div className="flex items-center justify-center gap-1 h-24 mb-8">
-              {[...Array(50)].map((_, i) => (
-                <motion.div
+            {/* Waveform Visualization - driven by RAF direct DOM updates */}
+            <div ref={waveformRef} className="flex items-center justify-center gap-1 h-24 mb-8">
+              {Array.from({ length: WAVEFORM_BARS }).map((_, i) => (
+                <div
                   key={i}
-                  animate={{
-                    height: isPlaying ? [8, Math.random() * 80 + 8, 8] : 8,
-                    backgroundColor: i < (progress / 2) ? '#22D3EE' : '#3B82F6'
-                  }}
-                  transition={{
-                    duration: 0.3,
-                    repeat: isPlaying ? Infinity : 0,
-                    delay: i * 0.02,
-                  }}
-                  className="w-1 md:w-1.5 rounded-full bg-blue-500"
-                  style={{ minHeight: 8 }}
+                  className="w-1 md:w-1.5 rounded-full"
+                  style={{ height: '8px', minHeight: '6px', backgroundColor: '#3B82F6' }}
                 />
               ))}
             </div>
@@ -3061,18 +3257,23 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
               </motion.button>
             </div>
 
-            {/* Progress Bar */}
-            <div className="relative h-2 bg-white/10 rounded-full overflow-hidden mb-4">
-              <motion.div
-                className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
+            {/* Progress Bar - Clickable for seeking */}
+            <div
+              ref={progressBarRef}
+              onClick={handleSeek}
+              className="relative h-2 bg-white/10 rounded-full overflow-hidden mb-4 cursor-pointer group"
+            >
+              <div
+                className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-[width] duration-100"
                 style={{ width: `${progress}%` }}
               />
+              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors rounded-full" />
             </div>
 
             {/* Time Display */}
             <div className="flex justify-between text-sm text-gray-400">
               <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
+              <span>{duration ? formatTime(duration) : '0:00'}</span>
             </div>
           </GlassCard>
         </motion.div>
