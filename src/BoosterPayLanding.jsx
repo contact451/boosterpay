@@ -1615,7 +1615,7 @@ const TestAISection = ({ onOpenBooking }) => {
     const steps = [
       'Lecture du fichier...',
       'Analyse des données...',
-      'Extraction des factures...',
+      'Extraction des données...',
       '✓ Import terminé !'
     ];
 
@@ -1682,7 +1682,7 @@ const TestAISection = ({ onOpenBooking }) => {
       {importedFile ? (
         <>
           <h3 className="text-xl font-bold text-white text-center">
-            {simulatedCount} factures prêtes à être relancées ! 🚀
+            {simulatedCount} clients prêts à être relancés ! 🚀
           </h3>
           <p className="text-gray-400 text-sm text-center">
             Notre IA a analysé <span className="text-cyan-400 font-medium">{importedFile.name}</span> et préparé les scripts de relance optimisés pour chaque client.
@@ -1693,7 +1693,7 @@ const TestAISection = ({ onOpenBooking }) => {
               <span className="text-white font-medium truncate max-w-[180px]">{importedFile.name}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400 flex items-center gap-2"><Users className="w-3.5 h-3.5" /> Factures détectées</span>
+              <span className="text-gray-400 flex items-center gap-2"><Users className="w-3.5 h-3.5" /> Clients détectés</span>
               <span className="text-white font-medium">{simulatedCount}</span>
             </div>
             <div className="flex justify-between text-sm">
@@ -1778,7 +1778,7 @@ const TestAISection = ({ onOpenBooking }) => {
             whileTap={{ scale: 0.97 }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white text-sm font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
           >
-            Ajouter mes factures →
+            Ajouter mes impayés →
           </motion.a>
         </motion.div>
       ) : (
@@ -1996,7 +1996,7 @@ const TestAISection = ({ onOpenBooking }) => {
             </h2>
 
             <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
-              Entrez une facture impayée et voyez la <span className="text-white font-medium">magie</span> opérer
+              Entrez un impayé et voyez la <span className="text-white font-medium">magie</span> opérer
             </p>
           </motion.div>
 
@@ -2104,7 +2104,7 @@ const TestAISection = ({ onOpenBooking }) => {
                           </div>
                           <div>
                             <h3 className="text-lg font-bold text-white">Ajout rapide</h3>
-                            <p className="text-xs text-gray-400">Entrez une facture pour tester</p>
+                            <p className="text-xs text-gray-400">Entrez un impayé pour tester</p>
                           </div>
                         </div>
 
@@ -2301,7 +2301,7 @@ const TestAISection = ({ onOpenBooking }) => {
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white">Import en masse</h3>
-                          <p className="text-xs text-gray-400">Importez toutes vos factures d&apos;un coup</p>
+                          <p className="text-xs text-gray-400">Importez tous vos impayés d&apos;un coup</p>
                         </div>
                       </div>
 
@@ -2384,7 +2384,7 @@ const TestAISection = ({ onOpenBooking }) => {
                           aria-expanded={isHelpOpen}
                         >
                           <HelpCircle className="w-4 h-4" />
-                          <span>Comment exporter mes factures ?</span>
+                          <span>Comment exporter mes données ?</span>
                           {isHelpOpen ? <ChevronUp className="w-4 h-4 ml-auto" /> : <ChevronDown className="w-4 h-4 ml-auto" />}
                         </button>
 
@@ -2629,7 +2629,7 @@ const ProblemSection = () => {
     {
       icon: TrendingDown,
       title: "Trésorerie en danger",
-      description: "En attendant, votre trésorerie souffre. Les factures s'accumulent.",
+      description: "En attendant, votre trésorerie souffre. Les impayés s'accumulent.",
       color: "orange"
     },
     {
@@ -2814,8 +2814,8 @@ const HowItWorksSection = () => {
     {
       number: "1",
       icon: FileText,
-      title: "Envoyez vos factures",
-      description: "Photo, email, PDF... Envoyez-nous vos factures comme vous voulez. On s'occupe du reste."
+      title: "Envoyez vos impayés",
+      description: "Photo, email, PDF... Envoyez-nous vos infos comme vous voulez. On s'occupe du reste."
     },
     {
       number: "2",
@@ -2856,7 +2856,7 @@ const HowItWorksSection = () => {
             Simple comme <span className="text-cyan-400">bonjour</span>.
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Pas besoin d'être un expert en informatique. Envoyez vos factures, on fait le reste.
+            Pas besoin d'être un expert en informatique. Envoyez vos impayés, on fait le reste.
           </p>
         </motion.div>
 
@@ -2923,7 +2923,7 @@ const HowItWorksSection = () => {
           transition={{ delay: 0.5 }}
           className="mt-16 text-center"
         >
-          <p className="text-gray-500 text-sm mb-6 uppercase tracking-wider">Envoyez vos factures comme vous préférez</p>
+          <p className="text-gray-500 text-sm mb-6 uppercase tracking-wider">Envoyez vos infos comme vous préférez</p>
           <div className="flex flex-wrap justify-center gap-4 md:gap-6">
             {[
               { icon: "📸", label: "Photo" },
@@ -3568,7 +3568,7 @@ const PricingSection = ({ onOpenBooking }) => {
       highlight: "LE PLUS SIMPLE",
       icon: "\u{1F680}",
       features: [
-        "Jusqu'\u00e0 20 factures/mois",
+        "Jusqu'\u00e0 20 impayés/mois",
         "IA Vocale + SMS + Email",
         "Relances automatiques 24/7",
         "Tableau de bord temps r\u00e9el",
@@ -3588,7 +3588,7 @@ const PricingSection = ({ onOpenBooking }) => {
       highlight: "LE PLUS RENTABLE",
       icon: "\u2B50",
       features: [
-        "Jusqu'\u00e0 100 factures/mois",
+        "Jusqu'\u00e0 100 impayés/mois",
         "IA Vocale + SMS + Email",
         "Synchronisation comptable auto",
         "Statistiques avanc\u00e9es",
@@ -3612,7 +3612,7 @@ const PricingSection = ({ onOpenBooking }) => {
       highlight: "LE PLUS PUISSANT",
       icon: "\u{1F48E}",
       features: [
-        "Jusqu'\u00e0 500 factures/mois",
+        "Jusqu'\u00e0 500 impayés/mois",
         "IA Vocale + SMS + Email",
         "Account Manager d\u00e9di\u00e9",
         "Int\u00e9grations illimit\u00e9es",

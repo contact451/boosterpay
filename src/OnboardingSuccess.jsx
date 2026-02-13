@@ -414,14 +414,14 @@ export default function OnboardingSuccess() {
           <p className="text-gray-400 text-lg md:text-xl max-w-lg mx-auto">
             {hasData ? (
               <>
-                {nbFactures} facture{nbFactures > 1 ? 's' : ''} pour un total de{' '}
+                {nbFactures} impayé{nbFactures > 1 ? 's' : ''} pour un total de{' '}
                 <span className="text-white font-semibold">
                   {Math.round(totalAmount).toLocaleString('fr-FR')} &euro;
                 </span>
                 {entreprise ? ` sont en route pour ${entreprise}` : ' sont en route vers notre IA'}.
               </>
             ) : (
-              <>Vos factures sont en route vers notre IA.</>
+              <>Vos impayés sont en route vers notre IA.</>
             )}
             <br className="hidden md:block" />
             On s&apos;occupe de tout.
@@ -436,7 +436,7 @@ export default function OnboardingSuccess() {
           className="flex justify-center gap-6 md:gap-10 mb-12"
         >
           {(hasData ? [
-            { value: String(nbFactures), label: nbFactures > 1 ? 'Factures importées' : 'Facture importée', highlight: false },
+            { value: String(nbFactures), label: nbFactures > 1 ? 'Impayés importés' : 'Impayé importé', highlight: false },
             { value: Math.round(totalAmount).toLocaleString('fr-FR') + ' €', label: 'À récupérer', highlight: true },
             { value: '24h', label: 'Premier appel', highlight: false },
           ] : [

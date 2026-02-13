@@ -431,7 +431,7 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                       {!(isMobile && isKeyboardOpen) && (
                         <p className="text-white font-semibold mt-1 flex items-center justify-center gap-2">
                           <FileText className="w-4 h-4 text-blue-400" />
-                          5 techniques pour récupérer vos factures impayées
+                          5 techniques pour récupérer vos impayés
                         </p>
                       )}
                     </div>

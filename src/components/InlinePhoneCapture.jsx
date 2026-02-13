@@ -57,7 +57,7 @@ const SUCCESS_MESSAGES = {
   hero: {
     title: "Inscription confirmée ! 🎉",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Importer ma 1ère facture →"
+    cta: "Importer mon 1er impayé →"
   },
   simulateur: {
     title: "Estimation envoyée ! 📊",
@@ -67,22 +67,22 @@ const SUCCESS_MESSAGES = {
   test_ai: {
     title: "IA activée ! 🤖",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Ajouter mes factures →"
+    cta: "Ajouter mes impayés →"
   },
   pricing_starter: {
     title: "Essai STARTER activé ! ✨",
     subtitle: "Vérifiez vos messages pour les détails !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   pricing_pro: {
     title: "Essai PRO activé ! ✨",
     subtitle: "Vérifiez vos messages pour les détails !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   pricing_business: {
     title: "Essai BUSINESS activé ! ✨",
     subtitle: "Vérifiez vos messages pour les détails !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   exit_intent: {
     title: "Guide envoyé ! 📚",
@@ -92,7 +92,7 @@ const SUCCESS_MESSAGES = {
   mobile_cta: {
     title: "C'est parti ! 🎉",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   booking: {
     title: "Rendez-vous confirmé ! 📅",
@@ -102,22 +102,22 @@ const SUCCESS_MESSAGES = {
   audio_demo: {
     title: "C'est parti ! 🎧",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   testimonials: {
     title: "Inscription confirmée ! 🎉",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   intermediate_cta: {
     title: "C'est parti ! 🚀",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   },
   deferred: {
     title: "Inscription confirmée ! ✅",
     subtitle: "Vérifiez vos messages (et les spams au cas où) !",
-    cta: "Importer mes factures →"
+    cta: "Importer mes impayés →"
   }
 };
 

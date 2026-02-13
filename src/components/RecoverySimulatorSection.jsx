@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { Banknote, TrendingUp, Mail, ArrowRight, Loader2, Minus, Plus, Euro, Sparkles } from 'lucide-react';
+import { Banknote, TrendingUp, Mail, ArrowRight, Loader2, Minus, Plus, Euro, Sparkles, Lock } from 'lucide-react';
 import InlinePhoneCapture from './InlinePhoneCapture';
 
 // Hook for mobile detection
@@ -285,7 +285,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                   min={5}
                   max={500}
                   step={5}
-                  label="Nombre de factures impayées par mois"
+                  label="Nombre d'impayés par mois"
                   formatValue={(v) => v.toString()}
                   isMobile={isMobile}
                 />
@@ -297,7 +297,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                   min={100}
                   max={10000}
                   step={100}
-                  label="Montant moyen d'une facture"
+                  label="Montant moyen d'un impayé"
                   formatValue={(v) => `${formatNumber(v)} €`}
                   isMobile={isMobile}
                 />
@@ -335,7 +335,8 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                       animate={{ opacity: 1 }}
                       className="absolute inset-0 flex items-center justify-center"
                     >
-                      <span className="text-gray-500 text-sm">
+                      <span className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
                         Entrez votre email pour voir le résultat
                       </span>
                     </motion.div>

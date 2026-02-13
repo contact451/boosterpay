@@ -299,7 +299,7 @@ function AnimatedBackground() {
 function ProgressBar() {
   const steps = [
     { label: 'Inscription', done: true },
-    { label: 'Import factures', active: true },
+    { label: 'Import impayés', active: true },
     { label: 'Lancement IA', done: false },
   ];
 
@@ -389,7 +389,7 @@ function ProfileSection({ profile, setProfile, isCollapsed, setIsCollapsed }) {
                 {profile.prenom} {profile.nom} — {profile.entreprise} — {profile.secteur}
               </p>
             ) : (
-              <p className="text-xs text-gray-400">Nécessaire avant d&apos;ajouter vos factures</p>
+              <p className="text-xs text-gray-400">Nécessaire avant d&apos;ajouter vos impayés</p>
             )}
           </div>
           {isCollapsed && (
@@ -704,7 +704,7 @@ const normalizeHeader = (str) => str?.toLowerCase().normalize('NFD').replace(/[\
 const REQUIRED_FIELDS = [
   { key: 'name', label: 'Client Débiteur', description: 'Nom du client qui doit payer' },
   { key: 'phone', label: 'Téléphone 1', description: 'Numéro principal du débiteur' },
-  { key: 'amount', label: 'Montant €', description: 'Montant de la facture' },
+  { key: 'amount', label: 'Montant €', description: "Montant de l'impayé" },
 ];
 
 const OPTIONAL_FIELDS = [
@@ -812,7 +812,7 @@ function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfir
   const STEPS = [
     { key: 'name', label: 'Nom du client', Icon: User, stepNum: 1 },
     { key: 'phone', label: 'Numéro de téléphone', Icon: Phone, stepNum: 2 },
-    { key: 'amount', label: 'Montant de la facture', Icon: Euro, stepNum: 3 },
+    { key: 'amount', label: "Montant de l'impayé", Icon: Euro, stepNum: 3 },
   ];
 
   // Labels humanisés pour les champs optionnels (basés sur OPTIONAL_FIELDS)
@@ -1232,7 +1232,7 @@ function InvoiceCard({ invoice, onDelete, index }) {
         <button
           onClick={() => setConfirmDelete(true)}
           className="p-2 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors shrink-0"
-          aria-label={`Supprimer la facture de ${invoice.name}`}
+          aria-label={`Supprimer l'impayé de ${invoice.name}`}
         >
           <Trash2 className="w-4 h-4" />
         </button>
@@ -1413,7 +1413,7 @@ export default function OnboardingStep2() {
     setCsvMapping(null);
     setColumnMapping({});
     setUploadState('success');
-    setUploadMessage(`${mappedInvoices.length} facture(s) importée(s) avec succès !`);
+    setUploadMessage(`${mappedInvoices.length} impayé(s) importé(s) avec succès !`);
     setTimeout(() => setUploadState('default'), 4000);
   }, []);
 
@@ -1508,7 +1508,7 @@ export default function OnboardingStep2() {
           <h1 className="text-2xl md:text-4xl font-bold mb-3">
             Importez vos{' '}
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              factures impayées
+              impayés
             </span>
           </h1>
           <p className="text-gray-400 md:text-lg max-w-xl mx-auto">
@@ -1535,7 +1535,7 @@ export default function OnboardingStep2() {
             >
               <div className="inline-flex items-center gap-3 bg-white/[0.03] backdrop-blur-xl border border-cyan-500/30 rounded-2xl px-5 py-3 flex-wrap justify-center">
                 <span className="text-cyan-400 font-bold text-lg">
-                  {animatedCount} facture{invoices.length > 1 ? 's' : ''}
+                  {animatedCount} impayé{invoices.length > 1 ? 's' : ''}
                 </span>
                 {hasImportedInvoices ? (
                   <>
@@ -1581,7 +1581,7 @@ export default function OnboardingStep2() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-white">Ajout manuel</h2>
-                  <p className="text-xs text-gray-400">Ajoutez une facture à la fois</p>
+                  <p className="text-xs text-gray-400">Ajoutez un impayé à la fois</p>
                 </div>
               </div>
 
@@ -1926,7 +1926,7 @@ export default function OnboardingStep2() {
                     >
                       <span className="flex items-center justify-center gap-2">
                         <Plus className="w-4 h-4" />
-                        Ajouter cette facture +
+                        Ajouter cet impayé +
                       </span>
                     </motion.button>
                   );
@@ -1949,7 +1949,7 @@ export default function OnboardingStep2() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-white">Import CSV / Excel</h2>
-                  <p className="text-xs text-gray-400">Importez plusieurs factures d&apos;un coup</p>
+                  <p className="text-xs text-gray-400">Importez plusieurs impayés d&apos;un coup</p>
                 </div>
               </div>
 
@@ -2016,7 +2016,7 @@ export default function OnboardingStep2() {
                       <FileText className="w-7 h-7 text-violet-400" />
                     </motion.div>
                     <div className="text-center relative z-10">
-                      <p className="text-sm text-gray-300">Plusieurs factures ?</p>
+                      <p className="text-sm text-gray-300">Plusieurs impayés ?</p>
                       <p className="text-sm text-violet-400 font-semibold">Glissez votre fichier ici</p>
                       <p className="text-xs text-gray-500 mt-1">.csv, .xlsx — On s&apos;adapte à votre format !</p>
                     </div>
@@ -2039,7 +2039,7 @@ export default function OnboardingStep2() {
             >
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Rocket className="w-5 h-5 text-violet-400" />
-                Factures prêtes pour l&apos;IA
+                Impayés prêts pour l&apos;IA
               </h3>
               <motion.div
                 variants={staggerContainer}
@@ -2108,8 +2108,8 @@ export default function OnboardingStep2() {
             {!canLaunch && (
               <p className="text-gray-500 text-sm mt-3">
                 {!profileCollapsed
-                  ? 'Complétez votre profil et ajoutez au moins une facture'
-                  : 'Ajoutez au moins une facture pour continuer'}
+                  ? 'Complétez votre profil et ajoutez au moins un impayé'
+                  : 'Ajoutez au moins un impayé pour continuer'}
               </p>
             )}
           </motion.div>
@@ -2156,8 +2156,8 @@ export default function OnboardingStep2() {
           {!canLaunch && (
             <p className="text-gray-500 text-xs mt-2 text-center">
               {!profileCollapsed
-                ? 'Complétez votre profil + ajoutez une facture'
-                : 'Ajoutez au moins une facture'}
+                ? 'Complétez votre profil + ajoutez un impayé'
+                : 'Ajoutez au moins un impayé'}
             </p>
           )}
         </div>
