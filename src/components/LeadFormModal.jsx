@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, Check, Loader2, Mail, Phone, Sparkles } from 'lucide-react';
+import { X, Gift, Check, Loader2, Mail, Sparkles } from 'lucide-react';
 import { submitLead } from '../services/leadService';
 
 // Hook for mobile detection
@@ -55,12 +55,10 @@ const LeadFormModal = ({
   // Safeguard: ensure prefilledEmail is a string
   const safePrefilledEmail = typeof prefilledEmail === 'string' ? prefilledEmail : '';
   const [email, setEmail] = useState(safePrefilledEmail);
-  const [phone, setPhone] = useState('');
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [errors, setErrors] = useState({});
   const isMobile = useIsMobile();
   const emailInputRef = useRef(null);
-  const phoneInputRef = useRef(null);
 
   // Update email if prefilled changes
   useEffect(() => {
@@ -103,49 +101,14 @@ const LeadFormModal = ({
       if (!prefilledEmail) {
         setEmail('');
       }
-      setPhone('');
     }
   }, [isOpen, prefilledEmail]);
-
-  // Format phone number as user types
-  const formatPhoneNumber = (value) => {
-    const digits = value.replace(/\D/g, '');
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
-    if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
-    if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
-    return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
-  };
-
-  const handlePhoneChange = (e) => {
-    const formatted = formatPhoneNumber(e.target.value);
-    setPhone(formatted);
-    if (errors.phone) {
-      setErrors(prev => ({ ...prev, phone: null }));
-    }
-  };
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
     if (errors.email) {
       setErrors(prev => ({ ...prev, email: null }));
     }
-  };
-
-  // Validate French mobile number (06/07, all formats)
-  const validateFrenchMobile = (phone) => {
-    // Remove spaces, dots, dashes, parentheses
-    const cleaned = phone.replace(/[\s.\-()]/g, '');
-
-    // Accepted patterns for French mobile (06 or 07)
-    const patterns = [
-      /^0[67]\d{8}$/,           // 0612345678
-      /^\+33[67]\d{8}$/,        // +33612345678
-      /^0033[67]\d{8}$/,        // 0033612345678
-      /^33[67]\d{8}$/,          // 33612345678
-    ];
-
-    return patterns.some(pattern => pattern.test(cleaned));
   };
 
   const validateForm = () => {
@@ -157,13 +120,6 @@ const LeadFormModal = ({
       newErrors.email = 'Email requis';
     } else if (!emailRegex.test(email)) {
       newErrors.email = 'Email invalide';
-    }
-
-    // Phone validation (French mobile: 06/07, all formats)
-    if (!phone) {
-      newErrors.phone = 'Téléphone requis';
-    } else if (!validateFrenchMobile(phone)) {
-      newErrors.phone = 'Entrez un numéro de mobile français valide (06 ou 07)';
     }
 
     setErrors(newErrors);
@@ -180,18 +136,19 @@ const LeadFormModal = ({
     try {
       await submitLead({
         email,
-        phone: phone.replace(/\s/g, ''),
         source
       });
 
       setStatus('success');
+
+      // Store for OnboardingStep2
+      sessionStorage.setItem('bp_lead_email', email.trim().toLowerCase());
 
       // Close modal after success animation
       setTimeout(() => {
         onClose();
         setStatus('idle');
         setEmail('');
-        setPhone('');
       }, 3000);
 
     } catch (error) {
@@ -235,9 +192,6 @@ const LeadFormModal = ({
   const isValid = (field) => {
     if (field === 'email') {
       return email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-    if (field === 'phone') {
-      return phone && validateFrenchMobile(phone);
     }
     return false;
   };
@@ -360,44 +314,6 @@ const LeadFormModal = ({
                       </div>
                       {errors.email && (
                         <p className="text-red-400 text-xs mt-1.5">{errors.email}</p>
-                      )}
-                    </div>
-
-                    {/* Phone field */}
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-1.5">
-                        Téléphone
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                        <input
-                          ref={phoneInputRef}
-                          type="tel"
-                          value={phone}
-                          onChange={handlePhoneChange}
-                          placeholder="06 12 34 56 78"
-                          className={`w-full pl-12 pr-10 py-3.5 md:py-3 rounded-xl bg-white/5 border ${
-                            errors.phone
-                              ? 'border-red-500/50 focus:border-red-500'
-                              : isValid('phone')
-                                ? 'border-emerald-500/50 focus:border-emerald-500'
-                                : 'border-white/10 focus:border-blue-500/50'
-                          } text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
-                            errors.phone
-                              ? 'focus:ring-red-500/20'
-                              : isValid('phone')
-                                ? 'focus:ring-emerald-500/20'
-                                : 'focus:ring-blue-500/20'
-                          } transition-all`}
-                          disabled={status === 'loading'}
-                          inputMode="tel"
-                        />
-                        {isValid('phone') && (
-                          <Check className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
-                        )}
-                      </div>
-                      {errors.phone && (
-                        <p className="text-red-400 text-xs mt-1.5">{errors.phone}</p>
                       )}
                     </div>
 

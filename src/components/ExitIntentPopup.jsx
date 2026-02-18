@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, Mail, ArrowRight, Check, Loader2, FileText, Phone } from 'lucide-react';
+import { X, Gift, Mail, ArrowRight, Check, Loader2, FileText } from 'lucide-react';
 import { submitLead } from '../services/leadService';
 
 // Hook to detect if keyboard is open (via visualViewport)
@@ -180,18 +180,13 @@ const useExitIntent = (onExit, options = {}) => {
 
 const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState(1); // 1 = email, 2 = phone
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [phoneStatus, setPhoneStatus] = useState('empty'); // empty | incomplete | invalid | valid
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [error, setError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
   const [hasShown, setHasShown] = useState(false);
   const isMobile = useIsMobile();
   const isKeyboardOpen = useKeyboardOpen();
   const emailInputRef = useRef(null);
-  const phoneInputRef = useRef(null);
 
   // Check if popup was already shown in this session
   useEffect(() => {
@@ -216,22 +211,20 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     mobileTimeout: 60000
   });
 
-  // Auto-focus input when popup opens or step changes (with scroll on mobile)
+  // Auto-focus input when popup opens
   useEffect(() => {
     if (isOpen) {
       const delay = isMobile ? 400 : 300;
       setTimeout(() => {
-        const targetRef = step === 1 ? emailInputRef : phoneInputRef;
-        if (targetRef.current) {
-          targetRef.current.focus();
-          // Scroll input into view on mobile
+        if (emailInputRef.current) {
+          emailInputRef.current.focus();
           if (isMobile) {
-            targetRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            emailInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
         }
       }, delay);
     }
-  }, [isOpen, step, isMobile]);
+  }, [isOpen, isMobile]);
 
   // Handle escape key
   useEffect(() => {
@@ -248,8 +241,8 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
-  // Step 1: Validate email → move to step 2
-  const handleEmailSubmit = (e) => {
+  // Submit email directly
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
 
     if (!email) {
@@ -262,37 +255,19 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
       return;
     }
 
-    setError('');
-    setStep(2); // Move to phone step
-  };
-
-  // Step 2: Validate phone → final submit
-  const handlePhoneSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validation STRICTE du téléphone
-    if (!validateFrenchMobile(phone)) {
-      const errorMsg = getPhoneErrorMessage(phone);
-      setPhoneError(errorMsg);
-      // Animation shake sur l'input
-      if (phoneInputRef.current) {
-        phoneInputRef.current.classList.add('animate-shake');
-        setTimeout(() => phoneInputRef.current?.classList.remove('animate-shake'), 500);
-      }
-      return;
-    }
-
     setStatus('loading');
-    setPhoneError('');
+    setError('');
 
     try {
       await submitLead({
         email: email.trim().toLowerCase(),
-        phone: phone.replace(/\D/g, ''),
         source: 'exit_intent'
       });
 
       setStatus('success');
+
+      // Store for OnboardingStep2
+      sessionStorage.setItem('bp_lead_email', email.trim().toLowerCase());
 
       // Pass email to parent for later use
       if (onEmailCapture) {
@@ -307,7 +282,7 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     } catch (err) {
       console.error('Error:', err);
       setStatus('error');
-      setPhoneError('Une erreur est survenue');
+      setError('Une erreur est survenue');
     }
   };
 
@@ -437,117 +412,32 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={step === 1 ? handleEmailSubmit : handlePhoneSubmit} className="space-y-4">
-                      {/* Step 1: Email input */}
-                      {step === 1 && (
-                        <div className="relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                          <input
-                            ref={emailInputRef}
-                            type="email"
-                            value={email}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              setError('');
-                            }}
-                            placeholder="votre@email.fr"
-                            className={`w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border ${
-                              error
-                                ? 'border-red-500/50 focus:border-red-500'
-                                : 'border-white/10 focus:border-blue-500/50'
-                            } text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
-                              error ? 'focus:ring-red-500/20' : 'focus:ring-blue-500/20'
-                            } transition-all text-base`}
-                            disabled={status === 'loading'}
-                          />
-                          {error && (
-                            <p className="text-red-400 text-xs mt-1.5 pl-1">{error}</p>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Step 2: Phone input (slides in after email validation) */}
-                      {step === 2 && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                        >
-                          <p className="text-emerald-400 text-sm mb-3 flex items-center gap-2">
-                            <Check className="w-4 h-4" /> Email validé !
-                          </p>
-                          <p className="text-white font-medium mb-3">
-                            Dernière étape pour recevoir le guide :
-                          </p>
-                          <div className="relative">
-                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                            <input
-                              ref={phoneInputRef}
-                              type="tel"
-                              inputMode="numeric"
-                              value={phone}
-                              onChange={(e) => {
-                                const formatted = formatPhoneNumber(e.target.value);
-                                setPhone(formatted);
-                                setPhoneStatus(getPhoneStatus(formatted));
-                                setPhoneError('');
-                              }}
-                              placeholder="06 __ __ __ __"
-                              className={`w-full pl-12 pr-12 py-4 rounded-xl bg-white/5 border transition-all text-base ${
-                                phoneStatus === 'valid'
-                                  ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-emerald-500/20'
-                                  : phoneStatus === 'invalid'
-                                  ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/20'
-                                  : 'border-white/10 focus:border-blue-500/50 focus:ring-blue-500/20'
-                              } text-white placeholder-gray-500 focus:outline-none focus:ring-2`}
-                              disabled={status === 'loading'}
-                              autoComplete="tel"
-                            />
-
-                            {/* Indicateur de validité à droite */}
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                              {phoneStatus === 'valid' && (
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
-                                >
-                                  <Check className="w-4 h-4 text-white" />
-                                </motion.div>
-                              )}
-                              {phoneStatus === 'invalid' && phone.replace(/\D/g, '').length > 0 && (
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"
-                                >
-                                  <X className="w-4 h-4 text-white" />
-                                </motion.div>
-                              )}
-                              {phoneStatus === 'incomplete' && (
-                                <span className="text-xs text-gray-500 font-medium">
-                                  {10 - phone.replace(/\D/g, '').length}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Message d'aide en temps réel */}
-                          {phoneStatus === 'invalid' && phone.replace(/\D/g, '').length > 0 && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="text-red-400 text-xs mt-1.5 pl-1"
-                            >
-                              {getPhoneErrorMessage(phone)}
-                            </motion.p>
-                          )}
-
-                          {phoneError && (
-                            <p className="text-red-400 text-xs mt-1.5 pl-1">{phoneError}</p>
-                          )}
-                        </motion.div>
-                      )}
+                    <form onSubmit={handleEmailSubmit} className="space-y-4">
+                      {/* Email input */}
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <input
+                          ref={emailInputRef}
+                          type="email"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setError('');
+                          }}
+                          placeholder="votre@email.fr"
+                          className={`w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border ${
+                            error
+                              ? 'border-red-500/50 focus:border-red-500'
+                              : 'border-white/10 focus:border-blue-500/50'
+                          } text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
+                            error ? 'focus:ring-red-500/20' : 'focus:ring-blue-500/20'
+                          } transition-all text-base`}
+                          disabled={status === 'loading'}
+                        />
+                        {error && (
+                          <p className="text-red-400 text-xs mt-1.5 pl-1">{error}</p>
+                        )}
+                      </div>
 
                       <motion.button
                         type="submit"
@@ -560,11 +450,6 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                           <>
                             <Loader2 className="w-5 h-5 animate-spin" />
                             Envoi...
-                          </>
-                        ) : step === 1 ? (
-                          <>
-                            Continuer
-                            <ArrowRight className="w-5 h-5" />
                           </>
                         ) : (
                           <>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import {
-  FileText, Upload, Plus, Trash2, Phone, Calendar,
+  FileText, Upload, Plus, Trash2, Phone,
   Euro, ChevronDown, ChevronUp, Headphones, Rocket,
   CheckCircle, AlertCircle, X, HelpCircle, User, Check,
   Smartphone, Mail, Loader2
@@ -299,8 +299,8 @@ function AnimatedBackground() {
 function ProgressBar() {
   const steps = [
     { label: 'Inscription', done: true },
-    { label: 'Import impayés', active: true },
-    { label: 'Lancement IA', done: false },
+    { label: 'Ajout impayés', active: true },
+    { label: 'Profil & Lancement', done: false },
   ];
 
   return (
@@ -333,215 +333,6 @@ function ProgressBar() {
   );
 }
 
-// === SECTION PROFIL ===
-function ProfileSection({ profile, setProfile, isCollapsed, setIsCollapsed }) {
-  const isComplete = profile.prenom.trim() && profile.nom.trim() && profile.entreprise.trim() && profile.secteur;
-
-  const handleValidate = () => {
-    if (isComplete) setIsCollapsed(true);
-  };
-
-  return (
-    <motion.div
-      variants={fadeInUp}
-      initial="hidden"
-      animate="visible"
-      transition={{ delay: 0.15 }}
-      className="mb-8"
-    >
-      <div
-        className={`bg-white/[0.03] backdrop-blur-xl border rounded-2xl overflow-hidden transition-all duration-300 ${
-          isCollapsed
-            ? 'border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.1)]'
-            : 'border-white/[0.06] hover:border-cyan-500/20'
-        }`}
-      >
-        {/* Header cliquable quand collapsé */}
-        <button
-          type="button"
-          onClick={() => { if (isCollapsed) setIsCollapsed(false); }}
-          className={`w-full flex items-center gap-3 p-5 md:p-6 text-left ${
-            isCollapsed ? 'cursor-pointer' : 'cursor-default'
-          }`}
-          aria-expanded={!isCollapsed}
-        >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-            isCollapsed
-              ? 'bg-green-500/20'
-              : 'bg-gradient-to-br from-cyan-500 to-blue-600'
-          }`}>
-            {isCollapsed ? (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-              >
-                <CheckCircle className="w-5 h-5 text-green-400" />
-              </motion.div>
-            ) : (
-              <User className="w-5 h-5 text-white" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-white">Complétez votre profil</h2>
-            {isCollapsed ? (
-              <p className="text-sm text-green-400 truncate">
-                {profile.prenom} {profile.nom} — {profile.entreprise} — {profile.secteur}
-              </p>
-            ) : (
-              <p className="text-xs text-gray-400">Nécessaire avant d&apos;ajouter vos impayés</p>
-            )}
-          </div>
-          {isCollapsed && (
-            <ChevronDown className="w-5 h-5 text-gray-400 shrink-0" />
-          )}
-        </button>
-
-        {/* Formulaire */}
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="px-5 pb-5 md:px-6 md:pb-6 space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {/* Prénom */}
-                  <div>
-                    <label htmlFor="profile-prenom" className="block text-sm text-gray-300 mb-1.5">
-                      Prénom
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="profile-prenom"
-                        type="text"
-                        placeholder="Jean"
-                        value={profile.prenom}
-                        onChange={(e) => setProfile((p) => ({ ...p, prenom: e.target.value }))}
-                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors pr-10"
-                      />
-                      {profile.prenom.trim() && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          <Check className="w-4 h-4 text-green-400" />
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Nom */}
-                  <div>
-                    <label htmlFor="profile-nom" className="block text-sm text-gray-300 mb-1.5">
-                      Nom
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="profile-nom"
-                        type="text"
-                        placeholder="Dupont"
-                        value={profile.nom}
-                        onChange={(e) => setProfile((p) => ({ ...p, nom: e.target.value }))}
-                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors pr-10"
-                      />
-                      {profile.nom.trim() && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          <Check className="w-4 h-4 text-green-400" />
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Entreprise */}
-                  <div>
-                    <label htmlFor="profile-entreprise" className="block text-sm text-gray-300 mb-1.5">
-                      Entreprise
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="profile-entreprise"
-                        type="text"
-                        placeholder="BoosterPay SAS"
-                        value={profile.entreprise}
-                        onChange={(e) => setProfile((p) => ({ ...p, entreprise: e.target.value }))}
-                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors pr-10"
-                      />
-                      {profile.entreprise.trim() && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2"
-                        >
-                          <Check className="w-4 h-4 text-green-400" />
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Secteur */}
-                  <div>
-                    <label htmlFor="profile-secteur" className="block text-sm text-gray-300 mb-1.5">
-                      Secteur d&apos;activité
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="profile-secteur"
-                        value={profile.secteur}
-                        onChange={(e) => setProfile((p) => ({ ...p, secteur: e.target.value }))}
-                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors appearance-none cursor-pointer pr-10"
-                      >
-                        <option value="" disabled className="bg-[#0a0f1a] text-gray-400">Sélectionnez...</option>
-                        {SECTEURS.map((s) => (
-                          <option key={s} value={s} className="bg-[#0a0f1a] text-white">{s}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      {profile.secteur && (
-                        <motion.div
-                          initial={{ scale: 0, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          className="absolute right-9 top-1/2 -translate-y-1/2"
-                        >
-                          <Check className="w-4 h-4 text-green-400" />
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bouton valider profil */}
-                <motion.button
-                  type="button"
-                  onClick={handleValidate}
-                  disabled={!isComplete}
-                  whileHover={isComplete ? { scale: 1.02 } : {}}
-                  whileTap={isComplete ? { scale: 0.98 } : {}}
-                  className={`w-full md:w-auto md:ml-auto md:flex py-3 px-6 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
-                    isComplete
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40'
-                      : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Valider mon profil
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
-  );
-}
 
 // === PANNEAU AIDE EXPORT ===
 function ExportHelpPanel({ isOpen, onToggle }) {
@@ -549,7 +340,7 @@ function ExportHelpPanel({ isOpen, onToggle }) {
     { name: 'Pennylane', steps: 'Ventes > Factures > Tout sélectionner > Exporter CSV' },
     { name: 'QuickBooks', steps: 'Ventes > Toutes les ventes > Icône Export > Excel' },
     { name: 'Sage / Cegid', steps: 'Journal des ventes > Actions > Exportation > CSV/Excel' },
-    { name: 'Excel / Sheets', steps: 'Fichier > Enregistrer sous > Format .csv (Colonnes : Nom, Tel, Montant, Échéance)' },
+    { name: 'Excel / Sheets', steps: 'Fichier > Enregistrer sous > Format .csv (Colonnes : Nom, Tel, Montant)' },
   ];
 
   return (
@@ -696,7 +487,6 @@ const COLUMN_HINTS = {
   amount:  ['montant', 'total', 'ttc', 'ht', 'somme', 'amount', 'prix', 'solde', 'reste', 'du', 'impaye', 'impayé'],
   email:   ['email', 'mail', 'courriel', 'e-mail'],
   phone2:  ['tel2', 'telephone2', 'téléphone2', 'fax', 'fixe', 'autre tel'],
-  dueDate: ['échéance', 'echeance', 'date', 'due', 'limite', 'deadline', 'date facture', 'date paiement'],
 };
 
 const normalizeHeader = (str) => str?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') || '';
@@ -710,7 +500,6 @@ const REQUIRED_FIELDS = [
 const OPTIONAL_FIELDS = [
   { key: 'email', label: 'Email Débiteur', description: 'Email du client' },
   { key: 'phone2', label: 'Téléphone 2', description: '2ème numéro' },
-  { key: 'dueDate', label: 'Date Échéance', description: 'Date limite de paiement' },
 ];
 
 // === MODAL DE MAPPING CSV (Redesign intuitif "3 questions") ===
@@ -801,7 +590,6 @@ function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfir
         phone2: sanitizeCSVValue(String(columnMapping.phone2 ? row[columnMapping.phone2] || '' : '').trim()),
         email: sanitizeCSVValue(String(columnMapping.email ? row[columnMapping.email] || '' : '').trim()),
         amount: String(parseAmount(columnMapping.amount ? row[columnMapping.amount] : 0)),
-        dueDate: sanitizeCSVValue(String(columnMapping.dueDate ? row[columnMapping.dueDate] || '' : '').trim()),
         id: Date.now() + Math.random(),
         imported: true,
       }));
@@ -816,8 +604,8 @@ function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfir
   ];
 
   // Labels humanisés pour les champs optionnels (basés sur OPTIONAL_FIELDS)
-  const OPTIONAL_ICONS = { email: Mail, phone2: Phone, dueDate: Calendar };
-  const OPTIONAL_LABELS = { email: 'Adresse email', phone2: '2ème numéro de téléphone', dueDate: "Date d\u2019échéance" };
+  const OPTIONAL_ICONS = { email: Mail, phone2: Phone };
+  const OPTIONAL_LABELS = { email: 'Adresse email', phone2: '2ème numéro de téléphone' };
   const OPTIONALS = OPTIONAL_FIELDS.map(f => ({
     key: f.key, label: OPTIONAL_LABELS[f.key] || f.label, Icon: OPTIONAL_ICONS[f.key] || FileText,
   }));
@@ -1204,12 +992,6 @@ function InvoiceCard({ invoice, onDelete, index }) {
             <Euro className="w-3 h-3" />
             {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
           </span>
-          {invoice.dueDate && (
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}
-            </span>
-          )}
         </div>
       </div>
 
@@ -1241,15 +1023,269 @@ function InvoiceCard({ invoice, onDelete, index }) {
   );
 }
 
+// === MODAL PROFIL (affiché avant le lancement) ===
+function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError }) {
+  const [profile, setProfile] = useState({ prenom: '', nom: '', entreprise: '', secteur: '' });
+  const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const isMobile = useIsMobile();
+
+  const isProfileComplete = profile.prenom.trim() && profile.nom.trim() && profile.entreprise.trim() && profile.secteur;
+  const isPhoneValid = isMobilePhone(phone);
+  const canSubmit = isProfileComplete && isPhoneValid;
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhoneInput(e.target.value);
+    setPhone(formatted);
+    setPhoneError('');
+  };
+
+  const handleSubmit = () => {
+    if (!isProfileComplete) return;
+
+    // Validate mobile phone (06/07 only)
+    if (!isMobilePhone(phone)) {
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 0) {
+        setPhoneError('Numéro requis');
+      } else if (digits.length < 10) {
+        setPhoneError(`Encore ${10 - digits.length} chiffre${10 - digits.length > 1 ? 's' : ''}`);
+      } else if (!digits.startsWith('06') && !digits.startsWith('07')) {
+        setPhoneError('Mobile uniquement (06 ou 07)');
+      } else {
+        setPhoneError('Numéro invalide');
+      }
+      return;
+    }
+
+    onSubmit({ profile, phone: phone.replace(/\D/g, '') });
+  };
+
+  const phoneDigits = phone.replace(/\D/g, '');
+  const phoneStatus = phoneDigits.length === 0 ? 'empty'
+    : phoneDigits.length < 10 ? 'incomplete'
+    : isMobilePhone(phone) ? 'valid'
+    : 'invalid';
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
+      {/* Overlay */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <motion.div
+        initial={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.95, y: 20 }}
+        animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+        exit={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.95 }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className={`relative z-10 w-full ${
+          isMobile
+            ? 'max-h-[90vh] rounded-t-3xl'
+            : 'max-w-lg mx-4 rounded-2xl'
+        } bg-gradient-to-b from-[#0f172a] to-[#0a0f1a] border border-white/10 shadow-2xl overflow-y-auto`}
+      >
+        <div className={`p-6 ${isMobile ? 'pb-8' : 'p-8'}`}>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-pink-600 flex items-center justify-center">
+                <Rocket className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">Dernière étape !</h2>
+                <p className="text-sm text-gray-400">Complétez votre profil pour lancer l'IA</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {/* Prénom + Nom */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1.5">Prénom</label>
+                <input
+                  type="text"
+                  placeholder="Jean"
+                  value={profile.prenom}
+                  onChange={(e) => setProfile(p => ({ ...p, prenom: e.target.value }))}
+                  className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1.5">Nom</label>
+                <input
+                  type="text"
+                  placeholder="Dupont"
+                  value={profile.nom}
+                  onChange={(e) => setProfile(p => ({ ...p, nom: e.target.value }))}
+                  className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Entreprise */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-1.5">Entreprise</label>
+              <input
+                type="text"
+                placeholder="BoosterPay SAS"
+                value={profile.entreprise}
+                onChange={(e) => setProfile(p => ({ ...p, entreprise: e.target.value }))}
+                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+              />
+            </div>
+
+            {/* Secteur */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-1.5">Secteur d&apos;activité</label>
+              <div className="relative">
+                <select
+                  value={profile.secteur}
+                  onChange={(e) => setProfile(p => ({ ...p, secteur: e.target.value }))}
+                  className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors appearance-none cursor-pointer pr-10"
+                >
+                  <option value="" disabled className="bg-[#0a0f1a] text-gray-400">Sélectionnez...</option>
+                  {SECTEURS.map((s) => (
+                    <option key={s} value={s} className="bg-[#0a0f1a] text-white">{s}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Téléphone mobile */}
+            <div>
+              <label className="block text-sm text-gray-300 mb-1.5">Téléphone mobile</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  value={phone}
+                  onChange={handlePhoneChange}
+                  placeholder="06 __ __ __ __"
+                  className={`w-full pl-11 pr-10 py-3 bg-white/[0.05] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-1 transition-all ${
+                    phoneStatus === 'valid'
+                      ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-emerald-500/30'
+                      : phoneStatus === 'invalid'
+                      ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30'
+                      : 'border-white/[0.1] focus:border-cyan-500/50 focus:ring-cyan-500/30'
+                  }`}
+                  autoComplete="tel"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {phoneStatus === 'valid' && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
+                    >
+                      <Check className="w-3 h-3 text-white" />
+                    </motion.div>
+                  )}
+                  {phoneStatus === 'invalid' && phoneDigits.length > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </motion.div>
+                  )}
+                  {phoneStatus === 'incomplete' && (
+                    <span className="text-xs text-gray-500 font-medium">
+                      {10 - phoneDigits.length}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {phoneError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-400 text-xs mt-1.5"
+                >
+                  {phoneError}
+                </motion.p>
+              )}
+              <p className="text-gray-500 text-xs mt-1.5">Numéro mobile uniquement (06 ou 07)</p>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <motion.button
+            onClick={handleSubmit}
+            disabled={!canSubmit || isSubmitting}
+            whileHover={canSubmit && !isSubmitting ? { scale: 1.02 } : {}}
+            whileTap={canSubmit && !isSubmitting ? { scale: 0.98 } : {}}
+            className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+              canSubmit && !isSubmitting
+                ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)]'
+                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Envoi en cours...
+              </>
+            ) : (
+              <>
+                <Rocket className="w-5 h-5" />
+                Lancer les appels IA 🚀
+              </>
+            )}
+          </motion.button>
+
+          {submitError && (
+            <motion.p
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-400 text-sm mt-2 text-center"
+            >
+              {submitError}
+            </motion.p>
+          )}
+
+          <p className="text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-3 flex-wrap">
+            <span className="flex items-center gap-1">
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+              Sans carte bancaire
+            </span>
+            <span className="flex items-center gap-1">
+              <Check className="w-3.5 h-3.5 text-emerald-500" />
+              Annulable en 1 clic
+            </span>
+          </p>
+        </div>
+        {isMobile && <div className="h-6" />}
+      </motion.div>
+    </div>
+  );
+}
+
 // === COMPOSANT PRINCIPAL ===
 export default function OnboardingStep2() {
-  // Profile state
-  const [profile, setProfile] = useState({ prenom: '', nom: '', entreprise: '', secteur: '' });
-  const [profileCollapsed, setProfileCollapsed] = useState(false);
+  // Profile modal state
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Invoice state
+  // Invoice state (no more profile state at top-level — profile lives in the modal)
   const [invoices, setInvoices] = useState([]);
-  const [formData, setFormData] = useState({ name: '', phone: '', phone2: '', email: '', amount: '', dueDate: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', phone2: '', email: '', amount: '' });
   const [showPhone2, setShowPhone2] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -1264,7 +1300,6 @@ export default function OnboardingStep2() {
   const leadIdFromUrl = urlSearchParams.get('lid') || '';
 
   const [leadEmail] = useState(() => sessionStorage.getItem('bp_lead_email') || '');
-  const [leadPhone] = useState(() => sessionStorage.getItem('bp_lead_phone') || '');
   const [leadId] = useState(leadIdFromUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -1276,19 +1311,19 @@ export default function OnboardingStep2() {
   const navigate = useNavigate();
 
   const totalAmount = invoices.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
-  const canLaunch = invoices.length > 0 && profileCollapsed;
+  const canLaunch = invoices.length > 0;
   const animatedCount = useCountUp(invoices.length);
   const animatedTotal = useCountUp(totalAmount);
 
   // Champs remplis dans le formulaire facture
-  const fieldsCompleted = [formData.name, formData.phone, formData.amount, formData.dueDate].filter(Boolean).length;
+  const fieldsCompleted = [formData.name, formData.phone, formData.amount].filter(Boolean).length;
 
   // Ajout facture
   const handleAddInvoice = useCallback((e) => {
     e.preventDefault();
-    const { name, phone, amount, dueDate } = formData;
+    const { name, phone, amount } = formData;
 
-    if (!name.trim() || !validateFrenchPhone(phone) || !amount || !dueDate) {
+    if (!name.trim() || !validateFrenchPhone(phone) || !amount) {
       setFormError(true);
       setTimeout(() => setFormError(false), 500);
       return;
@@ -1298,7 +1333,6 @@ export default function OnboardingStep2() {
       name: name.trim(),
       phone,
       amount,
-      dueDate,
       id: Date.now(),
       phoneType: isMobilePhone(phone) ? 'mobile' : 'fixed',
     };
@@ -1313,7 +1347,7 @@ export default function OnboardingStep2() {
     }
 
     setInvoices((prev) => [...prev, invoice]);
-    setFormData({ name: '', phone: '', phone2: '', email: '', amount: '', dueDate: '' });
+    setFormData({ name: '', phone: '', phone2: '', email: '', amount: '' });
     setShowPhone2(false);
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 1200);
@@ -1417,27 +1451,31 @@ export default function OnboardingStep2() {
     setTimeout(() => setUploadState('default'), 4000);
   }, []);
 
-  // Lancement IA
-  const handleLaunch = useCallback(async () => {
+  // Ouvrir le modal profil (dernière étape avant lancement)
+  const handleLaunch = useCallback(() => {
+    setShowProfileModal(true);
+  }, []);
+
+  // Soumission finale (depuis le modal profil)
+  const handleFinalSubmit = useCallback(async ({ profile: profileData, phone: profilePhone }) => {
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const urlParams = new URLSearchParams(window.location.search);
 
     const payload = {
       lead: {
-        prenom: profile.prenom,
-        nom: profile.nom,
-        entreprise: profile.entreprise,
-        secteur: profile.secteur,
+        prenom: profileData.prenom,
+        nom: profileData.nom,
+        entreprise: profileData.entreprise,
+        secteur: profileData.secteur,
+        telephone: profilePhone,
       },
       email: leadEmail,
-      telephone: leadPhone,
       factures: invoices.map((inv) => ({
         clientName: inv.name,
         phone: inv.phone,
         ...(inv.phone2 ? { phone2: inv.phone2 } : {}),
         ...(inv.email ? { email: inv.email } : {}),
         amount: parseFloat(inv.amount) || 0,
-        dueDate: inv.dueDate,
         imported: inv.imported || false,
       })),
       totalInvoices: invoices.length,
@@ -1459,12 +1497,12 @@ export default function OnboardingStep2() {
 
       if (result.success) {
         sessionStorage.removeItem('bp_lead_email');
-        sessionStorage.removeItem('bp_lead_phone');
+        setShowProfileModal(false);
         navigate('/onboarding/success', {
           state: {
             leadId: result.leadId,
-            prenom: profile.prenom,
-            entreprise: profile.entreprise,
+            prenom: profileData.prenom,
+            entreprise: profileData.entreprise,
             nbFactures: invoices.length,
             totalAmount: totalAmount,
           }
@@ -1479,7 +1517,7 @@ export default function OnboardingStep2() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [invoices, profile, navigate, leadEmail, leadPhone, leadId]);
+  }, [invoices, navigate, leadEmail, leadId, totalAmount]);
 
   return (
     <div className="min-h-screen text-white">
@@ -1516,14 +1554,6 @@ export default function OnboardingStep2() {
           </p>
         </motion.div>
 
-        {/* Section Profil */}
-        <ProfileSection
-          profile={profile}
-          setProfile={setProfile}
-          isCollapsed={profileCollapsed}
-          setIsCollapsed={setProfileCollapsed}
-        />
-
         {/* Compteur dynamique */}
         <AnimatePresence>
           {invoices.length > 0 && (
@@ -1558,9 +1588,7 @@ export default function OnboardingStep2() {
         </AnimatePresence>
 
         {/* 2 colonnes : Ajout manuel + Import CSV */}
-        <div className={`grid md:grid-cols-2 gap-6 mb-8 transition-opacity duration-300 ${
-          !profileCollapsed ? 'opacity-40 pointer-events-none' : ''
-        }`}>
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Formulaire ajout manuel */}
           <motion.div
             variants={fadeInUp}
@@ -1589,13 +1617,13 @@ export default function OnboardingStep2() {
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs text-gray-500">Progression</span>
-                  <span className="text-xs text-cyan-400 font-medium">{fieldsCompleted}/4 champs</span>
+                  <span className="text-xs text-cyan-400 font-medium">{fieldsCompleted}/3 champs</span>
                 </div>
                 <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
                     initial={{ width: 0 }}
-                    animate={{ width: `${(fieldsCompleted / 4) * 100}%` }}
+                    animate={{ width: `${(fieldsCompleted / 3) * 100}%` }}
                     transition={{ duration: 0.3 }}
                   />
                 </div>
@@ -1888,28 +1916,10 @@ export default function OnboardingStep2() {
                       className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
                     />
                   </div>
-                  <div>
-                    <label htmlFor="invoice-due-date" className="block text-sm text-gray-300 mb-1">
-                      Échéance
-                    </label>
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={() => document.getElementById('invoice-due-date')?.showPicker?.()}
-                    >
-                      <input
-                        id="invoice-due-date"
-                        type="date"
-                        value={formData.dueDate}
-                        onChange={(e) => setFormData((f) => ({ ...f, dueDate: e.target.value }))}
-                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                      />
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                    </div>
-                  </div>
                 </div>
 
                 {(() => {
-                  const isFormValid = formData.name && validateFrenchPhone(formData.phone) && formData.amount && formData.dueDate;
+                  const isFormValid = formData.name && validateFrenchPhone(formData.phone) && formData.amount;
                   return (
                     <motion.button
                       type="submit"
@@ -2107,9 +2117,7 @@ export default function OnboardingStep2() {
             )}
             {!canLaunch && (
               <p className="text-gray-500 text-sm mt-3">
-                {!profileCollapsed
-                  ? 'Complétez votre profil et ajoutez au moins un impayé'
-                  : 'Ajoutez au moins un impayé pour continuer'}
+                Ajoutez au moins un impayé pour continuer
               </p>
             )}
           </motion.div>
@@ -2155,9 +2163,7 @@ export default function OnboardingStep2() {
           )}
           {!canLaunch && (
             <p className="text-gray-500 text-xs mt-2 text-center">
-              {!profileCollapsed
-                ? 'Complétez votre profil + ajoutez un impayé'
-                : 'Ajoutez au moins un impayé'}
+              Ajoutez au moins un impayé
             </p>
           )}
         </div>
@@ -2194,6 +2200,15 @@ export default function OnboardingStep2() {
           onCancel={() => { setCsvMapping(null); setColumnMapping({}); }}
         />
       )}
+
+      {/* Modal profil (dernière étape) */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onSubmit={handleFinalSubmit}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+      />
 
       {/* Modal expert */}
       <ExpertModal isOpen={isExpertModalOpen} onClose={() => setIsExpertModalOpen(false)} />

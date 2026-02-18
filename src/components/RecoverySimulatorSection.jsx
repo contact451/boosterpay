@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { Banknote, TrendingUp, Mail, ArrowRight, Loader2, Minus, Plus, Euro, Sparkles, Lock } from 'lucide-react';
-import InlinePhoneCapture from './InlinePhoneCapture';
+import InlineEmailCapture from './InlineEmailCapture';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -154,7 +154,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
-  const [showPhoneCapture, setShowPhoneCapture] = useState(false);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
   const isMobile = useIsMobile();
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
@@ -202,13 +202,13 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
     }
 
     setError('');
-    // Open the phone capture popup instead of revealing directly
-    setShowPhoneCapture(true);
+    // Open the email capture popup
+    setShowEmailCapture(true);
   };
 
-  // Callback when phone capture is successful
-  const handlePhoneSuccess = () => {
-    setShowPhoneCapture(false);
+  // Callback when email capture is successful
+  const handleEmailSuccess = () => {
+    setShowEmailCapture(false);
     setIsRevealed(true);
     setIsSubmitted(true);
   };
@@ -416,13 +416,13 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                       </p>
                     </motion.form>
 
-                    {/* Inline Phone Capture Popup - EN DEHORS du form */}
-                    <InlinePhoneCapture
-                      isVisible={showPhoneCapture}
+                    {/* Inline Email Capture Popup */}
+                    <InlineEmailCapture
+                      isVisible={showEmailCapture}
                       email={email}
                       source="simulateur"
-                      onClose={() => setShowPhoneCapture(false)}
-                      onSuccess={handlePhoneSuccess}
+                      onClose={() => setShowEmailCapture(false)}
+                      onSuccess={handleEmailSuccess}
                       enrichmentData={{
                         estimation: recovery.recovered,
                         factures_mois: invoices,

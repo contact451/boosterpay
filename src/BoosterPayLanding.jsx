@@ -21,7 +21,6 @@ import {
   Lock,
   Globe,
   Mail,
-  Smartphone,
   ArrowRight,
   Volume2,
   AlertCircle,
@@ -42,7 +41,7 @@ import LeadFormModal from './components/LeadFormModal';
 import SocialProofToast from './components/SocialProofToast';
 import ExitIntentPopup from './components/ExitIntentPopup';
 import RecoverySimulatorSection from './components/RecoverySimulatorSection';
-import InlinePhoneCapture from './components/InlinePhoneCapture';
+import InlineEmailCapture from './components/InlineEmailCapture';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -1102,7 +1101,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
   const [phoneStep, setPhoneStep] = useState(1);
   const [heroEmail, setHeroEmail] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [showPhoneCapture, setShowPhoneCapture] = useState(false);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
 
   const phoneGlow = phoneStep === 1
     ? '0 0 80px rgba(249, 115, 22, 0.4), 0 0 120px rgba(249, 115, 22, 0.2)'
@@ -1140,6 +1139,18 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
             className="w-2 h-2 rounded-full bg-green-400"
           />
           <span className="text-sm text-blue-300">+847 entreprises inscrites ce mois</span>
+        </motion.div>
+
+        {/* Anti-paperasse badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-6"
+        >
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300 text-sm font-medium">
+            🚫 Aucune facture demandée — Juste le nom du client et le montant
+          </span>
         </motion.div>
 
         {/* Main Title */}
@@ -1207,7 +1218,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
                   setEmailError('Email invalide');
                   return;
                 }
-                setShowPhoneCapture(true);
+                setShowEmailCapture(true);
               }}
               whileHover={{ scale: 1.02, boxShadow: '0 0 35px rgba(59,130,246,0.5)' }}
               whileTap={{ scale: 0.98 }}
@@ -1226,14 +1237,14 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
             <p className="text-red-400 text-sm mt-2 text-center">{emailError}</p>
           )}
 
-          {/* Inline Phone Capture Popup */}
-          <InlinePhoneCapture
-            isVisible={showPhoneCapture}
+          {/* Inline Email Capture Popup */}
+          <InlineEmailCapture
+            isVisible={showEmailCapture}
             email={heroEmail}
             source="hero"
-            onClose={() => setShowPhoneCapture(false)}
+            onClose={() => setShowEmailCapture(false)}
             onSuccess={() => {
-              setShowPhoneCapture(false);
+              setShowEmailCapture(false);
               setHeroEmail('');
             }}
           />
@@ -1395,39 +1406,6 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
 // TEST AI SECTION
 // ============================================
 
-// Phone formatting for TestAI section
-const formatTestAIPhone = (value) => {
-  const digits = value.replace(/\D/g, '').slice(0, 10);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
-  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
-  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
-  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
-};
-
-// VALIDATION STRICTE pour TestAI - Mobile français UNIQUEMENT
-const validateTestAIPhone = (phone) => {
-  const digits = phone.replace(/\D/g, '');
-  return /^0[67]\d{8}$/.test(digits);
-};
-
-const getTestAIPhoneErrorMessage = (phone) => {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 0) return 'Numéro requis';
-  if (digits.length < 10) return `Encore ${10 - digits.length} chiffre${10 - digits.length > 1 ? 's' : ''}`;
-  if (!digits.startsWith('06') && !digits.startsWith('07')) return 'Mobile uniquement (06 ou 07)';
-  if (digits.length > 10) return 'Maximum 10 chiffres';
-  return '';
-};
-
-const getTestAIPhoneStatus = (phone) => {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 0) return 'empty';
-  if (digits.length < 10) return 'incomplete';
-  if (!digits.startsWith('06') && !digits.startsWith('07')) return 'invalid';
-  if (digits.length === 10 && /^0[67]\d{8}$/.test(digits)) return 'valid';
-  return 'invalid';
-};
 
 // Confetti for TestAI success
 const TestAIConfetti = ({ isMobile }) => {
@@ -1469,7 +1447,7 @@ const TestAISection = ({ onOpenBooking }) => {
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
 
-  const [formData, setFormData] = useState({ name: '', amount: '', dueDate: '' });
+  const [formData, setFormData] = useState({ name: '', amount: '' });
   const [isManualScanning, setIsManualScanning] = useState(false);
   const [manualScanText, setManualScanText] = useState('');
   const [isImportScanning, setIsImportScanning] = useState(false);
@@ -1484,12 +1462,9 @@ const TestAISection = ({ onOpenBooking }) => {
 
   // Lead capture states
   const [leadEmail, setLeadEmail] = useState('');
-  const [leadPhone, setLeadPhone] = useState('');
-  const [leadPhoneStatus, setLeadPhoneStatus] = useState('empty'); // empty | incomplete | invalid | valid
   const [leadStatus, setLeadStatus] = useState('idle'); // idle | loading | success
   const [leadError, setLeadError] = useState('');
   const leadEmailRef = useRef(null);
-  const leadPhoneRef = useRef(null);
 
   // Auto-scroll input into view on mobile focus
   const handleLeadFocus = (ref) => {
@@ -1506,27 +1481,14 @@ const TestAISection = ({ onOpenBooking }) => {
       setLeadError('Email invalide');
       return;
     }
-    // Validation STRICTE du téléphone
-    const digits = leadPhone.replace(/\D/g, '');
-    if (!validateTestAIPhone(leadPhone)) {
-      const errorMsg = getTestAIPhoneErrorMessage(leadPhone);
-      setLeadError(errorMsg);
-      // Animation shake sur l'input
-      if (leadPhoneRef.current) {
-        leadPhoneRef.current.classList.add('animate-shake');
-        setTimeout(() => leadPhoneRef.current?.classList.remove('animate-shake'), 500);
-      }
-      return;
-    }
 
     setLeadStatus('loading');
     setLeadError('');
 
     const payload = {
       email: leadEmail.trim().toLowerCase(),
-      telephone: digits,
       source: 'test_ai',
-      score: 30, // Lead très chaud
+      score: 30,
       timestamp: new Date().toISOString(),
       debiteur_test: formData.name,
       montant_test: formData.amount,
@@ -1537,7 +1499,6 @@ const TestAISection = ({ onOpenBooking }) => {
 
     // Stocker pour OnboardingStep2
     sessionStorage.setItem('bp_lead_email', payload.email);
-    sessionStorage.setItem('bp_lead_phone', payload.telephone);
 
     await new Promise(r => setTimeout(r, 1000));
     setLeadStatus('success');
@@ -1545,7 +1506,7 @@ const TestAISection = ({ onOpenBooking }) => {
     setTimeout(() => closeModal(), 8000);
   };
 
-  const isFormValid = formData.name && formData.amount && formData.dueDate;
+  const isFormValid = formData.name && formData.amount;
 
   // Lock scroll quand modal ouvert
   useEffect(() => {
@@ -1649,10 +1610,9 @@ const TestAISection = ({ onOpenBooking }) => {
     setShowResultModal(false);
     setImportedFile(null);
     setSimulatedCount(0);
-    setFormData({ name: '', amount: '', dueDate: '' });
+    setFormData({ name: '', amount: '' });
     // Reset lead form
     setLeadEmail('');
-    setLeadPhone('');
     setLeadStatus('idle');
     setLeadError('');
   }, []);
@@ -1661,7 +1621,7 @@ const TestAISection = ({ onOpenBooking }) => {
     { name: 'Pennylane', steps: 'Ventes > Factures > Tout sélectionner > Exporter CSV' },
     { name: 'QuickBooks', steps: 'Ventes > Toutes les ventes > Icône Export > Excel' },
     { name: 'Sage / Cegid', steps: 'Journal des ventes > Actions > Exportation > CSV/Excel' },
-    { name: 'Excel / Sheets', steps: 'Fichier > Enregistrer sous > .csv (Colonnes : Nom, Tel, Montant, Échéance)' },
+    { name: 'Excel / Sheets', steps: 'Fichier > Enregistrer sous > .csv (Colonnes : Nom, Email, Montant)' },
   ];
 
   // Contenu partagé du modal résultat
@@ -1719,10 +1679,6 @@ const TestAISection = ({ onOpenBooking }) => {
               <span className="text-gray-400 flex items-center gap-2"><Euro className="w-3.5 h-3.5" /> Montant</span>
               <span className="text-white font-medium">{formData.amount}€</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400 flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> Échéance</span>
-              <span className="text-white font-medium">{new Date(formData.dueDate).toLocaleDateString('fr-FR')}</span>
-            </div>
           </div>
         </>
       )}
@@ -1756,15 +1712,6 @@ const TestAISection = ({ onOpenBooking }) => {
             >
               <Mail className="w-3 h-3 text-blue-400" />
               <span className="text-blue-400 text-xs font-medium">Email envoyé</span>
-            </motion.div>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.6, type: 'spring' }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30"
-            >
-              <Smartphone className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400 text-xs font-medium">SMS envoyé</span>
             </motion.div>
           </motion.div>
 
@@ -1801,72 +1748,6 @@ const TestAISection = ({ onOpenBooking }) => {
               disabled={leadStatus === 'loading'}
             />
           </div>
-
-          {/* Téléphone */}
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-            <input
-              ref={leadPhoneRef}
-              type="tel"
-              inputMode="numeric"
-              value={leadPhone}
-              onChange={(e) => {
-                const formatted = formatTestAIPhone(e.target.value);
-                setLeadPhone(formatted);
-                setLeadPhoneStatus(getTestAIPhoneStatus(formatted));
-                setLeadError('');
-              }}
-              onFocus={() => handleLeadFocus(leadPhoneRef)}
-              placeholder="06 __ __ __ __"
-              className={`w-full pl-10 pr-10 py-3 rounded-lg bg-white/5 border transition-all text-base ${
-                leadPhoneStatus === 'valid'
-                  ? 'border-emerald-500/50 focus:border-emerald-500'
-                  : leadPhoneStatus === 'invalid'
-                  ? 'border-red-500/50 focus:border-red-500'
-                  : 'border-white/20 focus:border-violet-500/50'
-              } text-white placeholder-gray-500 focus:outline-none`}
-              disabled={leadStatus === 'loading'}
-              autoComplete="tel"
-            />
-
-            {/* Indicateur de validité à droite */}
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              {leadPhoneStatus === 'valid' && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"
-                >
-                  <Check className="w-3 h-3 text-white" />
-                </motion.div>
-              )}
-              {leadPhoneStatus === 'invalid' && leadPhone.replace(/\D/g, '').length > 0 && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center"
-                >
-                  <X className="w-3 h-3 text-white" />
-                </motion.div>
-              )}
-              {leadPhoneStatus === 'incomplete' && (
-                <span className="text-xs text-gray-500 font-medium">
-                  {10 - leadPhone.replace(/\D/g, '').length}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Message d'aide en temps réel */}
-          {leadPhoneStatus === 'invalid' && leadPhone.replace(/\D/g, '').length > 0 && (
-            <motion.p
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-red-400 text-xs -mt-1"
-            >
-              {getTestAIPhoneErrorMessage(leadPhone)}
-            </motion.p>
-          )}
 
           {leadError && <p className="text-red-400 text-xs">{leadError}</p>}
 
@@ -2142,26 +2023,6 @@ const TestAISection = ({ onOpenBooking }) => {
                                   required
                                   className="relative w-full h-[56px] bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:bg-white/[0.08] transition-all duration-300"
                                 />
-                              </div>
-                            </div>
-                            <div className="relative group/input">
-                              <label htmlFor="tai-duedate" className="block text-sm text-gray-300 mb-1.5 group-focus-within/input:text-cyan-400 transition-colors">Échéance</label>
-                              <div className="relative">
-                                <div className="absolute -inset-1 bg-cyan-500/20 rounded-xl blur-md opacity-0 group-focus-within/input:opacity-100 transition-opacity" />
-                                <div
-                                  className="relative cursor-pointer"
-                                  onClick={() => document.getElementById('tai-duedate').showPicker?.()}
-                                >
-                                  <input
-                                    id="tai-duedate"
-                                    type="date"
-                                    value={formData.dueDate}
-                                    onChange={(e) => setFormData((f) => ({ ...f, dueDate: e.target.value }))}
-                                    required
-                                    className="w-full h-[56px] bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:bg-white/[0.08] transition-all duration-300 cursor-pointer [color-scheme:dark]"
-                                  />
-                                  <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -2814,8 +2675,8 @@ const HowItWorksSection = () => {
     {
       number: "1",
       icon: FileText,
-      title: "Envoyez vos impayés",
-      description: "Photo, email, PDF... Envoyez-nous vos infos comme vous voulez. On s'occupe du reste."
+      title: "Dites-nous qui vous doit de l'argent",
+      description: "Juste un nom et un montant. Pas de facture, pas de paperasse. 30 secondes chrono."
     },
     {
       number: "2",
@@ -2915,40 +2776,38 @@ const HowItWorksSection = () => {
           </motion.div>
         </div>
 
-        {/* Méthodes d'envoi */}
+        {/* Zéro paperasse */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
-          className="mt-16 text-center"
+          className="mt-16"
         >
-          <p className="text-gray-500 text-sm mb-6 uppercase tracking-wider">Envoyez vos infos comme vous préférez</p>
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-            {[
-              { icon: "📸", label: "Photo" },
-              { icon: "📧", label: "Email" },
-              { icon: "💬", label: "WhatsApp" },
-              { icon: "📄", label: "PDF" },
-              { icon: "📊", label: "Excel" },
-            ].map((method, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 hover:border-white/20 transition-all cursor-default"
-              >
-                <span className="text-lg">{method.icon}</span>
-                <span className="text-gray-300 text-sm font-medium">{method.label}</span>
-              </motion.div>
-            ))}
+          <div className="max-w-lg mx-auto bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-6 md:p-8 text-center">
+            <p className="text-white font-bold text-lg mb-4">Zéro paperasse</p>
+            <div className="flex flex-wrap justify-center gap-3 mb-4">
+              {[
+                "Pas de facture",
+                "Pas de PDF",
+                "Pas de justificatif",
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full"
+                >
+                  <span className="text-red-400 text-sm font-medium">❌ {item}</span>
+                </motion.div>
+              ))}
+            </div>
+            <p className="text-gray-400 text-sm">
+              Un nom + un montant = l'IA s'occupe du reste
+            </p>
           </div>
-          <p className="text-gray-500 text-sm mt-6">
-            Vous n'avez pas Excel ? <span className="text-blue-400">Aucun problème.</span> Une simple photo suffit.
-          </p>
         </motion.div>
       </div>
     </section>
@@ -3292,7 +3151,7 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
 
           {showCapture && (
             <div className="mt-4 max-w-md mx-auto">
-              <InlinePhoneCapture
+              <InlineEmailCapture
                 isVisible={showCapture}
                 email=""
                 source="audio_demo"
@@ -3516,10 +3375,10 @@ const TestimonialsSection = () => {
             <ArrowRight className="w-5 h-5" />
           </motion.button>
 
-          {/* InlinePhoneCapture */}
+          {/* InlineEmailCapture */}
           {showCapture && (
             <div className="mt-4 max-w-md mx-auto">
-              <InlinePhoneCapture
+              <InlineEmailCapture
                 isVisible={showCapture}
                 email=""
                 source="testimonials"
@@ -3601,7 +3460,7 @@ const PricingSection = ({ onOpenBooking }) => {
       gradient: "from-blue-600 to-cyan-500",
       commission: {
         percent: "0,5%",
-        context: "sur montants r\u00e9cup\u00e9r\u00e9s"
+        amount: "5",
       }
     },
     {
@@ -3624,7 +3483,7 @@ const PricingSection = ({ onOpenBooking }) => {
       gradient: "from-purple-600 to-pink-500",
       commission: {
         percent: "0,3%",
-        context: "sur montants r\u00e9cup\u00e9r\u00e9s"
+        amount: "3",
       }
     }
   ];
@@ -3874,18 +3733,36 @@ const PricingSection = ({ onOpenBooking }) => {
                     </motion.li>
                   ))}
 
-                  {/* Commission comme dernière feature stylée */}
-                  {plan.commission && (
-                    <li className="flex items-start gap-3 pt-2 mt-2 border-t border-white/10">
-                      <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-emerald-400 text-xs">%</span>
-                      </div>
-                      <span className="text-emerald-300 text-sm">
-                        +{plan.commission.percent} {plan.commission.context}
-                      </span>
-                    </li>
-                  )}
                 </ul>
+
+                {/* Bloc commission de succès */}
+                {plan.commission && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base">🏅</span>
+                      <span className="text-amber-300 font-bold text-sm">
+                        Seulement {plan.commission.percent} de commission de succès
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Shield className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-400 text-xs">
+                        Payez uniquement si vous encaissez
+                      </span>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-amber-500/10">
+                      <span className="text-gray-400 text-xs italic">
+                        💡 Exemple : Pour 1 000€ récupérés, nos frais sont de seulement {plan.commission.amount}€.
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
 
                 {/* CTA */}
                 {plan.popular ? (
@@ -3919,10 +3796,10 @@ const PricingSection = ({ onOpenBooking }) => {
                   </motion.button>
                 )}
 
-                {/* InlinePhoneCapture under the CTA */}
+                {/* InlineEmailCapture under the CTA */}
                 {activePlan === plan.name && (
                   <div className="mt-4">
-                    <InlinePhoneCapture
+                    <InlineEmailCapture
                       isVisible={true}
                       email=""
                       source={`pricing_${plan.name.toLowerCase()}`}
@@ -4155,19 +4032,8 @@ const NeedHelpSection = ({ onOpenBooking }) => {
 };
 
 // Footer
-// Phone formatting for Footer
-const formatFooterPhone = (value) => {
-  const digits = value.replace(/\D/g, '').slice(0, 10);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
-  if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4)}`;
-  if (digits.length <= 8) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6)}`;
-  return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
-};
-
 const Footer = ({ onOpenBooking }) => {
   const [footerEmail, setFooterEmail] = useState('');
-  const [footerPhone, setFooterPhone] = useState('');
   const [footerStatus, setFooterStatus] = useState('idle'); // idle | loading | success
   const [footerError, setFooterError] = useState('');
 
@@ -4179,19 +4045,12 @@ const Footer = ({ onOpenBooking }) => {
       setFooterError('Email invalide');
       return;
     }
-    // Validate phone
-    const digits = footerPhone.replace(/\D/g, '');
-    if (!/^0[67]\d{8}$/.test(digits)) {
-      setFooterError('Téléphone invalide');
-      return;
-    }
 
     setFooterStatus('loading');
     setFooterError('');
 
     console.log('🦶 FOOTER - Lead qualifié:', {
       email: footerEmail.trim().toLowerCase(),
-      telephone: digits,
       source: 'footer',
       score: 10,
       timestamp: new Date().toISOString(),
@@ -4199,7 +4058,6 @@ const Footer = ({ onOpenBooking }) => {
 
     // Stocker pour OnboardingStep2
     sessionStorage.setItem('bp_lead_email', footerEmail.trim().toLowerCase());
-    sessionStorage.setItem('bp_lead_phone', digits);
 
     await new Promise(r => setTimeout(r, 1000));
     setFooterStatus('success');
@@ -4279,15 +4137,6 @@ const Footer = ({ onOpenBooking }) => {
                     placeholder="votre@email.fr"
                     className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
                     disabled={footerStatus === 'loading'}
-                  />
-                  <input
-                    type="tel"
-                    value={footerPhone}
-                    onChange={(e) => { setFooterPhone(formatFooterPhone(e.target.value)); setFooterError(''); }}
-                    placeholder="06 __ __ __ __"
-                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/20 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    disabled={footerStatus === 'loading'}
-                    autoComplete="tel"
                   />
                   {footerError && <p className="text-red-400 text-xs">{footerError}</p>}
                   <button
@@ -4547,10 +4396,10 @@ const BoosterPayLanding = () => {
                 </div>
               </div>
 
-              {/* InlinePhoneCapture */}
+              {/* InlineEmailCapture */}
               {showIntermediateCTA && (
                 <div className="mt-4 max-w-md mx-auto">
-                  <InlinePhoneCapture
+                  <InlineEmailCapture
                     isVisible={showIntermediateCTA}
                     email=""
                     source="intermediate_cta"
