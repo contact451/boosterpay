@@ -14,6 +14,7 @@ export const submitLead = async (leadData) => {
   const urlParams = new URLSearchParams(window.location.search);
 
   const payload = {
+    ref: urlParams.get('ref') || '',
     email: leadData.email,
     telephone: leadData.phone || leadData.telephone,
     source: leadData.source || 'website',
