@@ -1148,8 +1148,8 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
           transition={{ delay: 0.4 }}
           className="mb-6"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300 text-sm font-medium">
-            🚫 Aucune facture demandée — Juste le nom du client et le montant
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm font-medium">
+            ✨ Aucune facture nécessaire — Juste un nom et un montant
           </span>
         </motion.div>
 
@@ -2776,7 +2776,7 @@ const HowItWorksSection = () => {
           </motion.div>
         </div>
 
-        {/* Zéro paperasse */}
+        {/* Zéro paperasse — Bloc positif */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -2784,13 +2784,13 @@ const HowItWorksSection = () => {
           transition={{ delay: 0.5 }}
           className="mt-16"
         >
-          <div className="max-w-lg mx-auto bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-6 md:p-8 text-center">
-            <p className="text-white font-bold text-lg mb-4">Zéro paperasse</p>
+          <div className="max-w-lg mx-auto bg-gradient-to-br from-emerald-500/[0.06] to-green-500/[0.03] backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-6 md:p-8 text-center">
+            <p className="text-white font-bold text-lg mb-4">Zéro paperasse. Zéro friction. 🎉</p>
             <div className="flex flex-wrap justify-center gap-3 mb-4">
               {[
-                "Pas de facture",
-                "Pas de PDF",
-                "Pas de justificatif",
+                "Sans facture",
+                "Sans PDF",
+                "Sans justificatif",
               ].map((item, index) => (
                 <motion.div
                   key={index}
@@ -2798,14 +2798,14 @@ const HowItWorksSection = () => {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full"
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full"
                 >
-                  <span className="text-red-400 text-sm font-medium">❌ {item}</span>
+                  <span className="text-emerald-400 text-sm font-medium">✅ {item}</span>
                 </motion.div>
               ))}
             </div>
             <p className="text-gray-400 text-sm">
-              Un nom + un montant = l'IA s'occupe du reste
+              Un nom + un montant → l'IA lance la relance en 30 secondes
             </p>
           </div>
         </motion.div>
