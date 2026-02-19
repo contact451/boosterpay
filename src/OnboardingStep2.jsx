@@ -1295,9 +1295,9 @@ export default function OnboardingStep2() {
   const [uploadState, setUploadState] = useState('default');
   const [uploadMessage, setUploadMessage] = useState('');
   const [hasImportedInvoices, setHasImportedInvoices] = useState(false);
-  // Lire lid depuis l'URL (cas: lead arrive via lien SMS ou email)
+  // Lire ref depuis l'URL (cas: lead arrive via lien SMS ou email)
   const urlSearchParams = new URLSearchParams(window.location.search);
-  const leadIdFromUrl = urlSearchParams.get('lid') || '';
+  const leadIdFromUrl = urlSearchParams.get('ref') || '';
 
   const [leadEmail] = useState(() => sessionStorage.getItem('bp_lead_email') || '');
   const [leadId] = useState(leadIdFromUrl);
@@ -1483,7 +1483,7 @@ export default function OnboardingStep2() {
       appareil: isMobileDevice ? 'mobile' : 'desktop',
       utm_source: urlParams.get('utm_source') || '',
       utm_campaign: urlParams.get('utm_campaign') || '',
-      leadId: leadId || '',
+      ref: leadId || '',
     };
 
     console.log('=== PAYLOAD ONBOARDING STEP 2 ===');
@@ -1500,7 +1500,7 @@ export default function OnboardingStep2() {
         setShowProfileModal(false);
         navigate('/onboarding/success', {
           state: {
-            leadId: result.leadId,
+            ref: result.ref || result.leadId,
             prenom: profileData.prenom,
             entreprise: profileData.entreprise,
             nbFactures: invoices.length,
