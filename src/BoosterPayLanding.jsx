@@ -3403,15 +3403,12 @@ const PricingSection = ({ onOpenBooking }) => {
 
   const handlePricingCTA = (planName) => {
     setActivePlan(planName);
-    // Auto-scroll to form on mobile
-    if (isMobile) {
-      setTimeout(() => {
-        const cardEl = document.querySelector(`[data-plan="${planName}"]`);
-        if (cardEl) {
-          cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
-    }
+    setTimeout(() => {
+      const captureEl = document.getElementById(`pricing-capture-${planName}`);
+      if (captureEl) {
+        captureEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 300);
   };
 
   const handlePricingSuccess = () => {
@@ -3437,7 +3434,10 @@ const PricingSection = ({ onOpenBooking }) => {
       ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
       popular: false,
       gradient: "from-slate-600 to-slate-700",
-      commission: null
+      commission: {
+        percent: "1%",
+        amount: "10",
+      }
     },
     {
       name: "PRO",
@@ -3489,7 +3489,7 @@ const PricingSection = ({ onOpenBooking }) => {
   ];
 
   return (
-    <section id="pricing" className="py-24 relative overflow-hidden">
+    <section id="pricing" className="py-24 relative">
       {/* Orbes lumineuses flottantes */}
       {!isMobile && (
         <>
@@ -3572,7 +3572,7 @@ const PricingSection = ({ onOpenBooking }) => {
         </div>
 
         {/* Grille des 3 cartes */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto px-2 md:px-4 items-stretch">
+        <div className={`grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto px-2 md:px-4 ${activePlan ? 'items-start' : 'items-stretch'}`}>
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}
@@ -3636,12 +3636,12 @@ const PricingSection = ({ onOpenBooking }) => {
               {/* Bordure gradient subtile (non-PRO) */}
               {!plan.popular && (
                 <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-b from-white/20 to-white/5">
-                  <div className="h-full w-full rounded-3xl bg-slate-900/90 backdrop-blur-xl" />
+                  <div className="min-h-full w-full rounded-3xl bg-slate-900/90 backdrop-blur-xl" />
                 </div>
               )}
 
               {/* Carte */}
-              <div className={`relative h-full rounded-3xl p-4 md:p-8 ${
+              <div className={`relative min-h-full rounded-3xl p-4 md:p-8 ${
                 plan.popular ? 'bg-slate-900/95 backdrop-blur-xl' : ''
               }`}>
 
@@ -3742,24 +3742,32 @@ const PricingSection = ({ onOpenBooking }) => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.3 }}
-                    className="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20"
+                    className="mb-6 rounded-xl bg-gradient-to-br from-emerald-500/[0.08] to-emerald-500/[0.03] border border-emerald-500/20 p-4"
                   >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-base">🏅</span>
-                      <span className="text-amber-300 font-bold text-sm">
-                        Seulement {plan.commission.percent} de commission de succès
+                    {/* Ligne titre — icône + pourcentage */}
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <span className="text-emerald-400 font-bold text-[13px] tracking-wide">
+                        Commission de succès : {plan.commission.percent}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <Shield className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                      <span className="text-gray-400 text-xs">
-                        Payez uniquement si vous encaissez
-                      </span>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-amber-500/10">
-                      <span className="text-gray-400 text-xs italic">
-                        💡 Exemple : Pour 1 000€ récupérés, nos frais sont de seulement {plan.commission.amount}€.
-                      </span>
+
+                    {/* Séparateur subtil */}
+                    <div className="h-px bg-emerald-500/10 mb-2.5" />
+
+                    {/* Ligne rassurance */}
+                    <p className="text-gray-400 text-xs mb-2 flex items-center gap-1.5">
+                      <Shield className="w-3 h-3 text-emerald-500/40 flex-shrink-0" />
+                      Payez uniquement si vous encaissez.
+                    </p>
+
+                    {/* Exemple — ancrage prix dérisoire */}
+                    <div className="mt-2.5 px-3 py-2 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/15">
+                      <p className="text-gray-300 text-xs">
+                        1 000€ récupérés → <span className="text-emerald-400 font-semibold">seulement {plan.commission.amount}€ de frais</span>
+                      </p>
                     </div>
                   </motion.div>
                 )}
@@ -3798,7 +3806,7 @@ const PricingSection = ({ onOpenBooking }) => {
 
                 {/* InlineEmailCapture under the CTA */}
                 {activePlan === plan.name && (
-                  <div className="mt-4">
+                  <div className="mt-4 pb-2" id={`pricing-capture-${plan.name}`}>
                     <InlineEmailCapture
                       isVisible={true}
                       email=""

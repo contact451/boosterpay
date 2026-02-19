@@ -141,12 +141,18 @@ const InlineEmailCapture = ({
   const [localEmail, setLocalEmail] = useState(initialEmail || '');
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
   const [error, setError] = useState('');
+  const [entryDone, setEntryDone] = useState(false);
   const emailInputRef = useRef(null);
   const containerRef = useRef(null);
   const isMobile = useIsMobile();
 
   // Get contextual success message
   const successMessage = SUCCESS_MESSAGES[source] || SUCCESS_MESSAGES.hero;
+
+  // Reset overflow state when component closes
+  useEffect(() => {
+    if (!isVisible) setEntryDone(false);
+  }, [isVisible]);
 
   // Sync localEmail with email prop
   useEffect(() => {
@@ -269,7 +275,12 @@ const InlineEmailCapture = ({
             damping: 25,
             stiffness: 300
           }}
-          className="overflow-hidden"
+          onAnimationComplete={(definition) => {
+            if (definition.height === 'auto') {
+              setEntryDone(true);
+            }
+          }}
+          className={entryDone ? '' : 'overflow-hidden'}
         >
           <div className={`relative bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)] ${isMobile ? 'p-4' : 'p-6'}`}>
             {status === 'success' ? (
