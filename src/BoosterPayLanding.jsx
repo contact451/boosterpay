@@ -42,6 +42,7 @@ import SocialProofToast from './components/SocialProofToast';
 import ExitIntentPopup from './components/ExitIntentPopup';
 import RecoverySimulatorSection from './components/RecoverySimulatorSection';
 import InlineEmailCapture from './components/InlineEmailCapture';
+import { submitLead } from './services/leadService';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -1495,13 +1496,21 @@ const TestAISection = ({ onOpenBooking }) => {
       nb_factures_test: importedFile ? simulatedCount : 1,
     };
 
-    console.log('🤖 TEST AI - Lead qualifié:', payload);
+    sessionStorage.setItem('bp_lead_email', leadEmail.trim().toLowerCase());
 
-    // Stocker pour OnboardingStep2
-    sessionStorage.setItem('bp_lead_email', payload.email);
-
-    await new Promise(r => setTimeout(r, 1000));
-    setLeadStatus('success');
+    try {
+      await submitLead({
+        email: leadEmail.trim().toLowerCase(),
+        source: 'test_ai',
+        debiteur_test: formData.name,
+        montant_test: formData.amount,
+        nb_factures_test: importedFile ? simulatedCount : 1,
+      });
+      setLeadStatus('success');
+    } catch (err) {
+      console.error('Erreur envoi lead TestAI:', err);
+      setLeadStatus('success');
+    }
 
     setTimeout(() => closeModal(), 8000);
   };
@@ -4057,18 +4066,18 @@ const Footer = ({ onOpenBooking }) => {
     setFooterStatus('loading');
     setFooterError('');
 
-    console.log('🦶 FOOTER - Lead qualifié:', {
-      email: footerEmail.trim().toLowerCase(),
-      source: 'footer',
-      score: 10,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Stocker pour OnboardingStep2
     sessionStorage.setItem('bp_lead_email', footerEmail.trim().toLowerCase());
 
-    await new Promise(r => setTimeout(r, 1000));
-    setFooterStatus('success');
+    try {
+      await submitLead({
+        email: footerEmail.trim().toLowerCase(),
+        source: 'footer',
+      });
+      setFooterStatus('success');
+    } catch (err) {
+      console.error('Erreur envoi lead Footer:', err);
+      setFooterStatus('success');
+    }
   };
 
   const links = [

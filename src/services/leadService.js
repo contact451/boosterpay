@@ -3,6 +3,7 @@
  */
 
 const GOOGLE_SHEET_API_URL = import.meta.env.VITE_GOOGLE_SHEET_API_URL || '';
+const B2B_SHEET_API_URL = import.meta.env.VITE_B2B_SHEET_API_URL || '';
 
 /**
  * Envoie un lead vers Google Sheets
@@ -43,6 +44,21 @@ export const submitLead = async (leadData) => {
 
     const result = await response.json();
     console.log('✅ Lead envoyé avec succès:', result);
+
+    // Notifier Sheet 1 (B2B) pour stopper la séquence SMS/Email — fire & forget
+    if (B2B_SHEET_API_URL && payload.ref) {
+      fetch(B2B_SHEET_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          ref: payload.ref,
+          email: payload.email,
+          action: 'converted',
+          timestamp: payload.timestamp,
+        }),
+      }).catch(() => {});
+    }
+
     return result;
   } catch (error) {
     // Fallback silencieux — la capture ne doit JAMAIS bloquer l'UX
@@ -87,6 +103,23 @@ export const submitOnboarding = async (payload) => {
 
       const result = await response.json();
       console.log('✅ Onboarding envoyé:', result);
+
+      // Notifier Sheet 1 (B2B) pour stopper la séquence — fire & forget
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref') || '';
+      if (B2B_SHEET_API_URL && ref) {
+        fetch(B2B_SHEET_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            ref: ref,
+            email: payload.email,
+            action: 'converted',
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+      }
+
       return result;
 
     } catch (error) {
