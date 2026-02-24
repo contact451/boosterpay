@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Gift, Check, Loader2, Mail, Sparkles } from 'lucide-react';
 import { submitLead } from '../services/leadService';
+import { trackLeadFormSubmit } from '../services/analytics';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -140,6 +141,7 @@ const LeadFormModal = ({
       });
 
       setStatus('success');
+      trackLeadFormSubmit(email, source);
 
       // Store for OnboardingStep2
       sessionStorage.setItem('bp_lead_email', email.trim().toLowerCase());

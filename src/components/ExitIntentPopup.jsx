@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Gift, Mail, ArrowRight, Check, Loader2, FileText } from 'lucide-react';
 import { submitLead } from '../services/leadService';
+import { trackExitIntentShown, trackExitIntentEmail } from '../services/analytics';
 
 // Hook to detect if keyboard is open (via visualViewport)
 const useKeyboardOpen = () => {
@@ -203,6 +204,7 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     setIsOpen(true);
     setHasShown(true);
     sessionStorage.setItem('exitIntentShown', 'true');
+    trackExitIntentShown();
   }, [isLeadFormOpen, hasShown]);
 
   useExitIntent(handleExitIntent, {
@@ -265,6 +267,7 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
       });
 
       setStatus('success');
+      trackExitIntentEmail(email);
 
       // Store for OnboardingStep2
       sessionStorage.setItem('bp_lead_email', email.trim().toLowerCase());

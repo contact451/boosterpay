@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Check, Shield, Clock, X, Mail, ArrowRight } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { submitLead } from '../services/leadService';
+import { trackLeadEmailSubmit } from '../services/analytics';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -240,6 +241,7 @@ const InlineEmailCapture = ({
       });
 
       setStatus('success');
+      trackLeadEmailSubmit(localEmail, source);
 
       // Store for OnboardingStep2
       sessionStorage.setItem('bp_lead_email', localEmail.trim().toLowerCase());

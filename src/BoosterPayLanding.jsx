@@ -43,6 +43,25 @@ import ExitIntentPopup from './components/ExitIntentPopup';
 import RecoverySimulatorSection from './components/RecoverySimulatorSection';
 import InlineEmailCapture from './components/InlineEmailCapture';
 import { submitLead } from './services/leadService';
+import {
+  trackPageView,
+  trackScrollDepth,
+  trackVirtualPageView,
+  trackCTAClickTopbar,
+  trackNavLinkClick,
+  trackMobileMenuOpen,
+  trackAudioPlay,
+  trackAudioComplete,
+  trackFAQOpen,
+  trackLeadEmailSubmit,
+  trackTestAISubmit,
+  trackTestAIManualStart,
+  trackTestAIImportFile,
+  trackBookingModalOpen,
+  trackPricingCTAClick,
+  trackPricingToggle,
+  trackFooterEmailSubmit,
+} from './services/analytics';
 
 // ============================================
 // MOBILE DETECTION HOOK
@@ -548,7 +567,7 @@ const StickyTopBar = () => {
               Rejoignez <span className="font-bold text-yellow-300">{count.toLocaleString()}+</span> entreprises qui ont déjà accéléré leur trésorerie
             </span>
             <motion.button
-              onClick={(e) => scrollToSection(e, '#pricing')}
+              onClick={(e) => { trackCTAClickTopbar(); scrollToSection(e, '#pricing'); }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="hidden md:inline-flex items-center gap-1 bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-semibold hover:bg-yellow-300 transition-colors"
@@ -619,7 +638,7 @@ const Navigation = ({ onOpenDemo, onOpenBooking }) => {
               <motion.a
                 key={link.href}
                 href={link.href}
-                onClick={(e) => scrollToSection(e, link.href)}
+                onClick={(e) => { trackNavLinkClick(link.label, link.href); scrollToSection(e, link.href); }}
                 whileHover={{ y: -2 }}
                 className="text-gray-300 hover:text-white transition-colors text-sm font-medium"
               >
@@ -642,7 +661,7 @@ const Navigation = ({ onOpenDemo, onOpenBooking }) => {
           {/* Mobile Menu Button */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => setIsMobileMenuOpen(true)}
+            onClick={() => { trackMobileMenuOpen(); setIsMobileMenuOpen(true); }}
             className="md:hidden p-2 text-white"
           >
             <Menu className="w-6 h-6" />
@@ -1486,6 +1505,9 @@ const TestAISection = ({ onOpenBooking }) => {
     setLeadStatus('loading');
     setLeadError('');
 
+    trackTestAISubmit(formData.name, formData.amount);
+    trackLeadEmailSubmit(leadEmail, 'test_ai');
+
     const payload = {
       email: leadEmail.trim().toLowerCase(),
       source: 'test_ai',
@@ -1543,6 +1565,8 @@ const TestAISection = ({ onOpenBooking }) => {
     e.preventDefault();
     if (!isFormValid) return;
 
+    trackTestAIManualStart(formData.name, formData.amount);
+
     setIsManualScanning(true);
     setImportedFile(null);
     const steps = [
@@ -1580,6 +1604,8 @@ const TestAISection = ({ onOpenBooking }) => {
 
     setImportedFile({ name: file.name, size: file.size });
     setSimulatedCount(Math.floor(Math.random() * 21) + 5);
+
+    trackTestAIImportFile(file.name);
 
     setIsImportScanning(true);
     const steps = [
@@ -2865,6 +2891,7 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
         isPlayingRef.current = false;
         setProgress(100);
         progressRef.current = 100;
+        trackAudioComplete(audio.duration);
       });
       audioRef.current = audio;
     }
@@ -3048,6 +3075,7 @@ const AudioDemoSection = ({ isOpen, onClose }) => {
         progressRef.current = 0;
         setCurrentTime(0);
       }
+      trackAudioPlay(audio.currentTime);
       audio.play();
       setIsPlaying(true);
       isPlayingRef.current = true;
@@ -3411,6 +3439,10 @@ const PricingSection = ({ onOpenBooking }) => {
   const [activePlan, setActivePlan] = useState(null); // 'STARTER' | 'PRO' | 'BUSINESS'
 
   const handlePricingCTA = (planName) => {
+    const plan = plans.find(p => p.name === planName);
+    const price = plan ? (isAnnual ? plan.annualPrice : plan.monthlyPrice) : 0;
+    trackPricingCTAClick(planName, price, isAnnual ? 'annual' : 'monthly');
+
     setActivePlan(planName);
     setTimeout(() => {
       const captureEl = document.getElementById(`pricing-capture-${planName}`);
@@ -3563,7 +3595,7 @@ const PricingSection = ({ onOpenBooking }) => {
             Mensuel
           </span>
           <button
-            onClick={() => setIsAnnual(!isAnnual)}
+            onClick={() => { trackPricingToggle(!isAnnual ? 'annual' : 'monthly'); setIsAnnual(!isAnnual); }}
             className={`relative w-14 md:w-16 h-7 md:h-8 rounded-full transition-colors ${isAnnual ? 'bg-blue-600' : 'bg-gray-700'}`}
           >
             <motion.div
@@ -3927,7 +3959,7 @@ const FAQSection = ({ onOpenBooking }) => {
                 hover={false}
               >
                 <motion.button
-                  onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                  onClick={() => { if (openIndex !== index) trackFAQOpen(index, faq.question); setOpenIndex(openIndex === index ? null : index); }}
                   whileHover={{ backgroundColor: "rgba(255,255,255,0.05)" }}
                   className="w-full flex items-center justify-between text-left rounded-xl transition-colors min-h-[48px]"
                 >
@@ -4073,6 +4105,7 @@ const Footer = ({ onOpenBooking }) => {
         email: footerEmail.trim().toLowerCase(),
         source: 'footer',
       });
+      trackFooterEmailSubmit();
       setFooterStatus('success');
     } catch (err) {
       console.error('Erreur envoi lead Footer:', err);
@@ -4329,7 +4362,7 @@ const BoosterPayLanding = () => {
   const [capturedEmail, setCapturedEmail] = useState('');
   const [showIntermediateCTA, setShowIntermediateCTA] = useState(false);
 
-  const openBooking = () => setIsBookingModalOpen(true);
+  const openBooking = () => { trackBookingModalOpen('cta'); setIsBookingModalOpen(true); };
   const openLeadForm = (emailParam = '') => {
     // Safeguard: ensure email is a string, not an event object
     const email = typeof emailParam === 'string' ? emailParam : '';
@@ -4348,6 +4381,58 @@ const BoosterPayLanding = () => {
   // Fix: Force page to start at top
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
+
+  // GA4: Track initial page view
+  useEffect(() => {
+    trackPageView('/', 'BoosterPay - Accueil');
+  }, []);
+
+  // GA4: Scroll depth tracking (25%, 50%, 75%, 100%)
+  useEffect(() => {
+    const thresholds = [25, 50, 75, 100];
+    const reached = new Set();
+
+    const handleScroll = () => {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollHeight <= 0) return;
+      const percent = Math.round((window.scrollY / scrollHeight) * 100);
+
+      for (const t of thresholds) {
+        if (percent >= t && !reached.has(t)) {
+          reached.add(t);
+          trackScrollDepth(`${t}%`);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // GA4: Virtual page views when scrolling into major sections
+  useEffect(() => {
+    const sectionIds = ['how-it-works', 'pricing', 'testimonials', 'faq', 'test-ai', 'audio-demo', 'simulateur'];
+    const observed = new Set();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !observed.has(entry.target.id)) {
+            observed.add(entry.target.id);
+            trackVirtualPageView(entry.target.id);
+          }
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    for (const id of sectionIds) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   return (

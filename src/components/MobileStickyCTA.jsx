@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import { ChevronUp, Gift, ArrowRight, Shield, Check, Sparkles, Mail, Loader2 } from 'lucide-react';
 import { submitLead } from '../services/leadService';
+import { trackMobileCTAExpand, trackMobileCTASubmit } from '../services/analytics';
 
 // Composant pour le shimmer effect
 const ShimmerEffect = () => (
@@ -155,6 +156,7 @@ const ExpandedMode = ({ onCollapse }) => {
       });
 
       sessionStorage.setItem('bp_lead_email', email.trim().toLowerCase());
+      trackMobileCTASubmit(email);
       setStatus('success');
     } catch (err) {
       console.error('Error submitting lead:', err);
@@ -397,7 +399,7 @@ const MobileStickyCTA = ({ isHidden = false }) => {
               {!isExpanded ? (
                 <CompactMode
                   key="compact"
-                  onExpand={() => setIsExpanded(true)}
+                  onExpand={() => { trackMobileCTAExpand(); setIsExpanded(true); }}
                 />
               ) : (
                 <ExpandedMode

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { Banknote, TrendingUp, Mail, ArrowRight, Loader2, Minus, Plus, Euro, Sparkles, Lock } from 'lucide-react';
 import InlineEmailCapture from './InlineEmailCapture';
+import { trackSimulatorReveal } from '../services/analytics';
 
 // Hook for mobile detection
 const useIsMobile = () => {
@@ -202,6 +203,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
     }
 
     setError('');
+    trackSimulatorReveal(invoices, avgAmount, recovery.recovered);
     // Open the email capture popup
     setShowEmailCapture(true);
   };
