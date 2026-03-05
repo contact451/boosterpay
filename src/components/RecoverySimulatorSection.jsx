@@ -148,8 +148,8 @@ const formatNumber = (num) => {
 };
 
 const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
-  const [invoices, setInvoices] = useState(25);
-  const [avgAmount, setAvgAmount] = useState(2000);
+  const [invoices, setInvoices] = useState(40);
+  const [avgAmount, setAvgAmount] = useState(1500);
   const [email, setEmail] = useState(prefilledEmail);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -258,17 +258,17 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
           <motion.div variants={itemVariants} className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-6">
               <Banknote className="w-4 h-4" />
-              Simulateur de récupération
+              Simulateur de trésorerie
             </div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
               Combien pouvez-vous{' '}
               <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                récupérer
+                encaisser
               </span>{' '}
               ?
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Estimez le montant que vous pourriez récupérer chaque année
+              Estimez le montant que vous pourriez encaisser chaque année
             </p>
           </motion.div>
 
@@ -285,9 +285,9 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                   value={invoices}
                   onChange={setInvoices}
                   min={5}
-                  max={500}
+                  max={150}
                   step={5}
-                  label="Nombre d'impayés par mois"
+                  label="Nombre de factures en attente par mois"
                   formatValue={(v) => v.toString()}
                   isMobile={isMobile}
                 />
@@ -297,9 +297,9 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                   value={avgAmount}
                   onChange={setAvgAmount}
                   min={100}
-                  max={10000}
+                  max={8000}
                   step={100}
-                  label="Montant moyen d'un impayé"
+                  label="Montant moyen d'une facture en attente"
                   formatValue={(v) => `${formatNumber(v)} €`}
                   isMobile={isMobile}
                 />
@@ -311,7 +311,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
               {/* Results */}
               <div className="text-center">
                 <p className="text-gray-400 text-sm mb-4">
-                  Avec BoosterPay, vous pourriez récupérer
+                  Avec BoosterPay, vous pourriez encaisser
                 </p>
 
                 {/* Main result */}
@@ -449,7 +449,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
                       {/* Additional stats */}
                       <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mt-6">
                         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                          <p className="text-gray-400 text-xs mb-1">Taux de récupération</p>
+                          <p className="text-gray-400 text-xs mb-1">Taux d'encaissement</p>
                           <p className="text-emerald-400 font-bold text-xl">73%</p>
                         </div>
                         <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -487,7 +487,7 @@ const RecoverySimulatorSection = ({ onOpenLeadForm, prefilledEmail = '' }) => {
               </span>
               <span className="flex items-center gap-2">
                 <Euro className="w-4 h-4 text-blue-500" />
-                +8,7M € récupérés en 2025
+                +8,7M € encaissés en 2025
               </span>
             </motion.div>
           </motion.div>

@@ -482,11 +482,12 @@ function ExpertModal({ isOpen, onClose }) {
 
 // === COLUMN HINTS POUR AUTO-MAPPING CSV ===
 const COLUMN_HINTS = {
-  name:    ['nom', 'client', 'débiteur', 'debiteur', 'société', 'societe', 'entreprise', 'raison', 'contact', 'name', 'destinataire'],
-  phone:   ['tel', 'téléphone', 'telephone', 'mobile', 'portable', 'gsm', 'phone', 'tel1', 'telephone1'],
-  amount:  ['montant', 'total', 'ttc', 'ht', 'somme', 'amount', 'prix', 'solde', 'reste', 'du', 'impaye', 'impayé'],
-  email:   ['email', 'mail', 'courriel', 'e-mail'],
-  phone2:  ['tel2', 'telephone2', 'téléphone2', 'fax', 'fixe', 'autre tel'],
+  name:          ['nom', 'client', 'débiteur', 'debiteur', 'société', 'societe', 'entreprise', 'raison', 'contact', 'name', 'destinataire'],
+  phone:         ['tel', 'téléphone', 'telephone', 'mobile', 'portable', 'gsm', 'phone', 'tel1', 'telephone1'],
+  amount:        ['montant', 'total', 'ttc', 'ht', 'somme', 'amount', 'prix', 'solde', 'reste', 'du', 'impaye', 'impayé'],
+  email:         ['email', 'mail', 'courriel', 'e-mail'],
+  phone2:        ['tel2', 'telephone2', 'téléphone2', 'fax', 'fixe', 'autre tel'],
+  invoiceNumber: ['facture', 'numero', 'numéro', 'ref', 'référence', 'reference', 'n°', 'no', 'invoice', 'num', 'id facture'],
 };
 
 const normalizeHeader = (str) => str?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '') || '';
@@ -500,6 +501,7 @@ const REQUIRED_FIELDS = [
 const OPTIONAL_FIELDS = [
   { key: 'email', label: 'Email Débiteur', description: 'Email du client' },
   { key: 'phone2', label: 'Téléphone 2', description: '2ème numéro' },
+  { key: 'invoiceNumber', label: 'Numéro de facture', description: 'Référence de la facture (optionnel)' },
 ];
 
 // === MODAL DE MAPPING CSV (Redesign intuitif "3 questions") ===
@@ -590,6 +592,7 @@ function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfir
         phone2: sanitizeCSVValue(String(columnMapping.phone2 ? row[columnMapping.phone2] || '' : '').trim()),
         email: sanitizeCSVValue(String(columnMapping.email ? row[columnMapping.email] || '' : '').trim()),
         amount: String(parseAmount(columnMapping.amount ? row[columnMapping.amount] : 0)),
+        invoiceNumber: sanitizeCSVValue(String(columnMapping.invoiceNumber ? row[columnMapping.invoiceNumber] || '' : '').trim()),
         id: Date.now() + Math.random(),
         imported: true,
       }));
@@ -604,8 +607,8 @@ function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfir
   ];
 
   // Labels humanisés pour les champs optionnels (basés sur OPTIONAL_FIELDS)
-  const OPTIONAL_ICONS = { email: Mail, phone2: Phone };
-  const OPTIONAL_LABELS = { email: 'Adresse email', phone2: '2ème numéro de téléphone' };
+  const OPTIONAL_ICONS = { email: Mail, phone2: Phone, invoiceNumber: FileText };
+  const OPTIONAL_LABELS = { email: 'Adresse email', phone2: '2ème numéro de téléphone', invoiceNumber: 'Numéro de facture' };
   const OPTIONALS = OPTIONAL_FIELDS.map(f => ({
     key: f.key, label: OPTIONAL_LABELS[f.key] || f.label, Icon: OPTIONAL_ICONS[f.key] || FileText,
   }));
@@ -988,6 +991,12 @@ function InvoiceCard({ invoice, onDelete, index }) {
               <span className="truncate max-w-[140px]">{invoice.email}</span>
             </span>
           )}
+          {invoice.invoiceNumber && (
+            <span className="flex items-center gap-1">
+              <FileText className="w-3 h-3 text-blue-400" />
+              <span className="truncate max-w-[120px]">{invoice.invoiceNumber}</span>
+            </span>
+          )}
           <span className="flex items-center gap-1">
             <Euro className="w-3 h-3" />
             {parseFloat(invoice.amount).toLocaleString('fr-FR')} €
@@ -1285,7 +1294,7 @@ export default function OnboardingStep2() {
 
   // Invoice state (no more profile state at top-level — profile lives in the modal)
   const [invoices, setInvoices] = useState([]);
-  const [formData, setFormData] = useState({ name: '', phone: '', phone2: '', email: '', amount: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', phone2: '', email: '', amount: '', invoiceNumber: '' });
   const [showPhone2, setShowPhone2] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -1345,9 +1354,12 @@ export default function OnboardingStep2() {
     if (formData.email && formData.email.trim()) {
       invoice.email = formData.email.trim();
     }
+    if (formData.invoiceNumber && formData.invoiceNumber.trim()) {
+      invoice.invoiceNumber = formData.invoiceNumber.trim();
+    }
 
     setInvoices((prev) => [...prev, invoice]);
-    setFormData({ name: '', phone: '', phone2: '', email: '', amount: '' });
+    setFormData({ name: '', phone: '', phone2: '', email: '', amount: '', invoiceNumber: '' });
     setShowPhone2(false);
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 1200);
@@ -1477,6 +1489,7 @@ export default function OnboardingStep2() {
         ...(inv.email ? { email: inv.email } : {}),
         amount: parseFloat(inv.amount) || 0,
         imported: inv.imported || false,
+        ...(inv.invoiceNumber ? { invoiceNumber: inv.invoiceNumber } : {}),
       })),
       totalInvoices: invoices.length,
       source: 'onboarding_step2',
@@ -1916,6 +1929,20 @@ export default function OnboardingStep2() {
                       className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label htmlFor="invoice-number" className="block text-sm text-gray-300 mb-1">
+                    Numéro de facture <span className="text-gray-500">(optionnel)</span>
+                  </label>
+                  <input
+                    id="invoice-number"
+                    type="text"
+                    placeholder="Ex : FAC-2024-001"
+                    value={formData.invoiceNumber}
+                    onChange={(e) => setFormData((f) => ({ ...f, invoiceNumber: e.target.value }))}
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+                  />
                 </div>
 
                 {(() => {

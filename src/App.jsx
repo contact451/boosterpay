@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import BoosterPayLanding from './BoosterPayLanding';
 import OnboardingStep2 from './OnboardingStep2';
 import OnboardingSuccess from './OnboardingSuccess';
+import MentionsLegales from './pages/MentionsLegales';
+import CGV from './pages/CGV';
+import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
 
 function App() {
   return (
@@ -11,6 +14,9 @@ function App() {
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />
+        <Route path="/mentions-legales" element={<MentionsLegales />} />
+        <Route path="/cgv" element={<CGV />} />
+        <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
       </Routes>
     </BrowserRouter>
   );

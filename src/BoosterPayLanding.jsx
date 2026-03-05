@@ -42,6 +42,7 @@ import SocialProofToast from './components/SocialProofToast';
 import ExitIntentPopup from './components/ExitIntentPopup';
 import RecoverySimulatorSection from './components/RecoverySimulatorSection';
 import InlineEmailCapture from './components/InlineEmailCapture';
+import { Link } from 'react-router-dom';
 import { submitLead } from './services/leadService';
 import {
   trackPageView,
@@ -572,7 +573,7 @@ const StickyTopBar = () => {
               whileTap={{ scale: 0.95 }}
               className="hidden md:inline-flex items-center gap-1 bg-white text-blue-600 px-3 py-1 rounded-full text-sm font-semibold hover:bg-yellow-300 transition-colors"
             >
-              Essayer <ArrowRight className="w-3 h-3" />
+              Accélérer ma trésorerie <ArrowRight className="w-3 h-3" />
             </motion.button>
           </div>
         </motion.div>
@@ -1021,7 +1022,7 @@ const CounterScreen = ({ total, added }) => (
     exit={{ opacity: 0 }}
     className="text-center flex flex-col items-center justify-center flex-1 w-full"
   >
-    <p className="text-gray-400 text-sm mb-2">💰 RÉCUPÉRÉ CE MOIS</p>
+    <p className="text-gray-400 text-sm mb-2">💰 ENCAISSÉ CE MOIS</p>
 
     <div className="text-5xl font-extrabold text-white mb-3">
       <AnimatedCounter value={total} />€
@@ -1130,7 +1131,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
       : '0 0 60px rgba(59, 130, 246, 0.4), 0 0 100px rgba(59, 130, 246, 0.2)'; // Réduit de 150 à 50
 
   const { displayedText, isComplete } = useTypingEffect(
-    "Notre IA appelle vos clients avec une voix humaine, diplomate et efficace. Récupérez votre argent pendant que vous travaillez.",
+    "Notre IA appelle vos clients avec une voix humaine, diplomate et efficace. Encaissez plus vite pendant que vous travaillez.",
     30,
     1000
   );
@@ -1138,7 +1139,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
   const trustBadges = [
     { icon: Check, text: "Sans engagement" },
     { icon: Clock, text: "Résultats dès 48h" },
-    { icon: Banknote, text: "+8,7 millions € récupérés" }
+    { icon: Banknote, text: "+8,7 millions € encaissés" }
   ];
 
   return (
@@ -1169,7 +1170,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
           className="mb-6"
         >
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm font-medium">
-            ✨ Aucune facture nécessaire — Juste un nom et un montant
+            ✨ Simple et sans paperasse — Un nom, un montant, c'est tout
           </span>
         </motion.div>
 
@@ -1249,7 +1250,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
                 animate={{ x: ['-150%', '150%'] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 1.5 }}
               />
-              <span className="relative z-10">Démarrer gratuit</span>
+              <span className="relative z-10">Activer le suivi</span>
               <ArrowRight className="w-5 h-5 relative z-10" />
             </motion.button>
           </div>
@@ -1677,7 +1678,7 @@ const TestAISection = ({ onOpenBooking }) => {
       {importedFile ? (
         <>
           <h3 className="text-xl font-bold text-white text-center">
-            {simulatedCount} clients prêts à être relancés ! 🚀
+            {simulatedCount} clients prêts à être contactés ! 🚀
           </h3>
           <p className="text-gray-400 text-sm text-center">
             Notre IA a analysé <span className="text-cyan-400 font-medium">{importedFile.name}</span> et préparé les scripts de relance optimisés pour chaque client.
@@ -1700,10 +1701,10 @@ const TestAISection = ({ onOpenBooking }) => {
       ) : (
         <>
           <h3 className="text-xl font-bold text-white text-center">
-            {formData.amount}€ prêts à être récupérés ! 🚀
+            {formData.amount}€ prêts à être encaissés ! 🚀
           </h3>
           <p className="text-gray-400 text-sm text-center">
-            Notre IA a préparé un script de relance optimisé pour {formData.name}. Elle est prête à passer l&apos;appel maintenant pour sécuriser votre paiement.
+            Notre IA a préparé un script de suivi diplomatique optimisé pour {formData.name}. Elle est prête à contacter votre client pour fluidifier votre encaissement.
           </p>
           <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
             <div className="flex justify-between text-sm">
@@ -1760,7 +1761,7 @@ const TestAISection = ({ onOpenBooking }) => {
             whileTap={{ scale: 0.97 }}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white text-sm font-semibold shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-shadow"
           >
-            Ajouter mes impayés →
+            Ajouter mes factures →
           </motion.a>
         </motion.div>
       ) : (
@@ -1794,7 +1795,7 @@ const TestAISection = ({ onOpenBooking }) => {
             {leadStatus === 'loading' ? (
               <Loader2 className="w-5 h-5 animate-spin mx-auto" />
             ) : (
-              importedFile ? 'Lancer les appels IA maintenant' : "Lancer l'appel IA gratuitement"
+              importedFile ? 'Activer les suivis IA maintenant' : "Activer le suivi IA gratuitement"
             )}
           </button>
 
@@ -1912,7 +1913,7 @@ const TestAISection = ({ onOpenBooking }) => {
             </h2>
 
             <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
-              Entrez un impayé et voyez la <span className="text-white font-medium">magie</span> opérer
+              Entrez une facture en attente et voyez la <span className="text-white font-medium">magie</span> opérer
             </p>
           </motion.div>
 
@@ -2020,7 +2021,7 @@ const TestAISection = ({ onOpenBooking }) => {
                           </div>
                           <div>
                             <h3 className="text-lg font-bold text-white">Ajout rapide</h3>
-                            <p className="text-xs text-gray-400">Entrez un impayé pour tester</p>
+                            <p className="text-xs text-gray-400">Entrez une facture en attente pour tester</p>
                           </div>
                         </div>
 
@@ -2197,7 +2198,7 @@ const TestAISection = ({ onOpenBooking }) => {
                         </div>
                         <div>
                           <h3 className="text-lg font-bold text-white">Import en masse</h3>
-                          <p className="text-xs text-gray-400">Importez tous vos impayés d&apos;un coup</p>
+                          <p className="text-xs text-gray-400">Importez toutes vos factures en attente d&apos;un coup</p>
                         </div>
                       </div>
 
@@ -2504,7 +2505,7 @@ const LogoCarousel = ({ onScrollToSimulator }) => {
             onClick={onScrollToSimulator}
             className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors group"
           >
-            <span className="text-sm font-medium">Combien puis-je récupérer ?</span>
+            <span className="text-sm font-medium">Combien puis-je encaisser ?</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </motion.div>
@@ -2519,13 +2520,13 @@ const ProblemSection = () => {
     {
       icon: Phone,
       title: "Appels gênants",
-      description: "Appeler un client pour réclamer de l'argent ? Gênant et chronophage.",
+      description: "Assurer le suivi de facturation d'un client ? Inconfortable et chronophage.",
       color: "red"
     },
     {
       icon: TrendingDown,
       title: "Trésorerie en danger",
-      description: "En attendant, votre trésorerie souffre. Les impayés s'accumulent.",
+      description: "En attendant, votre trésorerie souffre. Les retards de paiement s'accumulent.",
       color: "orange"
     },
     {
@@ -2710,8 +2711,8 @@ const HowItWorksSection = () => {
     {
       number: "1",
       icon: FileText,
-      title: "Dites-nous qui vous doit de l'argent",
-      description: "Juste un nom et un montant. Pas de facture, pas de paperasse. 30 secondes chrono."
+      title: "Renseignez vos encours clients en attente",
+      description: "Un nom et un montant suffisent. Pas de paperasse. 30 secondes chrono."
     },
     {
       number: "2",
@@ -2752,7 +2753,7 @@ const HowItWorksSection = () => {
             Simple comme <span className="text-cyan-400">bonjour</span>.
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Pas besoin d'être un expert en informatique. Envoyez vos impayés, on fait le reste.
+            Pas besoin d'être un expert en informatique. Envoyez vos factures en attente, on fait le reste.
           </p>
         </motion.div>
 
@@ -2840,7 +2841,7 @@ const HowItWorksSection = () => {
               ))}
             </div>
             <p className="text-gray-400 text-sm">
-              Un nom + un montant → l'IA lance la relance en 30 secondes
+              Un nom + un montant → l'IA démarre le suivi de facturation en 30 secondes
             </p>
           </div>
         </motion.div>
@@ -3209,7 +3210,7 @@ const StatisticsSection = () => {
   const stats = [
     { value: 26, suffix: " jours", prefix: "-", label: "Réduction moyenne des délais de paiement" },
     { value: 94, suffix: "%", prefix: "", label: "Taux de paiement obtenu" },
-    { value: 8.7, suffix: "M €", prefix: "", label: "Récupérés pour nos clients", decimals: 1 },
+    { value: 8.7, suffix: "M €", prefix: "", label: "Encaissés pour nos clients", decimals: 1 },
     { value: 4.8, suffix: "/5", prefix: "", label: "Note de satisfaction", decimals: 1 }
   ];
 
@@ -3281,14 +3282,14 @@ const TestimonialsSection = () => {
     {
       name: "Jean-Pierre M.",
       role: "Agriculteur, Lot-et-Garonne",
-      content: "J'ai récupéré 4 500€ en une semaine. Avant, j'attendais 3 mois minimum.",
+      content: "J'ai encaissé 4 500€ en une semaine. Avant, j'attendais 3 mois minimum.",
       rating: 5,
       initials: "JP"
     },
     {
       name: "Marie D.",
       role: "Artisan électricienne, Lyon",
-      content: "Je détestais relancer mes clients. Maintenant, c'est fait et bien fait.",
+      content: "Je n'aimais pas assurer le suivi de facturation avec mes clients. Maintenant, c'est fait et bien fait.",
       rating: 5,
       initials: "MD"
     },
@@ -3309,7 +3310,7 @@ const TestimonialsSection = () => {
     {
       name: "Antoine R.",
       role: "Consultant indépendant, Paris",
-      content: "Je me concentre enfin sur mon métier. Fini le stress des impayés.",
+      content: "Je me concentre enfin sur mon métier. Fini le stress des retards de paiement.",
       rating: 5,
       initials: "AR"
     },
@@ -3465,7 +3466,7 @@ const PricingSection = ({ onOpenBooking }) => {
       highlight: "LE PLUS SIMPLE",
       icon: "\u{1F680}",
       features: [
-        "Jusqu'\u00e0 20 impayés/mois",
+        "Jusqu'à 20 dossiers clients/mois",
         "IA Vocale + SMS + Email",
         "Relances automatiques 24/7",
         "Tableau de bord temps r\u00e9el",
@@ -3488,7 +3489,7 @@ const PricingSection = ({ onOpenBooking }) => {
       highlight: "LE PLUS RENTABLE",
       icon: "\u2B50",
       features: [
-        "Jusqu'\u00e0 100 impayés/mois",
+        "Jusqu'à 100 dossiers clients/mois",
         "IA Vocale + SMS + Email",
         "Synchronisation comptable auto",
         "Statistiques avanc\u00e9es",
@@ -3512,7 +3513,7 @@ const PricingSection = ({ onOpenBooking }) => {
       highlight: "LE PLUS PUISSANT",
       icon: "\u{1F48E}",
       features: [
-        "Jusqu'\u00e0 500 impayés/mois",
+        "Jusqu'à 500 dossiers clients/mois",
         "IA Vocale + SMS + Email",
         "Account Manager d\u00e9di\u00e9",
         "Int\u00e9grations illimit\u00e9es",
@@ -3577,15 +3578,15 @@ const PricingSection = ({ onOpenBooking }) => {
           className="text-center mb-12"
         >
           <h2 className="text-4xl md:text-6xl font-black text-white mb-4">
-            {"Transformez vos impay\u00e9s en "}
+            {"Transformez vos encours en "}
             <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              cash.
+              trésorerie.
             </span>
           </h2>
           <p className="text-gray-400 text-xl max-w-2xl mx-auto">
             {"Pendant que vous vous concentrez sur votre m\u00e9tier,"}
             <br/>
-            <span className="text-white font-medium">{"l'IA r\u00e9cup\u00e8re ce qu'on vous doit."}</span>
+            <span className="text-white font-medium">{"l'IA g\u00e8re votre suivi de facturation."}</span>
           </p>
         </motion.div>
 
@@ -3791,7 +3792,7 @@ const PricingSection = ({ onOpenBooking }) => {
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
                       </div>
                       <span className="text-emerald-400 font-bold text-[13px] tracking-wide">
-                        Commission de succès : {plan.commission.percent}
+                        Frais de gestion à la performance : {plan.commission.percent}
                       </span>
                     </div>
 
@@ -3801,13 +3802,13 @@ const PricingSection = ({ onOpenBooking }) => {
                     {/* Ligne rassurance */}
                     <p className="text-gray-400 text-xs mb-2 flex items-center gap-1.5">
                       <Shield className="w-3 h-3 text-emerald-500/40 flex-shrink-0" />
-                      Payez uniquement si vous encaissez.
+                      Facturés uniquement sur les encaissements réalisés.
                     </p>
 
                     {/* Exemple — ancrage prix dérisoire */}
                     <div className="mt-2.5 px-3 py-2 rounded-lg bg-emerald-500/[0.08] border border-emerald-500/15">
                       <p className="text-gray-300 text-xs">
-                        1 000€ récupérés → <span className="text-emerald-400 font-semibold">seulement {plan.commission.amount}€ de frais</span>
+                        1 000€ encaissés → <span className="text-emerald-400 font-semibold">seulement {plan.commission.amount}€ de frais de gestion</span>
                       </p>
                     </div>
                   </motion.div>
@@ -3919,7 +3920,7 @@ const FAQSection = ({ onOpenBooking }) => {
     },
     {
       question: "Combien de temps avant de voir des résultats ?",
-      answer: "En moyenne, nos clients récupèrent leurs premiers paiements sous 48h."
+      answer: "En moyenne, nos clients encaissent leurs premiers paiements sous 48h."
     },
     {
       question: "Je peux annuler quand je veux ?",
@@ -4114,9 +4115,9 @@ const Footer = ({ onOpenBooking }) => {
   };
 
   const links = [
-    { label: "Mentions légales", href: "#" },
-    { label: "CGV", href: "#" },
-    { label: "Politique de confidentialité", href: "#" },
+    { label: "Mentions légales", href: "/mentions-legales" },
+    { label: "CGV", href: "/cgv" },
+    { label: "Politique de confidentialité", href: "/politique-confidentialite" },
     { label: "Contact", href: "#" }
   ];
 
@@ -4135,13 +4136,23 @@ const Footer = ({ onOpenBooking }) => {
           {/* Links */}
           <div className="flex flex-wrap justify-center gap-6">
             {links.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-gray-400 hover:text-white transition-colors text-sm"
-              >
-                {link.label}
-              </a>
+              link.label === "Contact" ? (
+                <button
+                  key={link.label}
+                  onClick={onOpenBooking}
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className="text-gray-400 hover:text-white transition-colors text-sm"
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
 
@@ -4162,7 +4173,7 @@ const Footer = ({ onOpenBooking }) => {
           <div className="max-w-md mx-auto">
             <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-2xl p-6 border border-white/10">
               <h3 className="text-xl font-bold text-white mb-2 text-center">
-                Prêt à récupérer votre argent ?
+                Prêt à accélérer vos encaissements ?
               </h3>
               <p className="text-gray-400 text-sm mb-4 text-center">
                 10 jours gratuits • Sans carte bancaire
@@ -4198,7 +4209,7 @@ const Footer = ({ onOpenBooking }) => {
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        Démarrer gratuit
+                        Activer le suivi
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
