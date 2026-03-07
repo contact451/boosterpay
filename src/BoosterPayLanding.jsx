@@ -176,7 +176,7 @@ const BookingModal = ({ isOpen, onClose }) => {
               <div className="p-2" style={{ height: '70vh' }}>
                 <div className="rounded-xl overflow-hidden bg-white h-full">
                   <iframe
-                    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
+                    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ3SXMUcI7y61Vs4XLcFYgxzAH58mbWpKT5NIaf0GwPYP-OX8Yvpxgk5lJ5xiSzbYK8kKkmH7zD8?gv=true"
                     className="w-full h-full border-0"
                     title="Réserver un appel"
                   />
@@ -249,7 +249,7 @@ const BookingModal = ({ isOpen, onClose }) => {
               <div className="p-5">
                 <div className="rounded-xl overflow-hidden bg-white">
                   <iframe
-                    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1a3ileaN1Jry5bswWVf9kB1YVlLPzjwXAbgOAgEJTCdva3yvBaTde-Wdt01MYcJNF3dYAAn-FP?gv=true"
+                    src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ3SXMUcI7y61Vs4XLcFYgxzAH58mbWpKT5NIaf0GwPYP-OX8Yvpxgk5lJ5xiSzbYK8kKkmH7zD8?gv=true"
                     className="w-full border-0"
                     style={{ height: '450px' }}
                     title="Réserver un appel"
