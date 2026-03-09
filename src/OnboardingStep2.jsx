@@ -1037,7 +1037,33 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
   const [profile, setProfile] = useState({ prenom: '', nom: '', entreprise: '', secteur: '' });
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [loadingText, setLoadingText] = useState('');
+  const loadingTimersRef = useRef([]);
   const isMobile = useIsMobile();
+
+  // Start loading text sequence when isSubmitting becomes true
+  useEffect(() => {
+    if (isSubmitting) {
+      const count = invoiceCount;
+      const steps = count >= 101
+        ? ['Envoi des données...', 'Préparation formule BUSINESS...', 'Redirection paiement...']
+        : count >= 21
+          ? ['Envoi des données...', 'Préparation formule PRO...', 'Redirection paiement...']
+          : ['Envoi des données...', "Configuration de l'IA...", 'Lancement imminent...'];
+
+      setLoadingText(steps[0]);
+      const t1 = setTimeout(() => setLoadingText(steps[1]), 1500);
+      const t2 = setTimeout(() => setLoadingText(steps[2]), 3000);
+      loadingTimersRef.current = [t1, t2];
+    } else {
+      loadingTimersRef.current.forEach(clearTimeout);
+      loadingTimersRef.current = [];
+      if (!submitError) setLoadingText('');
+    }
+    return () => {
+      loadingTimersRef.current.forEach(clearTimeout);
+    };
+  }, [isSubmitting, invoiceCount, submitError]);
 
   const isProfileComplete = profile.prenom.trim() && profile.nom.trim() && profile.entreprise.trim() && profile.secteur;
   const isPhoneValid = isMobilePhone(phone);
@@ -1241,32 +1267,74 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
             disabled={!canSubmit || isSubmitting}
             whileHover={canSubmit && !isSubmitting ? { scale: 1.02 } : {}}
             whileTap={canSubmit && !isSubmitting ? { scale: 0.98 } : {}}
-            className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${
+            animate={
+              isSubmitting
+                ? { opacity: [1, 0.9, 1] }
+                : submitError
+                  ? { x: [0, -6, 6, -6, 6, 0] }
+                  : {}
+            }
+            transition={
+              isSubmitting
+                ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+                : submitError
+                  ? { duration: 0.4 }
+                  : {}
+            }
+            className={`w-full mt-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
               canSubmit && !isSubmitting
                 ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)]'
-                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                : isSubmitting
+                  ? 'bg-gradient-to-r from-violet-600 to-pink-600 text-white shadow-[0_0_30px_rgba(124,58,237,0.4)] cursor-not-allowed'
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Envoi en cours...
-              </>
-            ) : invoiceCount >= 101 ? (
-              <>
-                <Rocket className="w-5 h-5" />
-                Continuer vers le paiement BUSINESS →
-              </>
-            ) : invoiceCount >= 21 ? (
-              <>
-                <Rocket className="w-5 h-5" />
-                Continuer vers le paiement PRO →
-              </>
-            ) : (
-              <>
-                <Rocket className="w-5 h-5" />
-                Lancer les appels IA 🚀
-              </>
+            <AnimatePresence mode="wait">
+              {isSubmitting ? (
+                <motion.span
+                  key="loading"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center justify-center gap-2 relative z-10"
+                >
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <motion.span
+                    key={loadingText}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                  >
+                    {loadingText}
+                  </motion.span>
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="idle"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center justify-center gap-2 relative z-10"
+                >
+                  <Rocket className="w-5 h-5" />
+                  {invoiceCount >= 101
+                    ? 'Continuer vers le paiement BUSINESS →'
+                    : invoiceCount >= 21
+                      ? 'Continuer vers le paiement PRO →'
+                      : 'Lancer les appels IA 🚀'}
+                </motion.span>
+              )}
+            </AnimatePresence>
+
+            {/* Progress bar */}
+            {isSubmitting && (
+              <motion.div
+                className="absolute bottom-0 left-0 h-0.5 bg-white/40 rounded-full"
+                initial={{ width: '0%' }}
+                animate={{ width: '90%' }}
+                transition={{ duration: 4, ease: 'easeOut' }}
+              />
             )}
           </motion.button>
 

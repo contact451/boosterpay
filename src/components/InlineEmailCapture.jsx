@@ -207,6 +207,8 @@ const InlineEmailCapture = ({
     }
   }, [isVisible, onClose]);
 
+  const [loadingText, setLoadingText] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -218,6 +220,10 @@ const InlineEmailCapture = ({
 
     setStatus('loading');
     setError('');
+    setLoadingText('Vérification...');
+
+    const textTimer1 = setTimeout(() => setLoadingText('Création du compte...'), 1500);
+    const textTimer2 = setTimeout(() => setLoadingText('Presque prêt...'), 3000);
 
     // Build payload - email only, no phone
     const searchParams = new URLSearchParams(window.location.search);
@@ -241,7 +247,10 @@ const InlineEmailCapture = ({
         ...enrichmentData
       });
 
+      clearTimeout(textTimer1);
+      clearTimeout(textTimer2);
       setStatus('success');
+      setLoadingText("C'est parti !");
       trackLeadEmailSubmit(localEmail, source);
 
       // Store for OnboardingStep2
@@ -253,8 +262,11 @@ const InlineEmailCapture = ({
       }, 5000);
 
     } catch (err) {
+      clearTimeout(textTimer1);
+      clearTimeout(textTimer2);
       console.error('Error submitting lead:', err);
       setStatus('error');
+      setLoadingText('');
       setError('Une erreur est survenue. Veuillez réessayer.');
     }
   };
@@ -428,26 +440,38 @@ const InlineEmailCapture = ({
                 {/* Submit button */}
                 <motion.button
                   type="submit"
-                  disabled={status === 'loading'}
-                  whileHover={{ scale: status === 'loading' ? 1 : 1.02 }}
-                  whileTap={{ scale: status === 'loading' ? 1 : 0.98 }}
+                  disabled={status !== 'idle'}
+                  whileHover={status === 'idle' ? { scale: 1.02 } : {}}
+                  whileTap={status === 'idle' ? { scale: 0.98 } : {}}
                   className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
-                    isEmailValid
-                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-500/30'
-                      : 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/25'
-                  } text-white disabled:opacity-70`}
-                  animate={isEmailValid && status === 'idle' ? {
-                    scale: [1, 1.02, 1],
-                    boxShadow: [
-                      '0 10px 25px -5px rgba(16, 185, 129, 0.3)',
-                      '0 10px 40px -5px rgba(16, 185, 129, 0.5)',
-                      '0 10px 25px -5px rgba(16, 185, 129, 0.3)',
-                    ],
-                  } : {}}
-                  transition={{ duration: 1.5, repeat: Infinity }}
+                    status === 'success'
+                      ? 'bg-emerald-600 shadow-lg shadow-emerald-500/30'
+                      : isEmailValid
+                        ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 shadow-lg shadow-emerald-500/30'
+                        : 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/25'
+                  } text-white disabled:cursor-not-allowed`}
+                  animate={
+                    status === 'loading'
+                      ? { opacity: [1, 0.9, 1] }
+                      : isEmailValid && status === 'idle'
+                        ? {
+                            scale: [1, 1.02, 1],
+                            boxShadow: [
+                              '0 10px 25px -5px rgba(16, 185, 129, 0.3)',
+                              '0 10px 40px -5px rgba(16, 185, 129, 0.5)',
+                              '0 10px 25px -5px rgba(16, 185, 129, 0.3)',
+                            ],
+                          }
+                        : {}
+                  }
+                  transition={
+                    status === 'loading'
+                      ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
+                      : { duration: 1.5, repeat: Infinity }
+                  }
                 >
-                  {/* Shimmer (desktop only) */}
-                  {!isMobile && isEmailValid && (
+                  {/* Shimmer (desktop only, idle state) */}
+                  {!isMobile && isEmailValid && status === 'idle' && (
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
                       animate={{ x: ['-200%', '200%'] }}
@@ -455,28 +479,85 @@ const InlineEmailCapture = ({
                     />
                   )}
 
-                  {status === 'loading' ? (
-                    <Loader2 className="w-5 h-5 animate-spin relative z-10" />
-                  ) : (
-                    <>
-                      {isEmailValid ? (
-                        <motion.div
-                          initial={{ x: 0 }}
-                          animate={{ x: [0, 5, 0] }}
-                          transition={{ duration: 0.8, repeat: Infinity }}
-                          className="flex items-center gap-2 relative z-10"
+                  <AnimatePresence mode="wait">
+                    {status === 'idle' && (
+                      <motion.span
+                        key="idle"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className="relative z-10"
+                      >
+                        {isEmailValid ? (
+                          <motion.span
+                            initial={{ x: 0 }}
+                            animate={{ x: [0, 5, 0] }}
+                            transition={{ duration: 0.8, repeat: Infinity }}
+                            className="flex items-center gap-2"
+                          >
+                            <Check className="w-5 h-5" />
+                            <span>{submitLabel}</span>
+                            <ArrowRight className="w-5 h-5" />
+                          </motion.span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <Mail className="w-5 h-5" />
+                            {submitLabel}
+                          </span>
+                        )}
+                      </motion.span>
+                    )}
+                    {status === 'loading' && (
+                      <motion.span
+                        key="loading"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex items-center justify-center gap-2 relative z-10"
+                      >
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <motion.span
+                          key={loadingText}
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="text-sm"
                         >
-                          <Check className="w-5 h-5" />
-                          <span>{submitLabel}</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </motion.div>
-                      ) : (
-                        <span className="relative z-10 flex items-center gap-2">
-                          <Mail className="w-5 h-5" />
-                          {submitLabel}
-                        </span>
-                      )}
-                    </>
+                          {loadingText}
+                        </motion.span>
+                      </motion.span>
+                    )}
+                    {status === 'success' && (
+                      <motion.span
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        className="flex items-center justify-center gap-2 relative z-10"
+                      >
+                        <Check className="w-5 h-5" />
+                        <span>{loadingText}</span>
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Progress bar */}
+                  {status === 'loading' && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 h-0.5 bg-white/40 rounded-full"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '90%' }}
+                      transition={{ duration: 4, ease: 'easeOut' }}
+                    />
+                  )}
+                  {status === 'success' && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 h-0.5 bg-white/60 rounded-full"
+                      initial={{ width: '90%' }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                    />
                   )}
                 </motion.button>
 
