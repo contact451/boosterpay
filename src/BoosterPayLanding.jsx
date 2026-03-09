@@ -1162,17 +1162,6 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
           <span className="text-sm text-blue-300">+847 entreprises inscrites ce mois</span>
         </motion.div>
 
-        {/* Anti-paperasse badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mb-6"
-        >
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-sm font-medium">
-            ✨ Simple et sans paperasse — Un nom, un montant, c'est tout
-          </span>
-        </motion.div>
 
         {/* Main Title */}
         <motion.h1
@@ -3474,7 +3463,9 @@ const PricingSection = ({ onOpenBooking }) => {
       ],
       cta: "Essayer 10 jours gratuit",
       ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
-      popular: false,
+      popular: true,
+      badge: "\u2B50 LE PLUS POPULAIRE",
+      isFree: true,
       gradient: "from-slate-600 to-slate-700",
       commission: {
         percent: "1%",
@@ -3495,10 +3486,10 @@ const PricingSection = ({ onOpenBooking }) => {
         "Statistiques avanc\u00e9es",
         "Support prioritaire"
       ],
-      cta: "\u{1F4B0} Essayer 10 jours gratuit",
-      ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
-      popular: true,
-      badge: "\u2B50 LE PLUS POPULAIRE",
+      cta: "🚀 Démarrer PRO maintenant",
+      ctaSubtext: "Paiement sécurisé • Annulable à tout moment",
+      popular: false,
+      isFree: false,
       gradient: "from-blue-600 to-cyan-500",
       commission: {
         percent: "0,5%",
@@ -3519,9 +3510,10 @@ const PricingSection = ({ onOpenBooking }) => {
         "Int\u00e9grations illimit\u00e9es",
         "Support VIP 7j/7"
       ],
-      cta: "Essayer 10 jours gratuit",
-      ctaSubtext: "Sans carte bancaire \u2022 Sans engagement",
+      cta: "💎 Démarrer BUSINESS maintenant",
+      ctaSubtext: "Paiement sécurisé • Annulable à tout moment",
       popular: false,
+      isFree: false,
       gradient: "from-purple-600 to-pink-500",
       commission: {
         percent: "0,3%",
@@ -3626,16 +3618,18 @@ const PricingSection = ({ onOpenBooking }) => {
               whileHover={!isMobile ? { y: -12, scale: 1.02, transition: { duration: 0.3, ease: "easeOut" } } : {}}
               className={`relative group ${plan.popular ? 'md:scale-[1.05] md:z-20 order-first md:order-none' : 'md:z-10'}`}
             >
-              {/* Badge 10 jours gratuits */}
-              <motion.div
-                className={`absolute -top-3 z-20 ${plan.popular ? 'left-4' : 'right-4'}`}
-                animate={isMobile ? {} : { y: [-2, 2, -2] }}
-                transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
-              >
-                <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full text-white text-xs font-bold shadow-lg shadow-emerald-500/30 whitespace-nowrap">
-                  {"\u{1F381} 10 JOURS GRATUITS"}
-                </span>
-              </motion.div>
+              {/* Badge 10 jours gratuits — STARTER uniquement */}
+              {plan.isFree && (
+                <motion.div
+                  className={`absolute -top-3 z-20 ${plan.popular ? 'left-4' : 'right-4'}`}
+                  animate={isMobile ? {} : { y: [-2, 2, -2] }}
+                  transition={isMobile ? {} : { duration: 2, repeat: Infinity }}
+                >
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full text-white text-xs font-bold shadow-lg shadow-emerald-500/30 whitespace-nowrap">
+                    {"\u{1F381} 10 JOURS GRATUITS"}
+                  </span>
+                </motion.div>
+              )}
 
               {/* Glow PRO */}
               {plan.popular && (
@@ -3733,16 +3727,18 @@ const PricingSection = ({ onOpenBooking }) => {
                   )}
                 </div>
 
-                {/* Badge sans carte bancaire */}
-                <div className="flex justify-center mt-3 mb-4">
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                    <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="1" y="4" width="22" height="16" rx="2"/>
-                      <line x1="1" y1="10" x2="23" y2="10"/>
-                    </svg>
-                    <span className="text-emerald-400 text-xs font-medium">Sans carte bancaire</span>
+                {/* Badge sans carte bancaire — STARTER uniquement */}
+                {plan.isFree && (
+                  <div className="flex justify-center mt-3 mb-4">
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                      <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2"/>
+                        <line x1="1" y1="10" x2="23" y2="10"/>
+                      </svg>
+                      <span className="text-emerald-400 text-xs font-medium">Sans carte bancaire</span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Badge sans engagement */}
                 <div className="text-center mb-6">
@@ -3846,7 +3842,7 @@ const PricingSection = ({ onOpenBooking }) => {
                   </motion.button>
                 )}
 
-                {/* InlineEmailCapture under the CTA */}
+                {/* InlineEmailCapture under the CTA — tous les plans */}
                 {activePlan === plan.name && (
                   <div className="mt-4 pb-2" id={`pricing-capture-${plan.name}`}>
                     <InlineEmailCapture
@@ -3858,6 +3854,7 @@ const PricingSection = ({ onOpenBooking }) => {
                       enrichmentData={{ plan: plan.name, price: isAnnual ? plan.annualPrice : plan.monthlyPrice }}
                       submitLabel={`Activer ${plan.name}`}
                       showEmailField={true}
+                      paidPlan={!plan.isFree}
                     />
                   </div>
                 )}
@@ -3868,6 +3865,7 @@ const PricingSection = ({ onOpenBooking }) => {
                     <span className="text-green-400">{"\u2713"}</span> {plan.ctaSubtext}
                   </p>
                 )}
+
               </div>
             </motion.div>
           ))}

@@ -5,7 +5,8 @@
       "Bash(npm run build:*)",
       "Bash(npm install:*)",
       "Bash(python3:*)",
-      "Bash(node scripts/generate-logo.js)"
+      "Bash(node scripts/generate-logo.js)",
+      "Bash(npx --yes vite build)"
     ]
   }
 }

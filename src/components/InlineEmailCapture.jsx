@@ -137,7 +137,8 @@ const InlineEmailCapture = ({
   onSuccess,
   enrichmentData = {},
   submitLabel = 'Démarrer gratuit',
-  showEmailField = true
+  showEmailField = true,
+  paidPlan = false
 }) => {
   const [localEmail, setLocalEmail] = useState(initialEmail || '');
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
@@ -361,7 +362,7 @@ const InlineEmailCapture = ({
                       <span className="text-white font-semibold block">Divisez vos délais de paiement par 2</span>
                       <span className="text-gray-400 text-xs flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        Résultats dès 48h — Sans carte bancaire
+                        Résultats dès 48h — {paidPlan ? 'Paiement sécurisé' : 'Sans carte bancaire'}
                       </span>
                     </div>
                   </div>

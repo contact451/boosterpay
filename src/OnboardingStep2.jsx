@@ -1033,7 +1033,7 @@ function InvoiceCard({ invoice, onDelete, index }) {
 }
 
 // === MODAL PROFIL (affiché avant le lancement) ===
-function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError }) {
+function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, invoiceCount = 0 }) {
   const [profile, setProfile] = useState({ prenom: '', nom: '', entreprise: '', secteur: '' });
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
@@ -1252,6 +1252,16 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError }) 
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Envoi en cours...
               </>
+            ) : invoiceCount >= 101 ? (
+              <>
+                <Rocket className="w-5 h-5" />
+                Continuer vers le paiement BUSINESS →
+              </>
+            ) : invoiceCount >= 21 ? (
+              <>
+                <Rocket className="w-5 h-5" />
+                Continuer vers le paiement PRO →
+              </>
             ) : (
               <>
                 <Rocket className="w-5 h-5" />
@@ -1271,14 +1281,29 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError }) 
           )}
 
           <p className="text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-3 flex-wrap">
-            <span className="flex items-center gap-1">
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
-              Sans carte bancaire
-            </span>
-            <span className="flex items-center gap-1">
-              <Check className="w-3.5 h-3.5 text-emerald-500" />
-              Annulable en 1 clic
-            </span>
+            {invoiceCount <= 20 ? (
+              <>
+                <span className="flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  Sans carte bancaire
+                </span>
+                <span className="flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  Annulable en 1 clic
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  Paiement sécurisé Stripe
+                </span>
+                <span className="flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  Annulable à tout moment
+                </span>
+              </>
+            )}
           </p>
         </div>
         {isMobile && <div className="h-6" />}
@@ -1463,7 +1488,12 @@ export default function OnboardingStep2() {
     setTimeout(() => setUploadState('default'), 4000);
   }, []);
 
-  // Ouvrir le modal profil (dernière étape avant lancement)
+  const STRIPE_LINKS = {
+    pro: 'https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01',
+    business: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
+  };
+
+  // Toujours ouvrir le ProfileModal, quel que soit le nombre de dossiers
   const handleLaunch = useCallback(() => {
     setShowProfileModal(true);
   }, []);
@@ -1472,6 +1502,7 @@ export default function OnboardingStep2() {
   const handleFinalSubmit = useCallback(async ({ profile: profileData, phone: profilePhone }) => {
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const urlParams = new URLSearchParams(window.location.search);
+    const count = invoices.length;
 
     const payload = {
       lead: {
@@ -1491,12 +1522,13 @@ export default function OnboardingStep2() {
         imported: inv.imported || false,
         ...(inv.invoiceNumber ? { invoiceNumber: inv.invoiceNumber } : {}),
       })),
-      totalInvoices: invoices.length,
+      totalInvoices: count,
       source: 'onboarding_step2',
       appareil: isMobileDevice ? 'mobile' : 'desktop',
       utm_source: urlParams.get('utm_source') || '',
       utm_campaign: urlParams.get('utm_campaign') || '',
       ref: leadId || '',
+      plan: count >= 101 ? 'BUSINESS' : count >= 21 ? 'PRO' : 'STARTER',
     };
 
     console.log('=== PAYLOAD ONBOARDING STEP 2 ===');
@@ -1511,15 +1543,22 @@ export default function OnboardingStep2() {
       if (result.success) {
         sessionStorage.removeItem('bp_lead_email');
         setShowProfileModal(false);
-        navigate('/onboarding/success', {
-          state: {
-            ref: result.ref || result.leadId,
-            prenom: profileData.prenom,
-            entreprise: profileData.entreprise,
-            nbFactures: invoices.length,
-            totalAmount: totalAmount,
-          }
-        });
+
+        if (count >= 101) {
+          window.location.href = STRIPE_LINKS.business;
+        } else if (count >= 21) {
+          window.location.href = STRIPE_LINKS.pro;
+        } else {
+          navigate('/onboarding/success', {
+            state: {
+              ref: result.ref || result.leadId,
+              prenom: profileData.prenom,
+              entreprise: profileData.entreprise,
+              nbFactures: count,
+              totalAmount: totalAmount,
+            }
+          });
+        }
       } else {
         console.error('❌ Erreur onboarding:', result.error);
         setSubmitError(result.error || 'Une erreur est survenue. Veuillez réessayer.');
@@ -2108,6 +2147,34 @@ export default function OnboardingStep2() {
             transition={{ delay: 0.5 }}
             className="text-center mt-6"
           >
+            {/* Indicateur de palier */}
+            <AnimatePresence mode="wait">
+              {canLaunch && (
+                <motion.div
+                  key={invoices.length >= 101 ? 'business' : invoices.length >= 21 ? 'pro' : 'free'}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-3"
+                >
+                  {invoices.length <= 20 && (
+                    <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
+                      {"\u2705"} Essai gratuit — jusqu&apos;à 20 dossiers
+                    </span>
+                  )}
+                  {invoices.length >= 21 && invoices.length <= 100 && (
+                    <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium">
+                      {"\u2B50"} Formule PRO requise — Paiement sécurisé
+                    </span>
+                  )}
+                  {invoices.length >= 101 && (
+                    <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-medium">
+                      {"\u{1F48E}"} Formule BUSINESS requise — Paiement sécurisé
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <motion.button
               onClick={handleLaunch}
               disabled={!canLaunch || isSubmitting}
@@ -2125,6 +2192,16 @@ export default function OnboardingStep2() {
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Envoi en cours...
+                </>
+              ) : invoices.length >= 101 ? (
+                <>
+                  <Rocket className="w-5 h-5" />
+                  Continuer — Formule BUSINESS 💎
+                </>
+              ) : invoices.length >= 21 ? (
+                <>
+                  <Rocket className="w-5 h-5" />
+                  Continuer — Formule PRO ⭐
                 </>
               ) : (
                 <>
@@ -2154,6 +2231,34 @@ export default function OnboardingStep2() {
       {/* CTA Sticky — mobile uniquement */}
       {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0a0f1a]/95 backdrop-blur-xl border-t border-white/[0.06] p-4 pb-safe">
+          {/* Indicateur de palier mobile */}
+          <AnimatePresence mode="wait">
+            {canLaunch && (
+              <motion.div
+                key={invoices.length >= 101 ? 'business' : invoices.length >= 21 ? 'pro' : 'free'}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="mb-2 text-center"
+              >
+                {invoices.length <= 20 && (
+                  <span className="text-green-400 text-xs font-medium">
+                    {"\u2705"} Essai gratuit — jusqu&apos;à 20 dossiers
+                  </span>
+                )}
+                {invoices.length >= 21 && invoices.length <= 100 && (
+                  <span className="text-blue-400 text-xs font-medium">
+                    {"\u2B50"} Formule PRO requise — Paiement sécurisé
+                  </span>
+                )}
+                {invoices.length >= 101 && (
+                  <span className="text-purple-400 text-xs font-medium">
+                    {"\u{1F48E}"} Formule BUSINESS requise — Paiement sécurisé
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
           <motion.button
             onClick={handleLaunch}
             disabled={!canLaunch || isSubmitting}
@@ -2171,6 +2276,16 @@ export default function OnboardingStep2() {
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Envoi en cours...
+              </>
+            ) : invoices.length >= 101 ? (
+              <>
+                <Rocket className="w-5 h-5" />
+                Continuer — BUSINESS 💎
+              </>
+            ) : invoices.length >= 21 ? (
+              <>
+                <Rocket className="w-5 h-5" />
+                Continuer — PRO ⭐
               </>
             ) : (
               <>
@@ -2235,6 +2350,7 @@ export default function OnboardingStep2() {
         onSubmit={handleFinalSubmit}
         isSubmitting={isSubmitting}
         submitError={submitError}
+        invoiceCount={invoices.length}
       />
 
       {/* Modal expert */}
