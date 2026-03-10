@@ -2801,39 +2801,6 @@ const HowItWorksSection = () => {
           </motion.div>
         </div>
 
-        {/* Zéro paperasse — Bloc positif */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="mt-16"
-        >
-          <div className="max-w-lg mx-auto bg-gradient-to-br from-emerald-500/[0.06] to-green-500/[0.03] backdrop-blur-sm border border-emerald-500/20 rounded-2xl p-6 md:p-8 text-center">
-            <p className="text-white font-bold text-lg mb-4">Zéro paperasse. Zéro friction. 🎉</p>
-            <div className="flex flex-wrap justify-center gap-3 mb-4">
-              {[
-                "Sans facture",
-                "Sans PDF",
-                "Sans justificatif",
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full"
-                >
-                  <span className="text-emerald-400 text-sm font-medium">✅ {item}</span>
-                </motion.div>
-              ))}
-            </div>
-            <p className="text-gray-400 text-sm">
-              Un nom + un montant → l'IA démarre le suivi de facturation en 30 secondes
-            </p>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

@@ -250,6 +250,147 @@ function ConfettiEffect({ trigger }) {
   );
 }
 
+// === CALCUL SCORE DE RÉCUPÉRATION ===
+function calculateRecoveryScore(data) {
+  let score = 0;
+  if (data.name?.trim()) score += 25;
+  if (data.phone && validateFrenchPhone(data.phone)) score += 25;
+  if (data.amount && parseFloat(data.amount) > 0) score += 20;
+  if (data.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) score += 15;
+  if (data.invoiceNumber?.trim()) score += 15;
+  return score;
+}
+
+function getScoreTier(score) {
+  if (score >= 86) return { color: '#10B981', glowColor: 'rgba(16,185,129,0.4)', label: 'Chances maximales !', track: 'rgba(16,185,129,0.15)' };
+  if (score >= 71) return { color: '#06B6D4', glowColor: 'rgba(6,182,212,0.3)', label: 'Bonnes chances', track: 'rgba(6,182,212,0.12)' };
+  if (score >= 51) return { color: '#F59E0B', glowColor: 'rgba(245,158,11,0.25)', label: 'Chances moyennes', track: 'rgba(245,158,11,0.1)' };
+  return { color: '#F97316', glowColor: 'rgba(249,115,22,0.2)', label: 'Chances faibles', track: 'rgba(249,115,22,0.08)' };
+}
+
+// === JAUGE SCORE DE RÉCUPÉRATION ===
+function RecoveryScoreGauge({ formData }) {
+  const score = calculateRecoveryScore(formData);
+  const tier = getScoreTier(score);
+  const animatedScore = useCountUp(score, 400);
+  const prevTierRef = useRef(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [bouncing, setBouncing] = useState(false);
+
+  // Detect tier changes for bounce animation
+  useEffect(() => {
+    const currentTier = tier.label;
+    if (prevTierRef.current && prevTierRef.current !== currentTier) {
+      setBouncing(true);
+      const t = setTimeout(() => setBouncing(false), 500);
+      if (score === 100) {
+        setShowConfetti(true);
+        const t2 = setTimeout(() => setShowConfetti(false), 1200);
+        return () => { clearTimeout(t); clearTimeout(t2); };
+      }
+      return () => clearTimeout(t);
+    }
+    prevTierRef.current = currentTier;
+  }, [tier.label, score]);
+
+  // SVG arc parameters (semi-circle)
+  const size = 140;
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  // Missing field hints (only shown once name + phone are filled)
+  const showHints = formData.name?.trim() && formData.phone && validateFrenchPhone(formData.phone);
+  const hints = [];
+  if (showHints) {
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      hints.push('📧 Ajoutez l\'email pour +15% de chances');
+    }
+    if (!formData.invoiceNumber?.trim()) {
+      hints.push('📄 Ajoutez le n° de facture pour +15%');
+    }
+  }
+
+  return (
+    <div className="mb-5">
+      <div className="relative bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl p-4 md:p-5 flex flex-col items-center overflow-hidden">
+        {showConfetti && <ConfettiEffect trigger={true} />}
+
+        <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider font-medium">Score de récupération</p>
+
+        {/* Gauge */}
+        <motion.div
+          animate={bouncing ? { scale: [1, 1.15, 1] } : {}}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="relative"
+          style={{
+            filter: `drop-shadow(0 0 ${8 + score * 0.2}px ${tier.glowColor})`,
+          }}
+        >
+          <svg width={size} height={size / 2 + strokeWidth} viewBox={`0 0 ${size} ${size / 2 + strokeWidth}`}>
+            {/* Track */}
+            <path
+              d={`M ${strokeWidth / 2} ${size / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${size / 2}`}
+              fill="none"
+              stroke={tier.track}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+            />
+            {/* Progress arc */}
+            <motion.path
+              d={`M ${strokeWidth / 2} ${size / 2} A ${radius} ${radius} 0 0 1 ${size - strokeWidth / 2} ${size / 2}`}
+              fill="none"
+              stroke={tier.color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: score / 100 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              style={{ pathLength: 0 }}
+            />
+          </svg>
+
+          {/* Center percentage */}
+          <div className="absolute inset-0 flex items-end justify-center pb-1">
+            <span className="text-2xl font-bold" style={{ color: tier.color }}>
+              {animatedScore}%
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Tier label */}
+        <motion.p
+          className="text-sm font-semibold mt-2"
+          animate={{ color: tier.color }}
+          transition={{ duration: 0.5 }}
+        >
+          {tier.label}
+        </motion.p>
+
+        {/* Hints */}
+        <div className="mt-3 space-y-1 w-full">
+          {score === 100 ? (
+            <p className="text-xs text-emerald-400 text-center font-medium">🎯 Score maximal ! Vos chances sont optimales</p>
+          ) : (
+            <AnimatePresence>
+              {hints.map((hint, i) => (
+                <motion.p
+                  key={hint}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.3, delay: i * 0.08 }}
+                  className="text-xs text-gray-500 text-center"
+                >
+                  {hint}
+                </motion.p>
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // === FOND ANIMÉ ===
 function AnimatedBackground() {
   const isMobile = useIsMobile();
@@ -505,6 +646,122 @@ const OPTIONAL_FIELDS = [
 ];
 
 // === MODAL DE MAPPING CSV (Redesign intuitif "3 questions") ===
+// === SCORE DE MAPPING CSV ===
+function calculateMappingScore(columnMapping) {
+  let score = 0;
+  if (columnMapping.name) score += 25;
+  if (columnMapping.phone) score += 25;
+  if (columnMapping.amount) score += 20;
+  if (columnMapping.email) score += 15;
+  if (columnMapping.invoiceNumber) score += 15;
+  return score;
+}
+
+function MappingScoreBar({ columnMapping }) {
+  const score = calculateMappingScore(columnMapping);
+  const tier = getScoreTier(score);
+  const animatedScore = useCountUp(score, 400);
+  const prevTierRef = useRef(null);
+  const [bouncing, setBouncing] = useState(false);
+
+  useEffect(() => {
+    const currentTier = tier.label;
+    if (prevTierRef.current && prevTierRef.current !== currentTier) {
+      setBouncing(true);
+      const t = setTimeout(() => setBouncing(false), 500);
+      return () => clearTimeout(t);
+    }
+    prevTierRef.current = currentTier;
+  }, [tier.label]);
+
+  const requiredMapped = !!(columnMapping.name && columnMapping.phone && columnMapping.amount);
+  const hints = [];
+  if (requiredMapped) {
+    if (!columnMapping.email) hints.push('📧 Ajoutez la colonne email pour +15% de chances');
+    if (!columnMapping.invoiceNumber) hints.push('📄 Ajoutez la colonne n° de facture pour +15%');
+  }
+
+  const glowStyle = score >= 85
+    ? { boxShadow: `0 0 20px ${tier.glowColor}, 0 0 40px ${tier.glowColor}` }
+    : score >= 50
+      ? { boxShadow: `0 0 10px ${tier.glowColor}` }
+      : {};
+
+  return (
+    <motion.div
+      animate={bouncing ? { scale: [1, 1.02, 1] } : {}}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="mb-5 bg-white/[0.05] border border-white/10 rounded-2xl p-5 transition-shadow duration-500"
+      style={glowStyle}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-bold text-white">Score de récupération</p>
+        <span className="text-2xl font-bold" style={{ color: tier.color }}>
+          {animatedScore}%{score === 100 ? ' ✨' : ''}
+        </span>
+      </div>
+
+      {/* Large progress bar */}
+      <div className="h-4 bg-white/[0.08] rounded-full overflow-hidden"
+        style={score === 100 ? { boxShadow: `0 0 14px ${tier.glowColor}` } : {}}
+      >
+        <motion.div
+          className="h-full rounded-full"
+          style={{
+            background: score >= 86
+              ? 'linear-gradient(90deg, #10B981, #34D399)'
+              : score >= 71
+                ? 'linear-gradient(90deg, #06B6D4, #22D3EE)'
+                : score >= 51
+                  ? 'linear-gradient(90deg, #F59E0B, #FBBF24)'
+                  : 'linear-gradient(90deg, #F97316, #FB923C)',
+          }}
+          initial={{ width: 0 }}
+          animate={{ width: `${score}%` }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        />
+      </div>
+
+      {/* Tier label */}
+      <motion.p
+        className="text-xs font-semibold mt-2"
+        animate={{ color: tier.color }}
+        transition={{ duration: 0.5 }}
+      >
+        {score === 100 ? '🎉 Chances maximales !' : tier.label}
+      </motion.p>
+
+      {/* Hints */}
+      <AnimatePresence>
+        {score === 100 ? (
+          <motion.p
+            key="max"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="text-xs text-emerald-400 mt-2 font-medium"
+          >
+            🎯 Parfait ! Chances de récupération maximales !
+          </motion.p>
+        ) : (
+          hints.map((hint) => (
+            <motion.p
+              key={hint}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.3 }}
+              className="text-xs text-gray-500 mt-1.5"
+            >
+              {hint}
+            </motion.p>
+          ))
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfirm, onCancel }) {
   const isMobile = useIsMobile();
 
@@ -839,22 +1096,13 @@ function CSVMappingModal({ csvMapping, columnMapping, setColumnMapping, onConfir
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className={`${isMobile ? 'px-4 pt-4' : 'px-6 pt-5'}`}>
-        <div className="flex items-center gap-1 mb-1">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="flex items-center flex-1 gap-1">
-              <div className={`w-full h-1.5 rounded-full transition-colors duration-400 ${
-                i < requiredMapped ? 'bg-emerald-500' : 'bg-white/10'
-              }`} />
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-gray-500 text-right">{requiredMapped}/3</p>
+      {/* Mapping recovery score — fixed above scroll */}
+      <div className={`${isMobile ? 'px-4 pt-3 pb-0' : 'px-6 pt-4 pb-0'} border-b border-white/10`}>
+        <MappingScoreBar columnMapping={columnMapping} />
       </div>
 
       {/* Scrollable body */}
-      <div className={`overflow-y-auto ${isMobile ? 'p-4' : 'px-6 pb-4 pt-2'}`} style={{ maxHeight: isMobile ? '55vh' : '55vh' }}>
+      <div className={`overflow-y-auto ${isMobile ? 'p-4' : 'px-6 pb-4 pt-2'}`} style={{ maxHeight: isMobile ? 'calc(55vh - 120px)' : 'calc(55vh - 120px)' }}>
 
         {/* Contact cards preview */}
         <div className={`flex gap-3 mb-6 ${isMobile ? 'overflow-x-auto pb-2 -mx-1 px-1' : ''}`}>
@@ -1417,9 +1665,6 @@ export default function OnboardingStep2() {
   const animatedCount = useCountUp(invoices.length);
   const animatedTotal = useCountUp(totalAmount);
 
-  // Champs remplis dans le formulaire facture
-  const fieldsCompleted = [formData.name, formData.phone, formData.amount].filter(Boolean).length;
-
   // Ajout facture
   const handleAddInvoice = useCallback((e) => {
     e.preventDefault();
@@ -1733,21 +1978,7 @@ export default function OnboardingStep2() {
                 </div>
               </div>
 
-              {/* Progress indicator */}
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-gray-500">Progression</span>
-                  <span className="text-xs text-cyan-400 font-medium">{fieldsCompleted}/3 champs</span>
-                </div>
-                <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(fieldsCompleted / 3) * 100}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              </div>
+              <RecoveryScoreGauge formData={formData} />
 
               <form onSubmit={handleAddInvoice} className="space-y-4">
                 <div>
