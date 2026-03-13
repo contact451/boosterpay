@@ -442,17 +442,7 @@ export default function FacturePage() {
               whileHover={isMobile ? {} : { y: -3, boxShadow: '0 8px 30px rgba(139,92,246,0.15)' }}
               className="flex-1 relative bg-white/[0.02] border border-violet-500/20 rounded-xl p-4 hover:border-violet-500/40 hover:bg-violet-500/[0.03] transition-colors"
             >
-              <div className="absolute -top-2 -right-2">
-                <motion.div
-                  animate={isMobile ? {} : { scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="px-2 py-0.5 bg-violet-500 rounded-full text-[9px] font-bold text-white shadow-lg shadow-violet-500/30"
-                >
-                  POPULAIRE
-                </motion.div>
-              </div>
-
-              <div className="flex items-center gap-1.5 mb-2">
+              <div className="flex items-center gap-1.5 mb-1">
                 <motion.div
                   animate={isMobile ? {} : { y: [0, -2, 0] }}
                   transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
@@ -461,6 +451,7 @@ export default function FacturePage() {
                 </motion.div>
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Particulier</span>
               </div>
+              <p className="text-[11px] text-gray-500 mb-2 ml-5">Je paie avec ma carte personnelle</p>
 
               <div className="text-center mb-3">
                 <p className="text-2xl font-bold text-white">
@@ -491,7 +482,7 @@ export default function FacturePage() {
                 ) : (
                   <>
                     <CalendarDays className="w-4 h-4 relative z-10" />
-                    <span className="relative z-10">Payer en 3× sans frais</span>
+                    <span className="relative z-10">Payer en 3×</span>
                   </>
                 )}
               </motion.button>
@@ -515,6 +506,7 @@ export default function FacturePage() {
                 </motion.div>
                 <span className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Professionnel</span>
               </div>
+              <p className="text-[11px] text-gray-500 mb-2 ml-5">Je paie avec une carte entreprise</p>
 
               <div className="text-center mb-3">
                 <p className="text-2xl font-bold text-white">
