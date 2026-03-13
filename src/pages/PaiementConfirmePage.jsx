@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, FileText, Hash, ArrowLeft } from 'lucide-react';
-import DebtorLayout, { useIsMobile } from './components/DebtorLayout';
+import DebtorLayout, { useIsMobile } from '../components/DebtorLayout';
 
 const ease = [0.22, 1, 0.36, 1];
 
