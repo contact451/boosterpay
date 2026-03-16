@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import BoosterPayLanding from './BoosterPayLanding';
 import OnboardingStep2 from './OnboardingStep2';
 import OnboardingSuccess from './OnboardingSuccess';
@@ -8,6 +8,7 @@ import PolitiqueConfidentialite from './pages/PolitiqueConfidentialite';
 import FacturePage from './FacturePage';
 import ContestationPage from './ContestationPage';
 import PaiementConfirmePage from './pages/PaiementConfirmePage';
+import DashboardPartenaire from './pages/DashboardPartenaire';
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
         <Route path="/facture" element={<FacturePage />} />
         <Route path="/contestation" element={<ContestationPage />} />
         <Route path="/paiement-confirme" element={<PaiementConfirmePage />} />
+        <Route path="/dashboard" element={<Navigate to="/dashboard/91ueq4ae0q" replace />} />
+        <Route path="/dashboard/:partnerId" element={<DashboardPartenaire />} />
       </Routes>
     </BrowserRouter>
   );

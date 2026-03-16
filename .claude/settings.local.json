@@ -7,7 +7,10 @@
       "Bash(python3:*)",
       "Bash(node scripts/generate-logo.js)",
       "Bash(npx --yes vite build)",
-      "Bash(ls /Users/nathanemarciano/Desktop/boosterpay/.env*)"
+      "Bash(ls /Users/nathanemarciano/Desktop/boosterpay/.env*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
