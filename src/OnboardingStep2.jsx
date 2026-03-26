@@ -1400,8 +1400,8 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
           <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 mb-5 flex items-start gap-2.5">
             <User className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-cyan-300">Vos coordonnées à vous</p>
-              <p className="text-xs text-gray-400 mt-0.5">Ces informations concernent <span className="text-white font-medium">vous, le créancier</span> (celui à qui on doit de l&apos;argent). Ce ne sont pas les coordonnées de votre client.</p>
+              <p className="text-sm font-semibold text-cyan-300">Ces informations vous concernent.</p>
+              <p className="text-xs text-gray-400 mt-0.5">Ce ne sont pas les coordonnées de votre client.</p>
             </div>
           </div>
 
@@ -1966,7 +1966,7 @@ export default function OnboardingStep2() {
           className="text-center mb-8"
         >
           <ProgressBar />
-          <h1 className="text-2xl md:text-4xl font-bold mb-3">
+          <h1 className="text-2xl md:text-4xl font-bold mb-4">
             Importez vos{' '}
             <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
               impayés
@@ -1977,29 +1977,29 @@ export default function OnboardingStep2() {
           </p>
 
           {/* Guide ultra simple pour l'utilisateur */}
-          <div className="mt-6 max-w-2xl mx-auto">
-            <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 md:p-5">
-              <p className="text-sm font-semibold text-white mb-3 text-center">Comment ça marche ? C&apos;est simple :</p>
-              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">1</div>
+          <div className="mt-10 max-w-3xl mx-auto">
+            <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-3xl px-6 py-7 md:px-10 md:py-9">
+              <p className="text-base font-semibold text-white mb-6 text-center">Comment ça marche ? C&apos;est simple :</p>
+              <div className="flex flex-col md:flex-row gap-6 md:gap-8">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-0.5">1</div>
                   <div>
-                    <p className="text-sm text-white font-medium">Ajoutez vos impayés</p>
-                    <p className="text-xs text-gray-400">Un par un à gauche, ou importez un fichier à droite</p>
+                    <p className="text-sm text-white font-semibold mb-1">Ajoutez vos impayés</p>
+                    <p className="text-sm text-gray-400 leading-relaxed">Un par un à gauche, ou importez un fichier à droite</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="w-7 h-7 rounded-full bg-violet-500 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">2</div>
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-0.5">2</div>
                   <div>
-                    <p className="text-sm text-white font-medium">Cliquez sur « Lancer »</p>
-                    <p className="text-xs text-gray-400">Le bouton apparaît dès que vous avez ajouté un impayé</p>
+                    <p className="text-sm text-white font-semibold mb-1">Cliquez sur « Lancer »</p>
+                    <p className="text-sm text-gray-400 leading-relaxed">Le bouton apparaît dès que vous avez ajouté un impayé</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">3</div>
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-0.5">3</div>
                   <div>
-                    <p className="text-sm text-white font-medium">L&apos;IA s&apos;occupe du reste</p>
-                    <p className="text-xs text-gray-400">Appels, relances, suivi — tout est automatique</p>
+                    <p className="text-sm text-white font-semibold mb-1">L&apos;IA s&apos;occupe du reste</p>
+                    <p className="text-sm text-gray-400 leading-relaxed">Appels, relances, suivi — tout est automatique</p>
                   </div>
                 </div>
               </div>
@@ -2041,7 +2041,7 @@ export default function OnboardingStep2() {
         </AnimatePresence>
 
         {/* 2 colonnes : Ajout manuel + Import CSV */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 gap-8 mb-10 mt-2">
           {/* Formulaire ajout manuel */}
           <motion.div
             variants={fadeInUp}
