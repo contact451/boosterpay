@@ -9,6 +9,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Papa from 'papaparse';
 import { submitOnboarding } from './services/leadService';
+import MandatValidation from './components/MandatValidation';
 
 // === ANIMATIONS ===
 const fadeInUp = {
@@ -1384,7 +1385,7 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">Dernière étape !</h2>
-                <p className="text-sm text-gray-400">Complétez votre profil pour lancer l'IA</p>
+                <p className="text-sm text-gray-400">Renseignez vos informations à vous (pas celles de votre client)</p>
               </div>
             </div>
             <button
@@ -1395,11 +1396,20 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
             </button>
           </div>
 
+          {/* Bandeau explicatif — VOS infos à vous */}
+          <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3 mb-5 flex items-start gap-2.5">
+            <User className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-cyan-300">Vos coordonnées à vous</p>
+              <p className="text-xs text-gray-400 mt-0.5">Ces informations concernent <span className="text-white font-medium">vous, le créancier</span> (celui à qui on doit de l&apos;argent). Ce ne sont pas les coordonnées de votre client.</p>
+            </div>
+          </div>
+
           <div className="space-y-4">
             {/* Prénom + Nom */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-gray-300 mb-1.5">Prénom</label>
+                <label className="block text-sm text-gray-300 mb-1.5">Votre prénom</label>
                 <input
                   type="text"
                   placeholder="Jean"
@@ -1409,7 +1419,7 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-300 mb-1.5">Nom</label>
+                <label className="block text-sm text-gray-300 mb-1.5">Votre nom</label>
                 <input
                   type="text"
                   placeholder="Dupont"
@@ -1422,7 +1432,7 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
 
             {/* Entreprise */}
             <div>
-              <label className="block text-sm text-gray-300 mb-1.5">Entreprise</label>
+              <label className="block text-sm text-gray-300 mb-1.5">Votre entreprise</label>
               <input
                 type="text"
                 placeholder="BoosterPay SAS"
@@ -1434,7 +1444,7 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
 
             {/* Secteur */}
             <div>
-              <label className="block text-sm text-gray-300 mb-1.5">Secteur d&apos;activité</label>
+              <label className="block text-sm text-gray-300 mb-1.5">Votre secteur d&apos;activité</label>
               <div className="relative">
                 <select
                   value={profile.secteur}
@@ -1452,7 +1462,7 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
 
             {/* Téléphone mobile */}
             <div>
-              <label className="block text-sm text-gray-300 mb-1.5">Téléphone mobile</label>
+              <label className="block text-sm text-gray-300 mb-1.5">Votre téléphone mobile</label>
               <div className="relative">
                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
@@ -1630,8 +1640,13 @@ function ProfileModal({ isOpen, onClose, onSubmit, isSubmitting, submitError, in
 
 // === COMPOSANT PRINCIPAL ===
 export default function OnboardingStep2() {
-  // Profile modal state
+  // Mandat + Profile modal state
+  const [showMandat, setShowMandat] = useState(false);
+  const [mandatAccepted, setMandatAccepted] = useState(false);
+  const [signatureMetadata, setSignatureMetadata] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileAlreadyComplete, setProfileAlreadyComplete] = useState(false);
+  const [savedProfile, setSavedProfile] = useState(null);
 
   // Invoice state (no more profile state at top-level — profile lives in the modal)
   const [invoices, setInvoices] = useState([]);
@@ -1660,6 +1675,23 @@ export default function OnboardingStep2() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
+
+  // Vérifier si le profil est déjà complété pour ce lead
+  useEffect(() => {
+    if (!leadId) return;
+    const apiUrl = import.meta.env.VITE_GOOGLE_SHEET_API_URL;
+    if (!apiUrl) return;
+    fetch(`${apiUrl}?action=checkProfile&ref=${encodeURIComponent(leadId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.profileComplete && data.profile) {
+          setProfileAlreadyComplete(true);
+          setSavedProfile(data.profile);
+          console.log("✅ Profil déjà complété:", data.profile);
+        }
+      })
+      .catch(err => console.warn("checkProfile error:", err));
+  }, [leadId]);
   const totalAmount = invoices.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0);
   const canLaunch = invoices.length > 0;
   const animatedCount = useCountUp(invoices.length);
@@ -1806,10 +1838,26 @@ export default function OnboardingStep2() {
     business: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
   };
 
-  // Toujours ouvrir le ProfileModal, quel que soit le nombre de dossiers
+  // Toujours ouvrir le mandat — obligatoire à chaque import
   const handleLaunch = useCallback(() => {
-    setShowProfileModal(true);
+    setMandatAccepted(false);
+    setShowMandat(true);
   }, []);
+
+  const [autoSubmitAfterMandat, setAutoSubmitAfterMandat] = useState(false);
+
+  const handleMandatValidated = useCallback((metadata) => {
+    setSignatureMetadata(metadata);
+    setMandatAccepted(true);
+    setShowMandat(false);
+    // Si le profil est déjà complété, marquer pour auto-submit (sans ProfileModal)
+    if (profileAlreadyComplete && savedProfile) {
+      setAutoSubmitAfterMandat(true);
+    } else {
+      // Ouvrir le ProfileModal seulement si le profil n'est pas encore rempli
+      setShowProfileModal(true);
+    }
+  }, [profileAlreadyComplete, savedProfile]);
 
   // Soumission finale (depuis le modal profil)
   const handleFinalSubmit = useCallback(async ({ profile: profileData, phone: profilePhone }) => {
@@ -1842,6 +1890,8 @@ export default function OnboardingStep2() {
       utm_campaign: urlParams.get('utm_campaign') || '',
       ref: leadId || '',
       plan: count >= 101 ? 'BUSINESS' : count >= 21 ? 'PRO' : 'STARTER',
+      mandat_accepte: true,
+      signature_metadata: signatureMetadata || {},
     };
 
     console.log('=== PAYLOAD ONBOARDING STEP 2 ===');
@@ -1882,7 +1932,15 @@ export default function OnboardingStep2() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [invoices, navigate, leadEmail, leadId, totalAmount]);
+  }, [invoices, navigate, leadEmail, leadId, totalAmount, signatureMetadata]);
+
+  // Auto-submit si le profil est déjà complété (skip ProfileModal)
+  useEffect(() => {
+    if (autoSubmitAfterMandat && savedProfile && !isSubmitting) {
+      setAutoSubmitAfterMandat(false);
+      handleFinalSubmit({ profile: savedProfile, phone: savedProfile.telephone || '' });
+    }
+  }, [autoSubmitAfterMandat, savedProfile, isSubmitting, handleFinalSubmit]);
 
   return (
     <div className="min-h-screen text-white">
@@ -1917,6 +1975,36 @@ export default function OnboardingStep2() {
           <p className="text-gray-400 md:text-lg max-w-xl mx-auto">
             Notre IA va contacter vos clients pour récupérer vos paiements
           </p>
+
+          {/* Guide ultra simple pour l'utilisateur */}
+          <div className="mt-6 max-w-2xl mx-auto">
+            <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-4 md:p-5">
+              <p className="text-sm font-semibold text-white mb-3 text-center">Comment ça marche ? C&apos;est simple :</p>
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="w-7 h-7 rounded-full bg-cyan-500 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">1</div>
+                  <div>
+                    <p className="text-sm text-white font-medium">Ajoutez vos impayés</p>
+                    <p className="text-xs text-gray-400">Un par un à gauche, ou importez un fichier à droite</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="w-7 h-7 rounded-full bg-violet-500 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">2</div>
+                  <div>
+                    <p className="text-sm text-white font-medium">Cliquez sur « Lancer »</p>
+                    <p className="text-xs text-gray-400">Le bouton apparaît dès que vous avez ajouté un impayé</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">3</div>
+                  <div>
+                    <p className="text-sm text-white font-medium">L&apos;IA s&apos;occupe du reste</p>
+                    <p className="text-xs text-gray-400">Appels, relances, suivi — tout est automatique</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Compteur dynamique */}
@@ -1974,7 +2062,7 @@ export default function OnboardingStep2() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-white">Ajout manuel</h2>
-                  <p className="text-xs text-gray-400">Ajoutez un impayé à la fois</p>
+                  <p className="text-xs text-gray-400">Remplissez les infos de la personne qui vous doit de l&apos;argent</p>
                 </div>
               </div>
 
@@ -2323,8 +2411,8 @@ export default function OnboardingStep2() {
                   <Upload className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Import CSV / Excel</h2>
-                  <p className="text-xs text-gray-400">Importez plusieurs impayés d&apos;un coup</p>
+                  <h2 className="text-lg font-bold text-white">Import fichier</h2>
+                  <p className="text-xs text-gray-400">Vous avez une liste ? Déposez votre fichier CSV ou Excel ici</p>
                 </div>
               </div>
 
@@ -2391,9 +2479,9 @@ export default function OnboardingStep2() {
                       <FileText className="w-7 h-7 text-violet-400" />
                     </motion.div>
                     <div className="text-center relative z-10">
-                      <p className="text-sm text-gray-300">Plusieurs impayés ?</p>
-                      <p className="text-sm text-violet-400 font-semibold">Glissez votre fichier ici</p>
-                      <p className="text-xs text-gray-500 mt-1">.csv, .xlsx — On s&apos;adapte à votre format !</p>
+                      <p className="text-sm text-gray-300">Plusieurs impayés à ajouter ?</p>
+                      <p className="text-sm text-violet-400 font-semibold">Cliquez ici ou glissez votre fichier</p>
+                      <p className="text-xs text-gray-500 mt-1">Formats acceptés : .csv, .xlsx — On détecte vos colonnes automatiquement</p>
                     </div>
                   </>
                 )}
@@ -2519,9 +2607,14 @@ export default function OnboardingStep2() {
               </motion.p>
             )}
             {!canLaunch && (
-              <p className="text-gray-500 text-sm mt-3">
-                Ajoutez au moins un impayé pour continuer
-              </p>
+              <div className="mt-4 text-center">
+                <p className="text-gray-500 text-sm">
+                  Ajoutez au moins un impayé pour débloquer le bouton
+                </p>
+                <p className="text-gray-600 text-xs mt-1">
+                  Utilisez le formulaire ci-dessus ou importez un fichier CSV
+                </p>
+              </div>
             )}
           </motion.div>
         )}
@@ -2604,7 +2697,7 @@ export default function OnboardingStep2() {
           )}
           {!canLaunch && (
             <p className="text-gray-500 text-xs mt-2 text-center">
-              Ajoutez au moins un impayé
+              Ajoutez au moins un impayé ci-dessus pour continuer
             </p>
           )}
         </div>
@@ -2641,6 +2734,31 @@ export default function OnboardingStep2() {
           onCancel={() => { setCsvMapping(null); setColumnMapping({}); }}
         />
       )}
+
+      {/* Modal Mandat (avant le profil) */}
+      <AnimatePresence>
+        {showMandat && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowMandat(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative z-10 w-full max-w-2xl"
+            >
+              <MandatValidation
+                userId={leadEmail || leadId || 'anonymous'}
+                onValidate={handleMandatValidated}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal profil (dernière étape) */}
       <ProfileModal
