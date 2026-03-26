@@ -1976,35 +1976,91 @@ export default function OnboardingStep2() {
             Notre IA va contacter vos clients pour récupérer vos paiements
           </p>
 
-          {/* Guide ultra simple pour l'utilisateur */}
-          <div className="mt-10 max-w-3xl mx-auto">
-            <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-3xl px-6 py-7 md:px-10 md:py-9">
-              <p className="text-base font-semibold text-white mb-6 text-center">Comment ça marche ? C&apos;est simple :</p>
+          {/* Guide ultra simple pour l'utilisateur — animé */}
+          <motion.div
+            className="mt-10 max-w-3xl mx-auto"
+            initial="hidden"
+            animate="visible"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15, delayChildren: 0.3 } } }}
+          >
+            <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-3xl px-6 py-7 md:px-10 md:py-9 overflow-hidden">
+              <motion.p
+                className="text-base font-semibold text-white mb-6 text-center"
+                variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } } }}
+              >
+                Comment ça marche ? C&apos;est simple :
+              </motion.p>
+
               <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-9 h-9 rounded-full bg-cyan-500 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-0.5">1</div>
-                  <div>
-                    <p className="text-sm text-white font-semibold mb-1">Ajoutez vos impayés</p>
-                    <p className="text-sm text-gray-400 leading-relaxed">Un par un à gauche, ou importez un fichier à droite</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-9 h-9 rounded-full bg-violet-500 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-0.5">2</div>
-                  <div>
-                    <p className="text-sm text-white font-semibold mb-1">Cliquez sur « Lancer »</p>
-                    <p className="text-sm text-gray-400 leading-relaxed">Le bouton apparaît dès que vous avez ajouté un impayé</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-sm font-bold text-white shrink-0 mt-0.5">3</div>
-                  <div>
-                    <p className="text-sm text-white font-semibold mb-1">L&apos;IA s&apos;occupe du reste</p>
-                    <p className="text-sm text-gray-400 leading-relaxed">Appels, relances, suivi — tout est automatique</p>
-                  </div>
-                </div>
+                {[
+                  { num: '1', color: 'cyan', gradient: 'from-cyan-500 to-cyan-400', glow: 'rgba(6,182,212,0.4)', title: 'Ajoutez vos impayés', desc: 'Un par un à gauche, ou importez un fichier à droite' },
+                  { num: '2', color: 'violet', gradient: 'from-violet-500 to-violet-400', glow: 'rgba(139,92,246,0.4)', title: 'Cliquez sur « Lancer »', desc: 'Le bouton apparaît dès que vous avez ajouté un impayé' },
+                  { num: '3', color: 'emerald', gradient: 'from-emerald-500 to-emerald-400', glow: 'rgba(16,185,129,0.4)', title: "L\u2019IA s\u2019occupe du reste", desc: 'Appels, relances, suivi — tout est automatique' },
+                ].map((step, i) => (
+                  <motion.div
+                    key={step.num}
+                    className="flex items-start gap-4 flex-1"
+                    variants={{
+                      hidden: { opacity: 0, y: 25, scale: 0.95 },
+                      visible: {
+                        opacity: 1, y: 0, scale: 1,
+                        transition: { type: 'spring', stiffness: 300, damping: 24 }
+                      }
+                    }}
+                  >
+                    <motion.div
+                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${step.gradient} flex items-center justify-center text-sm font-bold text-white shrink-0`}
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.4 + i * 0.18 }}
+                      whileHover={{ scale: 1.15, boxShadow: `0 0 20px ${step.glow}` }}
+                    >
+                      {step.num}
+                    </motion.div>
+                    <div>
+                      <motion.p
+                        className="text-sm text-white font-semibold mb-1"
+                        variants={{
+                          hidden: { opacity: 0, x: -10 },
+                          visible: { opacity: 1, x: 0, transition: { duration: 0.4, delay: 0.1 } }
+                        }}
+                      >
+                        {step.title}
+                      </motion.p>
+                      <motion.p
+                        className="text-sm text-gray-400 leading-relaxed"
+                        variants={{
+                          hidden: { opacity: 0, x: -10 },
+                          visible: { opacity: 1, x: 0, transition: { duration: 0.4, delay: 0.2 } }
+                        }}
+                      >
+                        {step.desc}
+                      </motion.p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
+
+              {/* Ligne de progression connectant les étapes — desktop uniquement */}
+              <motion.div
+                className="hidden md:block mt-6 mx-auto relative"
+                style={{ maxWidth: '80%' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, duration: 0.5 }}
+              >
+                <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(90deg, #06B6D4, #8B5CF6, #10B981)' }}
+                    initial={{ width: '0%' }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 1.2, delay: 1.4, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Compteur dynamique */}
