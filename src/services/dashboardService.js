@@ -1,6 +1,6 @@
-const DASHBOARD_API_URL = 'https://script.google.com/macros/s/XXXXX/exec';
+const DASHBOARD_API_URL = import.meta.env.VITE_GOOGLE_SHEET_API_URL || '';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 function generateMockData(partnerId) {
   const partnerNames = {
@@ -455,16 +455,20 @@ function generateMockData(partnerId) {
 }
 
 export async function fetchPartnerDashboard(partnerId) {
-  if (USE_MOCK) {
+  if (USE_MOCK || !DASHBOARD_API_URL) {
     await new Promise((r) => setTimeout(r, 100));
     return generateMockData(partnerId);
   }
 
-  const res = await fetch(`${DASHBOARD_API_URL}?action=getDashboard&partnerId=${encodeURIComponent(partnerId)}`);
-  if (!res.ok) throw new Error('Erreur lors du chargement des données');
-  const data = await res.json();
-  if (!data || !data.partner) throw new Error('Partenaire introuvable');
-  return data;
+  try {
+    const res = await fetch(`${DASHBOARD_API_URL}?action=getDashboard&partnerId=${encodeURIComponent(partnerId)}`);
+    const data = await res.json();
+    if (!data || !data.partner) throw new Error('Partenaire introuvable');
+    return data;
+  } catch (err) {
+    console.warn('Dashboard API error, fallback mock:', err.message);
+    return generateMockData(partnerId);
+  }
 }
 
 export function getEffectiveStatus(dossier) {

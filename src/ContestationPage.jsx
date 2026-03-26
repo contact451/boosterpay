@@ -183,6 +183,9 @@ export default function ContestationPage() {
   const [params] = useSearchParams();
   const id = params.get('id') || 'F-DEMO-001';
   const ref = params.get('ref') || 'FAC-2024-1234';
+  const nom = params.get('nom') || '';
+  const entreprise = params.get('entreprise') || '';
+  const montant = params.get('montant') || '';
   const isMobile = useIsMobile();
 
   const [motif, setMotif] = useState('');
@@ -322,7 +325,7 @@ export default function ContestationPage() {
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-white">Espace réclamation</h1>
-            <p className="text-sm text-gray-500">Votre demande sera traitée avec attention.</p>
+            <p className="text-sm text-gray-500">{entreprise ? `Réclamation concernant une facture de ${entreprise}` : 'Votre demande sera traitée avec attention.'}</p>
           </div>
         </div>
 
@@ -344,6 +347,36 @@ export default function ContestationPage() {
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs text-gray-400"
             >
               Réf. facture : {ref}
+            </motion.span>
+          )}
+          {entreprise && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.4 }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400"
+            >
+              Émise par : {entreprise}
+            </motion.span>
+          )}
+          {nom && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.5 }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs text-gray-400"
+            >
+              Débiteur : {nom}
+            </motion.span>
+          )}
+          {montant && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.6 }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 font-semibold"
+            >
+              Montant : {montant} €
             </motion.span>
           )}
         </div>
@@ -579,7 +612,7 @@ export default function ContestationPage() {
       >
         Souhaitez-vous régler cet impayé ?{' '}
         <a
-          href={`/facture?id=${id}${ref ? `&ref=${ref}` : ''}`}
+          href={`/facture?id=${id}${ref ? `&ref=${ref}` : ''}${nom ? `&nom=${encodeURIComponent(nom)}` : ''}${entreprise ? `&entreprise=${encodeURIComponent(entreprise)}` : ''}${montant ? `&montant=${encodeURIComponent(montant)}` : ''}`}
           className="text-gray-400 underline hover:text-white transition-colors"
         >
           Accéder au paiement

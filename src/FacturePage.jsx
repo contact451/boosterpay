@@ -186,6 +186,8 @@ export default function FacturePage() {
   const id = params.get('id') || 'F-DEMO-001';
   const ref = params.get('ref') || 'FAC-2024-1234';
   const montantRaw = params.get('montant') || '1 226,00';
+  const nom = params.get('nom') || '';
+  const entreprise = params.get('entreprise') || '';
   const isMobile = useIsMobile();
   const companiesCount = useCountUp(13247, 1800, 800);
 
@@ -230,6 +232,8 @@ export default function FacturePage() {
           mode,
           montant: montantRaw,
           deadline,
+          nom,
+          entreprise,
         }),
       });
       const data = await res.json();
@@ -248,6 +252,8 @@ export default function FacturePage() {
   const infoRows = [
     ...(montantRaw ? [{ icon: CreditCard, label: 'Montant dû', value: montantRaw + ' €', mono: false, highlight: true }] : []),
     ...(ref ? [{ icon: FileText, label: 'Référence facture', value: ref, mono: false }] : []),
+    ...(entreprise ? [{ icon: Building2, label: 'Émise par', value: entreprise, mono: false }] : []),
+    ...(nom ? [{ icon: User, label: 'Débiteur', value: nom, mono: false }] : []),
     { icon: Hash, label: 'N° de dossier', value: id, mono: true },
   ];
 
@@ -277,7 +283,7 @@ export default function FacturePage() {
             <h1 className="text-xl md:text-2xl font-bold text-white">
               {ref ? 'Détail de votre facture' : 'Détail de votre impayé'}
             </h1>
-            <p className="text-sm text-gray-500">Dossier en attente de règlement</p>
+            <p className="text-sm text-gray-500">{entreprise ? `Facture émise par ${entreprise}` : 'Dossier en attente de règlement'}</p>
           </div>
         </div>
       </motion.div>
@@ -575,8 +581,8 @@ export default function FacturePage() {
             )}
           </motion.button>
           <p className="text-center text-[11px] text-gray-600 mt-1.5">
-            Paiement sécurisé par carte bancaire — sans frais de dossier
-          </p>
+            Paiement sécurisé par carte bancaire — sans frais de dossier</p>
+          {entreprise && <p className="text-center text-[11px] text-gray-500 mt-0.5">Votre paiement sera versé à <span className="font-semibold text-gray-300">{entreprise}</span></p>}
         </motion.div>
 
         {/* Erreur paiement */}

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle, FileText, Hash, ArrowLeft } from 'lucide-react';
+import { CheckCircle, FileText, Hash, ArrowLeft, Building2, User, CreditCard } from 'lucide-react';
 import DebtorLayout, { useIsMobile } from '../components/DebtorLayout';
 
 const ease = [0.22, 1, 0.36, 1];
@@ -10,6 +10,9 @@ export default function PaiementConfirmePage() {
   const [params] = useSearchParams();
   const id = params.get('id') || '';
   const ref = params.get('ref') || '';
+  const nom = params.get('nom') || '';
+  const entreprise = params.get('entreprise') || '';
+  const montant = params.get('montant') || '';
   const isMobile = useIsMobile();
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -95,6 +98,27 @@ export default function PaiementConfirmePage() {
               N° de dossier
             </div>
             <span className="text-sm font-semibold text-white font-mono">{id}</span>
+          </motion.div>
+        )}
+
+        {entreprise && (
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.65, ease }} className="flex items-center justify-between py-2.5 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2 text-sm text-gray-400"><Building2 className="w-3.5 h-3.5 text-blue-500" />Facture émise par</div>
+            <span className="text-sm font-semibold text-blue-400">{entreprise}</span>
+          </motion.div>
+        )}
+
+        {nom && (
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.7, ease }} className="flex items-center justify-between py-2.5 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2 text-sm text-gray-400"><User className="w-3.5 h-3.5 text-gray-600" />Débiteur</div>
+            <span className="text-sm font-semibold text-white">{nom}</span>
+          </motion.div>
+        )}
+
+        {montant && (
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.75, ease }} className="flex items-center justify-between py-2.5 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2 text-sm text-gray-400"><CreditCard className="w-3.5 h-3.5 text-gray-600" />Montant réglé</div>
+            <span className="text-sm font-semibold text-green-400">{montant} €</span>
           </motion.div>
         )}
 
