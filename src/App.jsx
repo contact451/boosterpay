@@ -9,12 +9,18 @@ import FacturePage from './FacturePage';
 import ContestationPage from './ContestationPage';
 import PaiementConfirmePage from './pages/PaiementConfirmePage';
 import DashboardPartenaire from './pages/DashboardPartenaire';
+import ImpactAvisLanding from './pages/ImpactAvisLanding';
+import NotationClient from './pages/NotationClient';
+import IAVocaleLanding from './pages/IAVocaleLanding';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<BoosterPayLanding />} />
+        <Route path="/impact-avis" element={<ImpactAvisLanding />} />
+        <Route path="/avis/:partnerId" element={<NotationClient />} />
+        <Route path="/ia-vocale" element={<IAVocaleLanding />} />
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />
