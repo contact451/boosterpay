@@ -4,6 +4,8 @@
 
 const GOOGLE_SHEET_API_URL = import.meta.env.VITE_GOOGLE_SHEET_API_URL || '';
 const B2B_SHEET_API_URL = import.meta.env.VITE_B2B_SHEET_API_URL || '';
+// CRM API (Apps Script) — pour notifier la conversion des leads IA B2B
+const CRM_API_URL = import.meta.env.VITE_CRM_API_URL || 'https://script.google.com/macros/s/AKfycbztp_6rllQCg2MPXrrWOyudvaGcUlIdG6pZdVQjpU7-Z-8_3brmGHqoD2nrlCv0mMYe/exec';
 
 /**
  * Envoie un lead vers Google Sheets
@@ -54,6 +56,20 @@ export const submitLead = async (leadData) => {
           ref: payload.ref,
           email: payload.email,
           action: 'converted',
+          timestamp: payload.timestamp,
+        }),
+      }).catch(() => {});
+    }
+
+    // Notifier le CRM si le lead vient d'une campagne IA (ref = AVIS-xxx ou RELIA-xxx)
+    if (CRM_API_URL && payload.ref && (payload.ref.startsWith('AVIS-') || payload.ref.startsWith('RELIA-') || payload.ref.startsWith('REL-IA'))) {
+      fetch(CRM_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'convertLeadIA',
+          ref: payload.ref,
+          email: payload.email,
+          statut: 'INSCRIT',
           timestamp: payload.timestamp,
         }),
       }).catch(() => {});
@@ -115,6 +131,20 @@ export const submitOnboarding = async (payload) => {
             ref: ref,
             email: payload.email,
             action: 'converted',
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+      }
+
+      // Notifier le CRM si lead IA — passage en CONVERTI (onboarding terminé)
+      if (CRM_API_URL && ref && (ref.startsWith('AVIS-') || ref.startsWith('RELIA-') || ref.startsWith('REL-IA'))) {
+        fetch(CRM_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'convertLeadIA',
+            ref: ref,
+            email: payload.email,
+            statut: 'CONVERTI',
             timestamp: new Date().toISOString(),
           }),
         }).catch(() => {});
