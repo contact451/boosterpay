@@ -12,6 +12,7 @@ import DashboardPartenaire from './pages/DashboardPartenaire';
 import ImpactAvisLanding from './pages/ImpactAvisLanding';
 import NotationClient from './pages/NotationClient';
 import IAVocaleLanding from './pages/IAVocaleLanding';
+import MerciPage from './pages/MerciPage';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/impact-avis" element={<ImpactAvisLanding />} />
         <Route path="/avis/:partnerId" element={<NotationClient />} />
         <Route path="/ia-vocale" element={<IAVocaleLanding />} />
+        <Route path="/merci" element={<MerciPage />} />
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />
