@@ -25,6 +25,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
+import { captureLeadFromSite } from '../services/leadService';
 
 // ============ DESIGN SYSTEM ============
 const ease = [0.22, 1, 0.36, 1];
@@ -881,6 +882,22 @@ const ImportSection = () => {
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
     setFlowState('redirecting');
+
+    // Fire-and-forget lead capture to CRM
+    const planNames = { essentiel: "L'Essentiel", succes: 'Au Succès' };
+    const contactCount = csvData ? csvData.length : manualRows.filter(r => r.prenom || r.telephone).length;
+    const contactsList = csvData
+      ? csvData.map(r => ({ nom: r[csvMapping.nom] || '', telephone: r[csvMapping.telephone] || '', email: r[csvMapping.email] || '' }))
+      : manualRows.filter(r => r.prenom || r.telephone);
+    captureLeadFromSite({
+      companyName,
+      email: companyEmail,
+      plan: planNames[plan] || plan,
+      contactCount,
+      source: 'impact-avis',
+      contacts: contactsList,
+    });
+
     let c = 3;
     setCountdown(3);
     const timer = setInterval(() => {
@@ -911,11 +928,11 @@ const ImportSection = () => {
           <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} onSubmit={handleInfoSubmit} className="space-y-4 text-left">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom de votre société</label>
-              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
+              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 placeholder:text-gray-400" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Votre email</label>
-              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="votre@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
+              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="votre@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 placeholder:text-gray-400" />
             </div>
             <button type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all">
               Continuer →
@@ -1029,15 +1046,15 @@ const ImportSection = () => {
                     <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                       <div>
                         {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Nom</label>}
-                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Nom du contact" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Nom du contact" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
                       </div>
                       <div>
                         {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Téléphone</label>}
-                        <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                        <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
                       </div>
                       <div>
                         {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Email (facultatif)</label>}
-                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
                       </div>
                       <div>
                         {manualRows.length > 1 && (
@@ -1098,7 +1115,7 @@ const ImportSection = () => {
                             <select
                               value={csvMapping[field.key] || ''}
                               onChange={(e) => setCsvMapping({ ...csvMapping, [field.key]: e.target.value })}
-                              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
+                              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900"
                             >
                               <option value="">-- Sélectionner --</option>
                               {csvHeaders.map((h) => (
@@ -1333,6 +1350,47 @@ const PricingSection = () => (
         <span className="opacity-30">|</span>
         <div>Satisfait ou remboursé 30 jours</div>
       </motion.div>
+
+      {/* Pricing comparison guide */}
+      <motion.div
+        className="mt-16 max-w-3xl mx-auto"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">Quelle offre me convient ?</h3>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                <Zap className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">L&apos;Essentiel</h4>
+                <span className="text-sm text-indigo-600 font-semibold">49€/mois</span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Vous avez un flux régulier de clients et voulez des avis en continu. Idéal pour les commerces avec plus de 50 clients/mois. Tout illimité, un seul prix fixe.
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <Shield className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Au Succès</h4>
+                <span className="text-sm text-emerald-600 font-semibold">69€/15 avis</span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Vous préférez payer uniquement quand ça marche. Idéal pour tester ou pour les petites structures. Vous ne payez que les avis réellement obtenus.
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   </section>
 );
@@ -1342,12 +1400,30 @@ const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
   const faqs = [
-    { q: "Comment l'IA passe-t-elle les appels ?", a: "Notre IA utilise une synthèse vocale ultra-naturelle. Elle appelle vos clients du lundi au samedi, entre 9h et 20h, en se présentant au nom de votre commerce. Chaque appel est personnalisé avec le prénom du client." },
-    { q: "Que se passe-t-il si un client donne 1 étoile ?", a: "Notre bouclier intercepte automatiquement tout avis 1, 2 ou 3 étoiles. Vous recevez l'avis en privé pour pouvoir le gérer. Seuls les 4 et 5 étoiles apparaissent sur Google." },
-    { q: "Combien de temps pour voir les premiers avis ?", a: "En moyenne 48 heures. Certains clients voient leurs premiers 5 étoiles dès le jour même." },
-    { q: "Est-ce légal ? RGPD ?", a: "Entièrement conforme au RGPD et à la législation française. Consentements gérés, chaque appel peut être refusé." },
-    { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic. Sans justification, sans frais. Remboursement sous 30 jours si insatisfait." },
-    { q: "Ça marche pour mon type de commerce ?", a: "Restaurants, salons, garages, dentistes, hôtels, artisans, cliniques, boutiques... Si vous accueillez des clients, Impact-Avis peut vous aider." },
+    {
+      q: "Comment fonctionne Impact Avis ?",
+      a: "Impact Avis fonctionne en 3 étapes simples. D\u2019abord, vous importez votre liste de clients (CSV, Excel ou saisie manuelle). Ensuite, notre IA vocale appelle chacun de vos clients de manière personnalisée, en se présentant au nom de votre commerce. Si le client est satisfait, l\u2019IA le guide directement vers votre fiche Google pour laisser un avis 5 étoiles. Si le client exprime un mécontentement, l\u2019avis est intercepté et redirigé vers vous en privé, protégeant ainsi votre réputation en ligne.",
+    },
+    {
+      q: "Est-ce légal ? Conforme au RGPD ?",
+      a: "Oui, Impact Avis est 100% conforme au RGPD et à la législation française. Toutes les données de vos clients sont hébergées en France sur des serveurs sécurisés. Chaque client peut refuser l\u2019appel ou demander la suppression de ses données à tout moment (opt-out). Nous ne créons jamais de faux avis : seuls de vrais clients laissent de vrais avis sur Google. Le consentement est géré de manière transparente et traçable pour vous protéger juridiquement.",
+    },
+    {
+      q: "Combien d\u2019avis puis-je obtenir ?",
+      a: "Le nombre d\u2019avis dépend directement du volume de clients que vous nous transmettez. En moyenne, nos utilisateurs obtiennent un taux de conversion de 25 à 35% : sur 100 clients contactés, 25 à 35 laissent un avis Google. Plus vous importez de contacts réguliers, plus vos avis augmentent. Certains commerces avec un fort flux de clients récoltent plus de 50 nouveaux avis par mois.",
+    },
+    {
+      q: "Que se passe-t-il si un client laisse un avis négatif ?",
+      a: "C\u2019est là qu\u2019intervient notre Bouclier Anti-Avis Négatifs. Lorsqu\u2019un client exprime une insatisfaction (note de 1, 2 ou 3 étoiles), l\u2019avis n\u2019est PAS publié sur Google. Au lieu de cela, vous recevez une notification privée avec le détail du retour client, ce qui vous permet de résoudre le problème en direct. Seuls les avis 4 et 5 étoiles sont guidés vers votre fiche Google, ce qui protège votre note moyenne.",
+    },
+    {
+      q: "Puis-je annuler à tout moment ?",
+      a: "Absolument, il n\u2019y a aucun engagement de durée. Vous pouvez résilier votre abonnement en 1 clic depuis votre tableau de bord, sans justification et sans frais cachés. Si vous n\u2019êtes pas satisfait dans les 30 premiers jours, nous vous remboursons intégralement. Nous croyons en la qualité de notre service et ne voulons garder que des clients convaincus.",
+    },
+    {
+      q: "Comment fonctionne l\u2019essai gratuit ?",
+      a: "Votre essai gratuit comprend 10 avis offerts pour tester le service sans risque. Lors de l\u2019inscription, votre carte bancaire est enregistrée (empreinte sécurisée via Stripe) mais aucun prélèvement n\u2019est effectué pendant l\u2019essai. Vous recevrez une notification à 80% de consommation de votre essai pour garder le contrôle total. À la fin de l\u2019essai, votre formule choisie s\u2019active automatiquement, ou vous pouvez annuler sans frais avant.",
+    },
   ];
 
   return (
@@ -1377,11 +1453,11 @@ const FAQSection = () => {
             <AnimatePresence>
               {openIndex === i && (
                 <motion.div
-                  className="px-6 pb-5 text-[14px] text-gray-600 leading-relaxed"
+                  className="bg-gray-50 mx-4 mb-4 rounded-xl px-5 py-4 text-[14px] text-gray-600 leading-relaxed"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 >
                   {faq.a}
                 </motion.div>
@@ -1500,6 +1576,18 @@ const Footer = () => (
 
 // ============ MAIN ============
 export default function ImpactAvisLanding() {
+  useEffect(() => {
+    document.title = 'Impact Avis \u2014 Boostez vos avis Google automatiquement | BoosterPay';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', "Obtenez des avis Google 5 \u00e9toiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.");
+    else {
+      const m = document.createElement('meta');
+      m.name = 'description';
+      m.content = "Obtenez des avis Google 5 \u00e9toiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.";
+      document.head.appendChild(m);
+    }
+  }, []);
+
   return (
     <div className="bg-white min-h-screen overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── Service Navigation Bar ── */}

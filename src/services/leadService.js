@@ -96,6 +96,38 @@ export const submitSimulatorLead = async (simulatorData) => {
 };
 
 /**
+ * Capture un lead depuis les landing pages (impact-avis / ia-vocale).
+ * Fire-and-forget : ne bloque JAMAIS le parcours utilisateur.
+ * @param {Object} data - { companyName, email, plan, contactCount, source, contacts }
+ */
+export const captureLeadFromSite = (data) => {
+  if (!CRM_API_URL) {
+    console.warn('CRM_API_URL non configurée — lead site non envoyé');
+    return;
+  }
+
+  const payload = {
+    action: 'captureLeadFromSite',
+    companyName: data.companyName,
+    email: data.email,
+    plan: data.plan,
+    contactCount: data.contactCount,
+    source: data.source,
+    contacts: data.contacts || [],
+    timestamp: new Date().toISOString(),
+  };
+
+  console.log('📤 Capture lead site vers CRM:', payload);
+
+  fetch(CRM_API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }).catch((err) => {
+    console.warn('⚠️ captureLeadFromSite échoué (non bloquant):', err.message);
+  });
+};
+
+/**
  * Envoie les données de l'onboarding Step 2.
  * Le Apps Script RETROUVE le lead par email et le met à jour (statut → "Converti").
  */

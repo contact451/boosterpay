@@ -40,6 +40,7 @@ import {
   UserPlus,
   ArrowUpRight,
 } from 'lucide-react';
+import { captureLeadFromSite } from '../services/leadService';
 import Papa from 'papaparse';
 
 /* ------------------------------------------------------------------ */
@@ -267,6 +268,18 @@ export default function IAVocaleLanding() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    document.title = 'IA Vocale — Confirmations de RDV et relances automatiques | BoosterPay';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', "L'IA appelle vos clients pour confirmer les RDV et relancer les dossiers à renouveler. Divisez vos lapins par 5. 100 appels offerts pour tester.");
+    else {
+      const m = document.createElement('meta');
+      m.name = 'description';
+      m.content = "L'IA appelle vos clients pour confirmer les RDV et relancer les dossiers à renouveler. Divisez vos lapins par 5. 100 appels offerts pour tester.";
+      document.head.appendChild(m);
+    }
+  }, []);
+
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
@@ -349,6 +362,21 @@ export default function IAVocaleLanding() {
     setSelectedPlan(planId);
     setImportState('redirecting');
     setCountdown(3);
+
+    // Fire-and-forget lead capture to CRM
+    const planNames = { decouverte: 'Essai Découverte', boost: 'Pack Boost', business: 'Pack Business', croissance: 'Croissance' };
+    const contactCount = csvData ? csvData.length : manualRows.filter(r => r.prenom || r.telephone).length;
+    const contactsList = csvData
+      ? csvData.map(r => ({ nom: r[csvMapping.nom] || '', telephone: r[csvMapping.telephone] || '', email: r[csvMapping.email] || '' }))
+      : manualRows.filter(r => r.prenom || r.telephone);
+    captureLeadFromSite({
+      companyName,
+      email: companyEmail,
+      plan: planNames[planId] || planId,
+      contactCount,
+      source: 'ia-vocale',
+      contacts: contactsList,
+    });
   };
 
   /* ── Data ──────────────────────────────────────────────────── */
@@ -388,12 +416,12 @@ export default function IAVocaleLanding() {
   ];
 
   const faqs = [
-    { q: 'Comment l\'IA passe-t-elle les appels ?', a: 'Notre IA utilise une voix naturelle et un script adapté à votre métier. Elle appelle vos clients, confirme les RDV ou relance les renouvellements, puis met à jour votre tableau de bord en temps réel.' },
-    { q: 'Mes clients vont-ils savoir que c\'est une IA ?', a: 'L\'IA est conçue pour être naturelle et professionnelle. Elle se présente au nom de votre entreprise et suit un script personnalisé. La plupart des clients ne font pas la différence.' },
-    { q: 'Quels formats de fichiers sont acceptés ?', a: 'Vous pouvez importer vos contacts via CSV, Excel (.xlsx), ou les saisir manuellement. Notre système détecte automatiquement les colonnes et formate les données.' },
-    { q: 'Combien de temps pour être opérationnel ?', a: 'Moins de 24 heures. Importez vos contacts, personnalisez le script, et les appels commencent. Aucune installation technique requise.' },
-    { q: 'Est-ce conforme au RGPD ?', a: 'Oui, 100%. Les données sont hébergées en France, chiffrées, et nous respectons toutes les réglementations en vigueur. Vos clients peuvent se désinscrire à tout moment.' },
-    { q: 'Puis-je annuler à tout moment ?', a: 'Oui, zéro engagement. Les packs sont ponctuels (pas d\'abonnement). Le plan Croissance est mensuel et résiliable à tout moment.' },
+    { q: 'Comment l\'IA passe-t-elle les appels ?', a: 'Notre IA utilise une synthèse vocale de dernière génération avec une voix naturelle, fluide et professionnelle. Elle suit un script entièrement personnalisé selon votre métier (garagiste, courtier, praticien de santé, etc.) et adapte la conversation en fonction des réponses du client. À la fin de chaque appel, le résultat (confirmé, reporté, injoignable) est mis à jour automatiquement dans votre tableau de bord en temps réel.' },
+    { q: 'Mes clients vont-ils savoir que c\'est une IA ?', a: 'L\'IA est spécialement conçue pour être indiscernable d\'un appel humain. Elle se présente au nom de votre entreprise, utilise un ton chaleureux et professionnel, et suit un script personnalisé à votre activité. La grande majorité des clients ne font aucune différence avec un appel passé par votre secrétaire ou assistant(e). Vous gardez le contrôle total sur le ton et le contenu des appels.' },
+    { q: 'Quels formats de fichiers sont acceptés ?', a: 'Vous pouvez importer vos contacts via CSV, Excel (.xlsx), ou les saisir manuellement directement depuis l\'interface. Notre système détecte automatiquement les colonnes (nom, téléphone, type, date) et formate les données pour vous. Aucune compétence technique n\'est requise.' },
+    { q: 'Combien de temps pour être opérationnel ?', a: 'Moins de 24 heures, et souvent beaucoup moins. Il suffit d\'importer vos contacts (CSV ou saisie manuelle), et les appels démarrent immédiatement. Aucune installation technique, aucun logiciel à configurer : vous importez, l\'IA appelle, votre agenda se remplit.' },
+    { q: 'Est-ce conforme au RGPD ?', a: 'Absolument, la conformité RGPD est au c\u0153ur de notre solution. Toutes les données sont hébergées en France sur des serveurs sécurisés, chiffrées en transit et au repos (AES-256). Vos clients peuvent exercer leur droit d\'opposition et se désinscrire à tout moment via un simple mécanisme d\'opt-out intégré à chaque appel. Nous ne revendons jamais vos données et respectons strictement le Règlement Général sur la Protection des Données.' },
+    { q: 'Puis-je annuler à tout moment ?', a: 'Oui, vous êtes totalement libre. Les packs (Boost et Business) sont des achats ponctuels sans abonnement ni reconduction automatique : vous payez une fois, vous utilisez vos appels. Le plan Croissance est un abonnement mensuel résiliable à tout moment, sans frais de résiliation ni période d\'engagement.' },
   ];
 
   /* ── Render ────────────────────────────────────────────────── */
@@ -926,7 +954,7 @@ export default function IAVocaleLanding() {
                           value={companyName}
                           onChange={(e) => setCompanyName(e.target.value)}
                           placeholder="Ex: Garage Martin"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                           required
                         />
                       </div>
@@ -937,7 +965,7 @@ export default function IAVocaleLanding() {
                           value={companyEmail}
                           onChange={(e) => setCompanyEmail(e.target.value)}
                           placeholder="votre@email.fr"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                           required
                         />
                       </div>
@@ -1135,7 +1163,7 @@ export default function IAVocaleLanding() {
                               <select
                                 value={csvMapping[field.key]}
                                 onChange={(e) => setCsvMapping((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
+                                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
                               >
                                 <option value="">-- Sélectionner --</option>
                                 {csvHeaders.map((h) => (
@@ -1221,7 +1249,7 @@ export default function IAVocaleLanding() {
                               value={row.prenom}
                               onChange={(e) => updateRow(idx, 'prenom', e.target.value)}
                               placeholder="Jean"
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
+                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
                             />
                           </div>
                           <div className="sm:col-span-3">
@@ -1231,7 +1259,7 @@ export default function IAVocaleLanding() {
                               value={row.telephone}
                               onChange={(e) => updateRow(idx, 'telephone', e.target.value)}
                               placeholder="06 12 34 56 78"
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
+                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
                             />
                           </div>
                           <div className="sm:col-span-3">
@@ -1239,7 +1267,7 @@ export default function IAVocaleLanding() {
                             <select
                               value={row.type}
                               onChange={(e) => updateRow(idx, 'type', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
+                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
                             >
                               <option value="renouvellement">Renouvellement</option>
                               <option value="confirmation">Confirmation RDV</option>
@@ -1251,7 +1279,7 @@ export default function IAVocaleLanding() {
                               type="date"
                               value={row.dateRdv}
                               onChange={(e) => updateRow(idx, 'dateRdv', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
+                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
                             />
                           </div>
                           <div className="sm:col-span-1 flex justify-center">
@@ -1425,86 +1453,34 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* TESTIMONIALS                                 */}
       {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-gray-50/50 overflow-hidden">
+      <section className="py-24 md:py-32 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Témoignages"
             title="Ils utilisent BoosterPay."
             subtitle="Des professionnels comme vous qui ont automatisé leurs relances et confirmations."
           />
-        </div>
 
-        {/* Marquee row 1 — scrolling left */}
-        <div className="relative mb-4">
-          <div className="flex animate-marquee-left gap-5" style={{ width: 'max-content' }}>
-            {[...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 w-[340px] flex-shrink-0 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-xs">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{t.name}</p>
-                    <p className="text-[11px] text-gray-400">{t.role}</p>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    ))}
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((t, i) => (
+              <ScrollReveal key={i} delay={i * 0.12}>
+                <div className="bg-white rounded-2xl border border-gray-100 p-8 h-full flex flex-col">
+                  <p className="text-gray-600 leading-relaxed flex-1">“{t.quote}”</p>
+                  <div className="h-px bg-gray-100 my-6" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{t.name}</p>
+                      <p className="text-sm text-gray-400">{t.role}</p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-[13px] text-gray-600 leading-relaxed">"{t.quote}"</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
-
-        {/* Marquee row 2 — scrolling right */}
-        <div className="relative">
-          <div className="flex animate-marquee-right gap-5" style={{ width: 'max-content' }}>
-            {[...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 w-[340px] flex-shrink-0 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-xs">
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{t.name}</p>
-                    <p className="text-[11px] text-gray-400">{t.role}</p>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[13px] text-gray-600 leading-relaxed">"{t.quote}"</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Marquee CSS animations */}
-        <style>{`
-          @keyframes marquee-left {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-          @keyframes marquee-right {
-            0% { transform: translateX(-50%); }
-            100% { transform: translateX(0); }
-          }
-          .animate-marquee-left {
-            animation: marquee-left 40s linear infinite;
-          }
-          .animate-marquee-right {
-            animation: marquee-right 40s linear infinite;
-          }
-          .animate-marquee-left:hover,
-          .animate-marquee-right:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
       </section>
 
       {/* ============================================ */}
