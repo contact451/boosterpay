@@ -91,7 +91,7 @@ const GradientText = ({ children, className = '' }) => (
 const STRIPE_URL = 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02';
 
 const navLinks = [
-  { label: 'Fonctionnalites', href: '#features' },
+  { label: 'Fonctionnalités', href: '#features' },
   { label: 'Cas d\'usage', href: '#usecases' },
   { label: 'Tarifs', href: '#pricing' },
   { label: 'FAQ', href: '#faq' },
@@ -317,54 +317,65 @@ export default function IAVocaleLanding() {
     { value: '35', suffix: '%', prefix: '-', label: 'de lapins' },
     { value: '80', suffix: '%', label: 'renouvellements' },
     { value: '6', suffix: 'x', label: 'ROI moyen', prefix: '' },
-    { value: '24', suffix: 'h', label: 'operationnel' },
+    { value: '24', suffix: 'h', label: 'opérationnel' },
   ];
 
   const useCases = [
-    { icon: Wrench, title: 'Garagiste', desc: 'Relance des controles techniques et entretiens annuels automatiquement.' },
+    { icon: Wrench, title: 'Garagiste', desc: 'Relance des contrôles techniques et entretiens annuels automatiquement.' },
     { icon: Shield, title: 'Courtier', desc: 'Renouvellements de contrats d\'assurance sans passer un seul appel.' },
-    { icon: Heart, title: 'Dentiste / Medecin', desc: 'Rappels de bilans annuels, detartrages et controles periodiques.' },
+    { icon: Heart, title: 'Dentiste / Médecin', desc: 'Rappels de bilans annuels, détartrages et contrôles périodiques.' },
     { icon: Eye, title: 'Opticien', desc: 'Renouvellement lunettes et lentilles quand l\'ordonnance expire.' },
-    { icon: Scissors, title: 'Salon coiffure / beaute', desc: 'Reactivation des clients dormants qui n\'ont pas pris RDV depuis 3 mois.' },
-    { icon: Activity, title: 'Coach / Kine', desc: 'Suivi des seances et relance pour la continuite du parcours.' },
+    { icon: Scissors, title: 'Salon coiffure / beauté', desc: 'Réactivation des clients dormants qui n\'ont pas pris RDV depuis 3 mois.' },
+    { icon: Activity, title: 'Coach / Kiné', desc: 'Suivi des séances et relance pour la continuité du parcours.' },
   ];
 
   const steps = [
-    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prets.' },
-    { icon: PhoneCall, title: 'L\'IA appelle a votre place', desc: 'Appels naturels et professionnels. Renouvellements, confirmations, relances.' },
-    { icon: CalendarDays, title: 'Votre agenda se remplit', desc: 'Les RDV confirmes apparaissent. Les renouvellements sont relances. Vous gerez, on appelle.' },
+    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts.' },
+    { icon: PhoneCall, title: 'L\'IA appelle à votre place', desc: 'Appels naturels et professionnels. Renouvellements, confirmations, relances.' },
+    { icon: CalendarDays, title: 'Votre agenda se remplit', desc: 'Les RDV confirmés apparaissent. Les renouvellements sont relancés. Vous gérez, on appelle.' },
   ];
 
   const testimonials = [
-    { name: 'Thomas R.', role: 'Garagiste, Rennes', quote: '12 clients reactives en 1 semaine. Des controles techniques que j\'aurais perdus sans les relances IA.', avatar: 'T' },
-    { name: 'Camille D.', role: 'Osteopathe, Nantes', quote: 'Zero lapin depuis que les confirmations IA sont en place. Mon planning est enfin fiable.', avatar: 'C' },
-    { name: 'Marc L.', role: 'Courtier, Brest', quote: '80% de contrats renouveles sans passer un seul appel. Le ROI est immediat.', avatar: 'M' },
+    { name: 'Thomas R.', role: 'Garagiste, Rennes', quote: '12 clients réactivés en 1 semaine. Des contrôles techniques que j\'aurais perdus sans les relances IA.', avatar: 'T' },
+    { name: 'Camille D.', role: 'Ostéopathe, Nantes', quote: 'Zéro lapin depuis que les confirmations IA sont en place. Mon planning est enfin fiable.', avatar: 'C' },
+    { name: 'Marc L.', role: 'Courtier, Brest', quote: '80% de contrats renouvelés sans passer un seul appel. Le ROI est immédiat.', avatar: 'M' },
   ];
 
   const pricing = [
-    { name: 'Essai Decouverte', price: '0', unit: '', calls: '100 appels gratuits', features: ['Import CSV', 'Appels IA naturels', 'Tableau de bord', 'Support email'], popular: false },
-    { name: 'Pack Boost', price: '199', unit: 'HT', calls: '250 appels', features: ['Tout de l\'essai', 'Reporting avance', 'Relances multi-canaux', 'Support prioritaire'], popular: false },
-    { name: 'Pack Business', price: '349', unit: 'HT', calls: '500 appels', features: ['Tout du Boost', 'API & integrations', 'Manager dedie', 'Onboarding personnalise'], popular: true },
-    { name: 'Croissance', price: '399', unit: 'HT/mois', calls: '1 000 appels/mois', features: ['Tout du Business', 'Appels illimites*', 'Priorite support 24/7', 'Compte multi-utilisateurs'], popular: false },
+    { name: 'Essai Découverte', price: '0', unit: '', calls: '100 appels gratuits', features: ['Import CSV', 'Appels IA naturels', 'Tableau de bord', 'Support email'], popular: false },
+    { name: 'Pack Boost', price: '199', unit: 'HT', calls: '250 appels', features: ['Tout de l\'essai', 'Reporting avancé', 'Relances multi-canaux', 'Support prioritaire'], popular: false },
+    { name: 'Pack Business', price: '349', unit: 'HT', calls: '500 appels', features: ['Tout du Boost', 'API & intégrations', 'Manager dédié', 'Onboarding personnalisé'], popular: true },
+    { name: 'Croissance', price: '399', unit: 'HT/mois', calls: '1 000 appels/mois', features: ['Tout du Business', 'Appels illimités*', 'Priorité support 24/7', 'Compte multi-utilisateurs'], popular: false },
   ];
 
   const faqs = [
-    { q: 'Comment l\'IA passe-t-elle les appels ?', a: 'Notre IA utilise une voix naturelle et un script adapte a votre metier. Elle appelle vos clients, confirme les RDV ou relance les renouvellements, puis met a jour votre tableau de bord en temps reel.' },
-    { q: 'Mes clients vont-ils savoir que c\'est une IA ?', a: 'L\'IA est concue pour etre naturelle et professionnelle. Elle se presente au nom de votre entreprise et suit un script personnalise. La plupart des clients ne font pas la difference.' },
-    { q: 'Quels formats de fichiers sont acceptes ?', a: 'Vous pouvez importer vos contacts via CSV, Excel (.xlsx), ou les saisir manuellement. Notre systeme detecte automatiquement les colonnes et formate les donnees.' },
-    { q: 'Combien de temps pour etre operationnel ?', a: 'Moins de 24 heures. Importez vos contacts, personnalisez le script, et les appels commencent. Aucune installation technique requise.' },
-    { q: 'Est-ce conforme au RGPD ?', a: 'Oui, 100%. Les donnees sont hebergees en France, chiffrees, et nous respectons toutes les reglementations en vigueur. Vos clients peuvent se desinscrire a tout moment.' },
-    { q: 'Puis-je annuler a tout moment ?', a: 'Oui, zero engagement. Les packs sont ponctuels (pas d\'abonnement). Le plan Croissance est mensuel et resiliable a tout moment.' },
+    { q: 'Comment l\'IA passe-t-elle les appels ?', a: 'Notre IA utilise une voix naturelle et un script adapté à votre métier. Elle appelle vos clients, confirme les RDV ou relance les renouvellements, puis met à jour votre tableau de bord en temps réel.' },
+    { q: 'Mes clients vont-ils savoir que c\'est une IA ?', a: 'L\'IA est conçue pour être naturelle et professionnelle. Elle se présente au nom de votre entreprise et suit un script personnalisé. La plupart des clients ne font pas la différence.' },
+    { q: 'Quels formats de fichiers sont acceptés ?', a: 'Vous pouvez importer vos contacts via CSV, Excel (.xlsx), ou les saisir manuellement. Notre système détecte automatiquement les colonnes et formate les données.' },
+    { q: 'Combien de temps pour être opérationnel ?', a: 'Moins de 24 heures. Importez vos contacts, personnalisez le script, et les appels commencent. Aucune installation technique requise.' },
+    { q: 'Est-ce conforme au RGPD ?', a: 'Oui, 100%. Les données sont hébergées en France, chiffrées, et nous respectons toutes les réglementations en vigueur. Vos clients peuvent se désinscrire à tout moment.' },
+    { q: 'Puis-je annuler à tout moment ?', a: 'Oui, zéro engagement. Les packs sont ponctuels (pas d\'abonnement). Le plan Croissance est mensuel et résiliable à tout moment.' },
   ];
 
   /* ── Render ────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
 
+      {/* ── Service Navigation Bar ── */}
+      <div className="bg-gray-950 text-white text-center py-2 text-[13px] font-medium fixed top-0 w-full z-[60]">
+        <div className="flex items-center justify-center gap-6 md:gap-10">
+          <Link to="/impact-avis" className="opacity-70 hover:opacity-100 transition-opacity">Impact Avis</Link>
+          <span className="opacity-20">|</span>
+          <Link to="/ia-vocale" className="text-emerald-400 font-semibold">IA Vocale</Link>
+          <span className="opacity-20">|</span>
+          <Link to="/" className="opacity-70 hover:opacity-100 transition-opacity">Accélération de paiements</Link>
+        </div>
+      </div>
+
       {/* ============================================ */}
       {/* NAVBAR                                       */}
       {/* ============================================ */}
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100' : 'bg-transparent'}`}>
+      <nav className={`fixed top-8 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="text-xl font-bold tracking-tight">
             <GradientText>BoosterPay</GradientText>
@@ -421,7 +432,7 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* HERO                                         */}
       {/* ============================================ */}
-      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
+      <section className="relative pt-40 pb-20 md:pt-48 md:pb-32 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-white to-white" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-emerald-100/40 to-transparent rounded-full blur-3xl" />
@@ -448,7 +459,7 @@ export default function IAVocaleLanding() {
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight"
               >
                 Renouvelez vos dossiers et{' '}
-                <GradientText>securisez vos RDV.</GradientText>{' '}
+                <GradientText>sécurisez vos RDV.</GradientText>{' '}
                 Automatiquement.
               </motion.h1>
 
@@ -458,7 +469,7 @@ export default function IAVocaleLanding() {
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl"
               >
-                Notre IA appelle vos clients a votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
+                Notre IA appelle vos clients à votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
               </motion.p>
 
               <motion.div
@@ -512,7 +523,7 @@ export default function IAVocaleLanding() {
       <section id="features" className="py-24 md:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Fonctionnalites"
+            tag="Fonctionnalités"
             title="Deux leviers. Un objectif : remplir votre agenda."
             subtitle="L'IA appelle vos clients pour renouveler leurs dossiers et confirmer leurs rendez-vous. Automatiquement."
           />
@@ -528,10 +539,10 @@ export default function IAVocaleLanding() {
                   <h3 className="text-2xl font-bold text-gray-900">Renouvellement de dossiers</h3>
                 </div>
                 <p className="text-gray-500 leading-relaxed mb-6">
-                  L'IA detecte les dossiers qui arrivent a echeance et appelle vos clients pour les relancer. Controles techniques, assurances, entretiens annuels, bilans medicaux, devis en attente — tout est couvert.
+                  L'IA détecte les dossiers qui arrivent à échéance et appelle vos clients pour les relancer. Contrôles techniques, assurances, entretiens annuels, bilans médicaux, devis en attente — tout est couvert.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {['Controles techniques', 'Assurances', 'Entretiens annuels', 'Bilans medicaux', 'Devis en attente'].map((tag) => (
+                  {['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux', 'Devis en attente'].map((tag) => (
                     <span key={tag} className="text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
                       {tag}
                     </span>
@@ -554,14 +565,14 @@ export default function IAVocaleLanding() {
                   <h3 className="text-2xl font-bold text-gray-900">Confirmation de RDV</h3>
                 </div>
                 <p className="text-gray-500 leading-relaxed mb-6">
-                  L'IA appelle la veille pour confirmer chaque rendez-vous. Resultat : vos lapins passent de 43% a 8%. Votre planning est fiable, votre CA protege.
+                  L'IA appelle la veille pour confirmer chaque rendez-vous. Résultat : vos lapins passent de 43% à 8%. Votre planning est fiable, votre CA protégé.
                 </p>
 
                 {/* Mini calendar animation */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold text-gray-700">Cette semaine</span>
-                    <span className="text-xs text-emerald-600 font-medium">92% confirmes</span>
+                    <span className="text-xs text-emerald-600 font-medium">92% confirmés</span>
                   </div>
                   <div className="grid grid-cols-5 gap-2">
                     {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'].map((day, i) => (
@@ -598,8 +609,8 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Cas d'usage"
-            title="Adapte a votre metier."
-            subtitle="Quel que soit votre secteur, l'IA s'adapte a vos besoins de renouvellement et de confirmation."
+            title="Adapté à votre métier."
+            subtitle="Quel que soit votre secteur, l'IA s'adapte à vos besoins de renouvellement et de confirmation."
           />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -627,9 +638,9 @@ export default function IAVocaleLanding() {
       <section className="py-24 md:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Comment ca marche"
-            title="Trois etapes. Zero friction."
-            subtitle="De l'import a l'agenda rempli, tout est automatise."
+            tag="Comment ça marche"
+            title="Trois étapes. Zéro friction."
+            subtitle="De l'import à l'agenda rempli, tout est automatisé."
           />
 
           <div className="relative max-w-4xl mx-auto">
@@ -647,7 +658,7 @@ export default function IAVocaleLanding() {
                       <step.icon className="w-9 h-9 text-white" />
                     </motion.div>
                     <span className="inline-block text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full mb-3">
-                      Etape {i + 1}
+                      Étape {i + 1}
                     </span>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
                     <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
@@ -694,8 +705,8 @@ export default function IAVocaleLanding() {
                     <CheckCircle2 className="w-10 h-10 text-white" />
                   </motion.div>
 
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Felicitations !</h3>
-                  <p className="text-gray-500 mb-6">Vos donnees ont ete envoyees. Vos 100 appels gratuits vont commencer.</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Félicitations !</h3>
+                  <p className="text-gray-500 mb-6">Vos données ont été envoyées. Vos 100 appels gratuits vont commencer.</p>
 
                   {importState === 'redirecting' && (
                     <motion.div
@@ -760,7 +771,7 @@ export default function IAVocaleLanding() {
                     className="w-16 h-16 mx-auto border-4 border-emerald-200 border-t-emerald-600 rounded-full mb-6"
                   />
                   <p className="text-lg font-semibold text-gray-900">Envoi en cours...</p>
-                  <p className="text-sm text-gray-400 mt-2">Preparation de vos appels gratuits</p>
+                  <p className="text-sm text-gray-400 mt-2">Préparation de vos appels gratuits</p>
                 </motion.div>
               </motion.div>
             )}
@@ -819,7 +830,7 @@ export default function IAVocaleLanding() {
                         <div>
                           <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
                           <p className="text-lg font-semibold text-gray-900">{csvFileName}</p>
-                          <p className="text-sm text-emerald-600 mt-1">{csvData.length} contacts detectes</p>
+                          <p className="text-sm text-emerald-600 mt-1">{csvData.length} contacts détectés</p>
                         </div>
                       ) : (
                         <div>
@@ -883,7 +894,7 @@ export default function IAVocaleLanding() {
                           className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
                         >
                           <div className="sm:col-span-3">
-                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Prenom client</label>}
+                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Prénom client</label>}
                             <input
                               type="text"
                               value={row.prenom}
@@ -893,7 +904,7 @@ export default function IAVocaleLanding() {
                             />
                           </div>
                           <div className="sm:col-span-3">
-                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Telephone</label>}
+                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone</label>}
                             <input
                               type="tel"
                               value={row.telephone}
@@ -964,7 +975,7 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="ROI"
-            title="Avant / Apres BoosterPay."
+            title="Avant / Après BoosterPay."
             subtitle="Comparez votre quotidien sans et avec l'IA vocale."
           />
 
@@ -980,9 +991,9 @@ export default function IAVocaleLanding() {
                 </div>
                 <ul className="space-y-4">
                   {[
-                    { icon: Clock, text: '3h/jour au telephone' },
+                    { icon: Clock, text: '3h/jour au téléphone' },
                     { icon: Users, text: '40% de lapins' },
-                    { icon: TrendingUp, text: 'CA perdu sur les dossiers non renouveles' },
+                    { icon: TrendingUp, text: 'CA perdu sur les dossiers non renouvelés' },
                     { icon: Timer, text: 'Temps perdu, stress, oublis' },
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -1005,10 +1016,10 @@ export default function IAVocaleLanding() {
                 </div>
                 <ul className="space-y-4">
                   {[
-                    { icon: Zap, text: '0 minute au telephone', highlight: true },
+                    { icon: Zap, text: '0 minute au téléphone', highlight: true },
                     { icon: Target, text: '8% de lapins seulement', highlight: true },
-                    { icon: BarChart3, text: 'Agenda rempli, dossiers renouveles' },
-                    { icon: Sparkles, text: 'Serein. L\'IA gere tout.' },
+                    { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés' },
+                    { icon: Sparkles, text: 'Serein. L\'IA gère tout.' },
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <item.icon className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
@@ -1028,9 +1039,9 @@ export default function IAVocaleLanding() {
       <section className="py-24 md:py-32 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Temoignages"
+            tag="Témoignages"
             title="Ils utilisent BoosterPay."
-            subtitle="Des professionnels comme vous qui ont automatise leurs relances et confirmations."
+            subtitle="Des professionnels comme vous qui ont automatisé leurs relances et confirmations."
           />
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -1067,7 +1078,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Tarifs"
             title="Simple. Transparent. Sans engagement."
-            subtitle="Commencez gratuitement, evoluez quand vous le souhaitez."
+            subtitle="Commencez gratuitement, évoluez quand vous le souhaitez."
           />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -1116,6 +1127,45 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
+      {/* ── Section Robot Personnalisé ── */}
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal>
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 mb-6">
+              <Bot className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-semibold text-emerald-700">Sur mesure</span>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.1}>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Un besoin spécifique ?{' '}
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                On crée votre robot sur mesure.
+              </span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mt-6 leading-relaxed">
+              Appels chronophages, processus répétitifs, scénarios complexes — notre équipe configure une IA vocale 100% adaptée à votre métier et à vos workflows.
+            </p>
+          </ScrollReveal>
+          <ScrollReveal delay={0.3}>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="https://calendar.app.google/GHtu4ymohWhAXJTG8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
+              >
+                <CalendarCheck className="w-5 h-5" />
+                Réserver un appel découverte
+              </a>
+            </div>
+            <p className="text-sm text-gray-400 mt-4">Gratuit · 15 min · Sans engagement</p>
+          </ScrollReveal>
+        </div>
+      </section>
+
       {/* ============================================ */}
       {/* FAQ                                          */}
       {/* ============================================ */}
@@ -1123,7 +1173,7 @@ export default function IAVocaleLanding() {
         <div className="max-w-3xl mx-auto px-6">
           <SectionHeading
             tag="FAQ"
-            title="Questions frequentes."
+            title="Questions fréquentes."
           />
 
           <div className="space-y-3">
@@ -1175,10 +1225,10 @@ export default function IAVocaleLanding() {
 
               <div className="relative">
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
-                  100 appels offerts.<br />Zero engagement.
+                  100 appels offerts.<br />Zéro engagement.
                 </h2>
                 <p className="text-lg text-emerald-100 max-w-xl mx-auto mb-8">
-                  Testez l'IA vocale BoosterPay sans risque. Importez vos contacts, lancez vos premiers appels, et constatez les resultats.
+                  Testez l'IA vocale BoosterPay sans risque. Importez vos contacts, lancez vos premiers appels, et constatez les résultats.
                 </p>
                 <a
                   href="#import"
@@ -1203,24 +1253,24 @@ export default function IAVocaleLanding() {
                 <GradientText>BoosterPay</GradientText>
               </h4>
               <p className="text-sm text-gray-400 leading-relaxed">
-                L'IA vocale qui renouvelle vos dossiers et securise vos rendez-vous. Automatiquement.
+                L'IA vocale qui renouvelle vos dossiers et sécurise vos rendez-vous. Automatiquement.
               </p>
             </div>
             <div>
               <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Produit</h5>
               <ul className="space-y-2">
-                <li><a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Fonctionnalites</a></li>
+                <li><a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Fonctionnalités</a></li>
                 <li><a href="#usecases" className="text-sm text-gray-400 hover:text-white transition-colors">Cas d'usage</a></li>
                 <li><a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
                 <li><a href="#faq" className="text-sm text-gray-400 hover:text-white transition-colors">FAQ</a></li>
               </ul>
             </div>
             <div>
-              <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Legal</h5>
+              <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Légal</h5>
               <ul className="space-y-2">
-                <li><Link to="/mentions-legales" className="text-sm text-gray-400 hover:text-white transition-colors">Mentions legales</Link></li>
+                <li><Link to="/mentions-legales" className="text-sm text-gray-400 hover:text-white transition-colors">Mentions légales</Link></li>
                 <li><Link to="/cgv" className="text-sm text-gray-400 hover:text-white transition-colors">CGV</Link></li>
-                <li><Link to="/politique-confidentialite" className="text-sm text-gray-400 hover:text-white transition-colors">Politique de confidentialite</Link></li>
+                <li><Link to="/politique-confidentialite" className="text-sm text-gray-400 hover:text-white transition-colors">Politique de confidentialité</Link></li>
               </ul>
             </div>
             <div>
@@ -1233,7 +1283,7 @@ export default function IAVocaleLanding() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} BoosterPay. Tous droits reserves.</p>
+            <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} BoosterPay. Tous droits réservés.</p>
             <p className="text-xs text-gray-500">Fait avec passion en Bretagne.</p>
           </div>
         </div>
