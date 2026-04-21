@@ -95,10 +95,10 @@ const IA_VOCALE_PLANS = [
   { id: 'croissance', name: 'Croissance', price: '399€ HT/mois', desc: '1000 appels/mois · Support prioritaire' },
 ];
 const STRIPE_LINKS = {
-  decouverte: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
-  boost: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
-  business: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
-  croissance: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
+  decouverte: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
+  boost: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
+  business: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
+  croissance: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
 };
 
 const navLinks = [
