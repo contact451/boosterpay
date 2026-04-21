@@ -232,7 +232,7 @@ export default function IAVocaleLanding() {
   const [scrolled, setScrolled] = useState(false);
 
   // Import flow state
-  const [importTab, setImportTab] = useState('csv');
+  const [importTab, setImportTab] = useState('manual');
   const [csvData, setCsvData] = useState(null);
   const [csvFileName, setCsvFileName] = useState('');
   const [manualRows, setManualRows] = useState([
@@ -316,7 +316,7 @@ export default function IAVocaleLanding() {
   const stats = [
     { value: '35', suffix: '%', prefix: '-', label: 'de lapins' },
     { value: '80', suffix: '%', label: 'renouvellements' },
-    { value: '6', suffix: 'x', label: 'ROI moyen', prefix: '' },
+    { value: '6', suffix: 'x', label: 'rentabilité', prefix: '' },
     { value: '24', suffix: 'h', label: 'opérationnel' },
   ];
 
@@ -338,7 +338,7 @@ export default function IAVocaleLanding() {
   const testimonials = [
     { name: 'Thomas R.', role: 'Garagiste, Rennes', quote: '12 clients réactivés en 1 semaine. Des contrôles techniques que j\'aurais perdus sans les relances IA.', avatar: 'T' },
     { name: 'Camille D.', role: 'Ostéopathe, Nantes', quote: 'Zéro lapin depuis que les confirmations IA sont en place. Mon planning est enfin fiable.', avatar: 'C' },
-    { name: 'Marc L.', role: 'Courtier, Brest', quote: '80% de contrats renouvelés sans passer un seul appel. Le ROI est immédiat.', avatar: 'M' },
+    { name: 'Marc L.', role: 'Courtier, Brest', quote: '80% de contrats renouvelés sans passer un seul appel. La rentabilité est immédiate.', avatar: 'M' },
   ];
 
   const pricing = [
@@ -517,6 +517,64 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
+      {/* ── Trois services, un seul outil ── */}
+      <section className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <SectionHeading
+            tag="Nos services"
+            title="Trois services. Un seul outil."
+            subtitle="Chaque service s'adapte à votre métier et à vos besoins."
+          />
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: RefreshCw,
+                title: 'Renouvellement de dossiers',
+                desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance. Contrôles techniques, assurances, entretiens.',
+                color: 'from-emerald-500 to-teal-500',
+                bg: 'bg-emerald-50',
+                border: 'border-emerald-200',
+              },
+              {
+                icon: CalendarCheck,
+                title: 'Confirmation de RDV',
+                desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous. Résultat : vos lapins chutent de 43% à 8%.',
+                color: 'from-blue-500 to-indigo-500',
+                bg: 'bg-blue-50',
+                border: 'border-blue-200',
+              },
+              {
+                icon: Bot,
+                title: 'Robot IA sur mesure',
+                desc: 'Un besoin spécifique ? On configure une IA vocale 100% adaptée à vos processus et à votre métier.',
+                color: 'from-violet-500 to-purple-500',
+                bg: 'bg-violet-50',
+                border: 'border-violet-200',
+                cta: { label: 'Réserver un appel', href: 'https://calendar.app.google/GHtu4ymohWhAXJTG8' },
+              },
+            ].map((service, i) => (
+              <ScrollReveal key={i} delay={i * 0.1}>
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  className={`relative p-8 rounded-2xl border ${service.border} ${service.bg} h-full flex flex-col`}
+                >
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center mb-6 shadow-lg`}>
+                    <service.icon className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{service.title}</h3>
+                  <p className="text-gray-500 leading-relaxed flex-1">{service.desc}</p>
+                  {service.cta && (
+                    <a href={service.cta.href} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-600 hover:text-violet-700 transition-colors">
+                      {service.cta.label} <ArrowRight className="w-4 h-4" />
+                    </a>
+                  )}
+                </motion.div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ============================================ */}
       {/* TWO CORE VALUE PROPS                         */}
       {/* ============================================ */}
@@ -539,7 +597,7 @@ export default function IAVocaleLanding() {
                   <h3 className="text-2xl font-bold text-gray-900">Renouvellement de dossiers</h3>
                 </div>
                 <p className="text-gray-500 leading-relaxed mb-6">
-                  L'IA détecte les dossiers qui arrivent à échéance et appelle vos clients pour les relancer. Contrôles techniques, assurances, entretiens annuels, bilans médicaux, devis en attente — tout est couvert.
+                  Importez vos dossiers clients à renouveler — l'IA appelle chaque contact pour relancer les échéances. Contrôles techniques, assurances, entretiens annuels, bilans médicaux, devis en attente — tout est couvert.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux', 'Devis en attente'].map((tag) => (
@@ -568,27 +626,72 @@ export default function IAVocaleLanding() {
                   L'IA appelle la veille pour confirmer chaque rendez-vous. Résultat : vos lapins passent de 43% à 8%. Votre planning est fiable, votre CA protégé.
                 </p>
 
-                {/* Mini calendar animation */}
+                {/* Enhanced appointment confirmation animation */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-700">Cette semaine</span>
-                    <span className="text-xs text-emerald-600 font-medium">92% confirmés</span>
+                    <span className="text-sm font-semibold text-gray-700">Agenda du jour</span>
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 2.2 }}
+                      className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
+                    >
+                      Taux de présence : 92%
+                    </motion.span>
                   </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'].map((day, i) => (
-                      <div key={day} className="text-center">
-                        <p className="text-[10px] text-gray-400 mb-1">{day}</p>
+                  <div className="space-y-2">
+                    {[
+                      { time: '09:00', name: 'Martin D.', status: 'confirmed' },
+                      { time: '10:30', name: 'Sophie L.', status: 'confirmed' },
+                      { time: '11:00', name: 'Pierre B.', status: 'confirmed' },
+                      { time: '14:00', name: 'Claire M.', status: 'noshow' },
+                      { time: '15:30', name: 'Lucas R.', status: 'confirmed' },
+                    ].map((slot, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 + i * 0.25 }}
+                        className="flex items-center gap-3 py-1.5"
+                      >
+                        <span className="text-xs font-medium text-gray-400 w-10">{slot.time}</span>
+                        <span className="text-sm text-gray-700 flex-1">{slot.name}</span>
                         <motion.div
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
-                          transition={{ delay: 0.3 + i * 0.1, type: 'spring' }}
                           viewport={{ once: true }}
-                          className="w-8 h-8 mx-auto rounded-lg bg-emerald-100 flex items-center justify-center"
+                          transition={{ delay: 0.8 + i * 0.25, type: 'spring', stiffness: 300 }}
                         >
-                          <Check className="w-4 h-4 text-emerald-600" />
+                          {slot.status === 'confirmed' ? (
+                            <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                              <X className="w-3.5 h-3.5 text-red-500" />
+                            </div>
+                          )}
                         </motion.div>
-                      </div>
+                      </motion.div>
                     ))}
+                  </div>
+                  {/* Animated progress bar */}
+                  <div className="mt-3 pt-3 border-t border-gray-50">
+                    <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1">
+                      <span>Avant IA : 57%</span>
+                      <span>Avec IA : 92%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: '57%' }}
+                        whileInView={{ width: '92%' }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 2, duration: 1.2, ease: 'easeOut' }}
+                        className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -783,8 +886,8 @@ export default function IAVocaleLanding() {
               {/* Tabs */}
               <div className="flex border-b border-gray-100">
                 {[
-                  { key: 'csv', label: 'Import CSV', icon: FileSpreadsheet },
                   { key: 'manual', label: 'Ajout manuel', icon: UserPlus },
+                  { key: 'csv', label: 'Import CSV', icon: FileSpreadsheet },
                 ].map((tab) => (
                   <button
                     key={tab.key}
@@ -968,65 +1071,69 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* ============================================ */}
-      {/* ROI SECTION                                  */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+      {/* ── Avant / Après ── */}
+      <section className="py-24 bg-white">
+        <div className="max-w-6xl mx-auto px-6">
           <SectionHeading
-            tag="ROI"
-            title="Avant / Après BoosterPay."
+            tag="Impact sur votre activité"
+            title="Avant / Après BoosterPay"
             subtitle="Comparez votre quotidien sans et avec l'IA vocale."
           />
-
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Sans IA */}
-            <ScrollReveal>
-              <div className="rounded-2xl border border-red-100 bg-red-50/30 p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-                    <X className="w-5 h-5 text-red-500" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Sans IA</h3>
-                </div>
-                <ul className="space-y-4">
+            <ScrollReveal delay={0.1}>
+              <div className="relative p-8 rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 border border-red-100 overflow-hidden">
+                <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-xs font-bold px-4 py-1.5 rounded-bl-xl">SANS IA</div>
+                <div className="space-y-6 mt-4">
                   {[
-                    { icon: Clock, text: '3h/jour au téléphone' },
-                    { icon: Users, text: '40% de lapins' },
+                    { icon: Clock, text: '3h/jour au téléphone à relancer' },
+                    { icon: Calendar, text: '43% de lapins non anticipés' },
                     { icon: TrendingUp, text: 'CA perdu sur les dossiers non renouvelés' },
                     { icon: Timer, text: 'Temps perdu, stress, oublis' },
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <item.icon className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600">{item.text}</span>
-                    </li>
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.1 + i * 0.1 }}
+                      className="flex items-center gap-4"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                        <item.icon className="w-5 h-5 text-red-500" />
+                      </div>
+                      <span className="text-gray-700 font-medium">{item.text}</span>
+                    </motion.div>
                   ))}
-                </ul>
+                </div>
               </div>
             </ScrollReveal>
-
             {/* Avec IA */}
-            <ScrollReveal delay={0.15}>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/30 p-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <Check className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900">Avec BoosterPay</h3>
-                </div>
-                <ul className="space-y-4">
+            <ScrollReveal delay={0.2}>
+              <div className="relative p-8 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 overflow-hidden shadow-lg shadow-emerald-100/50">
+                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl">AVEC BOOSTERPAY</div>
+                <div className="space-y-6 mt-4">
                   {[
-                    { icon: Zap, text: '0 minute au téléphone', highlight: true },
-                    { icon: Target, text: '8% de lapins seulement', highlight: true },
+                    { icon: Zap, text: '0 minute au téléphone' },
+                    { icon: CheckCircle2, text: 'Seulement 8% de lapins' },
                     { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés' },
-                    { icon: Sparkles, text: 'Serein. L\'IA gère tout.' },
+                    { icon: Star, text: 'Vous gérez, l\'IA appelle' },
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <item.icon className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                      <span className={item.highlight ? 'text-gray-900 font-semibold' : 'text-gray-600'}>{item.text}</span>
-                    </li>
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.1 + i * 0.1 }}
+                      className="flex items-center gap-4"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <item.icon className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <span className="text-gray-700 font-medium">{item.text}</span>
+                    </motion.div>
                   ))}
-                </ul>
+                </div>
               </div>
             </ScrollReveal>
           </div>

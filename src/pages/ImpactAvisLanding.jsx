@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import Papa from 'papaparse';
 import {
   Menu,
   X,
@@ -21,6 +22,8 @@ import {
   BarChart3,
   MessageSquare,
   Eye,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 // ============ DESIGN SYSTEM ============
@@ -101,7 +104,7 @@ const AnnouncementBar = () => (
   <div className="bg-gray-900 text-white text-center py-2.5 text-[13px] font-medium fixed top-[32px] w-full z-50">
     <span className="opacity-80">+2 340 commerces utilisent déjà Impact-Avis IA</span>
     <span className="mx-2 opacity-30">|</span>
-    <a href="#pricing" className="text-indigo-300 hover:text-indigo-200 transition-colors font-semibold">
+    <a href="#tarifs" className="text-indigo-300 hover:text-indigo-200 transition-colors font-semibold">
       Voir les tarifs <ChevronRight className="w-3 h-3 inline" />
     </a>
   </div>
@@ -126,14 +129,15 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">Fonctionnalités</a>
-          <a href="#how-it-works" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">Comment ça marche</a>
-          <a href="#pricing" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">Tarifs</a>
+          <a href="#fonctionnalites" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">Fonctionnalités</a>
+          <a href="#comment-ca-marche" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">Comment ça marche</a>
+          <a href="#tarifs" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">Tarifs</a>
+          <a href="#faq" className="text-[14px] font-medium text-gray-600 hover:text-gray-900 transition-colors">FAQ</a>
         </div>
 
         <div className="hidden md:flex items-center gap-3">
           <motion.a
-            href="#pricing"
+            href="#import"
             className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-[14px] font-semibold hover:bg-gray-800 transition-colors shadow-sm"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -155,9 +159,11 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <a href="#features" className="text-lg font-semibold text-gray-900" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</a>
-            <a href="#pricing" className="text-lg font-medium text-gray-600" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
-            <motion.a href="#pricing" className="bg-gray-900 text-white px-8 py-3 rounded-xl font-semibold mt-4" whileTap={{ scale: 0.95 }}>
+            <a href="#fonctionnalites" className="text-lg font-semibold text-gray-900" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</a>
+            <a href="#comment-ca-marche" className="text-lg font-medium text-gray-600" onClick={() => setMobileMenuOpen(false)}>Comment ça marche</a>
+            <a href="#tarifs" className="text-lg font-medium text-gray-600" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
+            <a href="#faq" className="text-lg font-medium text-gray-600" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
+            <motion.a href="#import" className="bg-gray-900 text-white px-8 py-3 rounded-xl font-semibold mt-4" whileTap={{ scale: 0.95 }}>
               Essai gratuit
             </motion.a>
           </motion.div>
@@ -478,7 +484,7 @@ const HeroSection = () => {
 
           <div className="flex flex-col sm:flex-row gap-3 mb-10">
             <motion.a
-              href="#pricing"
+              href="#import"
               className="bg-gray-900 text-white px-8 py-4 rounded-2xl font-semibold text-[16px] flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -486,7 +492,7 @@ const HeroSection = () => {
               Démarrer gratuitement <ArrowRight className="w-5 h-5" />
             </motion.a>
             <motion.a
-              href="#how-it-works"
+              href="#comment-ca-marche"
               className="border-2 border-gray-200 text-gray-700 px-8 py-4 rounded-2xl font-semibold text-[16px] flex items-center justify-center gap-2 hover:border-gray-300 transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -579,65 +585,73 @@ const StatsSection = () => {
 };
 
 // ============ PROBLEM ============
-const ProblemSection = () => {
-  const problems = [
-    { icon: AlertTriangle, stat: '68%', text: "des consommateurs ne choisissent JAMAIS un commerce avec moins de 4 étoiles", color: 'red' },
-    { icon: TrendingDown, stat: '30', text: "clients perdus pour chaque avis négatif non traité", color: 'orange' },
-    { icon: Users, stat: '0', text: "avis pendant que vos concurrents en récoltent chaque semaine", color: 'amber' },
-  ];
-
-  return (
-    <section className="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
+const ProblemSection = () => (
+  <section className="py-24 bg-white">
+    <div className="max-w-6xl mx-auto px-6">
       <div className="text-center mb-16">
         <SectionBadge>Le problème</SectionBadge>
-        <SectionTitle>
-          Sans gestion d&apos;avis,
-          <br />
-          <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
-            votre commerce est invisible.
-          </span>
+        <SectionTitle className="text-center">
+          Sans avis récents, vous êtes <span className="text-red-500">invisible</span>.
         </SectionTitle>
       </div>
-
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
-        {problems.map((p, i) => {
-          const Icon = p.icon;
-          return (
-            <motion.div
-              key={i}
-              className="group relative bg-white rounded-3xl border border-gray-200/60 p-8 hover:border-red-200 transition-all duration-500 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6, ease }}
-            >
-              <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-5">
-                <Icon className="w-6 h-6 text-red-500" />
-              </div>
-              <div className="text-[40px] font-extrabold text-gray-900 mb-2 leading-none">
-                {p.stat}{p.stat !== '0' ? (p.stat === '68%' ? '' : ' clients') : ' avis'}
-              </div>
-              <p className="text-[15px] text-gray-600 leading-relaxed">{p.text}</p>
-            </motion.div>
-          );
-        })}
+      <div className="grid md:grid-cols-3 gap-8">
+        {[
+          {
+            icon: AlertTriangle,
+            stat: '68%',
+            color: 'text-red-500',
+            bg: 'bg-red-50',
+            border: 'border-red-100',
+            title: 'Clients exigeants',
+            desc: 'des consommateurs ne choisissent jamais un commerce noté en dessous de 4 étoiles.',
+          },
+          {
+            icon: TrendingDown,
+            stat: '30',
+            suffix: ' clients',
+            color: 'text-amber-500',
+            bg: 'bg-amber-50',
+            border: 'border-amber-100',
+            title: 'Impact direct',
+            desc: 'perdus en moyenne pour chaque avis négatif non traité qui reste visible sur Google.',
+          },
+          {
+            icon: Users,
+            stat: '8/10',
+            color: 'text-indigo-500',
+            bg: 'bg-indigo-50',
+            border: 'border-indigo-100',
+            title: 'Le choix se fait sur les avis',
+            desc: 'clients choisissent le commerce avec les avis les plus récents et les mieux notés.',
+          },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ y: -6, transition: { duration: 0.3 } }}
+            className={`relative p-8 rounded-2xl border ${item.border} ${item.bg} text-center`}
+          >
+            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${item.bg} border ${item.border} mb-6`}>
+              <item.icon className={`w-7 h-7 ${item.color}`} />
+            </div>
+            <div className={`text-5xl font-extrabold ${item.color} mb-2`}>
+              {item.stat}{item.suffix || ''}
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
+            <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+          </motion.div>
+        ))}
       </div>
-
-      <motion.p
-        className="text-center text-2xl font-bold text-gray-900"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-      >
-        Il est temps de reprendre le contrôle.
-      </motion.p>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 // ============ FEATURES BENTO ============
 const FeaturesSection = () => (
-  <section id="features" className="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
+  <section id="fonctionnalites" className="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
     <div className="text-center mb-16">
       <SectionBadge>Fonctionnalités</SectionBadge>
       <SectionTitle>Tout pour dominer Google.</SectionTitle>
@@ -648,10 +662,11 @@ const FeaturesSection = () => (
       {/* Main card — Shield */}
       <motion.div
         className="md:col-span-2 md:row-span-2 relative overflow-hidden bg-gray-900 text-white rounded-3xl p-10 flex flex-col justify-between"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7, ease }}
+        whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
         {/* Gradient orb */}
         <div className="absolute top-0 right-0 w-64 h-64 opacity-20"
@@ -685,10 +700,11 @@ const FeaturesSection = () => (
       {/* IA Vocale card */}
       <motion.div
         className="md:col-span-2 relative bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ delay: 0.1, duration: 0.7, ease }}
+        transition={{ delay: 0.15, duration: 0.7, ease }}
+        whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
         <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.03]"
           style={{ background: 'radial-gradient(circle, #6366f1, transparent 60%)' }} />
@@ -715,10 +731,11 @@ const FeaturesSection = () => (
       {/* Import card */}
       <motion.div
         className="md:col-span-2 relative bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ delay: 0.2, duration: 0.7, ease }}
+        transition={{ delay: 0.3, duration: 0.7, ease }}
+        whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
         <div className="relative z-10">
           <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mb-6">
@@ -743,7 +760,7 @@ const HowItWorksSection = () => {
   ];
 
   return (
-    <section id="how-it-works" className="py-24 px-6 lg:px-8 max-w-5xl mx-auto">
+    <section id="comment-ca-marche" className="py-24 px-6 lg:px-8 max-w-5xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>Simplicité</SectionBadge>
         <SectionTitle>3 minutes pour tout mettre en place.</SectionTitle>
@@ -756,10 +773,11 @@ const HowItWorksSection = () => {
             <motion.div
               key={i}
               className="group flex items-start gap-6 bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6, ease }}
+              transition={{ delay: i * 0.15, duration: 0.6, ease }}
+              whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
             >
               <div className="flex-shrink-0 w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center">
                 <span className="text-white font-bold text-lg tabular-nums">{s.num}</span>
@@ -774,6 +792,207 @@ const HowItWorksSection = () => {
             </motion.div>
           );
         })}
+      </div>
+    </section>
+  );
+};
+
+// ============ IMPORT SECTION ============
+const ImportSection = () => {
+  const [activeTab, setActiveTab] = useState('manual');
+  const [manualRows, setManualRows] = useState([{ prenom: '', telephone: '', email: '' }]);
+  const [csvData, setCsvData] = useState(null);
+  const [csvFileName, setCsvFileName] = useState('');
+  const [flowState, setFlowState] = useState('idle'); // idle, uploading, success, redirecting
+  const [countdown, setCountdown] = useState(3);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const addRow = () => setManualRows([...manualRows, { prenom: '', telephone: '', email: '' }]);
+  const removeRow = (i) => setManualRows(manualRows.filter((_, idx) => idx !== i));
+  const updateRow = (i, field, value) => {
+    const updated = [...manualRows];
+    updated[i][field] = value;
+    setManualRows(updated);
+  };
+
+  const handleFile = (file) => {
+    if (!file) return;
+    setCsvFileName(file.name);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => setCsvData(results.data),
+    });
+  };
+
+  const handleSubmit = () => {
+    setFlowState('uploading');
+    setTimeout(() => {
+      setFlowState('success');
+      let c = 3;
+      const timer = setInterval(() => {
+        c -= 1;
+        setCountdown(c);
+        if (c <= 0) {
+          clearInterval(timer);
+          setFlowState('redirecting');
+          window.location.href = 'https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01';
+        }
+      }, 1000);
+    }, 1500);
+  };
+
+  if (flowState === 'success' || flowState === 'redirecting') {
+    return (
+      <section id="import" className="py-24 bg-gradient-to-b from-indigo-50 to-white">
+        <div className="max-w-lg mx-auto px-6 text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-200">
+              <Check className="w-10 h-10 text-white" />
+            </div>
+          </motion.div>
+          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-3">
+            Félicitations !
+          </motion.h3>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 text-lg mb-8">
+            Vos données ont été envoyées. Vos 10 avis gratuits vont être collectés.
+          </motion.p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="text-sm text-gray-400">
+            Redirection dans <span className="font-bold text-indigo-600 text-lg">{countdown}</span> seconde{countdown > 1 ? 's' : ''}...
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="import" className="py-24 bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-3xl mx-auto px-6">
+        <div className="text-center mb-12">
+          <SectionBadge>Machine à leads</SectionBadge>
+          <SectionTitle className="text-center">Lancez votre première campagne</SectionTitle>
+          <SectionSub>Importez vos contacts et l&apos;IA commence à collecter vos avis en 48h.</SectionSub>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex bg-gray-100 rounded-full p-1">
+            {[{ id: 'manual', label: 'Ajout manuel' }, { id: 'csv', label: 'Import CSV' }].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+                  activeTab === tab.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <motion.div layout className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+          <AnimatePresence mode="wait">
+            {activeTab === 'manual' ? (
+              <motion.div key="manual" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+                <div className="space-y-4">
+                  {manualRows.map((row, i) => (
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                      <div>
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Prénom</label>}
+                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Jean" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                      </div>
+                      <div>
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Téléphone</label>}
+                        <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                      </div>
+                      <div>
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Email</label>}
+                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                      </div>
+                      <div>
+                        {manualRows.length > 1 && (
+                          <button onClick={() => removeRow(i)} className="p-3 text-gray-400 hover:text-red-500 transition-colors">
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={addRow} className="mt-4 inline-flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-700 transition-colors">
+                  <span className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center"><span className="text-lg leading-none">+</span></span>
+                  Ajouter un contact
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div key="csv" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 ${
+                    dragOver ? 'border-indigo-400 bg-indigo-50' : csvData ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={(e) => handleFile(e.target.files[0])} className="hidden" />
+                  {csvData ? (
+                    <>
+                      <Upload className="w-10 h-10 text-green-500 mx-auto mb-3" />
+                      <p className="font-semibold text-gray-900">{csvFileName}</p>
+                      <p className="text-sm text-green-600 mt-1">{csvData.length} contacts détectés</p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                      <p className="font-medium text-gray-600">Glissez votre fichier ici</p>
+                      <p className="text-sm text-gray-400 mt-1">CSV ou Excel · 10 Mo max</p>
+                    </>
+                  )}
+                </div>
+                {csvData && csvData.length > 0 && (
+                  <div className="mt-4 max-h-40 overflow-y-auto rounded-xl border border-gray-100">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          {Object.keys(csvData[0]).slice(0, 4).map((k) => (
+                            <th key={k} className="px-4 py-2 text-left text-xs font-medium text-gray-500">{k}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {csvData.slice(0, 5).map((row, i) => (
+                          <tr key={i} className="border-t border-gray-50">
+                            {Object.values(row).slice(0, 4).map((v, j) => (
+                              <td key={j} className="px-4 py-2 text-gray-600">{String(v)}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {csvData.length > 5 && <p className="text-xs text-gray-400 text-center py-2">... et {csvData.length - 5} autres contacts</p>}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button
+            onClick={handleSubmit}
+            disabled={flowState === 'uploading'}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {flowState === 'uploading' ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>Lancer mes 10 avis gratuits <ArrowRight className="w-4 h-4" /></>
+            )}
+          </motion.button>
+        </motion.div>
       </div>
     </section>
   );
@@ -814,10 +1033,11 @@ const TestimonialsSection = () => {
           <motion.div
             key={i}
             className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.1, duration: 0.6, ease }}
+            transition={{ delay: i * 0.15, duration: 0.6, ease }}
+            whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
           >
             {/* Stars */}
             <div className="flex gap-0.5 mb-5">
@@ -844,7 +1064,7 @@ const TestimonialsSection = () => {
 
 // ============ PRICING ============
 const PricingSection = () => (
-  <section id="pricing" className="py-24 px-6 lg:px-8 bg-gray-50/50">
+  <section id="tarifs" className="py-24 px-6 lg:px-8 bg-gray-50/50">
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>Tarifs</SectionBadge>
@@ -856,10 +1076,11 @@ const PricingSection = () => (
         {/* Plan 1 */}
         <motion.div
           className="relative bg-white rounded-3xl border-2 border-gray-900 p-8 shadow-[0_4px_30px_rgba(0,0,0,0.08)]"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease }}
+          whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
         >
           <div className="absolute -top-3.5 left-8 bg-gray-900 text-white px-4 py-1 rounded-full text-[12px] font-bold tracking-wide">
             Le + populaire
@@ -882,13 +1103,14 @@ const PricingSection = () => (
             ))}
           </div>
 
-          <motion.button
-            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-semibold text-[15px] hover:bg-gray-800 transition-colors shadow-sm"
+          <motion.a
+            href="https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01"
+            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-semibold text-[15px] hover:bg-gray-800 transition-colors shadow-sm block text-center"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
           >
             Commencer maintenant <ArrowRight className="w-4 h-4 inline ml-1" />
-          </motion.button>
+          </motion.a>
 
           <p className="text-center text-xs text-gray-400 mt-3">10 avis offerts pour tester</p>
         </motion.div>
@@ -896,10 +1118,11 @@ const PricingSection = () => (
         {/* Plan 2 */}
         <motion.div
           className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.1, duration: 0.6, ease }}
+          transition={{ delay: 0.15, duration: 0.6, ease }}
+          whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
         >
           <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[12px] font-bold mb-4">
             <Shield className="w-3 h-3" /> Zéro risque
@@ -922,13 +1145,14 @@ const PricingSection = () => (
             ))}
           </div>
 
-          <motion.button
-            className="w-full border-2 border-gray-200 text-gray-900 py-4 rounded-2xl font-semibold text-[15px] hover:border-gray-300 transition-colors"
+          <motion.a
+            href="https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01"
+            className="w-full border-2 border-gray-200 text-gray-900 py-4 rounded-2xl font-semibold text-[15px] hover:border-gray-300 transition-colors block text-center"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
           >
             Tester sans risque
-          </motion.button>
+          </motion.a>
         </motion.div>
       </div>
 
@@ -962,7 +1186,7 @@ const FAQSection = () => {
   ];
 
   return (
-    <section className="py-24 px-6 lg:px-8 max-w-3xl mx-auto">
+    <section id="faq" className="py-24 px-6 lg:px-8 max-w-3xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>FAQ</SectionBadge>
         <SectionTitle>Questions fréquentes</SectionTitle>
@@ -1036,7 +1260,7 @@ const FinalCTASection = () => (
       </motion.p>
 
       <motion.a
-        href="#pricing"
+        href="#import"
         className="inline-flex items-center gap-2 bg-white text-gray-900 px-10 py-4 rounded-2xl font-bold text-lg shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] transition-all"
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
@@ -1081,7 +1305,7 @@ const Footer = () => (
           <ul className="space-y-2.5 text-sm text-gray-500">
             <li><Link to="/impact-avis" className="hover:text-gray-900 transition-colors">Impact-Avis</Link></li>
             <li><Link to="/ia-vocale" className="hover:text-gray-900 transition-colors">IA Vocale</Link></li>
-            <li><a href="#pricing" className="hover:text-gray-900 transition-colors">Tarifs</a></li>
+            <li><a href="#tarifs" className="hover:text-gray-900 transition-colors">Tarifs</a></li>
           </ul>
         </div>
 
@@ -1123,6 +1347,7 @@ export default function ImpactAvisLanding() {
       <ProblemSection />
       <FeaturesSection />
       <HowItWorksSection />
+      <ImportSection />
       <TestimonialsSection />
       <PricingSection />
       <FAQSection />
