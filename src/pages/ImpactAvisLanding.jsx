@@ -873,14 +873,19 @@ const ImportSection = () => {
     succes: 'https://buy.stripe.com/aFabJ31FQgF9cPe7FEf3a04',
   };
 
+  const scrollToImport = () => {
+    const el = document.getElementById('import');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleSubmit = () => {
     setFlowState('uploading');
-    setTimeout(() => setFlowState('info'), 1500);
+    setTimeout(() => { setFlowState('info'); scrollToImport(); }, 1500);
   };
 
   const handleInfoSubmit = (e) => {
     e.preventDefault();
-    if (companyName && companyEmail) setFlowState('plan');
+    if (companyName && companyEmail) { setFlowState('plan'); scrollToImport(); }
   };
 
   const handlePlanSelect = (plan) => {

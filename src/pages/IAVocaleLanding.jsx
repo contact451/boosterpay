@@ -349,10 +349,16 @@ export default function IAVocaleLanding() {
   };
 
   /* ── Submit ───────────────────────────────────────────────── */
+  const scrollToImport = () => {
+    const el = document.getElementById('import');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleSubmit = () => {
     setImportState('uploading');
     setTimeout(() => {
       setImportState('info');
+      scrollToImport();
     }, 2000);
   };
 
@@ -360,6 +366,7 @@ export default function IAVocaleLanding() {
     e.preventDefault();
     if (!companyName.trim() || !companyEmail.trim()) return;
     setImportState('plan');
+    scrollToImport();
   };
 
   const handlePlanSelect = (planId) => {
