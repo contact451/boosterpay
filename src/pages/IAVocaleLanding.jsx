@@ -1086,54 +1086,6 @@ export default function IAVocaleLanding() {
           </AnimatePresence>
 
           {/* Import card */}
-          {/* Service type selector */}
-          <ScrollReveal>
-            <div className="mb-8">
-              <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">Ce fichier concerne...</h3>
-              <p className="text-sm text-gray-400 text-center mb-5">Choisissez le type de service pour tous les contacts</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={() => setServiceType('renouvellement')}
-                  className={`flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                    serviceType === 'renouvellement'
-                      ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                      : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    serviceType === 'renouvellement' ? 'bg-emerald-100' : 'bg-gray-100'
-                  }`}>
-                    <RefreshCw className={`w-5 h-5 ${serviceType === 'renouvellement' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                  </div>
-                  <div>
-                    <p className={`font-semibold text-sm ${serviceType === 'renouvellement' ? 'text-emerald-700' : 'text-gray-800'}`}>Renouvellement de dossiers</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Relance des dossiers arrivant à échéance</p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setServiceType('confirmation')}
-                  className={`flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
-                    serviceType === 'confirmation'
-                      ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                      : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    serviceType === 'confirmation' ? 'bg-emerald-100' : 'bg-gray-100'
-                  }`}>
-                    <CalendarCheck className={`w-5 h-5 ${serviceType === 'confirmation' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                  </div>
-                  <div>
-                    <p className={`font-semibold text-sm ${serviceType === 'confirmation' ? 'text-emerald-700' : 'text-gray-800'}`}>Confirmation de RDV</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Appel J-1 pour confirmer les rendez-vous</p>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {serviceType && (
-          <>
           <ScrollReveal>
             <div className="bg-white rounded-3xl border border-gray-200 shadow-xl shadow-emerald-900/5 overflow-hidden">
               {/* Tabs */}
@@ -1330,9 +1282,52 @@ export default function IAVocaleLanding() {
                           <span className="text-sm font-semibold text-gray-800">{csvData.length} contacts prêts</span>
                           <button onClick={() => setCsvMappingConfirmed(false)} className="ml-auto text-xs text-emerald-600 hover:text-emerald-700 font-medium">Modifier le mapping</button>
                         </div>
+                        {/* Service type selector */}
+                        <div className="mt-4 mb-4">
+                          <h4 className="text-sm font-bold text-gray-900 mb-1">Ce fichier concerne...</h4>
+                          <p className="text-xs text-gray-400 mb-3">Choisissez le type de service pour tous les contacts</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                              onClick={() => setServiceType('renouvellement')}
+                              className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                                serviceType === 'renouvellement'
+                                  ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
+                                  : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                serviceType === 'renouvellement' ? 'bg-emerald-100' : 'bg-gray-100'
+                              }`}>
+                                <RefreshCw className={`w-5 h-5 ${serviceType === 'renouvellement' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                              </div>
+                              <div>
+                                <p className={`font-semibold text-sm ${serviceType === 'renouvellement' ? 'text-emerald-700' : 'text-gray-800'}`}>Renouvellement de dossiers</p>
+                                <p className="text-xs text-gray-400 mt-0.5">Relance des dossiers arrivant à échéance</p>
+                              </div>
+                            </button>
+                            <button
+                              onClick={() => setServiceType('confirmation')}
+                              className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                                serviceType === 'confirmation'
+                                  ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
+                                  : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                serviceType === 'confirmation' ? 'bg-emerald-100' : 'bg-gray-100'
+                              }`}>
+                                <CalendarCheck className={`w-5 h-5 ${serviceType === 'confirmation' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                              </div>
+                              <div>
+                                <p className={`font-semibold text-sm ${serviceType === 'confirmation' ? 'text-emerald-700' : 'text-gray-800'}`}>Confirmation de RDV</p>
+                                <p className="text-xs text-gray-400 mt-0.5">Appel J-1 pour confirmer les rendez-vous</p>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
                         <button
                           onClick={handleSubmit}
-                          disabled={importState !== 'idle'}
+                          disabled={importState !== 'idle' || !serviceType}
                           className="w-full py-4 rounded-xl text-white font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                         >
                           Lancer mes 100 appels gratuits
@@ -1401,10 +1396,53 @@ export default function IAVocaleLanding() {
                     >
                       <Plus className="w-4 h-4" /> Ajouter un contact
                     </button>
+                    {/* Service type selector */}
+                    <div className="mt-6 mb-2">
+                      <h4 className="text-sm font-bold text-gray-900 mb-1">Ce fichier concerne...</h4>
+                      <p className="text-xs text-gray-400 mb-3">Choisissez le type de service pour tous les contacts</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setServiceType('renouvellement')}
+                          className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                            serviceType === 'renouvellement'
+                              ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
+                              : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            serviceType === 'renouvellement' ? 'bg-emerald-100' : 'bg-gray-100'
+                          }`}>
+                            <RefreshCw className={`w-5 h-5 ${serviceType === 'renouvellement' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                          </div>
+                          <div>
+                            <p className={`font-semibold text-sm ${serviceType === 'renouvellement' ? 'text-emerald-700' : 'text-gray-800'}`}>Renouvellement de dossiers</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Relance des dossiers arrivant à échéance</p>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => setServiceType('confirmation')}
+                          className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
+                            serviceType === 'confirmation'
+                              ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
+                              : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                            serviceType === 'confirmation' ? 'bg-emerald-100' : 'bg-gray-100'
+                          }`}>
+                            <CalendarCheck className={`w-5 h-5 ${serviceType === 'confirmation' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                          </div>
+                          <div>
+                            <p className={`font-semibold text-sm ${serviceType === 'confirmation' ? 'text-emerald-700' : 'text-gray-800'}`}>Confirmation de RDV</p>
+                            <p className="text-xs text-gray-400 mt-0.5">Appel J-1 pour confirmer les rendez-vous</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
 
                     <button
                       onClick={handleSubmit}
-                      disabled={manualRows.every((r) => !r.prenom || !r.telephone) || importState !== 'idle'}
+                      disabled={manualRows.every((r) => !r.prenom || !r.telephone) || importState !== 'idle' || !serviceType}
                       className="w-full mt-6 py-4 rounded-xl text-white font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
                       Lancer mes 100 appels gratuits
@@ -1414,7 +1452,6 @@ export default function IAVocaleLanding() {
               </div>
             </div>
           </ScrollReveal>
-          </>)}
         </div>
       </section>
 
@@ -1623,9 +1660,7 @@ export default function IAVocaleLanding() {
                     ))}
                   </ul>
                   <a
-                    href={STRIPE_LINKS.decouverte}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="#import"
                     className={`block text-center py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
                       plan.popular
                         ? 'text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02]'
