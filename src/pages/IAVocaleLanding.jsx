@@ -39,6 +39,7 @@ import {
   FileSpreadsheet,
   UserPlus,
   ArrowUpRight,
+  HelpCircle,
 } from 'lucide-react';
 import { captureLeadFromSite } from '../services/leadService';
 import Papa from 'papaparse';
@@ -248,16 +249,20 @@ export default function IAVocaleLanding() {
   const [csvData, setCsvData] = useState(null);
   const [csvFileName, setCsvFileName] = useState('');
   const [csvHeaders, setCsvHeaders] = useState([]);
-  const [csvMapping, setCsvMapping] = useState({ nom: '', telephone: '', type: '', dateRdv: '' });
+  const [csvMapping, setCsvMapping] = useState({ nom: '', telephone: '', dateRdv: '' });
   const [csvMappingConfirmed, setCsvMappingConfirmed] = useState(false);
   const [manualRows, setManualRows] = useState([
-    { prenom: '', telephone: '', type: 'renouvellement', dateRdv: '' },
+    { prenom: '', telephone: '', dateRdv: '' },
   ]);
   const [importState, setImportState] = useState('idle'); // idle | uploading | info | plan | redirecting
   const [countdown, setCountdown] = useState(3);
   const [companyName, setCompanyName] = useState('');
   const [companyEmail, setCompanyEmail] = useState('');
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // Service type (global for all contacts)
+  const [serviceType, setServiceType] = useState('');
+  const [csvHelpOpen, setCsvHelpOpen] = useState(false);
 
   // FAQ
   const [openFaq, setOpenFaq] = useState(null);
@@ -308,12 +313,11 @@ export default function IAVocaleLanding() {
         setCsvData(results.data);
         const headers = results.meta.fields || [];
         setCsvHeaders(headers);
-        const autoMap = { nom: '', telephone: '', type: '', dateRdv: '' };
+        const autoMap = { nom: '', telephone: '', dateRdv: '' };
         headers.forEach((h) => {
           const lower = h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           if (!autoMap.nom && (lower.includes('nom') || lower.includes('name') || lower.includes('prenom') || lower.includes('client'))) autoMap.nom = h;
           if (!autoMap.telephone && (lower.includes('tel') || lower.includes('phone') || lower.includes('mobile') || lower.includes('numero'))) autoMap.telephone = h;
-          if (!autoMap.type && (lower.includes('type') || lower.includes('motif') || lower.includes('objet'))) autoMap.type = h;
           if (!autoMap.dateRdv && (lower.includes('date') || lower.includes('rdv') || lower.includes('echeance'))) autoMap.dateRdv = h;
         });
         setCsvMapping(autoMap);
@@ -338,7 +342,7 @@ export default function IAVocaleLanding() {
     setManualRows(updated);
   };
   const addRow = () =>
-    setManualRows([...manualRows, { prenom: '', telephone: '', type: 'renouvellement', dateRdv: '' }]);
+    setManualRows([...manualRows, { prenom: '', telephone: '', dateRdv: '' }]);
   const removeRow = (idx) => {
     if (manualRows.length <= 1) return;
     setManualRows(manualRows.filter((_, i) => i !== idx));
@@ -375,6 +379,7 @@ export default function IAVocaleLanding() {
       plan: planNames[planId] || planId,
       contactCount,
       source: 'ia-vocale',
+      serviceType,
       contacts: contactsList,
     });
   };
@@ -1081,6 +1086,54 @@ export default function IAVocaleLanding() {
           </AnimatePresence>
 
           {/* Import card */}
+          {/* Service type selector */}
+          <ScrollReveal>
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-gray-900 mb-1 text-center">Ce fichier concerne...</h3>
+              <p className="text-sm text-gray-400 text-center mb-5">Choisissez le type de service pour tous les contacts</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  onClick={() => setServiceType('renouvellement')}
+                  className={`flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                    serviceType === 'renouvellement'
+                      ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
+                      : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    serviceType === 'renouvellement' ? 'bg-emerald-100' : 'bg-gray-100'
+                  }`}>
+                    <RefreshCw className={`w-5 h-5 ${serviceType === 'renouvellement' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <p className={`font-semibold text-sm ${serviceType === 'renouvellement' ? 'text-emerald-700' : 'text-gray-800'}`}>Renouvellement de dossiers</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Relance des dossiers arrivant à échéance</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setServiceType('confirmation')}
+                  className={`flex items-start gap-4 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                    serviceType === 'confirmation'
+                      ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
+                      : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    serviceType === 'confirmation' ? 'bg-emerald-100' : 'bg-gray-100'
+                  }`}>
+                    <CalendarCheck className={`w-5 h-5 ${serviceType === 'confirmation' ? 'text-emerald-600' : 'text-gray-400'}`} />
+                  </div>
+                  <div>
+                    <p className={`font-semibold text-sm ${serviceType === 'confirmation' ? 'text-emerald-700' : 'text-gray-800'}`}>Confirmation de RDV</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Appel J-1 pour confirmer les rendez-vous</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          {serviceType && (
+          <>
           <ScrollReveal>
             <div className="bg-white rounded-3xl border border-gray-200 shadow-xl shadow-emerald-900/5 overflow-hidden">
               {/* Tabs */}
@@ -1144,6 +1197,67 @@ export default function IAVocaleLanding() {
                       )}
                     </div>
 
+                    {/* CSV Export Help */}
+                    <div className="mt-4">
+                      <button
+                        onClick={() => setCsvHelpOpen(!csvHelpOpen)}
+                        className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>Comment exporter en CSV ?</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${csvHelpOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      <AnimatePresence>
+                        {csvHelpOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-3 bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-100">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <FileSpreadsheet className="w-4 h-4 text-green-700" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">Microsoft Excel</p>
+                                  <p className="text-xs text-gray-500 mt-0.5">Fichier → Enregistrer sous → Format : CSV UTF-8 (délimité par des virgules)</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <FileSpreadsheet className="w-4 h-4 text-blue-700" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">Google Sheets</p>
+                                  <p className="text-xs text-gray-500 mt-0.5">Fichier → Télécharger → Valeurs séparées par des virgules (.csv)</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <FileSpreadsheet className="w-4 h-4 text-gray-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">Numbers (Mac)</p>
+                                  <p className="text-xs text-gray-500 mt-0.5">Fichier → Exporter vers → CSV</p>
+                                </div>
+                              </div>
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <Wrench className="w-4 h-4 text-amber-700" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">Logiciel métier</p>
+                                  <p className="text-xs text-gray-500 mt-0.5">Cherchez « Export » ou « Télécharger » dans votre outil. La plupart proposent un export CSV ou Excel.</p>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                     {/* CSV Column Mapping */}
                     {csvData && csvData.length > 0 && !csvMappingConfirmed && (
                       <div className="mt-6">
@@ -1153,7 +1267,6 @@ export default function IAVocaleLanding() {
                           {[
                             { key: 'nom', label: 'Nom', required: true },
                             { key: 'telephone', label: 'Téléphone', required: true },
-                            { key: 'type', label: 'Type (renouvellement/confirmation)', required: true },
                             { key: 'dateRdv', label: 'Date RDV', required: false },
                           ].map((field) => (
                             <div key={field.key}>
@@ -1183,7 +1296,6 @@ export default function IAVocaleLanding() {
                                 <tr className="border-b border-gray-100">
                                   <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Nom</th>
                                   <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Téléphone</th>
-                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Type</th>
                                   <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Date RDV</th>
                                 </tr>
                               </thead>
@@ -1192,7 +1304,6 @@ export default function IAVocaleLanding() {
                                   <tr key={i} className="border-b border-gray-50">
                                     <td className="py-2 px-3 text-gray-700 font-medium">{row[csvMapping.nom] || '—'}</td>
                                     <td className="py-2 px-3 text-gray-600">{row[csvMapping.telephone] || '—'}</td>
-                                    <td className="py-2 px-3 text-gray-600">{csvMapping.type ? (row[csvMapping.type] || '—') : '—'}</td>
                                     <td className="py-2 px-3 text-gray-600">{csvMapping.dateRdv ? (row[csvMapping.dateRdv] || '—') : '—'}</td>
                                   </tr>
                                 ))}
@@ -1203,7 +1314,7 @@ export default function IAVocaleLanding() {
 
                         <button
                           onClick={() => setCsvMappingConfirmed(true)}
-                          disabled={!csvMapping.nom || !csvMapping.telephone || !csvMapping.type}
+                          disabled={!csvMapping.nom || !csvMapping.telephone}
                           className="w-full mt-4 py-3 rounded-xl text-white font-semibold bg-gray-900 hover:bg-gray-800 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
                         >
                           Valider le mapping
@@ -1242,7 +1353,7 @@ export default function IAVocaleLanding() {
                           animate={{ opacity: 1, y: 0 }}
                           className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
                         >
-                          <div className="sm:col-span-3">
+                          <div className="sm:col-span-4">
                             {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Prénom client</label>}
                             <input
                               type="text"
@@ -1252,7 +1363,7 @@ export default function IAVocaleLanding() {
                               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
                             />
                           </div>
-                          <div className="sm:col-span-3">
+                          <div className="sm:col-span-4">
                             {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone</label>}
                             <input
                               type="tel"
@@ -1263,17 +1374,6 @@ export default function IAVocaleLanding() {
                             />
                           </div>
                           <div className="sm:col-span-3">
-                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Type</label>}
-                            <select
-                              value={row.type}
-                              onChange={(e) => updateRow(idx, 'type', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
-                            >
-                              <option value="renouvellement">Renouvellement</option>
-                              <option value="confirmation">Confirmation RDV</option>
-                            </select>
-                          </div>
-                          <div className="sm:col-span-2">
                             {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Date RDV</label>}
                             <input
                               type="date"
@@ -1314,6 +1414,7 @@ export default function IAVocaleLanding() {
               </div>
             </div>
           </ScrollReveal>
+          </>)}
         </div>
       </section>
 

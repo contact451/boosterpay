@@ -23,6 +23,9 @@ import {
   MessageSquare,
   Eye,
   Plus,
+  HelpCircle,
+  FileSpreadsheet,
+  Wrench,
   Trash2,
 } from 'lucide-react';
 import { captureLeadFromSite } from '../services/leadService';
@@ -832,6 +835,7 @@ const ImportSection = () => {
   const [csvMapping, setCsvMapping] = useState({});
   const [csvHeaders, setCsvHeaders] = useState([]);
   const fileInputRef = useRef(null);
+  const [csvHelpOpen, setCsvHelpOpen] = useState(false);
 
   const addRow = () => setManualRows([...manualRows, { prenom: '', telephone: '', email: '' }]);
   const removeRow = (i) => setManualRows(manualRows.filter((_, idx) => idx !== i));
@@ -1097,7 +1101,68 @@ const ImportSection = () => {
                     </>
                   )}
                 </div>
-                {csvData && csvData.length > 0 && csvHeaders.length > 0 && (
+
+                {/* CSV Export Help */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => setCsvHelpOpen(!csvHelpOpen)}
+                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                    <span>Comment exporter en CSV ?</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${csvHelpOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {csvHelpOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-3 bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-100">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <FileSpreadsheet className="w-4 h-4 text-green-700" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">Microsoft Excel</p>
+                              <p className="text-xs text-gray-500 mt-0.5">Fichier → Enregistrer sous → Format : CSV UTF-8 (délimité par des virgules)</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <FileSpreadsheet className="w-4 h-4 text-blue-700" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">Google Sheets</p>
+                              <p className="text-xs text-gray-500 mt-0.5">Fichier → Télécharger → Valeurs séparées par des virgules (.csv)</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <FileSpreadsheet className="w-4 h-4 text-gray-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">Numbers (Mac)</p>
+                              <p className="text-xs text-gray-500 mt-0.5">Fichier → Exporter vers → CSV</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Wrench className="w-4 h-4 text-amber-700" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800">Logiciel métier</p>
+                              <p className="text-xs text-gray-500 mt-0.5">Cherchez « Export » ou « Télécharger » dans votre outil. La plupart proposent un export CSV ou Excel.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>                {csvData && csvData.length > 0 && csvHeaders.length > 0 && (
                   <div className="mt-6 space-y-5">
                     {/* Column mapping UI */}
                     <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
