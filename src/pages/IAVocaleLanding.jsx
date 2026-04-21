@@ -540,82 +540,99 @@ export default function IAVocaleLanding() {
       </section>
 
       {/* ── Trois services. Un seul outil. ── */}
-      <section className="py-28 bg-white overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-32 bg-[#FAFAFA] overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Nos services"
             title="Trois services. Un seul outil."
-            subtitle="Chaque service s'adapte à votre métier et à vos besoins."
+            subtitle="Chaque service s\'adapte à votre métier et à vos besoins."
           />
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10 mt-4">
             {[
               {
                 icon: RefreshCw,
                 title: 'Renouvellement de dossiers',
-                desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance.',
+                desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance. Zéro oubli, zéro effort.',
                 details: ['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux'],
-                gradient: 'from-emerald-500 to-teal-400',
-                glow: 'shadow-emerald-500/20',
+                accentBg: 'bg-emerald-50',
+                accentText: 'text-emerald-600',
+                accentBorder: 'border-emerald-100',
+                iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-400',
+                chipBg: 'bg-emerald-50',
+                chipText: 'text-emerald-700',
+                ctaBg: 'bg-gray-900 hover:bg-gray-800',
               },
               {
                 icon: CalendarCheck,
                 title: 'Confirmation de RDV',
-                desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous et supprimer les lapins.',
+                desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous et supprimer les lapins. Planning fiable, CA protégé.',
                 details: ['Appel J-1 automatique', 'SMS de rappel', 'Gestion des reports', 'Planning mis à jour'],
-                gradient: 'from-blue-500 to-indigo-500',
-                glow: 'shadow-blue-500/20',
+                accentBg: 'bg-blue-50',
+                accentText: 'text-blue-600',
+                accentBorder: 'border-blue-100',
+                iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-500',
+                chipBg: 'bg-blue-50',
+                chipText: 'text-blue-700',
+                ctaBg: 'bg-gray-900 hover:bg-gray-800',
               },
               {
                 icon: Bot,
                 title: 'Robot IA sur mesure',
-                desc: 'On configure une IA vocale 100% adaptée à vos processus et à votre métier.',
+                desc: 'On configure une IA vocale 100% adaptée à vos processus et à votre métier. Du script à l\'intégration CRM.',
                 details: ['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'],
-                gradient: 'from-violet-500 to-purple-500',
-                glow: 'shadow-violet-500/20',
-                cta: { label: 'Réserver un appel découverte', href: 'https://calendar.app.google/GHtu4ymohWhAXJTG8' },
+                accentBg: 'bg-violet-50',
+                accentText: 'text-violet-600',
+                accentBorder: 'border-violet-100',
+                iconBg: 'bg-gradient-to-br from-violet-500 to-purple-500',
+                chipBg: 'bg-violet-50',
+                chipText: 'text-violet-700',
+                ctaBg: 'bg-violet-600 hover:bg-violet-700',
+                isCustom: true,
               },
             ].map((service, i) => (
-              <ScrollReveal key={i} delay={i * 0.12}>
+              <ScrollReveal key={i} delay={i * 0.15}>
                 <motion.div
-                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
-                  className="relative h-full bg-white rounded-3xl border border-gray-100 p-8 flex flex-col group hover:shadow-2xl transition-shadow duration-500"
+                  whileHover={{ y: -12, transition: { duration: 0.35, ease: 'easeOut' } }}
+                  className="relative h-full bg-white rounded-[28px] border border-gray-100/80 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-gray-900/[0.08] transition-all duration-500"
                 >
-                  {/* Gradient glow on hover */}
-                  <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
-
-                  {/* Icon */}
-                  <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-8 shadow-lg ${service.glow}`}>
-                    <service.icon className="w-8 h-8 text-white" />
+                  {/* Large icon area */}
+                  <div className={`relative w-20 h-20 rounded-3xl ${service.iconBg} flex items-center justify-center mb-10 shadow-lg`}>
+                    <service.icon className="w-10 h-10 text-white" strokeWidth={1.5} />
                   </div>
 
-                  {/* Content */}
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
-                  <p className="text-gray-500 leading-relaxed mb-6">{service.desc}</p>
+                  {/* Title */}
+                  <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">{service.title}</h3>
+
+                  {/* Description */}
+                  <p className="text-[15px] text-gray-500 leading-relaxed mb-8">{service.desc}</p>
 
                   {/* Detail chips */}
-                  <div className="flex flex-wrap gap-2 mb-6 mt-auto">
+                  <div className="flex flex-wrap gap-2 mb-10 mt-auto">
                     {service.details.map((d, j) => (
-                      <span key={j} className="text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5">
+                      <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-4 py-2 border ${service.accentBorder}`}>
                         {d}
                       </span>
                     ))}
                   </div>
 
-                  {/* CTA for custom robot */}
-                  {service.cta ? (
+                  {/* CTA Button */}
+                  {service.isCustom ? (
                     <a
-                      href={service.cta.href}
+                      href="https://calendar.app.google/GHtu4ymohWhAXJTG8"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`inline-flex items-center justify-center gap-2 bg-gradient-to-r ${service.gradient} text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg transition-all duration-300 hover:scale-105`}
+                      className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}
                     >
                       <CalendarCheck className="w-4 h-4" />
-                      {service.cta.label}
+                      Réserver un appel découverte
                     </a>
                   ) : (
-                    <a href="#import" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-emerald-600 transition-colors group/link">
+                    <a
+                      href="#import"
+                      className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}
+                    >
                       Commencer gratuitement
-                      <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4" />
                     </a>
                   )}
                 </motion.div>
@@ -624,6 +641,7 @@ export default function IAVocaleLanding() {
           </div>
         </div>
       </section>
+
 
       {/* ============================================ */}
       {/* TWO CORE VALUE PROPS                         */}
@@ -639,58 +657,84 @@ export default function IAVocaleLanding() {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Card 1 — Renouvellement */}
             <ScrollReveal delay={0}>
-              <div className="group relative bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 p-8 md:p-10 hover:shadow-xl hover:shadow-emerald-900/5 transition-all duration-300 h-full">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                    <RefreshCw className="w-7 h-7 text-white" />
+              <div className="group relative bg-white rounded-[24px] border border-gray-100/60 p-10 md:p-12 hover:shadow-2xl hover:shadow-gray-900/[0.06] transition-all duration-500 h-full">
+                {/* Metric highlight */}
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-md">
+                    <RefreshCw className="w-6 h-6 text-white" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900">Renouvellement de dossiers</h3>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Renouvellement de dossiers</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Relance automatique avant expiration</p>
+                  </div>
                 </div>
-                <p className="text-gray-500 leading-relaxed mb-6">
-                  Importez vos dossiers clients à renouveler — l'IA appelle chaque contact pour relancer les échéances. Contrôles techniques, assurances, entretiens annuels, bilans médicaux, devis en attente — tout est couvert.
+
+                {/* Key stats */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-emerald-50/60 rounded-2xl p-4 text-center border border-emerald-100/50">
+                    <div className="text-3xl font-black text-emerald-600 tracking-tight">0</div>
+                    <div className="text-[11px] font-medium text-gray-500 mt-1">Dossiers oubliés</div>
+                  </div>
+                  <div className="bg-emerald-50/60 rounded-2xl p-4 text-center border border-emerald-100/50">
+                    <div className="text-3xl font-black text-emerald-600 tracking-tight">100%</div>
+                    <div className="text-[11px] font-medium text-gray-500 mt-1">Couverture relance</div>
+                  </div>
+                </div>
+
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">
+                  Importez vos dossiers clients à renouveler — l’IA appelle chaque contact pour relancer les échéances. Tout est couvert, rien ne passe entre les mailles.
                 </p>
+
                 <div className="flex flex-wrap gap-2">
                   {['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux', 'Devis en attente'].map((tag) => (
-                    <span key={tag} className="text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full">
+                    <span key={tag} className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 rounded-full">
                       {tag}
                     </span>
                   ))}
-                </div>
-                <div className="mt-8 flex items-center gap-3 text-gray-400 text-sm">
-                  <Calendar className="w-4 h-4" />
-                  <span>Relance automatique avant expiration</span>
                 </div>
               </div>
             </ScrollReveal>
 
             {/* Card 2 — Confirmation RDV */}
             <ScrollReveal delay={0.15}>
-              <div className="group relative bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 p-8 md:p-10 hover:shadow-xl hover:shadow-emerald-900/5 transition-all duration-300 h-full">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
-                    <CalendarCheck className="w-7 h-7 text-white" />
+              <div className="group relative bg-white rounded-[24px] border border-gray-100/60 p-10 md:p-12 hover:shadow-2xl hover:shadow-gray-900/[0.06] transition-all duration-500 h-full">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md">
+                    <CalendarCheck className="w-6 h-6 text-white" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900">Confirmation de RDV</h3>
+                  <div>
+                    <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Confirmation de RDV</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Appel automatique J-1</p>
+                  </div>
                 </div>
-                <p className="text-gray-500 leading-relaxed mb-6">
-                  L'IA appelle la veille pour confirmer chaque rendez-vous. Résultat : vos lapins passent de 43% à 8%. Votre planning est fiable, votre CA protégé.
-                </p>
 
-                {/* Enhanced appointment confirmation animation */}
-                <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-700">Agenda du jour</span>
+                {/* Key stat - large */}
+                <div className="flex items-end gap-3 mb-8">
+                  <div className="bg-blue-50/60 rounded-2xl px-6 py-4 border border-blue-100/50 flex-1 text-center">
+                    <div className="text-4xl font-black text-blue-600 tracking-tight">92%</div>
+                    <div className="text-[11px] font-medium text-gray-500 mt-1">Taux de présence</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-2xl px-5 py-4 border border-gray-100 text-center">
+                    <div className="text-lg font-bold text-gray-400 line-through">57%</div>
+                    <div className="text-[11px] font-medium text-gray-400 mt-1">Avant IA</div>
+                  </div>
+                </div>
+
+                {/* Polished appointment animation */}
+                <div className="bg-gray-50/80 rounded-2xl border border-gray-100/60 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[13px] font-bold text-gray-800 tracking-tight">Agenda du jour</span>
                     <motion.span
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
-                      transition={{ delay: 2.2 }}
-                      className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
+                      transition={{ delay: 2.2, type: 'spring' }}
+                      className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
                     >
-                      Taux de présence : 92%
+                      92% confirmés
                     </motion.span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {[
                       { time: '09:00', name: 'Martin D.', status: 'confirmed' },
                       { time: '10:30', name: 'Sophie L.', status: 'confirmed' },
@@ -703,24 +747,24 @@ export default function IAVocaleLanding() {
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ delay: 0.3 + i * 0.25 }}
-                        className="flex items-center gap-3 py-1.5"
+                        transition={{ delay: 0.3 + i * 0.2 }}
+                        className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white border border-gray-100/40"
                       >
-                        <span className="text-xs font-medium text-gray-400 w-10">{slot.time}</span>
-                        <span className="text-sm text-gray-700 flex-1">{slot.name}</span>
+                        <span className="text-[11px] font-semibold text-gray-400 w-10 tabular-nums">{slot.time}</span>
+                        <span className="text-[13px] font-medium text-gray-800 flex-1">{slot.name}</span>
                         <motion.div
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
                           viewport={{ once: true }}
-                          transition={{ delay: 0.8 + i * 0.25, type: 'spring', stiffness: 300 }}
+                          transition={{ delay: 0.8 + i * 0.2, type: 'spring', stiffness: 300 }}
                         >
                           {slot.status === 'confirmed' ? (
-                            <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
+                              <Check className="w-4 h-4 text-emerald-600" />
                             </div>
                           ) : (
-                            <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                              <X className="w-3.5 h-3.5 text-red-500" />
+                            <div className="w-7 h-7 rounded-full bg-red-50 flex items-center justify-center">
+                              <X className="w-4 h-4 text-red-400" />
                             </div>
                           )}
                         </motion.div>
@@ -728,29 +772,25 @@ export default function IAVocaleLanding() {
                     ))}
                   </div>
                   {/* Animated progress bar */}
-                  <div className="mt-3 pt-3 border-t border-gray-50">
-                    <div className="flex items-center justify-between text-[10px] text-gray-400 mb-1">
+                  <div className="mt-4 pt-4 border-t border-gray-100/60">
+                    <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-2">
                       <span>Avant IA : 57%</span>
-                      <span>Avec IA : 92%</span>
+                      <span className="text-emerald-600">Avec IA : 92%</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: '57%' }}
                         whileInView={{ width: '92%' }}
                         viewport={{ once: true }}
                         transition={{ delay: 2, duration: 1.2, ease: 'easeOut' }}
-                        className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full"
+                        className="h-full bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full"
                       />
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-6 flex items-center gap-3 text-gray-400 text-sm">
-                  <Phone className="w-4 h-4" />
-                  <span>Appel automatique J-1</span>
-                </div>
               </div>
             </ScrollReveal>
+
           </div>
         </div>
       </section>
@@ -1183,73 +1223,137 @@ export default function IAVocaleLanding() {
       </section>
 
       {/* ── Avant / Après ── */}
-      <section className="py-24 bg-white">
+      <section className="py-32 bg-[#FAFAFA]">
         <div className="max-w-6xl mx-auto px-6">
           <SectionHeading
             tag="Impact sur votre activité"
             title="Avant / Après BoosterPay"
-            subtitle="Comparez votre quotidien sans et avec l'IA vocale."
+            subtitle="Comparez votre quotidien sans et avec l\'IA vocale."
           />
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Sans IA */}
+          <div className="relative grid md:grid-cols-[1fr,auto,1fr] gap-0 max-w-5xl mx-auto items-stretch">
+
+            {/* Sans IA — Dark card */}
             <ScrollReveal delay={0.1}>
-              <div className="relative p-8 rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 border border-red-100 overflow-hidden">
-                <div className="absolute top-0 right-0 bg-red-100 text-red-600 text-xs font-bold px-4 py-1.5 rounded-bl-xl">SANS IA</div>
-                <div className="space-y-6 mt-4">
-                  {[
-                    { icon: Clock, text: '3h/jour au téléphone à relancer' },
-                    { icon: Calendar, text: '43% de lapins non anticipés' },
-                    { icon: TrendingUp, text: 'CA perdu sur les dossiers non renouvelés' },
-                    { icon: Timer, text: 'Temps perdu, stress, oublis' },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.1 + i * 0.1 }}
-                      className="flex items-center gap-4"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-5 h-5 text-red-500" />
-                      </div>
-                      <span className="text-gray-700 font-medium">{item.text}</span>
-                    </motion.div>
-                  ))}
+              <div className="relative bg-gray-900 rounded-[24px] p-10 md:p-12 overflow-hidden h-full">
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-800/50 to-gray-900 rounded-[24px]" />
+                <div className="relative">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-8">
+                    <div className="w-2 h-2 rounded-full bg-red-400" />
+                    Sans IA
+                  </div>
+                  <div className="space-y-5">
+                    {[
+                      { icon: Clock, text: '3h/jour au téléphone', stat: '3h' },
+                      { icon: Calendar, text: '43% de lapins non anticipés', stat: '43%' },
+                      { icon: TrendingUp, text: 'CA perdu sur dossiers non renouvelés', stat: null },
+                      { icon: Timer, text: 'Temps perdu, stress, oublis', stat: null },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.15 + i * 0.1 }}
+                        className="flex items-center gap-4"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
+                          <X className="w-4 h-4 text-red-400" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-[14px] text-gray-300 font-medium">{item.text}</span>
+                        </div>
+                        {item.stat && (
+                          <span className="text-xl font-black text-red-400/80 tabular-nums">{item.stat}</span>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
-            {/* Avec IA */}
-            <ScrollReveal delay={0.2}>
-              <div className="relative p-8 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 overflow-hidden shadow-lg shadow-emerald-100/50">
-                <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl">AVEC BOOSTERPAY</div>
-                <div className="space-y-6 mt-4">
-                  {[
-                    { icon: Zap, text: '0 minute au téléphone' },
-                    { icon: CheckCircle2, text: 'Seulement 8% de lapins' },
-                    { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés' },
-                    { icon: Star, text: 'Vous gérez, l\'IA appelle' },
-                  ].map((item, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.1 + i * 0.1 }}
-                      className="flex items-center gap-4"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <span className="text-gray-700 font-medium">{item.text}</span>
-                    </motion.div>
-                  ))}
+
+            {/* Central VS divider */}
+            <div className="hidden md:flex flex-col items-center justify-center px-6">
+              <div className="w-px h-16 bg-gradient-to-b from-transparent to-gray-200" />
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                whileInView={{ scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
+                className="w-14 h-14 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center my-3"
+              >
+                <span className="text-sm font-black text-gray-900 tracking-tight">VS</span>
+              </motion.div>
+              <div className="w-px h-16 bg-gradient-to-b from-gray-200 to-transparent" />
+            </div>
+            {/* Mobile VS */}
+            <div className="flex md:hidden items-center justify-center py-6">
+              <motion.div
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, type: 'spring' }}
+                className="w-12 h-12 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center"
+              >
+                <span className="text-xs font-black text-gray-900">VS</span>
+              </motion.div>
+            </div>
+
+            {/* Avec BoosterPay — White elevated card */}
+            <ScrollReveal delay={0.25}>
+              <div className="relative bg-white rounded-[24px] p-10 md:p-12 overflow-hidden shadow-2xl shadow-emerald-900/[0.08] border border-emerald-100/50 h-full">
+                <div className="relative">
+                  <div className="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-8">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Avec BoosterPay
+                  </div>
+                  <div className="space-y-5">
+                    {[
+                      { icon: Zap, text: '0 minute au téléphone', stat: '0min' },
+                      { icon: CheckCircle2, text: 'Seulement 8% de lapins', stat: '8%' },
+                      { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés', stat: null },
+                      { icon: Star, text: 'Vous gérez, l\'IA appelle', stat: null },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: 20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 + i * 0.12 }}
+                        className="flex items-center gap-4"
+                      >
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-[14px] text-gray-800 font-medium">{item.text}</span>
+                        </div>
+                        {item.stat && (
+                          <span className="text-xl font-black text-emerald-600 tabular-nums">{item.stat}</span>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Bottom accent stats */}
+                  <div className="mt-10 pt-8 border-t border-gray-100 grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-black text-gray-900 tracking-tight">+35%</div>
+                      <div className="text-[11px] font-medium text-gray-400 mt-1">Dossiers renouvelés</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-black text-gray-900 tracking-tight">3h</div>
+                      <div className="text-[11px] font-medium text-gray-400 mt-1">Gagnées par jour</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </ScrollReveal>
           </div>
         </div>
       </section>
+
 
       {/* ============================================ */}
       {/* TESTIMONIALS                                 */}

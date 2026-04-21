@@ -585,35 +585,83 @@ const StatsSection = () => {
 };
 
 // ============ PROBLEM ============
-const ProblemSection = () => (
-  <section className="py-28 bg-white">
-    <div className="max-w-6xl mx-auto px-6">
-      <div className="text-center mb-20">
-        <SectionBadge>Le constat</SectionBadge>
-        <SectionTitle className="text-center">
-          Sans avis récents, vous êtes invisible.
-        </SectionTitle>
+const problemStats = [
+  {
+    stat: '72',
+    suffix: '%',
+    description: 'des clients refusent un commerce noté sous 4 étoiles.',
+  },
+  {
+    stat: '×30',
+    suffix: '',
+    description: "Un seul avis négatif fait fuir jusqu'à 30 clients potentiels.",
+  },
+  {
+    stat: '8',
+    suffix: '/10',
+    description: 'des clients comparent les avis avant de pousser la porte.',
+  },
+];
+
+const ProblemStatCard = ({ stat, suffix, description, index }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 48 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: '-80px' }}
+    transition={{ delay: index * 0.12, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+    className="group relative bg-white border border-gray-200 rounded-2xl p-10 md:p-12
+               transition-all duration-500 ease-out
+               hover:shadow-[0_8px_40px_-12px_rgba(0,0,0,0.12)] hover:-translate-y-1"
+  >
+    <div className="flex flex-col items-center text-center">
+      <div className="mb-6">
+        <span className="text-7xl md:text-8xl font-extrabold tracking-tighter text-black leading-none">
+          {stat}
+        </span>
+        {suffix && (
+          <span className="text-4xl md:text-5xl font-bold text-gray-400 tracking-tight">
+            {suffix}
+          </span>
+        )}
       </div>
-      <div className="grid md:grid-cols-3 gap-12">
-        {[
-          { stat: '68%', title: 'Clients exigeants', desc: 'des consommateurs ne choisissent jamais un commerce noté en dessous de 4 étoiles.' },
-          { stat: '30', suffix: ' clients perdus', title: 'Impact direct', desc: 'en moyenne pour chaque avis négatif non traité qui reste visible sur votre fiche Google.' },
-          { stat: '8/10', title: 'Le choix se fait sur les avis', desc: 'clients choisissent le commerce avec les avis les plus récents et les mieux notés.' },
-        ].map((item, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.15, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center"
-          >
-            <div className="text-6xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-1">
-              {item.stat}{item.suffix && <span className="text-3xl md:text-4xl font-bold text-gray-400">{item.suffix}</span>}
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">{item.title}</h3>
-            <p className="text-gray-500 leading-relaxed max-w-xs mx-auto">{item.desc}</p>
-          </motion.div>
+      <div className="w-12 h-px bg-gray-200 mb-6" />
+      <p className="text-base md:text-lg text-gray-500 leading-relaxed max-w-[280px]">
+        {description}
+      </p>
+    </div>
+  </motion.div>
+);
+
+const ProblemSection = () => (
+  <section className="py-32 md:py-40 bg-white">
+    <div className="max-w-6xl mx-auto px-6">
+      <div className="text-center mb-24">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-gray-400 mb-6">
+            Le constat
+          </span>
+        </motion.div>
+        <motion.h2
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black tracking-tight leading-[1.1] max-w-3xl mx-auto"
+        >
+          Vos avis Google décident
+          <br />
+          <span className="text-gray-300">pour vos clients.</span>
+        </motion.h2>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+        {problemStats.map((item, i) => (
+          <ProblemStatCard key={i} index={i} {...item} />
         ))}
       </div>
     </div>
