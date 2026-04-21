@@ -828,6 +828,8 @@ const ImportSection = () => {
   const [companyEmail, setCompanyEmail] = useState('');
   const [selectedPlan, setSelectedPlan] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [csvMapping, setCsvMapping] = useState({});
+  const [csvHeaders, setCsvHeaders] = useState([]);
   const fileInputRef = useRef(null);
 
   const addRow = () => setManualRows([...manualRows, { prenom: '', telephone: '', email: '' }]);
@@ -844,7 +846,20 @@ const ImportSection = () => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => setCsvData(results.data),
+      complete: (results) => {
+        setCsvData(results.data);
+        const headers = Object.keys(results.data[0] || {});
+        setCsvHeaders(headers);
+        // Auto-detect obvious columns
+        const autoMapping = {};
+        headers.forEach((h) => {
+          const lower = h.toLowerCase();
+          if (lower.includes('nom') || lower.includes('name')) autoMapping.nom = h;
+          if (lower.includes('tel') || lower.includes('phone') || lower.includes('mobile')) autoMapping.telephone = h;
+          if (lower.includes('email') || lower.includes('mail') || lower.includes('courriel')) autoMapping.email = h;
+        });
+        setCsvMapping(autoMapping);
+      },
     });
   };
 
@@ -899,8 +914,8 @@ const ImportSection = () => {
               <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Votre email professionnel</label>
-              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="contact@monsociete.fr" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Votre email</label>
+              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="votre@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
             </div>
             <button type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all">
               Continuer →
@@ -944,6 +959,16 @@ const ImportSection = () => {
               </motion.button>
             ))}
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex items-center justify-center gap-2 mt-8 text-sm text-gray-500 bg-gray-50 rounded-xl px-5 py-3 max-w-xl mx-auto"
+          >
+            <Shield className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+            <span>La formule choisie sera activée à la fin de votre essai gratuit. Vous serez notifié à 80% de votre essai pour garder le contrôle. Aucune surprise.</span>
+          </motion.div>
         </div>
       </section>
     );
@@ -959,8 +984,11 @@ const ImportSection = () => {
             </div>
           </motion.div>
           <h3 className="text-3xl font-bold text-gray-900 mb-3">Parfait !</h3>
-          <p className="text-gray-500 text-lg mb-6">Redirection vers le paiement sécurisé...</p>
+          <p className="text-gray-500 text-lg mb-6">Redirection vers l'empreinte bancaire sécurisée...</p>
           <span className="text-4xl font-bold text-indigo-600">{countdown}</span>
+          <p className="text-gray-400 text-sm mt-6 max-w-md mx-auto">
+            Aucun prélèvement immédiat. Votre carte est enregistrée pour activer votre formule après l&apos;essai gratuit.
+          </p>
         </div>
       </section>
     );
@@ -970,7 +998,7 @@ const ImportSection = () => {
     <section id="import" className="py-24 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-12">
-          <SectionBadge>Machine à leads</SectionBadge>
+          <SectionBadge>Machine à avis Google</SectionBadge>
           <SectionTitle className="text-center">Lancez votre première campagne</SectionTitle>
           <SectionSub>Importez vos contacts et l&apos;IA commence à collecter vos avis en 48h.</SectionSub>
         </div>
@@ -1000,15 +1028,15 @@ const ImportSection = () => {
                   {manualRows.map((row, i) => (
                     <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                       <div>
-                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Prénom</label>}
-                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Jean" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Nom</label>}
+                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Nom du contact" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
                       </div>
                       <div>
                         {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Téléphone</label>}
                         <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
                       </div>
                       <div>
-                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Email</label>}
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Email (facultatif)</label>}
                         <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
                       </div>
                       <div>
@@ -1052,27 +1080,62 @@ const ImportSection = () => {
                     </>
                   )}
                 </div>
-                {csvData && csvData.length > 0 && (
-                  <div className="mt-4 max-h-40 overflow-y-auto rounded-xl border border-gray-100">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 sticky top-0">
-                        <tr>
-                          {Object.keys(csvData[0]).slice(0, 4).map((k) => (
-                            <th key={k} className="px-4 py-2 text-left text-xs font-medium text-gray-500">{k}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {csvData.slice(0, 5).map((row, i) => (
-                          <tr key={i} className="border-t border-gray-50">
-                            {Object.values(row).slice(0, 4).map((v, j) => (
-                              <td key={j} className="px-4 py-2 text-gray-600">{String(v)}</td>
-                            ))}
-                          </tr>
+                {csvData && csvData.length > 0 && csvHeaders.length > 0 && (
+                  <div className="mt-6 space-y-5">
+                    {/* Column mapping UI */}
+                    <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                      <h4 className="text-sm font-bold text-gray-900 mb-4">Associez vos colonnes</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[
+                          { key: 'nom', label: 'Nom', required: true },
+                          { key: 'telephone', label: 'Téléphone', required: true },
+                          { key: 'email', label: 'Email (facultatif)', required: false },
+                        ].map((field) => (
+                          <div key={field.key}>
+                            <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                              {field.label} {field.required && <span className="text-red-400">*</span>}
+                            </label>
+                            <select
+                              value={csvMapping[field.key] || ''}
+                              onChange={(e) => setCsvMapping({ ...csvMapping, [field.key]: e.target.value })}
+                              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
+                            >
+                              <option value="">-- Sélectionner --</option>
+                              {csvHeaders.map((h) => (
+                                <option key={h} value={h}>{h}</option>
+                              ))}
+                            </select>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                    {csvData.length > 5 && <p className="text-xs text-gray-400 text-center py-2">... et {csvData.length - 5} autres contacts</p>}
+                      </div>
+                    </div>
+
+                    {/* Preview with mapped columns */}
+                    {(csvMapping.nom || csvMapping.telephone) && (
+                      <div className="rounded-xl border border-gray-100 overflow-hidden">
+                        <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500">Aperçu (3 premiers contacts)</div>
+                        <table className="w-full text-sm">
+                          <thead className="bg-gray-50/50">
+                            <tr>
+                              {csvMapping.nom && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Nom</th>}
+                              {csvMapping.telephone && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Téléphone</th>}
+                              {csvMapping.email && <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Email</th>}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {csvData.slice(0, 3).map((row, i) => (
+                              <tr key={i} className="border-t border-gray-50">
+                                {csvMapping.nom && <td className="px-4 py-2 text-gray-700">{String(row[csvMapping.nom] || '')}</td>}
+                                {csvMapping.telephone && <td className="px-4 py-2 text-gray-700">{String(row[csvMapping.telephone] || '')}</td>}
+                                {csvMapping.email && <td className="px-4 py-2 text-gray-500">{String(row[csvMapping.email] || '')}</td>}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-400 text-center">{csvData.length} contacts détectés au total</p>
                   </div>
                 )}
               </motion.div>
@@ -1253,6 +1316,8 @@ const PricingSection = () => (
           >
             Tester sans risque
           </motion.a>
+
+          <p className="text-center text-xs text-gray-400 mt-3">10 avis offerts pour tester</p>
         </motion.div>
       </div>
 
@@ -1262,7 +1327,7 @@ const PricingSection = () => (
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
       >
-        <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Paiement sécurisé Stripe</div>
+        <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Empreinte sécurisée Stripe</div>
         <span className="opacity-30">|</span>
         <div>Résiliation en 1 clic</div>
         <span className="opacity-30">|</span>

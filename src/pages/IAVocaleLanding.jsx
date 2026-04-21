@@ -246,6 +246,9 @@ export default function IAVocaleLanding() {
   const [importTab, setImportTab] = useState('manual');
   const [csvData, setCsvData] = useState(null);
   const [csvFileName, setCsvFileName] = useState('');
+  const [csvHeaders, setCsvHeaders] = useState([]);
+  const [csvMapping, setCsvMapping] = useState({ nom: '', telephone: '', type: '', dateRdv: '' });
+  const [csvMappingConfirmed, setCsvMappingConfirmed] = useState(false);
   const [manualRows, setManualRows] = useState([
     { prenom: '', telephone: '', type: 'renouvellement', dateRdv: '' },
   ]);
@@ -284,10 +287,24 @@ export default function IAVocaleLanding() {
   const handleCsvFile = (file) => {
     if (!file) return;
     setCsvFileName(file.name);
+    setCsvMappingConfirmed(false);
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => setCsvData(results.data),
+      complete: (results) => {
+        setCsvData(results.data);
+        const headers = results.meta.fields || [];
+        setCsvHeaders(headers);
+        const autoMap = { nom: '', telephone: '', type: '', dateRdv: '' };
+        headers.forEach((h) => {
+          const lower = h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          if (!autoMap.nom && (lower.includes('nom') || lower.includes('name') || lower.includes('prenom') || lower.includes('client'))) autoMap.nom = h;
+          if (!autoMap.telephone && (lower.includes('tel') || lower.includes('phone') || lower.includes('mobile') || lower.includes('numero'))) autoMap.telephone = h;
+          if (!autoMap.type && (lower.includes('type') || lower.includes('motif') || lower.includes('objet'))) autoMap.type = h;
+          if (!autoMap.dateRdv && (lower.includes('date') || lower.includes('rdv') || lower.includes('echeance'))) autoMap.dateRdv = h;
+        });
+        setCsvMapping(autoMap);
+      },
     });
   };
 
@@ -545,7 +562,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Nos services"
             title="Trois services. Un seul outil."
-            subtitle="Chaque service s\'adapte à votre métier et à vos besoins."
+            subtitle="Chaque service s'adapte à votre métier et à vos besoins."
           />
           <div className="grid md:grid-cols-3 gap-10 mt-4">
             {[
@@ -914,12 +931,12 @@ export default function IAVocaleLanding() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email professionnel</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Votre email</label>
                         <input
                           type="email"
                           value={companyEmail}
                           onChange={(e) => setCompanyEmail(e.target.value)}
-                          placeholder="contact@entreprise.fr"
+                          placeholder="votre@email.fr"
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                           required
                         />
@@ -967,6 +984,9 @@ export default function IAVocaleLanding() {
                         </motion.button>
                       ))}
                     </div>
+                    <p className="text-[13px] text-gray-400 text-center mt-6 leading-relaxed max-w-md mx-auto">
+                      La formule choisie sera activée à la fin de votre essai gratuit. Vous serez notifié à 80% de votre essai. Transparence totale, aucune surprise.
+                    </p>
                   </motion.div>
                 )}
 
@@ -987,7 +1007,8 @@ export default function IAVocaleLanding() {
                       <CheckCircle2 className="w-10 h-10 text-white" />
                     </motion.div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">Félicitations !</h3>
-                    <p className="text-gray-500 mb-6">Redirection vers le paiement sécurisé...</p>
+                    <p className="text-gray-500 mb-4">Redirection vers l'empreinte bancaire sécurisée...</p>
+                    <p className="text-xs text-gray-400 mb-6">Aucun prélèvement immédiat. Votre carte est simplement enregistrée.</p>
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-gray-400">
                       <p>Redirection dans <span className="font-bold text-emerald-600 text-lg">{countdown}</span>...</p>
                       <div className="mt-4 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -1095,44 +1116,90 @@ export default function IAVocaleLanding() {
                       )}
                     </div>
 
-                    {/* CSV Preview */}
-                    {csvData && csvData.length > 0 && (
-                      <div className="mt-6 overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-gray-100">
-                              {Object.keys(csvData[0]).slice(0, 4).map((key) => (
-                                <th key={key} className="text-left py-2 px-3 text-xs font-semibold text-gray-400 uppercase">
-                                  {key}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {csvData.slice(0, 5).map((row, i) => (
-                              <tr key={i} className="border-b border-gray-50">
-                                {Object.values(row).slice(0, 4).map((val, j) => (
-                                  <td key={j} className="py-2 px-3 text-gray-600">{String(val)}</td>
+                    {/* CSV Column Mapping */}
+                    {csvData && csvData.length > 0 && !csvMappingConfirmed && (
+                      <div className="mt-6">
+                        <h4 className="text-sm font-bold text-gray-900 mb-1">Associez vos colonnes</h4>
+                        <p className="text-xs text-gray-400 mb-4">Indiquez quelle colonne correspond à chaque champ requis.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {[
+                            { key: 'nom', label: 'Nom', required: true },
+                            { key: 'telephone', label: 'Téléphone', required: true },
+                            { key: 'type', label: 'Type (renouvellement/confirmation)', required: true },
+                            { key: 'dateRdv', label: 'Date RDV', required: false },
+                          ].map((field) => (
+                            <div key={field.key}>
+                              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                {field.label} {field.required ? <span className="text-red-400">*</span> : <span className="text-gray-300">(facultatif)</span>}
+                              </label>
+                              <select
+                                value={csvMapping[field.key]}
+                                onChange={(e) => setCsvMapping((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
+                              >
+                                <option value="">-- Sélectionner --</option>
+                                {csvHeaders.map((h) => (
+                                  <option key={h} value={h}>{h}</option>
                                 ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {csvData.length > 5 && (
-                          <p className="text-xs text-gray-400 mt-2 text-center">
-                            ... et {csvData.length - 5} autres contacts
-                          </p>
+                              </select>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Preview first 3 rows with mapping */}
+                        {csvMapping.nom && csvMapping.telephone && (
+                          <div className="mt-4 overflow-x-auto">
+                            <p className="text-xs font-semibold text-gray-500 mb-2">Aperçu (3 premières lignes)</p>
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-gray-100">
+                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Nom</th>
+                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Téléphone</th>
+                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Type</th>
+                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Date RDV</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {csvData.slice(0, 3).map((row, i) => (
+                                  <tr key={i} className="border-b border-gray-50">
+                                    <td className="py-2 px-3 text-gray-700 font-medium">{row[csvMapping.nom] || '—'}</td>
+                                    <td className="py-2 px-3 text-gray-600">{row[csvMapping.telephone] || '—'}</td>
+                                    <td className="py-2 px-3 text-gray-600">{csvMapping.type ? (row[csvMapping.type] || '—') : '—'}</td>
+                                    <td className="py-2 px-3 text-gray-600">{csvMapping.dateRdv ? (row[csvMapping.dateRdv] || '—') : '—'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         )}
+
+                        <button
+                          onClick={() => setCsvMappingConfirmed(true)}
+                          disabled={!csvMapping.nom || !csvMapping.telephone || !csvMapping.type}
+                          className="w-full mt-4 py-3 rounded-xl text-white font-semibold bg-gray-900 hover:bg-gray-800 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
+                        >
+                          Valider le mapping
+                        </button>
                       </div>
                     )}
 
-                    <button
-                      onClick={handleSubmit}
-                      disabled={!csvData || importState !== 'idle'}
-                      className="w-full mt-6 py-4 rounded-xl text-white font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-                    >
-                      Lancer mes 100 appels gratuits
-                    </button>
+                    {/* Confirmed mapping summary + submit */}
+                    {csvData && csvMappingConfirmed && (
+                      <div className="mt-6">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                          <span className="text-sm font-semibold text-gray-800">{csvData.length} contacts prêts</span>
+                          <button onClick={() => setCsvMappingConfirmed(false)} className="ml-auto text-xs text-emerald-600 hover:text-emerald-700 font-medium">Modifier le mapping</button>
+                        </div>
+                        <button
+                          onClick={handleSubmit}
+                          disabled={importState !== 'idle'}
+                          className="w-full py-4 rounded-xl text-white font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        >
+                          Lancer mes 100 appels gratuits
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1228,7 +1295,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Impact sur votre activité"
             title="Avant / Après BoosterPay"
-            subtitle="Comparez votre quotidien sans et avec l\'IA vocale."
+            subtitle="Comparez votre quotidien sans et avec l'IA vocale."
           />
           <div className="relative grid md:grid-cols-[1fr,auto,1fr] gap-0 max-w-5xl mx-auto items-stretch">
 
@@ -1358,38 +1425,86 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* TESTIMONIALS                                 */}
       {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-gray-50/50">
+      <section className="py-24 md:py-32 bg-gray-50/50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Témoignages"
             title="Ils utilisent BoosterPay."
             subtitle="Des professionnels comme vous qui ont automatisé leurs relances et confirmations."
           />
+        </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {testimonials.map((t, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
-                <div className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-emerald-900/5 transition-shadow duration-300 h-full flex flex-col">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">{t.name}</p>
-                      <p className="text-xs text-gray-400">{t.role}</p>
-                    </div>
+        {/* Marquee row 1 — scrolling left */}
+        <div className="relative mb-4">
+          <div className="flex animate-marquee-left gap-5" style={{ width: 'max-content' }}>
+            {[...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials].map((t, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 w-[340px] flex-shrink-0 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-xs">
+                    {t.avatar}
                   </div>
-                  <div className="flex gap-0.5 mb-3">
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{t.name}</p>
+                    <p className="text-[11px] text-gray-400">{t.role}</p>
+                  </div>
+                  <div className="ml-auto flex gap-0.5">
                     {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed flex-1">"{t.quote}"</p>
                 </div>
-              </ScrollReveal>
+                <p className="text-[13px] text-gray-600 leading-relaxed">"{t.quote}"</p>
+              </div>
             ))}
           </div>
         </div>
+
+        {/* Marquee row 2 — scrolling right */}
+        <div className="relative">
+          <div className="flex animate-marquee-right gap-5" style={{ width: 'max-content' }}>
+            {[...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials, ...testimonials].map((t, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 w-[340px] flex-shrink-0 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-xs">
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{t.name}</p>
+                    <p className="text-[11px] text-gray-400">{t.role}</p>
+                  </div>
+                  <div className="ml-auto flex gap-0.5">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[13px] text-gray-600 leading-relaxed">"{t.quote}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Marquee CSS animations */}
+        <style>{`
+          @keyframes marquee-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          @keyframes marquee-right {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+          }
+          .animate-marquee-left {
+            animation: marquee-left 40s linear infinite;
+          }
+          .animate-marquee-right {
+            animation: marquee-right 40s linear infinite;
+          }
+          .animate-marquee-left:hover,
+          .animate-marquee-right:hover {
+            animation-play-state: paused;
+          }
+        `}</style>
       </section>
 
       {/* ============================================ */}
