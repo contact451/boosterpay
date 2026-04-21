@@ -528,7 +528,7 @@ const ScrollProgress = () => {
 
   return (
     <motion.div
-      className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 origin-left z-[100]"
+      className="fixed top-8 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 origin-left z-[100]"
       style={{ scaleX: scrollYProgress }}
     />
   );
@@ -560,7 +560,7 @@ const StickyTopBar = () => {
           animate={{ y: 0 }}
           exit={{ y: -100 }}
           transition={{ duration: 0.3 }}
-          className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600/90 to-cyan-500/90 ${isMobile ? '' : 'backdrop-blur-md'} border-b border-white/10`}
+          className={`fixed top-8 left-0 right-0 z-50 bg-gradient-to-r from-blue-600/90 to-cyan-500/90 ${isMobile ? '' : 'backdrop-blur-md'} border-b border-white/10`}
         >
           <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm md:text-base">
             <span className="text-yellow-300 animate-pulse">🔥</span>
@@ -607,7 +607,7 @@ const Navigation = ({ onOpenDemo, onOpenBooking }) => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className={`fixed top-10 left-0 right-0 z-40 transition-all duration-300 ${
+        className={`fixed top-[72px] left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled ? `bg-[#0a0f1a]/95 ${isMobile ? '' : 'backdrop-blur-lg'} border-b border-white/5` : ''
         }`}
       >
@@ -1143,7 +1143,7 @@ const HeroSection = ({ onOpenDemo, onOpenBooking, onOpenLeadForm }) => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-40 pb-20">
       <motion.div
         className="relative z-10 max-w-6xl mx-auto px-4 text-center"
       >
@@ -4416,6 +4416,17 @@ const BoosterPayLanding = () => {
       <AnimatePresence>
         {isLoading && <Loader onComplete={() => setIsLoading(false)} />}
       </AnimatePresence>
+
+      {/* ── Service Navigation Bar ── */}
+      <div className="bg-gray-950 text-white text-center py-2 text-[13px] font-medium fixed top-0 w-full z-[60]">
+        <div className="flex items-center justify-center gap-6 md:gap-10">
+          <a href="/impact-avis" className="opacity-70 hover:opacity-100 transition-opacity">Impact Avis</a>
+          <span className="opacity-20">|</span>
+          <a href="/ia-vocale" className="opacity-70 hover:opacity-100 transition-opacity">IA Vocale</a>
+          <span className="opacity-20">|</span>
+          <span className="text-blue-400 font-semibold">Accélération de paiements</span>
+        </div>
+      </div>
 
       <div className="min-h-screen text-white overflow-x-hidden">
         {/* Aurora Flow Animated Background */}

@@ -58,7 +58,7 @@ const SectionSub = ({ children }) => (
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ delay: 0.1, duration: 0.6, ease }}
-    className="text-lg md:text-xl text-gray-500 max-w-2xl leading-relaxed mt-5"
+    className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mt-5 text-center"
   >
     {children}
   </motion.p>
@@ -586,62 +586,33 @@ const StatsSection = () => {
 
 // ============ PROBLEM ============
 const ProblemSection = () => (
-  <section className="py-24 bg-white">
+  <section className="py-28 bg-white">
     <div className="max-w-6xl mx-auto px-6">
-      <div className="text-center mb-16">
-        <SectionBadge>Le problème</SectionBadge>
+      <div className="text-center mb-20">
+        <SectionBadge>Le constat</SectionBadge>
         <SectionTitle className="text-center">
-          Sans avis récents, vous êtes <span className="text-red-500">invisible</span>.
+          Sans avis récents, vous êtes invisible.
         </SectionTitle>
       </div>
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-12">
         {[
-          {
-            icon: AlertTriangle,
-            stat: '68%',
-            color: 'text-red-500',
-            bg: 'bg-red-50',
-            border: 'border-red-100',
-            title: 'Clients exigeants',
-            desc: 'des consommateurs ne choisissent jamais un commerce noté en dessous de 4 étoiles.',
-          },
-          {
-            icon: TrendingDown,
-            stat: '30',
-            suffix: ' clients',
-            color: 'text-amber-500',
-            bg: 'bg-amber-50',
-            border: 'border-amber-100',
-            title: 'Impact direct',
-            desc: 'perdus en moyenne pour chaque avis négatif non traité qui reste visible sur Google.',
-          },
-          {
-            icon: Users,
-            stat: '8/10',
-            color: 'text-indigo-500',
-            bg: 'bg-indigo-50',
-            border: 'border-indigo-100',
-            title: 'Le choix se fait sur les avis',
-            desc: 'clients choisissent le commerce avec les avis les plus récents et les mieux notés.',
-          },
+          { stat: '68%', title: 'Clients exigeants', desc: 'des consommateurs ne choisissent jamais un commerce noté en dessous de 4 étoiles.' },
+          { stat: '30', suffix: ' clients perdus', title: 'Impact direct', desc: 'en moyenne pour chaque avis négatif non traité qui reste visible sur votre fiche Google.' },
+          { stat: '8/10', title: 'Le choix se fait sur les avis', desc: 'clients choisissent le commerce avec les avis les plus récents et les mieux notés.' },
         ].map((item, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -6, transition: { duration: 0.3 } }}
-            className={`relative p-8 rounded-2xl border ${item.border} ${item.bg} text-center`}
+            transition={{ delay: i * 0.15, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center"
           >
-            <div className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${item.bg} border ${item.border} mb-6`}>
-              <item.icon className={`w-7 h-7 ${item.color}`} />
+            <div className="text-6xl md:text-7xl font-extrabold text-gray-900 tracking-tight mb-1">
+              {item.stat}{item.suffix && <span className="text-3xl md:text-4xl font-bold text-gray-400">{item.suffix}</span>}
             </div>
-            <div className={`text-5xl font-extrabold ${item.color} mb-2`}>
-              {item.stat}{item.suffix || ''}
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
-            <p className="text-gray-500 leading-relaxed">{item.desc}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">{item.title}</h3>
+            <p className="text-gray-500 leading-relaxed max-w-xs mx-auto">{item.desc}</p>
           </motion.div>
         ))}
       </div>
@@ -654,7 +625,7 @@ const FeaturesSection = () => (
   <section id="fonctionnalites" className="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
     <div className="text-center mb-16">
       <SectionBadge>Fonctionnalités</SectionBadge>
-      <SectionTitle>Tout pour dominer Google.</SectionTitle>
+      <SectionTitle className="text-center">Tout pour dominer Google.</SectionTitle>
       <SectionSub>Un seul outil. Trois armes redoutables.</SectionSub>
     </div>
 
@@ -763,7 +734,7 @@ const HowItWorksSection = () => {
     <section id="comment-ca-marche" className="py-24 px-6 lg:px-8 max-w-5xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>Simplicité</SectionBadge>
-        <SectionTitle>3 minutes pour tout mettre en place.</SectionTitle>
+        <SectionTitle className="text-center">3 minutes pour tout mettre en place.</SectionTitle>
       </div>
 
       <div className="space-y-6">
@@ -803,8 +774,11 @@ const ImportSection = () => {
   const [manualRows, setManualRows] = useState([{ prenom: '', telephone: '', email: '' }]);
   const [csvData, setCsvData] = useState(null);
   const [csvFileName, setCsvFileName] = useState('');
-  const [flowState, setFlowState] = useState('idle'); // idle, uploading, success, redirecting
+  const [flowState, setFlowState] = useState('idle');
   const [countdown, setCountdown] = useState(3);
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -826,41 +800,119 @@ const ImportSection = () => {
     });
   };
 
-  const handleSubmit = () => {
-    setFlowState('uploading');
-    setTimeout(() => {
-      setFlowState('success');
-      let c = 3;
-      const timer = setInterval(() => {
-        c -= 1;
-        setCountdown(c);
-        if (c <= 0) {
-          clearInterval(timer);
-          setFlowState('redirecting');
-          window.location.href = 'https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01';
-        }
-      }, 1000);
-    }, 1500);
+  const STRIPE_LINKS = {
+    essentiel: 'https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01',
+    succes: 'https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01',
   };
 
-  if (flowState === 'success' || flowState === 'redirecting') {
+  const handleSubmit = () => {
+    setFlowState('uploading');
+    setTimeout(() => setFlowState('info'), 1500);
+  };
+
+  const handleInfoSubmit = (e) => {
+    e.preventDefault();
+    if (companyName && companyEmail) setFlowState('plan');
+  };
+
+  const handlePlanSelect = (plan) => {
+    setSelectedPlan(plan);
+    setFlowState('redirecting');
+    let c = 3;
+    setCountdown(3);
+    const timer = setInterval(() => {
+      c -= 1;
+      setCountdown(c);
+      if (c <= 0) {
+        clearInterval(timer);
+        window.location.href = STRIPE_LINKS[plan];
+      }
+    }, 1000);
+  };
+
+  if (flowState === 'info') {
     return (
-      <section id="import" className="py-24 bg-gradient-to-b from-indigo-50 to-white">
+      <section id="import" className="py-24 bg-gradient-to-b from-indigo-50/50 to-white">
+        <div className="max-w-md mx-auto px-6 text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-200">
+              <Check className="w-10 h-10 text-white" />
+            </div>
+          </motion.div>
+          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-2">
+            Félicitations !
+          </motion.h3>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 mb-8">
+            Vos contacts ont été importés. Dernière étape avant de lancer votre campagne.
+          </motion.p>
+          <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} onSubmit={handleInfoSubmit} className="space-y-4 text-left">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom de votre société</label>
+              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Votre email professionnel</label>
+              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="contact@monsociete.fr" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
+            </div>
+            <button type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all">
+              Continuer →
+            </button>
+          </motion.form>
+        </div>
+      </section>
+    );
+  }
+
+  if (flowState === 'plan') {
+    return (
+      <section id="import" className="py-24 bg-gradient-to-b from-indigo-50/50 to-white">
+        <div className="max-w-2xl mx-auto px-6 text-center">
+          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold text-gray-900 mb-2">
+            Choisissez votre formule
+          </motion.h3>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-gray-500 mb-10">
+            Quelle que soit la formule, vous commencez gratuitement. Vous ne serez débité qu'à la fin de votre essai.
+          </motion.p>
+          <div className="grid md:grid-cols-2 gap-6">
+            {[
+              { id: 'essentiel', name: "L'Essentiel", price: '49€ HT/mois', desc: 'Appels IA illimités · Bouclier anti-avis · Dashboard temps réel', badge: 'Le plus populaire' },
+              { id: 'succes', name: 'Au Succès', price: '69€ HT / 15 avis', desc: 'Payez uniquement aux résultats · Mêmes fonctionnalités', badge: null },
+            ].map((plan, i) => (
+              <motion.button
+                key={plan.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + i * 0.1 }}
+                onClick={() => handlePlanSelect(plan.id)}
+                className="relative p-8 rounded-2xl border-2 border-gray-200 hover:border-indigo-400 bg-white text-left transition-all duration-300 hover:shadow-lg group"
+              >
+                {plan.badge && <span className="absolute -top-3 left-6 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">{plan.badge}</span>}
+                <h4 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h4>
+                <p className="text-2xl font-extrabold text-indigo-600 mb-3">{plan.price}</p>
+                <p className="text-gray-500 text-sm">{plan.desc}</p>
+                <div className="mt-4 text-sm font-semibold text-indigo-600 group-hover:text-indigo-700 flex items-center gap-1">
+                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (flowState === 'redirecting') {
+    return (
+      <section id="import" className="py-24 bg-gradient-to-b from-indigo-50/50 to-white">
         <div className="max-w-lg mx-auto px-6 text-center">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15 }}>
             <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-200">
               <Check className="w-10 h-10 text-white" />
             </div>
           </motion.div>
-          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-3">
-            Félicitations !
-          </motion.h3>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 text-lg mb-8">
-            Vos données ont été envoyées. Vos 10 avis gratuits vont être collectés.
-          </motion.p>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="text-sm text-gray-400">
-            Redirection dans <span className="font-bold text-indigo-600 text-lg">{countdown}</span> seconde{countdown > 1 ? 's' : ''}...
-          </motion.div>
+          <h3 className="text-3xl font-bold text-gray-900 mb-3">Parfait !</h3>
+          <p className="text-gray-500 text-lg mb-6">Redirection vers le paiement sécurisé...</p>
+          <span className="text-4xl font-bold text-indigo-600">{countdown}</span>
         </div>
       </section>
     );
@@ -1025,7 +1077,7 @@ const TestimonialsSection = () => {
     <section className="py-24 px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>Témoignages</SectionBadge>
-        <SectionTitle>Des résultats concrets.</SectionTitle>
+        <SectionTitle className="text-center">Des résultats concrets.</SectionTitle>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -1068,7 +1120,7 @@ const PricingSection = () => (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>Tarifs</SectionBadge>
-        <SectionTitle>Investissez dans votre réputation.</SectionTitle>
+        <SectionTitle className="text-center">Investissez dans votre réputation.</SectionTitle>
         <SectionSub>Pas de surprise, pas d&apos;engagement. Résiliez quand vous voulez.</SectionSub>
       </div>
 
@@ -1104,7 +1156,7 @@ const PricingSection = () => (
           </div>
 
           <motion.a
-            href="https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01"
+            href="#import"
             className="w-full bg-gray-900 text-white py-4 rounded-2xl font-semibold text-[15px] hover:bg-gray-800 transition-colors shadow-sm block text-center"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
@@ -1146,7 +1198,7 @@ const PricingSection = () => (
           </div>
 
           <motion.a
-            href="https://buy.stripe.com/14A00l1FQ60vdTi8JIf3a01"
+            href="#import"
             className="w-full border-2 border-gray-200 text-gray-900 py-4 rounded-2xl font-semibold text-[15px] hover:border-gray-300 transition-colors block text-center"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
@@ -1189,7 +1241,7 @@ const FAQSection = () => {
     <section id="faq" className="py-24 px-6 lg:px-8 max-w-3xl mx-auto">
       <div className="text-center mb-16">
         <SectionBadge>FAQ</SectionBadge>
-        <SectionTitle>Questions fréquentes</SectionTitle>
+        <SectionTitle className="text-center">Questions fréquentes</SectionTitle>
       </div>
 
       <div className="space-y-3">

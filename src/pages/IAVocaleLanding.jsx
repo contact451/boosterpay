@@ -88,7 +88,18 @@ const GradientText = ({ children, className = '' }) => (
   </span>
 );
 
-const STRIPE_URL = 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02';
+const IA_VOCALE_PLANS = [
+  { id: 'decouverte', name: 'Essai Découverte', price: '0€', desc: '100 appels gratuits · Import CSV · Dashboard' },
+  { id: 'boost', name: 'Pack Boost', price: '199€ HT', desc: '250 appels · Résultats immédiats', badge: null },
+  { id: 'business', name: 'Pack Business', price: '349€ HT', desc: '500 appels · Manager dédié', badge: 'Le plus populaire' },
+  { id: 'croissance', name: 'Croissance', price: '399€ HT/mois', desc: '1000 appels/mois · Support prioritaire' },
+];
+const STRIPE_LINKS = {
+  decouverte: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
+  boost: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
+  business: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
+  croissance: 'https://buy.stripe.com/bJecN7fwG3Sn9D20dcf3a02',
+};
 
 const navLinks = [
   { label: 'Fonctionnalités', href: '#features' },
@@ -238,8 +249,11 @@ export default function IAVocaleLanding() {
   const [manualRows, setManualRows] = useState([
     { prenom: '', telephone: '', type: 'renouvellement', dateRdv: '' },
   ]);
-  const [importState, setImportState] = useState('idle'); // idle | uploading | success | redirecting
+  const [importState, setImportState] = useState('idle'); // idle | uploading | info | plan | redirecting
   const [countdown, setCountdown] = useState(3);
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   // FAQ
   const [openFaq, setOpenFaq] = useState(null);
@@ -259,7 +273,7 @@ export default function IAVocaleLanding() {
   useEffect(() => {
     if (importState !== 'redirecting') return;
     if (countdown <= 0) {
-      window.location.href = STRIPE_URL;
+      window.location.href = STRIPE_LINKS[selectedPlan] || STRIPE_LINKS.decouverte;
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
@@ -304,12 +318,20 @@ export default function IAVocaleLanding() {
   const handleSubmit = () => {
     setImportState('uploading');
     setTimeout(() => {
-      setImportState('success');
-      setTimeout(() => {
-        setImportState('redirecting');
-        setCountdown(3);
-      }, 1500);
+      setImportState('info');
     }, 2000);
+  };
+
+  const handleInfoSubmit = (e) => {
+    e.preventDefault();
+    if (!companyName.trim() || !companyEmail.trim()) return;
+    setImportState('plan');
+  };
+
+  const handlePlanSelect = (planId) => {
+    setSelectedPlan(planId);
+    setImportState('redirecting');
+    setCountdown(3);
   };
 
   /* ── Data ──────────────────────────────────────────────────── */
@@ -517,55 +539,83 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* ── Trois services, un seul outil ── */}
-      <section className="py-20 bg-white">
+      {/* ── Trois services. Un seul outil. ── */}
+      <section className="py-28 bg-white overflow-hidden">
         <div className="max-w-6xl mx-auto px-6">
           <SectionHeading
             tag="Nos services"
             title="Trois services. Un seul outil."
             subtitle="Chaque service s'adapte à votre métier et à vos besoins."
           />
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 icon: RefreshCw,
                 title: 'Renouvellement de dossiers',
-                desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance. Contrôles techniques, assurances, entretiens.',
-                color: 'from-emerald-500 to-teal-500',
-                bg: 'bg-emerald-50',
-                border: 'border-emerald-200',
+                desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance.',
+                details: ['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux'],
+                gradient: 'from-emerald-500 to-teal-400',
+                glow: 'shadow-emerald-500/20',
               },
               {
                 icon: CalendarCheck,
                 title: 'Confirmation de RDV',
-                desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous. Résultat : vos lapins chutent de 43% à 8%.',
-                color: 'from-blue-500 to-indigo-500',
-                bg: 'bg-blue-50',
-                border: 'border-blue-200',
+                desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous et supprimer les lapins.',
+                details: ['Appel J-1 automatique', 'SMS de rappel', 'Gestion des reports', 'Planning mis à jour'],
+                gradient: 'from-blue-500 to-indigo-500',
+                glow: 'shadow-blue-500/20',
               },
               {
                 icon: Bot,
                 title: 'Robot IA sur mesure',
-                desc: 'Un besoin spécifique ? On configure une IA vocale 100% adaptée à vos processus et à votre métier.',
-                color: 'from-violet-500 to-purple-500',
-                bg: 'bg-violet-50',
-                border: 'border-violet-200',
-                cta: { label: 'Réserver un appel', href: 'https://calendar.app.google/GHtu4ymohWhAXJTG8' },
+                desc: 'On configure une IA vocale 100% adaptée à vos processus et à votre métier.',
+                details: ['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'],
+                gradient: 'from-violet-500 to-purple-500',
+                glow: 'shadow-violet-500/20',
+                cta: { label: 'Réserver un appel découverte', href: 'https://calendar.app.google/GHtu4ymohWhAXJTG8' },
               },
             ].map((service, i) => (
-              <ScrollReveal key={i} delay={i * 0.1}>
+              <ScrollReveal key={i} delay={i * 0.12}>
                 <motion.div
-                  whileHover={{ y: -6 }}
-                  className={`relative p-8 rounded-2xl border ${service.border} ${service.bg} h-full flex flex-col`}
+                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                  className="relative h-full bg-white rounded-3xl border border-gray-100 p-8 flex flex-col group hover:shadow-2xl transition-shadow duration-500"
                 >
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${service.color} flex items-center justify-center mb-6 shadow-lg`}>
-                    <service.icon className="w-7 h-7 text-white" />
+                  {/* Gradient glow on hover */}
+                  <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
+
+                  {/* Icon */}
+                  <div className={`relative w-16 h-16 rounded-2xl bg-gradient-to-br ${service.gradient} flex items-center justify-center mb-8 shadow-lg ${service.glow}`}>
+                    <service.icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{service.title}</h3>
-                  <p className="text-gray-500 leading-relaxed flex-1">{service.desc}</p>
-                  {service.cta && (
-                    <a href={service.cta.href} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-violet-600 hover:text-violet-700 transition-colors">
-                      {service.cta.label} <ArrowRight className="w-4 h-4" />
+
+                  {/* Content */}
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">{service.title}</h3>
+                  <p className="text-gray-500 leading-relaxed mb-6">{service.desc}</p>
+
+                  {/* Detail chips */}
+                  <div className="flex flex-wrap gap-2 mb-6 mt-auto">
+                    {service.details.map((d, j) => (
+                      <span key={j} className="text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* CTA for custom robot */}
+                  {service.cta ? (
+                    <a
+                      href={service.cta.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center justify-center gap-2 bg-gradient-to-r ${service.gradient} text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg transition-all duration-300 hover:scale-105`}
+                    >
+                      <CalendarCheck className="w-4 h-4" />
+                      {service.cta.label}
+                    </a>
+                  ) : (
+                    <a href="#import" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-emerald-600 transition-colors group/link">
+                      Commencer gratuitement
+                      <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
                     </a>
                   )}
                 </motion.div>
@@ -784,39 +834,121 @@ export default function IAVocaleLanding() {
             subtitle="100 appels offerts. Importez vos contacts et laissez l'IA faire le reste."
           />
 
-          {/* Success overlay */}
+          {/* Multi-step overlay: info → plan → redirect */}
           <AnimatePresence>
-            {(importState === 'success' || importState === 'redirecting') && (
+            {(importState === 'info' || importState === 'plan' || importState === 'redirecting') && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6"
               >
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                  className="bg-white rounded-3xl p-10 max-w-md w-full text-center shadow-2xl"
-                >
+                {/* Step: Info (société + email) */}
+                {importState === 'info' && (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
-                    className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl"
                   >
-                    <CheckCircle2 className="w-10 h-10 text-white" />
-                  </motion.div>
-
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Félicitations !</h3>
-                  <p className="text-gray-500 mb-6">Vos données ont été envoyées. Vos 100 appels gratuits vont commencer.</p>
-
-                  {importState === 'redirecting' && (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-sm text-gray-400"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                      className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
                     >
+                      <CheckCircle2 className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Données reçues !</h3>
+                    <p className="text-gray-500 mb-6 text-center">Plus qu'une étape : dites-nous qui vous êtes.</p>
+                    <form onSubmit={handleInfoSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la société</label>
+                        <input
+                          type="text"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="Ex: Garage Martin"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email professionnel</label>
+                        <input
+                          type="email"
+                          value={companyEmail}
+                          onChange={(e) => setCompanyEmail(e.target.value)}
+                          placeholder="contact@entreprise.fr"
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300"
+                      >
+                        Continuer
+                      </button>
+                    </form>
+                  </motion.div>
+                )}
+
+                {/* Step: Plan selection */}
+                {importState === 'plan' && (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    className="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl"
+                  >
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Choisissez votre plan</h3>
+                    <p className="text-gray-500 mb-8 text-center">Sélectionnez l'offre adaptée à vos besoins.</p>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {IA_VOCALE_PLANS.map((plan) => (
+                        <motion.button
+                          key={plan.id}
+                          whileHover={{ y: -4 }}
+                          onClick={() => handlePlanSelect(plan.id)}
+                          className={`relative text-left p-6 rounded-2xl border-2 transition-all duration-300 ${
+                            plan.badge
+                              ? 'border-emerald-500 bg-emerald-50/50 shadow-lg shadow-emerald-500/10'
+                              : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          {plan.badge && (
+                            <span className="absolute -top-3 left-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                              {plan.badge}
+                            </span>
+                          )}
+                          <div className="text-2xl font-bold text-gray-900 mb-1">{plan.price}</div>
+                          <div className="text-sm font-semibold text-gray-700 mb-2">{plan.name}</div>
+                          <div className="text-xs text-gray-500">{plan.desc}</div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Step: Redirecting */}
+                {importState === 'redirecting' && (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    className="bg-white rounded-3xl p-10 max-w-md w-full text-center shadow-2xl"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                      className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
+                    >
+                      <CheckCircle2 className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Félicitations !</h3>
+                    <p className="text-gray-500 mb-6">Redirection vers le paiement sécurisé...</p>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-gray-400">
                       <p>Redirection dans <span className="font-bold text-emerald-600 text-lg">{countdown}</span>...</p>
                       <div className="mt-4 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <motion.div
@@ -827,29 +959,8 @@ export default function IAVocaleLanding() {
                         />
                       </div>
                     </motion.div>
-                  )}
-
-                  {/* Celebration particles */}
-                  {[...Array(12)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
-                      animate={{
-                        opacity: 0,
-                        scale: 1,
-                        x: (Math.random() - 0.5) * 200,
-                        y: (Math.random() - 0.5) * 200,
-                      }}
-                      transition={{ duration: 1, delay: 0.3 + i * 0.05 }}
-                      className="absolute w-3 h-3 rounded-full"
-                      style={{
-                        background: i % 3 === 0 ? '#059669' : i % 3 === 1 ? '#0D9488' : '#34D399',
-                        top: '40%',
-                        left: '50%',
-                      }}
-                    />
-                  ))}
-                </motion.div>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1216,7 +1327,7 @@ export default function IAVocaleLanding() {
                     ))}
                   </ul>
                   <a
-                    href={STRIPE_URL}
+                    href={STRIPE_LINKS.decouverte}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`block text-center py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
