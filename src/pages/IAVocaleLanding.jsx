@@ -146,6 +146,9 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 /*  Hero appointment animation                                         */
 /* ------------------------------------------------------------------ */
 const HeroAnimation = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-30px' });
+
   const appointments = [
     { name: 'Martin D.', time: '09:00', type: 'Renouvellement' },
     { name: 'Sophie L.', time: '10:30', type: 'Confirmation RDV' },
@@ -155,32 +158,38 @@ const HeroAnimation = () => {
   ];
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
+    <div ref={ref} className="relative w-full max-w-md mx-auto" style={{ willChange: 'transform' }}>
       {/* Phone frame */}
-      <div className="relative bg-white rounded-[2.5rem] shadow-2xl shadow-emerald-900/10 border border-gray-100 p-6 pt-10 overflow-hidden">
+      <div className="relative bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-6 pt-10 overflow-hidden" style={{ transform: 'translateZ(0)' }}>
         {/* Notch */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl" />
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 mt-2">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.4 }}
+          className="flex items-center justify-between mb-6 mt-2"
+        >
           <div>
-            <p className="text-xs text-gray-400 font-medium">Aujourd'hui</p>
+            <p className="text-xs text-gray-400 font-medium">Aujourd\u2019hui</p>
             <p className="text-lg font-bold text-gray-900">Mon agenda</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
             <CalendarCheck className="w-5 h-5 text-white" />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Appointments */}
+        {/* Appointments — staggered with simple easing, no springs */}
         <div className="space-y-3">
           {appointments.map((apt, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.8 + i * 0.3, duration: 0.5, ease: 'easeOut' }}
+              initial={{ opacity: 0, x: -15 }}
+              animate={isInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ delay: 0.3 + i * 0.15, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
               className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100"
+              style={{ willChange: 'transform, opacity' }}
             >
               <div className="text-sm font-semibold text-gray-400 w-12">{apt.time}</div>
               <div className="flex-1">
@@ -189,8 +198,8 @@ const HeroAnimation = () => {
               </div>
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 1.5 + i * 0.3, type: 'spring', stiffness: 300 }}
+                animate={isInView ? { scale: 1, opacity: 1 } : {}}
+                transition={{ delay: 0.8 + i * 0.15, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                 className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center"
               >
                 <Check className="w-4 h-4 text-emerald-600" />
@@ -201,9 +210,9 @@ const HeroAnimation = () => {
 
         {/* Bottom bar */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3, duration: 0.5 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 1.5, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="mt-6 flex items-center justify-center gap-2 text-emerald-600 text-sm font-medium"
         >
           <Sparkles className="w-4 h-4" />
@@ -211,27 +220,29 @@ const HeroAnimation = () => {
         </motion.div>
       </div>
 
-      {/* Floating badges */}
+      {/* Floating badges — simpler easing, no heavy springs */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ delay: 2.5, type: 'spring', stiffness: 200 }}
-        className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-lg shadow-emerald-900/10 border border-gray-100 px-4 py-3 flex items-center gap-2"
+        initial={{ opacity: 0, y: 15 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ delay: 1.2, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+        className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-2"
+        style={{ willChange: 'transform, opacity', transform: 'translateZ(0)' }}
       >
         <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
           <PhoneCall className="w-4 h-4 text-emerald-600" />
         </div>
         <div>
           <p className="text-xs font-bold text-gray-800">100% automatique</p>
-          <p className="text-[10px] text-gray-400">L'IA appelle pour vous</p>
+          <p className="text-[10px] text-gray-400">L\u2019IA appelle pour vous</p>
         </div>
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: -20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ delay: 2.8, type: 'spring', stiffness: 200 }}
-        className="absolute -top-2 -right-4 bg-white rounded-2xl shadow-lg shadow-emerald-900/10 border border-gray-100 px-4 py-3 flex items-center gap-2"
+        initial={{ opacity: 0, y: -15 }}
+        animate={isInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ delay: 1.4, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+        className="absolute -top-2 -right-4 bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-2"
+        style={{ willChange: 'transform, opacity', transform: 'translateZ(0)' }}
       >
         <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
           <TrendingUp className="w-4 h-4 text-teal-600" />

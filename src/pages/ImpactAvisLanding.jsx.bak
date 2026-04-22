@@ -23,22 +23,17 @@ import {
   MessageSquare,
   Eye,
   Plus,
-  HelpCircle,
-  FileSpreadsheet,
-  Wrench,
   Trash2,
 } from 'lucide-react';
-import { captureLeadFromSite } from '../services/leadService';
 
 // ============ DESIGN SYSTEM ============
 const ease = [0.22, 1, 0.36, 1];
 
 const SectionBadge = ({ children }) => (
   <motion.div
-    initial={{ opacity: 0.01, y: 10 }}
+    initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
-    style={{ willChange: 'opacity, transform' }}
+    viewport={{ once: true }}
     className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5 mb-6"
   >
     <span className="text-[13px] font-semibold text-indigo-700 tracking-wide">{children}</span>
@@ -47,11 +42,10 @@ const SectionBadge = ({ children }) => (
 
 const SectionTitle = ({ children, className = '' }) => (
   <motion.h2
-    initial={{ opacity: 0.01, y: 20 }}
+    initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
+    viewport={{ once: true }}
     transition={{ duration: 0.7, ease }}
-    style={{ willChange: 'opacity, transform' }}
     className={`text-4xl md:text-[56px] font-extrabold text-gray-900 tracking-tight leading-[1.08] ${className}`}
   >
     {children}
@@ -60,11 +54,10 @@ const SectionTitle = ({ children, className = '' }) => (
 
 const SectionSub = ({ children }) => (
   <motion.p
-    initial={{ opacity: 0.01, y: 10 }}
+    initial={{ opacity: 0, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
+    viewport={{ once: true }}
     transition={{ delay: 0.1, duration: 0.6, ease }}
-    style={{ willChange: 'opacity, transform' }}
     className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mt-5 text-center"
   >
     {children}
@@ -162,7 +155,7 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <motion.div
             className="md:hidden fixed inset-0 top-[122px] bg-white z-30 flex flex-col items-center pt-12 gap-8"
-            initial={{ opacity: 0.01, y: -10 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
@@ -183,7 +176,7 @@ const Navbar = () => {
 // ============ GOOGLE CARD BEFORE/AFTER ANIMATION ============
 const GoogleCardAnimation = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-40px' });
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
   const [phase, setPhase] = useState('before'); // 'before' | 'transitioning' | 'after'
 
   useEffect(() => {
@@ -226,63 +219,68 @@ const GoogleCardAnimation = () => {
   ];
 
   return (
-    <div ref={ref} className="relative" style={{ willChange: 'transform' }}>
-      {/* Simplified background glow — NO blur-3xl on mobile (very expensive) */}
-      <div
-        className="absolute -inset-8 rounded-[40px] transition-all duration-1000 ease-out"
-        style={{
+    <div ref={ref} className="relative">
+      <motion.div
+        className="absolute -inset-8 rounded-[40px] blur-3xl"
+        animate={{
           background: isAfter
-            ? 'radial-gradient(ellipse at center, rgba(34,197,94,0.10) 0%, transparent 70%)'
-            : 'radial-gradient(ellipse at center, rgba(239,68,68,0.06) 0%, transparent 70%)',
-          opacity: 0.8,
+            ? 'radial-gradient(ellipse at center, rgba(34,197,94,0.12) 0%, rgba(99,102,241,0.06) 50%, transparent 80%)'
+            : 'radial-gradient(ellipse at center, rgba(239,68,68,0.08) 0%, rgba(200,200,200,0.04) 50%, transparent 80%)',
         }}
+        transition={{ duration: 1.2 }}
       />
 
-      <div
-        className="relative bg-white rounded-3xl overflow-hidden transition-all duration-700 ease-out"
-        style={{
-          border: '1.5px solid',
+      <motion.div
+        className="relative bg-white rounded-3xl overflow-hidden"
+        animate={{
           borderColor: isAfter ? 'rgba(34,197,94,0.3)' : 'rgba(229,231,235,0.8)',
           boxShadow: isAfter
-            ? '0 25px 60px rgba(34,197,94,0.10), 0 8px 24px rgba(0,0,0,0.05)'
-            : '0 20px 50px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.03)',
-          willChange: 'border-color, box-shadow',
-          transform: 'translateZ(0)',
+            ? '0 25px 80px rgba(34,197,94,0.12), 0 8px 30px rgba(0,0,0,0.06)'
+            : '0 20px 60px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.03)',
         }}
+        transition={{ duration: 1 }}
+        style={{ border: '1.5px solid' }}
       >
-        {/* Status bar — CSS transition instead of framer motion animate */}
-        <div
-          className="px-6 py-2.5 flex items-center justify-between text-[12px] font-semibold transition-colors duration-700 ease-out"
-          style={{
+        <motion.div
+          className="px-6 py-2.5 flex items-center justify-between text-[12px] font-semibold"
+          animate={{
             backgroundColor: isAfter ? 'rgb(240, 253, 244)' : 'rgb(254, 242, 242)',
             color: isAfter ? 'rgb(22, 163, 74)' : 'rgb(185, 28, 28)',
           }}
+          transition={{ duration: 0.8 }}
         >
-          <div className="flex items-center gap-1.5">
-            <span className="transition-transform duration-300" style={{ display: 'inline-block', transform: isAfter ? 'scale(1)' : 'scale(0.8)' }}>
-              {isAfter ? '\u2713' : '\u26A0'}
-            </span>
+          <motion.div className="flex items-center gap-1.5">
+            {isAfter ? (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, delay: 0.3 }}>{'\u2713'}</motion.span>
+            ) : (
+              <span>{'\u26A0'}</span>
+            )}
             <span>{isAfter ? 'R\u00e9putation excellente' : 'R\u00e9putation \u00e0 risque'}</span>
-          </div>
-          <span style={{ opacity: isAfter ? 1 : 0.7 }} className="transition-opacity duration-500">
+          </motion.div>
+          <motion.span animate={{ opacity: isAfter ? 1 : 0.7 }}>
             {isAfter ? '\u2191 Top 5% local' : '\u2193 En dessous de la moyenne'}
-          </span>
-        </div>
+          </motion.span>
+        </motion.div>
 
         <div className="p-6">
-          {/* Business info row */}
           <div className="flex items-start gap-4 mb-5">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 relative overflow-hidden transition-all duration-800 ease-out"
-              style={{
+            <motion.div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 relative overflow-hidden"
+              animate={{
                 background: isAfter
                   ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
                   : 'linear-gradient(135deg, #9ca3af, #6b7280)',
-                transform: 'translateZ(0)',
               }}
+              transition={{ duration: 1 }}
             >
               <Star className="w-7 h-7 text-white fill-white" />
-            </div>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                initial={{ x: '-100%' }}
+                animate={isAfter ? { x: '200%' } : { x: '-100%' }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              />
+            </motion.div>
             <div className="flex-1">
               <h3 className="font-bold text-gray-900 text-lg">Votre Commerce</h3>
               <p className="text-sm text-gray-400">Commerce local &middot; Ouvert</p>
@@ -297,26 +295,25 @@ const GoogleCardAnimation = () => {
             </div>
           </div>
 
-          {/* Rating + stars */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
-              <span
-                className="text-[42px] font-black leading-none transition-colors duration-700"
-                style={{ color: isAfter ? '#111827' : '#6b7280' }}
+              <motion.span
+                className="text-[42px] font-black leading-none"
+                animate={{ color: isAfter ? '#111827' : '#6b7280' }}
+                transition={{ duration: 0.8 }}
               >
                 {rating.toFixed(1)}
-              </span>
+              </motion.span>
               <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((i) => {
                   const isFilled = i <= filledStars;
                   return (
-                    <span
-                      key={i}
-                      className="transition-transform duration-300 ease-out inline-block"
-                      style={{ transform: isFilled ? 'scale(1.1)' : 'scale(1)' }}
+                    <motion.div key={i}
+                      animate={{ scale: isFilled ? [1, 1.3, 1] : 1, rotate: isFilled && i === filledStars ? [0, 15, -10, 0] : 0 }}
+                      transition={{ duration: 0.4, delay: i * 0.06 }}
                     >
-                      <Star className={`w-6 h-6 transition-colors duration-400 ${isFilled ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`} />
-                    </span>
+                      <Star className={`w-6 h-6 transition-colors duration-500 ${isFilled ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`} />
+                    </motion.div>
                   );
                 })}
               </div>
@@ -324,19 +321,15 @@ const GoogleCardAnimation = () => {
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-500 font-medium">{Math.round(reviews)} avis Google</span>
               <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-1500 ease-out"
-                  style={{
-                    width: isAfter ? '92%' : '28%',
-                    backgroundColor: isAfter ? '#22c55e' : '#ef4444',
-                    transform: 'translateZ(0)',
-                  }}
+                <motion.div
+                  className="h-full rounded-full"
+                  animate={{ width: isAfter ? '92%' : '28%', backgroundColor: isAfter ? '#22c55e' : '#ef4444' }}
+                  transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Quick action buttons */}
           <div className="flex gap-2 mb-5">
             {['Itin\u00e9raire', 'Avis', 'Appeler'].map((label, i) => (
               <div key={i} className="flex-1 bg-gray-50 hover:bg-gray-100 rounded-xl py-2 text-center text-xs font-semibold text-gray-600 border border-gray-100 transition-colors cursor-default">
@@ -345,16 +338,14 @@ const GoogleCardAnimation = () => {
             ))}
           </div>
 
-          {/* Review cards — simplified transitions */}
           <div className="space-y-2.5 relative" style={{ minHeight: '180px' }}>
             <AnimatePresence mode="wait">
               {!isAfter ? (
-                <motion.div key="before" className="space-y-2.5" exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+                <motion.div key="before" className="space-y-2.5" exit={{ opacity: 0, y: -20, scale: 0.95 }} transition={{ duration: 0.4 }}>
                   {beforeReviews.map((r, i) => (
                     <motion.div key={i} className="bg-gray-50 rounded-xl p-3.5 border border-gray-100"
-                      initial={{ opacity: 0.01, x: -15 }} animate={isInView ? { opacity: 1, x: 0 } : {}}
-                      transition={{ delay: 0.6 + i * 0.15, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                      style={{ willChange: 'transform, opacity' }}
+                      initial={{ opacity: 0, x: -20 }} animate={isInView ? { opacity: 1, x: 0 } : {}}
+                      transition={{ delay: 0.6 + i * 0.15 }}
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-600">{r.author.charAt(0)}</div>
@@ -372,24 +363,23 @@ const GoogleCardAnimation = () => {
                 </motion.div>
               ) : (
                 <motion.div key="after" className="space-y-2.5"
-                  initial={{ opacity: 0.01, y: 15 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
                 >
                   {afterReviews.map((r, i) => (
                     <motion.div key={i}
                       className={`rounded-xl p-3.5 border ${i === 2 ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-gray-50 border-gray-100'}`}
-                      initial={{ opacity: 0.01, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                      style={{ willChange: 'transform, opacity' }}
+                      initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: i * 0.12, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                     >
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-600">{r.author.charAt(0)}</div>
                         <span className="text-xs font-semibold text-gray-700">{r.author}</span>
                         {r.isNew && (
                           <motion.span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-md"
-                            initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: 0.2 + i * 0.08 }}
+                            initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            transition={{ type: 'spring', stiffness: 400, delay: 0.3 + i * 0.1 }}
                           >
                             Nouveau
                           </motion.span>
@@ -398,7 +388,10 @@ const GoogleCardAnimation = () => {
                       </div>
                       <div className="flex gap-0.5 mb-1">
                         {[...Array(5)].map((_, j) => (
-                          <Star key={j} className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <motion.div key={j} initial={{ scale: 0 }} animate={{ scale: 1 }}
+                            transition={{ delay: 0.2 + i * 0.1 + j * 0.03, type: 'spring', stiffness: 300 }}>
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          </motion.div>
                         ))}
                       </div>
                       <p className="text-[13px] text-gray-700 leading-snug font-medium">{r.text}</p>
@@ -409,15 +402,13 @@ const GoogleCardAnimation = () => {
             </AnimatePresence>
           </div>
 
-          {/* Bottom success bar */}
           <AnimatePresence>
             {isAfter && (
               <motion.div
                 className="mt-4 flex items-center justify-between bg-emerald-50 rounded-xl px-4 py-3 border border-emerald-100"
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                transition={{ delay: 0.3, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                style={{ willChange: 'opacity', transform: 'translateZ(0)' }}
+                initial={{ opacity: 0, y: 10, height: 0, marginTop: 0, padding: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto', marginTop: 16, padding: '12px 16px' }}
+                transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -425,40 +416,43 @@ const GoogleCardAnimation = () => {
                   </div>
                   <span className="text-[13px] font-bold text-emerald-700">+312% d&apos;avis en 30 jours</span>
                 </div>
-                <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md">
+                <motion.div
+                  className="text-[11px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-1 rounded-md"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ repeat: Infinity, duration: 2, repeatDelay: 1 }}
+                >
                   Impact-Avis IA
-                </span>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Top badge — AVANT / APRÈS */}
       <motion.div
         className="absolute -top-4 left-1/2 -translate-x-1/2 z-20"
-        initial={{ opacity: 0.01, y: 8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 0.4, duration: 0.4 }}
-        style={{ willChange: 'transform, opacity' }}
+        transition={{ delay: 0.5 }}
       >
-        <div
-          className="px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wider shadow-lg transition-colors duration-600"
-          style={{
+        <motion.div
+          className="px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wider shadow-lg"
+          animate={{
             backgroundColor: isAfter ? '#f0fdf4' : '#fef2f2',
             color: isAfter ? '#15803d' : '#b91c1c',
-            border: '1.5px solid',
             borderColor: isAfter ? '#bbf7d0' : '#fecaca',
           }}
+          transition={{ duration: 0.6 }}
+          style={{ border: '1.5px solid' }}
         >
           {isAfter ? '\u2726 APR\u00c8S IMPACT-AVIS' : '\u2727 AVANT'}
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );
 };
 
-// ============ HERO ============// ============ HERO ============
+// ============ HERO ============
 const HeroSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -467,7 +461,7 @@ const HeroSection = () => {
     <section ref={ref} className="pt-52 pb-24 px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
         <motion.div
-          initial={{ opacity: 0.01, y: 30 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.9, ease }}
         >
@@ -509,7 +503,7 @@ const HeroSection = () => {
 
           <div className="flex flex-wrap gap-6 text-[14px] text-gray-500">
             {['10 avis offerts', 'Sans carte bancaire', 'Résultats sous 48h'].map((t, i) => (
-              <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0.01 }}
+              <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0 }}
                 animate={isInView ? { opacity: 1 } : {}} transition={{ delay: 0.5 + i * 0.1 }}>
                 <Check className="w-4 h-4 text-emerald-500" /> {t}
               </motion.div>
@@ -519,7 +513,7 @@ const HeroSection = () => {
 
         {/* Hero visual — Animated Before/After Google Card */}
         <motion.div
-          initial={{ opacity: 0.01, y: 40, scale: 0.97 }}
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
           animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ duration: 1, delay: 0.2, ease }}
         >
@@ -544,9 +538,9 @@ const SocialProofBar = () => {
           {sectors.map((s, i) => (
             <motion.span key={i}
               className="px-4 py-2 bg-white border border-gray-200/60 rounded-full text-[13px] font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all cursor-default"
-              initial={{ opacity: 0.01, y: 10 }}
+              initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
+              viewport={{ once: true }}
               transition={{ delay: i * 0.04 }}
             >
               {s}
@@ -574,9 +568,9 @@ const StatsSection = () => {
           <motion.div
             key={i}
             className="text-center"
-            initial={{ opacity: 0.01, y: 20 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true }}
             transition={{ delay: i * 0.08, duration: 0.6, ease }}
           >
             <div className="text-[48px] md:text-[56px] font-extrabold bg-gradient-to-b from-gray-900 to-gray-600 bg-clip-text text-transparent leading-none mb-2">
@@ -611,7 +605,7 @@ const problemStats = [
 
 const ProblemStatCard = ({ stat, suffix, description, index }) => (
   <motion.div
-    initial={{ opacity: 0.01, y: 48 }}
+    initial={{ opacity: 0, y: 48 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: '-80px' }}
     transition={{ delay: index * 0.12, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -643,9 +637,9 @@ const ProblemSection = () => (
     <div className="max-w-6xl mx-auto px-6">
       <div className="text-center mb-24">
         <motion.div
-          initial={{ opacity: 0.01, y: 24 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
           <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-gray-400 mb-6">
@@ -653,9 +647,9 @@ const ProblemSection = () => (
           </span>
         </motion.div>
         <motion.h2
-          initial={{ opacity: 0.01, y: 32 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black tracking-tight leading-[1.1] max-w-3xl mx-auto"
         >
@@ -687,9 +681,9 @@ const FeaturesSection = () => (
       {/* Main card — Shield */}
       <motion.div
         className="md:col-span-2 md:row-span-2 relative overflow-hidden bg-gray-900 text-white rounded-3xl p-10 flex flex-col justify-between"
-        initial={{ opacity: 0.01, y: 30 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ duration: 0.7, ease }}
         whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
@@ -725,9 +719,9 @@ const FeaturesSection = () => (
       {/* IA Vocale card */}
       <motion.div
         className="md:col-span-2 relative bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-        initial={{ opacity: 0.01, y: 30 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ delay: 0.15, duration: 0.7, ease }}
         whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
@@ -756,9 +750,9 @@ const FeaturesSection = () => (
       {/* Import card */}
       <motion.div
         className="md:col-span-2 relative bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-        initial={{ opacity: 0.01, y: 30 }}
+        initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ delay: 0.3, duration: 0.7, ease }}
         whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
@@ -798,9 +792,9 @@ const HowItWorksSection = () => {
             <motion.div
               key={i}
               className="group flex items-start gap-6 bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500"
-              initial={{ opacity: 0.01, y: 30 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
+              viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.6, ease }}
               whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
             >
@@ -824,11 +818,6 @@ const HowItWorksSection = () => {
 
 // ============ IMPORT SECTION ============
 const ImportSection = () => {
-  const isMobileFR = (phone) => {
-    const cleaned = phone.replace(/[\s.\-()]/g, '');
-    return /^(06|07|\+336|\+337|00336|00337)/.test(cleaned);
-  };
-
   const [activeTab, setActiveTab] = useState('manual');
   const [manualRows, setManualRows] = useState([{ prenom: '', telephone: '', email: '' }]);
   const [csvData, setCsvData] = useState(null);
@@ -842,7 +831,6 @@ const ImportSection = () => {
   const [csvMapping, setCsvMapping] = useState({});
   const [csvHeaders, setCsvHeaders] = useState([]);
   const fileInputRef = useRef(null);
-  const [csvHelpOpen, setCsvHelpOpen] = useState(false);
 
   const addRow = () => setManualRows([...manualRows, { prenom: '', telephone: '', email: '' }]);
   const removeRow = (i) => setManualRows(manualRows.filter((_, idx) => idx !== i));
@@ -880,41 +868,19 @@ const ImportSection = () => {
     succes: 'https://buy.stripe.com/aFabJ31FQgF9cPe7FEf3a04',
   };
 
-  const scrollToImport = () => {
-    setTimeout(() => {
-      window.scrollTo({ top: document.getElementById('import')?.offsetTop - 80, behavior: 'smooth' });
-    }, 100);
-  };
-
   const handleSubmit = () => {
     setFlowState('uploading');
-    setTimeout(() => { setFlowState('info'); scrollToImport(); }, 1500);
+    setTimeout(() => setFlowState('info'), 1500);
   };
 
   const handleInfoSubmit = (e) => {
     e.preventDefault();
-    if (companyName && companyEmail) { setFlowState('plan'); scrollToImport(); }
+    if (companyName && companyEmail) setFlowState('plan');
   };
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
     setFlowState('redirecting');
-
-    // Fire-and-forget lead capture to CRM
-    const planNames = { essentiel: "L'Essentiel", succes: 'Au Succès' };
-    const contactCount = csvData ? csvData.length : manualRows.filter(r => r.prenom || r.telephone).length;
-    const contactsList = csvData
-      ? csvData.map(r => ({ nom: r[csvMapping.nom] || '', telephone: r[csvMapping.telephone] || '', email: r[csvMapping.email] || '' }))
-      : manualRows.filter(r => r.prenom || r.telephone);
-    captureLeadFromSite({
-      companyName,
-      email: companyEmail,
-      plan: planNames[plan] || plan,
-      contactCount,
-      source: 'impact-avis',
-      contacts: contactsList,
-    });
-
     let c = 3;
     setCountdown(3);
     const timer = setInterval(() => {
@@ -936,20 +902,20 @@ const ImportSection = () => {
               <Check className="w-10 h-10 text-white" />
             </div>
           </motion.div>
-          <motion.h3 initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-2">
+          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-2">
             Félicitations !
           </motion.h3>
-          <motion.p initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 mb-8">
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 mb-8">
             Vos contacts ont été importés. Dernière étape avant de lancer votre campagne.
           </motion.p>
-          <motion.form initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} onSubmit={handleInfoSubmit} className="space-y-4 text-left">
+          <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} onSubmit={handleInfoSubmit} className="space-y-4 text-left">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom de votre société</label>
-              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 placeholder:text-gray-400" />
+              <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Votre email</label>
-              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="votre@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 placeholder:text-gray-400" />
+              <input type="email" value={companyEmail} onChange={(e) => setCompanyEmail(e.target.value)} required placeholder="votre@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none" />
             </div>
             <button type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all">
               Continuer →
@@ -964,10 +930,10 @@ const ImportSection = () => {
     return (
       <section id="import" className="py-24 bg-gradient-to-b from-indigo-50/50 to-white">
         <div className="max-w-2xl mx-auto px-6 text-center">
-          <motion.h3 initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold text-gray-900 mb-2">
+          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold text-gray-900 mb-2">
             Choisissez votre formule
           </motion.h3>
-          <motion.p initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-gray-500 mb-10">
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-gray-500 mb-10">
             Quelle que soit la formule, vous commencez gratuitement. Vous ne serez débité qu'à la fin de votre essai.
           </motion.p>
           <div className="grid md:grid-cols-2 gap-6">
@@ -977,7 +943,7 @@ const ImportSection = () => {
             ].map((plan, i) => (
               <motion.button
                 key={plan.id}
-                initial={{ opacity: 0.01, y: 20 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
                 onClick={() => handlePlanSelect(plan.id)}
@@ -995,7 +961,7 @@ const ImportSection = () => {
           </div>
 
           <motion.div
-            initial={{ opacity: 0.01, y: 10 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="flex items-center justify-center gap-2 mt-8 text-sm text-gray-500 bg-gray-50 rounded-xl px-5 py-3 max-w-xl mx-auto"
@@ -1057,21 +1023,21 @@ const ImportSection = () => {
         <motion.div layout className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
           <AnimatePresence mode="wait">
             {activeTab === 'manual' ? (
-              <motion.div key="manual" initial={{ opacity: 0.01, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+              <motion.div key="manual" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
                 <div className="space-y-4">
                   {manualRows.map((row, i) => (
                     <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                       <div>
                         {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Nom</label>}
-                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Nom du contact" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
+                        <input type="text" value={row.prenom} onChange={(e) => updateRow(i, 'prenom', e.target.value)} placeholder="Nom du contact" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
                       </div>
                       <div>
                         {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Téléphone</label>}
-                        <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
+                        <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
                       </div>
                       <div>
-                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">{row.telephone && !isMobileFR(row.telephone) ? <>Email <span className="text-red-500">*</span></> : 'Email (facultatif)'}</label>}
-                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className={`w-full px-4 py-3 rounded-xl border focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400 ${row.telephone && !isMobileFR(row.telephone) && !row.email ? 'border-red-300' : 'border-gray-200'}`} />
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Email (facultatif)</label>}
+                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all" />
                       </div>
                       <div>
                         {manualRows.length > 1 && (
@@ -1089,7 +1055,7 @@ const ImportSection = () => {
                 </button>
               </motion.div>
             ) : (
-              <motion.div key="csv" initial={{ opacity: 0.01, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+              <motion.div key="csv" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                 <div
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                   onDragLeave={() => setDragOver(false)}
@@ -1114,68 +1080,7 @@ const ImportSection = () => {
                     </>
                   )}
                 </div>
-
-                {/* CSV Export Help */}
-                <div className="mt-4">
-                  <button
-                    onClick={() => setCsvHelpOpen(!csvHelpOpen)}
-                    className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                    <span>Comment exporter en CSV ?</span>
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${csvHelpOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  <AnimatePresence>
-                    {csvHelpOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="mt-3 bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-100">
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <FileSpreadsheet className="w-4 h-4 text-green-700" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">Microsoft Excel</p>
-                              <p className="text-xs text-gray-500 mt-0.5">Fichier → Enregistrer sous → Format : CSV UTF-8 (délimité par des virgules)</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <FileSpreadsheet className="w-4 h-4 text-blue-700" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">Google Sheets</p>
-                              <p className="text-xs text-gray-500 mt-0.5">Fichier → Télécharger → Valeurs séparées par des virgules (.csv)</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <FileSpreadsheet className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">Numbers (Mac)</p>
-                              <p className="text-xs text-gray-500 mt-0.5">Fichier → Exporter vers → CSV</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Wrench className="w-4 h-4 text-amber-700" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-800">Logiciel métier</p>
-                              <p className="text-xs text-gray-500 mt-0.5">Cherchez « Export » ou « Télécharger » dans votre outil. La plupart proposent un export CSV ou Excel.</p>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>                {csvData && csvData.length > 0 && csvHeaders.length > 0 && (
+                {csvData && csvData.length > 0 && csvHeaders.length > 0 && (
                   <div className="mt-6 space-y-5">
                     {/* Column mapping UI */}
                     <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
@@ -1193,7 +1098,7 @@ const ImportSection = () => {
                             <select
                               value={csvMapping[field.key] || ''}
                               onChange={(e) => setCsvMapping({ ...csvMapping, [field.key]: e.target.value })}
-                              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900"
+                              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none"
                             >
                               <option value="">-- Sélectionner --</option>
                               {csvHeaders.map((h) => (
@@ -1239,7 +1144,7 @@ const ImportSection = () => {
 
           <motion.button
             onClick={handleSubmit}
-            disabled={flowState === 'uploading' || (activeTab === 'manual' && manualRows.some(r => r.telephone && !isMobileFR(r.telephone) && !r.email))}
+            disabled={flowState === 'uploading'}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1291,9 +1196,9 @@ const TestimonialsSection = () => {
           <motion.div
             key={i}
             className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col"
-            initial={{ opacity: 0.01, y: 30 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true }}
             transition={{ delay: i * 0.15, duration: 0.6, ease }}
             whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
           >
@@ -1334,9 +1239,9 @@ const PricingSection = () => (
         {/* Plan 1 */}
         <motion.div
           className="relative bg-white rounded-3xl border-2 border-gray-900 p-8 shadow-[0_4px_30px_rgba(0,0,0,0.08)]"
-          initial={{ opacity: 0.01, y: 30 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ duration: 0.6, ease }}
           whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
         >
@@ -1376,9 +1281,9 @@ const PricingSection = () => (
         {/* Plan 2 */}
         <motion.div
           className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-          initial={{ opacity: 0.01, y: 30 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
+          viewport={{ once: true }}
           transition={{ delay: 0.15, duration: 0.6, ease }}
           whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
         >
@@ -1418,56 +1323,15 @@ const PricingSection = () => (
 
       <motion.div
         className="flex items-center justify-center gap-6 mt-10 text-[13px] text-gray-400"
-        initial={{ opacity: 0.01 }}
+        initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
       >
         <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Empreinte sécurisée Stripe</div>
         <span className="opacity-30">|</span>
         <div>Résiliation en 1 clic</div>
         <span className="opacity-30">|</span>
         <div>Satisfait ou remboursé 30 jours</div>
-      </motion.div>
-
-      {/* Pricing comparison guide */}
-      <motion.div
-        className="mt-16 max-w-3xl mx-auto"
-        initial={{ opacity: 0.01, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">Quelle offre me convient ?</h3>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                <Zap className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">L&apos;Essentiel</h4>
-                <span className="text-sm text-indigo-600 font-semibold">49€/mois</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Vous avez un flux régulier de clients et voulez des avis en continu. Idéal pour les commerces avec plus de 50 clients/mois. Tout illimité, un seul prix fixe.
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                <Shield className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">Au Succès</h4>
-                <span className="text-sm text-emerald-600 font-semibold">69€/15 avis</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Vous préférez payer uniquement quand ça marche. Idéal pour tester ou pour les petites structures. Vous ne payez que les avis réellement obtenus.
-            </p>
-          </div>
-        </div>
       </motion.div>
     </div>
   </section>
@@ -1478,30 +1342,12 @@ const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
   const faqs = [
-    {
-      q: "Comment fonctionne Impact Avis ?",
-      a: "Impact Avis fonctionne en 3 étapes simples. D\u2019abord, vous importez votre liste de clients (CSV, Excel ou saisie manuelle). Ensuite, notre IA vocale appelle chacun de vos clients de manière personnalisée, en se présentant au nom de votre commerce. Si le client est satisfait, l\u2019IA le guide directement vers votre fiche Google pour laisser un avis 5 étoiles. Si le client exprime un mécontentement, l\u2019avis est intercepté et redirigé vers vous en privé, protégeant ainsi votre réputation en ligne.",
-    },
-    {
-      q: "Est-ce légal ? Conforme au RGPD ?",
-      a: "Oui, Impact Avis est 100% conforme au RGPD et à la législation française. Toutes les données de vos clients sont hébergées en France sur des serveurs sécurisés. Chaque client peut refuser l\u2019appel ou demander la suppression de ses données à tout moment (opt-out). Nous ne créons jamais de faux avis : seuls de vrais clients laissent de vrais avis sur Google. Le consentement est géré de manière transparente et traçable pour vous protéger juridiquement.",
-    },
-    {
-      q: "Combien d\u2019avis puis-je obtenir ?",
-      a: "Le nombre d\u2019avis dépend directement du volume de clients que vous nous transmettez. En moyenne, nos utilisateurs obtiennent un taux de conversion de 25 à 35% : sur 100 clients contactés, 25 à 35 laissent un avis Google. Plus vous importez de contacts réguliers, plus vos avis augmentent. Certains commerces avec un fort flux de clients récoltent plus de 50 nouveaux avis par mois.",
-    },
-    {
-      q: "Que se passe-t-il si un client laisse un avis négatif ?",
-      a: "C\u2019est là qu\u2019intervient notre Bouclier Anti-Avis Négatifs. Lorsqu\u2019un client exprime une insatisfaction (note de 1, 2 ou 3 étoiles), l\u2019avis n\u2019est PAS publié sur Google. Au lieu de cela, vous recevez une notification privée avec le détail du retour client, ce qui vous permet de résoudre le problème en direct. Seuls les avis 4 et 5 étoiles sont guidés vers votre fiche Google, ce qui protège votre note moyenne.",
-    },
-    {
-      q: "Puis-je annuler à tout moment ?",
-      a: "Absolument, il n\u2019y a aucun engagement de durée. Vous pouvez résilier votre abonnement en 1 clic depuis votre tableau de bord, sans justification et sans frais cachés. Si vous n\u2019êtes pas satisfait dans les 30 premiers jours, nous vous remboursons intégralement. Nous croyons en la qualité de notre service et ne voulons garder que des clients convaincus.",
-    },
-    {
-      q: "Comment fonctionne l\u2019essai gratuit ?",
-      a: "Votre essai gratuit comprend 10 avis offerts pour tester le service sans risque. Lors de l\u2019inscription, votre carte bancaire est enregistrée (empreinte sécurisée via Stripe) mais aucun prélèvement n\u2019est effectué pendant l\u2019essai. Vous recevrez une notification à 80% de consommation de votre essai pour garder le contrôle total. À la fin de l\u2019essai, votre formule choisie s\u2019active automatiquement, ou vous pouvez annuler sans frais avant.",
-    },
+    { q: "Comment l'IA passe-t-elle les appels ?", a: "Notre IA utilise une synthèse vocale ultra-naturelle. Elle appelle vos clients du lundi au samedi, entre 9h et 20h, en se présentant au nom de votre commerce. Chaque appel est personnalisé avec le prénom du client." },
+    { q: "Que se passe-t-il si un client donne 1 étoile ?", a: "Notre bouclier intercepte automatiquement tout avis 1, 2 ou 3 étoiles. Vous recevez l'avis en privé pour pouvoir le gérer. Seuls les 4 et 5 étoiles apparaissent sur Google." },
+    { q: "Combien de temps pour voir les premiers avis ?", a: "En moyenne 48 heures. Certains clients voient leurs premiers 5 étoiles dès le jour même." },
+    { q: "Est-ce légal ? RGPD ?", a: "Entièrement conforme au RGPD et à la législation française. Consentements gérés, chaque appel peut être refusé." },
+    { q: "Puis-je annuler à tout moment ?", a: "Oui, en 1 clic. Sans justification, sans frais. Remboursement sous 30 jours si insatisfait." },
+    { q: "Ça marche pour mon type de commerce ?", a: "Restaurants, salons, garages, dentistes, hôtels, artisans, cliniques, boutiques... Si vous accueillez des clients, Impact-Avis peut vous aider." },
   ];
 
   return (
@@ -1516,9 +1362,9 @@ const FAQSection = () => {
           <motion.div
             key={i}
             className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-            initial={{ opacity: 0.01, y: 10 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true }}
             transition={{ delay: i * 0.04 }}
           >
             <button
@@ -1531,11 +1377,11 @@ const FAQSection = () => {
             <AnimatePresence>
               {openIndex === i && (
                 <motion.div
-                  className="bg-gray-50 mx-4 mb-4 rounded-xl px-5 py-4 text-[14px] text-gray-600 leading-relaxed"
+                  className="px-6 pb-5 text-[14px] text-gray-600 leading-relaxed"
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.3 }}
                 >
                   {faq.a}
                 </motion.div>
@@ -1560,9 +1406,9 @@ const FinalCTASection = () => (
     <div className="relative z-10 max-w-3xl mx-auto text-center">
       <motion.h2
         className="text-4xl md:text-[52px] font-extrabold text-white tracking-tight leading-[1.1] mb-6"
-        initial={{ opacity: 0.01, y: 20 }}
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ duration: 0.7, ease }}
       >
         Prêt à transformer votre réputation Google ?
@@ -1570,9 +1416,9 @@ const FinalCTASection = () => (
 
       <motion.p
         className="text-xl text-white/60 mb-10"
-        initial={{ opacity: 0.01 }}
+        initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ delay: 0.1 }}
       >
         Rejoignez les 2 340+ commerces qui récoltent des avis en automatique.
@@ -1581,9 +1427,9 @@ const FinalCTASection = () => (
       <motion.a
         href="#import"
         className="inline-flex items-center gap-2 bg-white text-gray-900 px-10 py-4 rounded-2xl font-bold text-lg shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] transition-all"
-        initial={{ opacity: 0.01, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ delay: 0.2, ease }}
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.98 }}
@@ -1593,9 +1439,9 @@ const FinalCTASection = () => (
 
       <motion.p
         className="text-white/40 text-sm mt-6"
-        initial={{ opacity: 0.01 }}
+        initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true, margin: "-50px" }}
+        viewport={{ once: true }}
         transition={{ delay: 0.3 }}
       >
         10 avis offerts &middot; Sans carte bancaire &middot; Résultats garantis sous 48h
@@ -1654,18 +1500,6 @@ const Footer = () => (
 
 // ============ MAIN ============
 export default function ImpactAvisLanding() {
-  useEffect(() => {
-    document.title = 'Impact Avis \u2014 Boostez vos avis Google automatiquement | BoosterPay';
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', "Obtenez des avis Google 5 \u00e9toiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.");
-    else {
-      const m = document.createElement('meta');
-      m.name = 'description';
-      m.content = "Obtenez des avis Google 5 \u00e9toiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.";
-      document.head.appendChild(m);
-    }
-  }, []);
-
   return (
     <div className="bg-white min-h-screen overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       {/* ── Service Navigation Bar ── */}
