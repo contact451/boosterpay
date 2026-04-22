@@ -1423,11 +1423,11 @@ const PricingSection = () => (
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-50px" }}
       >
-        <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Vérification carte 0,50€ — remboursé</div>
+        <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Paiement sécurisé Stripe</div>
         <span className="opacity-30">|</span>
         <div>Résiliation en 1 clic</div>
         <span className="opacity-30">|</span>
-        <div>Satisfait ou remboursé 30 jours</div>
+        <div>Sans engagement</div>
       </motion.div>
 
       {/* Pricing comparison guide */}
