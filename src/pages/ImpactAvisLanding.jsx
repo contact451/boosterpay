@@ -35,9 +35,10 @@ const ease = [0.22, 1, 0.36, 1];
 
 const SectionBadge = ({ children }) => (
   <motion.div
-    initial={{ opacity: 0, y: 10 }}
+    initial={{ opacity: 0.01, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
+    viewport={{ once: true, margin: "-50px" }}
+    style={{ willChange: 'opacity, transform' }}
     className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-full px-4 py-1.5 mb-6"
   >
     <span className="text-[13px] font-semibold text-indigo-700 tracking-wide">{children}</span>
@@ -46,10 +47,11 @@ const SectionBadge = ({ children }) => (
 
 const SectionTitle = ({ children, className = '' }) => (
   <motion.h2
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0.01, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
+    viewport={{ once: true, margin: "-50px" }}
     transition={{ duration: 0.7, ease }}
+    style={{ willChange: 'opacity, transform' }}
     className={`text-4xl md:text-[56px] font-extrabold text-gray-900 tracking-tight leading-[1.08] ${className}`}
   >
     {children}
@@ -58,10 +60,11 @@ const SectionTitle = ({ children, className = '' }) => (
 
 const SectionSub = ({ children }) => (
   <motion.p
-    initial={{ opacity: 0, y: 10 }}
+    initial={{ opacity: 0.01, y: 10 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
+    viewport={{ once: true, margin: "-50px" }}
     transition={{ delay: 0.1, duration: 0.6, ease }}
+    style={{ willChange: 'opacity, transform' }}
     className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mt-5 text-center"
   >
     {children}
@@ -159,7 +162,7 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <motion.div
             className="md:hidden fixed inset-0 top-[122px] bg-white z-30 flex flex-col items-center pt-12 gap-8"
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0.01, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
@@ -348,7 +351,7 @@ const GoogleCardAnimation = () => {
                 <motion.div key="before" className="space-y-2.5" exit={{ opacity: 0, y: -20, scale: 0.95 }} transition={{ duration: 0.4 }}>
                   {beforeReviews.map((r, i) => (
                     <motion.div key={i} className="bg-gray-50 rounded-xl p-3.5 border border-gray-100"
-                      initial={{ opacity: 0, x: -20 }} animate={isInView ? { opacity: 1, x: 0 } : {}}
+                      initial={{ opacity: 0.01, x: -20 }} animate={isInView ? { opacity: 1, x: 0 } : {}}
                       transition={{ delay: 0.6 + i * 0.15 }}
                     >
                       <div className="flex items-center gap-2 mb-1.5">
@@ -367,13 +370,13 @@ const GoogleCardAnimation = () => {
                 </motion.div>
               ) : (
                 <motion.div key="after" className="space-y-2.5"
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
                   {afterReviews.map((r, i) => (
                     <motion.div key={i}
                       className={`rounded-xl p-3.5 border ${i === 2 ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-gray-50 border-gray-100'}`}
-                      initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                      initial={{ opacity: 0.01, y: 15, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ delay: i * 0.12, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                     >
@@ -410,7 +413,7 @@ const GoogleCardAnimation = () => {
             {isAfter && (
               <motion.div
                 className="mt-4 flex items-center justify-between bg-emerald-50 rounded-xl px-4 py-3 border border-emerald-100"
-                initial={{ opacity: 0, y: 10, height: 0, marginTop: 0, padding: 0 }}
+                initial={{ opacity: 0.01, y: 10, height: 0, marginTop: 0, padding: 0 }}
                 animate={{ opacity: 1, y: 0, height: 'auto', marginTop: 16, padding: '12px 16px' }}
                 transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
@@ -435,7 +438,7 @@ const GoogleCardAnimation = () => {
 
       <motion.div
         className="absolute -top-4 left-1/2 -translate-x-1/2 z-20"
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0.01, y: 10 }}
         animate={isInView ? { opacity: 1, y: 0 } : {}}
         transition={{ delay: 0.5 }}
       >
@@ -465,7 +468,7 @@ const HeroSection = () => {
     <section ref={ref} className="pt-52 pb-24 px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-2 gap-16 items-center">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0.01, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.9, ease }}
         >
@@ -507,7 +510,7 @@ const HeroSection = () => {
 
           <div className="flex flex-wrap gap-6 text-[14px] text-gray-500">
             {['10 avis offerts', 'Sans carte bancaire', 'Résultats sous 48h'].map((t, i) => (
-              <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0 }}
+              <motion.div key={i} className="flex items-center gap-2" initial={{ opacity: 0.01 }}
                 animate={isInView ? { opacity: 1 } : {}} transition={{ delay: 0.5 + i * 0.1 }}>
                 <Check className="w-4 h-4 text-emerald-500" /> {t}
               </motion.div>
@@ -517,7 +520,7 @@ const HeroSection = () => {
 
         {/* Hero visual — Animated Before/After Google Card */}
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          initial={{ opacity: 0.01, y: 40, scale: 0.97 }}
           animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ duration: 1, delay: 0.2, ease }}
         >
@@ -542,9 +545,9 @@ const SocialProofBar = () => {
           {sectors.map((s, i) => (
             <motion.span key={i}
               className="px-4 py-2 bg-white border border-gray-200/60 rounded-full text-[13px] font-medium text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all cursor-default"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0.01, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: i * 0.04 }}
             >
               {s}
@@ -572,9 +575,9 @@ const StatsSection = () => {
           <motion.div
             key={i}
             className="text-center"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0.01, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.08, duration: 0.6, ease }}
           >
             <div className="text-[48px] md:text-[56px] font-extrabold bg-gradient-to-b from-gray-900 to-gray-600 bg-clip-text text-transparent leading-none mb-2">
@@ -609,7 +612,7 @@ const problemStats = [
 
 const ProblemStatCard = ({ stat, suffix, description, index }) => (
   <motion.div
-    initial={{ opacity: 0, y: 48 }}
+    initial={{ opacity: 0.01, y: 48 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: '-80px' }}
     transition={{ delay: index * 0.12, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -641,9 +644,9 @@ const ProblemSection = () => (
     <div className="max-w-6xl mx-auto px-6">
       <div className="text-center mb-24">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0.01, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >
           <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-gray-400 mb-6">
@@ -651,9 +654,9 @@ const ProblemSection = () => (
           </span>
         </motion.div>
         <motion.h2
-          initial={{ opacity: 0, y: 32 }}
+          initial={{ opacity: 0.01, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ delay: 0.1, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-black tracking-tight leading-[1.1] max-w-3xl mx-auto"
         >
@@ -685,9 +688,9 @@ const FeaturesSection = () => (
       {/* Main card — Shield */}
       <motion.div
         className="md:col-span-2 md:row-span-2 relative overflow-hidden bg-gray-900 text-white rounded-3xl p-10 flex flex-col justify-between"
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0.01, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.7, ease }}
         whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
@@ -723,9 +726,9 @@ const FeaturesSection = () => (
       {/* IA Vocale card */}
       <motion.div
         className="md:col-span-2 relative bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0.01, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ delay: 0.15, duration: 0.7, ease }}
         whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
@@ -754,9 +757,9 @@ const FeaturesSection = () => (
       {/* Import card */}
       <motion.div
         className="md:col-span-2 relative bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden"
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0.01, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ delay: 0.3, duration: 0.7, ease }}
         whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
       >
@@ -796,9 +799,9 @@ const HowItWorksSection = () => {
             <motion.div
               key={i}
               className="group flex items-start gap-6 bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500"
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0.01, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: i * 0.15, duration: 0.6, ease }}
               whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
             >
@@ -822,6 +825,11 @@ const HowItWorksSection = () => {
 
 // ============ IMPORT SECTION ============
 const ImportSection = () => {
+  const isMobileFR = (phone) => {
+    const cleaned = phone.replace(/[\s.\-()]/g, '');
+    return /^(06|07|\+336|\+337|00336|00337)/.test(cleaned);
+  };
+
   const [activeTab, setActiveTab] = useState('manual');
   const [manualRows, setManualRows] = useState([{ prenom: '', telephone: '', email: '' }]);
   const [csvData, setCsvData] = useState(null);
@@ -874,8 +882,9 @@ const ImportSection = () => {
   };
 
   const scrollToImport = () => {
-    const el = document.getElementById('import');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      window.scrollTo({ top: document.getElementById('import')?.offsetTop - 80, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleSubmit = () => {
@@ -928,13 +937,13 @@ const ImportSection = () => {
               <Check className="w-10 h-10 text-white" />
             </div>
           </motion.div>
-          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-2">
+          <motion.h3 initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="text-3xl font-bold text-gray-900 mb-2">
             Félicitations !
           </motion.h3>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 mb-8">
+          <motion.p initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-gray-500 mb-8">
             Vos contacts ont été importés. Dernière étape avant de lancer votre campagne.
           </motion.p>
-          <motion.form initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} onSubmit={handleInfoSubmit} className="space-y-4 text-left">
+          <motion.form initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} onSubmit={handleInfoSubmit} className="space-y-4 text-left">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom de votre société</label>
               <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="Mon Commerce" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-gray-900 placeholder:text-gray-400" />
@@ -956,10 +965,10 @@ const ImportSection = () => {
     return (
       <section id="import" className="py-24 bg-gradient-to-b from-indigo-50/50 to-white">
         <div className="max-w-2xl mx-auto px-6 text-center">
-          <motion.h3 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold text-gray-900 mb-2">
+          <motion.h3 initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold text-gray-900 mb-2">
             Choisissez votre formule
           </motion.h3>
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-gray-500 mb-10">
+          <motion.p initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-gray-500 mb-10">
             Quelle que soit la formule, vous commencez gratuitement. Vous ne serez débité qu'à la fin de votre essai.
           </motion.p>
           <div className="grid md:grid-cols-2 gap-6">
@@ -969,7 +978,7 @@ const ImportSection = () => {
             ].map((plan, i) => (
               <motion.button
                 key={plan.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0.01, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
                 onClick={() => handlePlanSelect(plan.id)}
@@ -987,7 +996,7 @@ const ImportSection = () => {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className="flex items-center justify-center gap-2 mt-8 text-sm text-gray-500 bg-gray-50 rounded-xl px-5 py-3 max-w-xl mx-auto"
@@ -1049,7 +1058,7 @@ const ImportSection = () => {
         <motion.div layout className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
           <AnimatePresence mode="wait">
             {activeTab === 'manual' ? (
-              <motion.div key="manual" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+              <motion.div key="manual" initial={{ opacity: 0.01, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
                 <div className="space-y-4">
                   {manualRows.map((row, i) => (
                     <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -1062,8 +1071,8 @@ const ImportSection = () => {
                         <input type="tel" value={row.telephone} onChange={(e) => updateRow(i, 'telephone', e.target.value)} placeholder="06 12 34 56 78" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
                       </div>
                       <div>
-                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">Email (facultatif)</label>}
-                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400" />
+                        {i === 0 && <label className="block text-xs font-medium text-gray-500 mb-1.5">{row.telephone && !isMobileFR(row.telephone) ? <>Email <span className="text-red-500">*</span></> : 'Email (facultatif)'}</label>}
+                        <input type="email" value={row.email} onChange={(e) => updateRow(i, 'email', e.target.value)} placeholder="jean@email.com" className={`w-full px-4 py-3 rounded-xl border focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 outline-none text-sm transition-all text-gray-900 placeholder:text-gray-400 ${row.telephone && !isMobileFR(row.telephone) && !row.email ? 'border-red-300' : 'border-gray-200'}`} />
                       </div>
                       <div>
                         {manualRows.length > 1 && (
@@ -1081,7 +1090,7 @@ const ImportSection = () => {
                 </button>
               </motion.div>
             ) : (
-              <motion.div key="csv" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+              <motion.div key="csv" initial={{ opacity: 0.01, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                 <div
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                   onDragLeave={() => setDragOver(false)}
@@ -1231,7 +1240,7 @@ const ImportSection = () => {
 
           <motion.button
             onClick={handleSubmit}
-            disabled={flowState === 'uploading'}
+            disabled={flowState === 'uploading' || (activeTab === 'manual' && manualRows.some(r => r.telephone && !isMobileFR(r.telephone) && !r.email))}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="mt-8 w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -1283,9 +1292,9 @@ const TestimonialsSection = () => {
           <motion.div
             key={i}
             className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col"
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0.01, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.15, duration: 0.6, ease }}
             whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
           >
@@ -1326,9 +1335,9 @@ const PricingSection = () => (
         {/* Plan 1 */}
         <motion.div
           className="relative bg-white rounded-3xl border-2 border-gray-900 p-8 shadow-[0_4px_30px_rgba(0,0,0,0.08)]"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0.01, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.6, ease }}
           whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
         >
@@ -1368,9 +1377,9 @@ const PricingSection = () => (
         {/* Plan 2 */}
         <motion.div
           className="bg-white rounded-3xl border border-gray-200/60 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0.01, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ delay: 0.15, duration: 0.6, ease }}
           whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.3 } }}
         >
@@ -1410,9 +1419,9 @@ const PricingSection = () => (
 
       <motion.div
         className="flex items-center justify-center gap-6 mt-10 text-[13px] text-gray-400"
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
       >
         <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Empreinte sécurisée Stripe</div>
         <span className="opacity-30">|</span>
@@ -1424,9 +1433,9 @@ const PricingSection = () => (
       {/* Pricing comparison guide */}
       <motion.div
         className="mt-16 max-w-3xl mx-auto"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0.01, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
         <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">Quelle offre me convient ?</h3>
@@ -1508,9 +1517,9 @@ const FAQSection = () => {
           <motion.div
             key={i}
             className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0.01, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: i * 0.04 }}
           >
             <button
@@ -1552,9 +1561,9 @@ const FinalCTASection = () => (
     <div className="relative z-10 max-w-3xl mx-auto text-center">
       <motion.h2
         className="text-4xl md:text-[52px] font-extrabold text-white tracking-tight leading-[1.1] mb-6"
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0.01, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ duration: 0.7, ease }}
       >
         Prêt à transformer votre réputation Google ?
@@ -1562,9 +1571,9 @@ const FinalCTASection = () => (
 
       <motion.p
         className="text-xl text-white/60 mb-10"
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ delay: 0.1 }}
       >
         Rejoignez les 2 340+ commerces qui récoltent des avis en automatique.
@@ -1573,9 +1582,9 @@ const FinalCTASection = () => (
       <motion.a
         href="#import"
         className="inline-flex items-center gap-2 bg-white text-gray-900 px-10 py-4 rounded-2xl font-bold text-lg shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.15)] transition-all"
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0.01, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ delay: 0.2, ease }}
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.98 }}
@@ -1585,9 +1594,9 @@ const FinalCTASection = () => (
 
       <motion.p
         className="text-white/40 text-sm mt-6"
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 0.01 }}
         whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ delay: 0.3 }}
       >
         10 avis offerts &middot; Sans carte bancaire &middot; Résultats garantis sous 48h

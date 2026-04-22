@@ -1,16 +1,39 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight, Shield, Mail } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Shield, Mail, Phone } from 'lucide-react';
 
 export default function MerciPage() {
   useEffect(() => {
     document.title = 'Merci ! Votre essai est activé | BoosterPay';
   }, []);
 
+  useEffect(() => {
+    // Notify CRM that card was registered
+    const urlParams = new URLSearchParams(window.location.search);
+    const CRM_API_URL = 'https://script.google.com/macros/s/AKfycbztp_6rllQCg2MPXrrWOyudvaGcUlIdG6pZdVQjpU7-Z-8_3brmGHqoD2nrlCv0mMYe/exec';
+
+    fetch(CRM_API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'cardRegistered',
+        sessionId: urlParams.get('session_id') || '',
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-6">
       <div className="max-w-lg w-full text-center">
+
+        {/* BoosterPay Logo */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <Phone className="w-6 h-6 text-blue-500" />
+          <span className="text-xl font-bold text-gray-900">
+            Booster<span className="text-blue-500">Pay</span>
+          </span>
+        </div>
 
         {/* Success icon */}
         <motion.div

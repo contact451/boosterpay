@@ -45,15 +45,23 @@ import { captureLeadFromSite } from '../services/leadService';
 import Papa from 'papaparse';
 
 /* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
+const isMobileFR = (phone) => {
+  const cleaned = phone.replace(/[\s.\-()]/g, '');
+  return /^(06|07|\+336|\+337|00336|00337)/.test(cleaned);
+};
+
+/* ------------------------------------------------------------------ */
 /*  Utility components                                                 */
 /* ------------------------------------------------------------------ */
 
 const ScrollReveal = ({ children, y = 40, delay = 0, className = '' }) => (
   <motion.div
-    initial={{ opacity: 0, y }}
+    initial={{ opacity: 0.01, y }}
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
-    viewport={{ once: true, margin: '-60px' }}
+    viewport={{ once: true, margin: '-50px' }}
     className={className}
   >
     {children}
@@ -350,8 +358,9 @@ export default function IAVocaleLanding() {
 
   /* ── Submit ───────────────────────────────────────────────── */
   const scrollToImport = () => {
-    const el = document.getElementById('import');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      window.scrollTo({ top: document.getElementById('import')?.offsetTop - 80, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleSubmit = () => {
@@ -388,6 +397,7 @@ export default function IAVocaleLanding() {
       source: 'ia-vocale',
       serviceType,
       contacts: contactsList,
+      timestamp: new Date().toISOString(),
     });
   };
 
@@ -782,10 +792,10 @@ export default function IAVocaleLanding() {
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[13px] font-bold text-gray-800 tracking-tight">Agenda du jour</span>
                     <motion.span
-                      initial={{ opacity: 0, scale: 0.8 }}
+                      initial={{ opacity: 0.01, scale: 0.8 }}
                       whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 2.2, type: 'spring' }}
+                      viewport={{ once: true, margin: '-50px' }}
+                      transition={{ delay: 0.5, type: 'spring' }}
                       className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
                     >
                       92% confirmés
@@ -801,10 +811,10 @@ export default function IAVocaleLanding() {
                     ].map((slot, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, x: -10 }}
+                        initial={{ opacity: 0.01, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.3 + i * 0.2 }}
+                        viewport={{ once: true, margin: '-50px' }}
+                        transition={{ delay: 0.3 + i * 0.15 }}
                         className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white border border-gray-100/40"
                       >
                         <span className="text-[11px] font-semibold text-gray-400 w-10 tabular-nums">{slot.time}</span>
@@ -812,8 +822,8 @@ export default function IAVocaleLanding() {
                         <motion.div
                           initial={{ scale: 0 }}
                           whileInView={{ scale: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: 0.8 + i * 0.2, type: 'spring', stiffness: 300 }}
+                          viewport={{ once: true, margin: '-50px' }}
+                          transition={{ delay: 0.5 + i * 0.15, type: 'spring', stiffness: 300 }}
                         >
                           {slot.status === 'confirmed' ? (
                             <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -838,8 +848,8 @@ export default function IAVocaleLanding() {
                       <motion.div
                         initial={{ width: '57%' }}
                         whileInView={{ width: '92%' }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 2, duration: 1.2, ease: 'easeOut' }}
+                        viewport={{ once: true, margin: '-50px' }}
+                        transition={{ delay: 0.5, duration: 1.2, ease: 'easeOut' }}
                         className="h-full bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full"
                       />
                     </div>
@@ -1271,6 +1281,13 @@ export default function IAVocaleLanding() {
                           </div>
                         )}
 
+                        {csvData && csvMapping.telephone && csvData.some(r => r[csvMapping.telephone] && !isMobileFR(r[csvMapping.telephone])) && (
+                          <div className="mt-4 flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                            <Phone className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                            <span>Certains numéros sont des fixes. L'IA appellera sur le fixe directement.</span>
+                          </div>
+                        )}
+
                         <button
                           onClick={() => setCsvMappingConfirmed(true)}
                           disabled={!csvMapping.nom || !csvMapping.telephone}
@@ -1347,6 +1364,12 @@ export default function IAVocaleLanding() {
                 {/* Manual Tab */}
                 {importTab === 'manual' && (
                   <div>
+                    {manualRows.some(r => r.telephone && !isMobileFR(r.telephone)) && (
+                      <div className="mb-4 flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                        <Phone className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <span>Certains numéros sont des fixes. L'IA appellera sur le fixe directement.</span>
+                      </div>
+                    )}
                     <div className="space-y-4">
                       {manualRows.map((row, idx) => (
                         <motion.div
@@ -1491,9 +1514,9 @@ export default function IAVocaleLanding() {
                     ].map((item, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0.01, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: true, margin: '-50px' }}
                         transition={{ delay: 0.15 + i * 0.1 }}
                         className="flex items-center gap-4"
                       >
@@ -1519,7 +1542,7 @@ export default function IAVocaleLanding() {
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 whileInView={{ scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: '-50px' }}
                 transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
                 className="w-14 h-14 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center my-3"
               >
@@ -1532,7 +1555,7 @@ export default function IAVocaleLanding() {
               <motion.div
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: '-50px' }}
                 transition={{ delay: 0.3, type: 'spring' }}
                 className="w-12 h-12 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center"
               >
@@ -1557,9 +1580,9 @@ export default function IAVocaleLanding() {
                     ].map((item, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0.01, x: 20 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: true, margin: '-50px' }}
                         transition={{ delay: 0.2 + i * 0.12 }}
                         className="flex items-center gap-4"
                       >
