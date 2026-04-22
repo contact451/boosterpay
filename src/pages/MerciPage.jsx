@@ -13,15 +13,23 @@ export default function MerciPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const CRM_API_URL = 'https://script.google.com/macros/s/AKfycbztp_6rllQCg2MPXrrWOyudvaGcUlIdG6pZdVQjpU7-Z-8_3brmGHqoD2nrlCv0mMYe/exec';
 
+    const source = urlParams.get('source') || (() => { try { const s = localStorage.getItem('bp_source') || ''; localStorage.removeItem('bp_source'); return s; } catch(e) { return ''; } })();
+
     fetch(CRM_API_URL, {
       method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action: 'cardRegistered',
         sessionId: urlParams.get('session_id') || '',
-        source: urlParams.get('source') || (function() { try { var s = localStorage.getItem('bp_source') || ''; localStorage.removeItem('bp_source'); return s; } catch(e) { return ''; } })(),
+        source,
         timestamp: new Date().toISOString(),
       }),
-    }).catch(() => {});
+    }).then(res => {
+      console.log('✅ cardRegistered réponse:', res.status);
+      return res.text().then(t => console.log('📋 Réponse CRM:', t));
+    }).catch(err => {
+      console.warn('⚠️ cardRegistered échoué:', err.message);
+    });
   }, []);
 
   return (

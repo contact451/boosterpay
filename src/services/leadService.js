@@ -121,7 +121,11 @@ export const captureLeadFromSite = (data) => {
 
   fetch(CRM_API_URL, {
     method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(payload),
+  }).then((res) => {
+    console.log('✅ captureLeadFromSite réponse:', res.status);
+    return res.text().then(t => console.log('📋 Réponse CRM:', t));
   }).catch((err) => {
     console.warn('⚠️ captureLeadFromSite échoué (non bloquant):', err.message);
   });
