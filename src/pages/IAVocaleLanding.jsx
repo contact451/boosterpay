@@ -128,15 +128,18 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 
   useEffect(() => {
     if (!inView) return;
-    let start = 0;
     const end = parseInt(value);
-    const step = end / (duration * 60);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= end) { setDisplay(end); clearInterval(timer); }
-      else setDisplay(Math.floor(start));
-    }, 1000 / 60);
-    return () => clearInterval(timer);
+    const startTime = performance.now();
+    const ms = duration * 1000;
+    let raf;
+    const tick = (now) => {
+      const p = Math.min((now - startTime) / ms, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.floor(end * e));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, [inView, value, duration]);
 
   return <span ref={ref}>{prefix}{display}{suffix}</span>;
@@ -539,60 +542,52 @@ export default function IAVocaleLanding() {
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-teal-100/30 to-transparent rounded-full blur-3xl" />
 
         <div className="relative max-w-7xl mx-auto px-6">
+          {/* CSS keyframes for hero fade-in — zero JS overhead on mobile */}
+          <style>{`
+            @keyframes heroFadeUp {
+              from { opacity: 0; transform: translateY(20px) translateZ(0); }
+              to { opacity: 1; transform: translateY(0) translateZ(0); }
+            }
+            .hero-fade { 
+              animation: heroFadeUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+              will-change: opacity, transform;
+            }
+            .hero-fade-1 { animation-delay: 0s; }
+            .hero-fade-2 { animation-delay: 0.08s; }
+            .hero-fade-3 { animation-delay: 0.16s; }
+            .hero-fade-4 { animation-delay: 0.24s; }
+            .hero-fade-5 { animation-delay: 0.4s; }
+          `}</style>
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left */}
+            {/* Left — Pure CSS animations, no framer-motion overhead */}
             <div>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
-              >
+              <div className="hero-fade hero-fade-1">
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-6">
                   <Bot className="w-4 h-4" /> IA Vocale pour professionnels
                 </span>
-              </motion.div>
+              </div>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight"
-              >
+              <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
                 Renouvelez vos dossiers et{' '}
-                <GradientText>sécurisez vos RDV.</GradientText>{' '}
+                <GradientText>s\u00e9curisez vos RDV.</GradientText>{' '}
                 Automatiquement.
-              </motion.h1>
+              </h1>
 
-              <motion.p
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                className="mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl"
-              >
-                Notre IA appelle vos clients à votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
-              </motion.p>
+              <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
+                Notre IA appelle vos clients \u00e0 votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
+              </p>
 
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.3 }}
-                className="mt-8 flex flex-col sm:flex-row gap-4"
-              >
+              <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
                 <a
                   href="#import"
                   className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
                 >
-                  Essayer gratuitement — 100 appels offerts <ArrowRight className="w-5 h-5" />
+                  Essayer gratuitement \u2014 100 appels offerts <ArrowRight className="w-5 h-5" />
                 </a>
-              </motion.div>
+              </div>
 
               {/* Stats */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.5 }}
-                className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6"
-              >
+              <div className="hero-fade hero-fade-5 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6">
                 {stats.map((s, i) => (
                   <div key={i} className="text-center sm:text-left">
                     <p className="text-2xl md:text-3xl font-bold text-gray-900">
@@ -601,18 +596,13 @@ export default function IAVocaleLanding() {
                     <p className="text-sm text-gray-400 mt-1">{s.label}</p>
                   </div>
                 ))}
-              </motion.div>
+              </div>
             </div>
 
-            {/* Right — Hero animation */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="hidden lg:block"
-            >
+            {/* Right — Hero animation (desktop only) */}
+            <div className="hidden lg:block hero-fade hero-fade-4" style={{ transform: 'translateZ(0)' }}>
               <HeroAnimation />
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
