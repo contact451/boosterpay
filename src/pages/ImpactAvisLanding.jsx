@@ -969,7 +969,7 @@ const ImportSection = () => {
             Choisissez votre formule
           </motion.h3>
           <motion.p initial={{ opacity: 0.01 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-gray-500 mb-10">
-            Quelle que soit la formule, vous commencez gratuitement. Vous ne serez débité qu'à la fin de votre essai.
+            Vérification de carte à 0,50€ HT (remboursé automatiquement sous quelques minutes).
           </motion.p>
           <div className="grid md:grid-cols-2 gap-6">
             {[
@@ -1019,10 +1019,10 @@ const ImportSection = () => {
             </div>
           </motion.div>
           <h3 className="text-3xl font-bold text-gray-900 mb-3">Parfait !</h3>
-          <p className="text-gray-500 text-lg mb-6">Redirection vers l'empreinte bancaire sécurisée...</p>
+          <p className="text-gray-500 text-lg mb-6">Redirection vers la vérification de carte sécurisée...</p>
           <span className="text-4xl font-bold text-indigo-600">{countdown}</span>
           <p className="text-gray-400 text-sm mt-6 max-w-md mx-auto">
-            Aucun prélèvement immédiat. Votre carte est enregistrée pour activer votre formule après l&apos;essai gratuit.
+            Un prélèvement de 0,50€ HT sera effectué pour vérifier votre carte, puis remboursé sous quelques minutes.
           </p>
         </div>
       </section>
@@ -1423,7 +1423,7 @@ const PricingSection = () => (
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-50px" }}
       >
-        <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Empreinte sécurisée Stripe</div>
+        <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Vérification carte 0,50€ — remboursé</div>
         <span className="opacity-30">|</span>
         <div>Résiliation en 1 clic</div>
         <span className="opacity-30">|</span>
@@ -1501,7 +1501,7 @@ const FAQSection = () => {
     },
     {
       q: "Comment fonctionne l\u2019essai gratuit ?",
-      a: "Votre essai gratuit comprend 10 avis offerts pour tester le service sans risque. Lors de l\u2019inscription, votre carte bancaire est enregistrée (empreinte sécurisée via Stripe) mais aucun prélèvement n\u2019est effectué pendant l\u2019essai. Vous recevrez une notification à 80% de consommation de votre essai pour garder le contrôle total. À la fin de l\u2019essai, votre formule choisie s\u2019active automatiquement, ou vous pouvez annuler sans frais avant.",
+      a: "Votre essai gratuit comprend 10 avis offerts pour tester le service sans risque. Lors de l\u2019inscription, un prélèvement de 0,50\u20ac HT est effectué pour vérifier votre carte (via Stripe, 100% sécurisé). Ce montant est automatiquement remboursé sous quelques minutes. Vous recevrez une notification à 80% de consommation de votre essai pour garder le contrôle total. À la fin de l\u2019essai, votre formule choisie s\u2019active automatiquement, ou vous pouvez annuler sans frais avant.",
     },
   ];
 
@@ -1640,8 +1640,8 @@ const Footer = () => (
 
         <div>
           <h4 className="font-bold text-gray-900 text-[14px] mb-4">Contact</h4>
-          <a href="mailto:support@boosterpay.fr" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            support@boosterpay.fr
+          <a href="mailto:contact@booster-pay.com" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            contact@booster-pay.com
           </a>
         </div>
       </div>

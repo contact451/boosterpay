@@ -64,9 +64,9 @@ export default function MerciPage() {
           transition={{ delay: 0.5 }}
           className="text-xl text-gray-500 mb-8 leading-relaxed"
         >
-          Votre empreinte bancaire a bien été enregistrée.
+          Votre carte a bien été vérifiée.
           <br />
-          Votre essai gratuit est maintenant actif.
+          Le prélèvement de 0,50€ sera remboursé sous quelques minutes.
         </motion.p>
 
         {/* Reassurance cards */}
@@ -81,8 +81,8 @@ export default function MerciPage() {
               <Shield className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Aucun prélèvement immédiat</p>
-              <p className="text-sm text-gray-500">Votre carte est enregistrée mais ne sera débitée qu'à la fin de votre essai.</p>
+              <p className="text-sm font-semibold text-gray-900">Remboursement automatique</p>
+              <p className="text-sm text-gray-500">Les 0,50€ de vérification sont remboursés automatiquement sous quelques minutes.</p>
             </div>
           </div>
 

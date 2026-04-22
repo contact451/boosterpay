@@ -1062,8 +1062,8 @@ export default function IAVocaleLanding() {
                       <CheckCircle2 className="w-10 h-10 text-white" />
                     </motion.div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">Félicitations !</h3>
-                    <p className="text-gray-500 mb-4">Redirection vers l'empreinte bancaire sécurisée...</p>
-                    <p className="text-xs text-gray-400 mb-6">Aucun prélèvement immédiat. Votre carte est simplement enregistrée.</p>
+                    <p className="text-gray-500 mb-4">Redirection vers la vérification de carte sécurisée...</p>
+                    <p className="text-xs text-gray-400 mb-6">Un prélèvement de 0,50€ HT sera effectué pour vérifier votre carte, puis remboursé sous quelques minutes.</p>
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-gray-400">
                       <p>Redirection dans <span className="font-bold text-emerald-600 text-lg">{countdown}</span>...</p>
                       <div className="mt-4 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -1860,7 +1860,7 @@ export default function IAVocaleLanding() {
             <div>
               <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Contact</h5>
               <ul className="space-y-2">
-                <li><a href="mailto:contact@boosterpay.fr" className="text-sm text-gray-400 hover:text-white transition-colors">contact@boosterpay.fr</a></li>
+                <li><a href="mailto:contact@booster-pay.com" className="text-sm text-gray-400 hover:text-white transition-colors">contact@booster-pay.com</a></li>
                 <li><span className="text-sm text-gray-400">Bretagne, France</span></li>
               </ul>
             </div>
