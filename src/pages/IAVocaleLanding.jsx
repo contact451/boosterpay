@@ -569,12 +569,12 @@ export default function IAVocaleLanding() {
 
               <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
                 Renouvelez vos dossiers et{' '}
-                <GradientText>s\u00e9curisez vos RDV.</GradientText>{' '}
+                <GradientText>sécurisez vos RDV.</GradientText>{' '}
                 Automatiquement.
               </h1>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                Notre IA appelle vos clients \u00e0 votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
+                Notre IA appelle vos clients à votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
@@ -582,7 +582,7 @@ export default function IAVocaleLanding() {
                   href="#import"
                   className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
                 >
-                  Essayer gratuitement \u2014 100 appels offerts <ArrowRight className="w-5 h-5" />
+                  Essayer gratuitement — 100 appels offerts <ArrowRight className="w-5 h-5" />
                 </a>
               </div>
 
@@ -600,7 +600,7 @@ export default function IAVocaleLanding() {
             </div>
 
             {/* Right — Hero animation (desktop only) */}
-            <div className="hidden lg:block hero-fade hero-fade-4" style={{ transform: 'translateZ(0)' }}>
+            <div className="hero-fade hero-fade-4" style={{ transform: 'translateZ(0)' }}>
               <HeroAnimation />
             </div>
           </div>
