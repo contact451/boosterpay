@@ -56,13 +56,14 @@ const isMobileFR = (phone) => {
 /*  Utility components                                                 */
 /* ------------------------------------------------------------------ */
 
-const ScrollReveal = ({ children, y = 40, delay = 0, className = '' }) => (
+const ScrollReveal = ({ children, y = 30, delay = 0, className = '' }) => (
   <motion.div
     initial={{ opacity: 0.01, y }}
     whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
-    viewport={{ once: true, margin: '-50px' }}
+    transition={{ duration: 0.5, delay, ease: [0.25, 0.1, 0.25, 1] }}
+    viewport={{ once: true, margin: '-60px' }}
     className={className}
+    style={{ willChange: 'transform, opacity' }}
   >
     {children}
   </motion.div>
@@ -83,7 +84,7 @@ const SectionHeading = ({ tag, title, subtitle }) => (
       </h2>
     </ScrollReveal>
     {subtitle && (
-      <ScrollReveal y={30} delay={0.12}>
+      <ScrollReveal y={30} delay={0.06}>
         <p className="text-lg md:text-xl text-gray-500 max-w-2xl leading-relaxed mt-5 mx-auto">
           {subtitle}
         </p>
@@ -660,7 +661,7 @@ export default function IAVocaleLanding() {
             ].map((service, i) => (
               <ScrollReveal key={i} delay={i * 0.15}>
                 <motion.div
-                  whileHover={{ y: -12, transition: { duration: 0.35, ease: 'easeOut' } }}
+                  whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
                   className="relative h-full bg-white rounded-[28px] border border-gray-100/80 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-gray-900/[0.08] transition-all duration-500"
                 >
                   {/* Large icon area */}
@@ -793,10 +794,10 @@ export default function IAVocaleLanding() {
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[13px] font-bold text-gray-800 tracking-tight">Agenda du jour</span>
                     <motion.span
-                      initial={{ opacity: 0.01, scale: 0.8 }}
+                      initial={{ opacity: 0, scale: 0.9 }}
                       whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true, margin: '-50px' }}
-                      transition={{ delay: 0.5, type: 'spring' }}
+                      viewport={{ once: true, margin: '-60px' }}
+                      transition={{ delay: 0.3, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                       className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
                     >
                       92% confirmés
@@ -812,19 +813,20 @@ export default function IAVocaleLanding() {
                     ].map((slot, i) => (
                       <motion.div
                         key={i}
-                        initial={{ opacity: 0.01, x: -10 }}
+                        initial={{ opacity: 0, x: -8 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, margin: '-50px' }}
-                        transition={{ delay: 0.3 + i * 0.15 }}
+                        viewport={{ once: true, margin: '-60px' }}
+                        transition={{ delay: 0.15 + i * 0.08, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
                         className="flex items-center gap-3 py-2 px-3 rounded-xl bg-white border border-gray-100/40"
+                        style={{ willChange: 'transform, opacity' }}
                       >
                         <span className="text-[11px] font-semibold text-gray-400 w-10 tabular-nums">{slot.time}</span>
                         <span className="text-[13px] font-medium text-gray-800 flex-1">{slot.name}</span>
                         <motion.div
-                          initial={{ scale: 0 }}
-                          whileInView={{ scale: 1 }}
-                          viewport={{ once: true, margin: '-50px' }}
-                          transition={{ delay: 0.5 + i * 0.15, type: 'spring', stiffness: 300 }}
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          whileInView={{ scale: 1, opacity: 1 }}
+                          viewport={{ once: true, margin: '-60px' }}
+                          transition={{ delay: 0.25 + i * 0.08, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                         >
                           {slot.status === 'confirmed' ? (
                             <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -849,9 +851,10 @@ export default function IAVocaleLanding() {
                       <motion.div
                         initial={{ width: '57%' }}
                         whileInView={{ width: '92%' }}
-                        viewport={{ once: true, margin: '-50px' }}
-                        transition={{ delay: 0.5, duration: 1.2, ease: 'easeOut' }}
+                        viewport={{ once: true, margin: '-60px' }}
+                        transition={{ delay: 0.3, duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
                         className="h-full bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full"
+                        style={{ willChange: 'width' }}
                       />
                     </div>
                   </div>
@@ -956,13 +959,13 @@ export default function IAVocaleLanding() {
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1], damping: 20 }}
                     className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
                       className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
                     >
                       <CheckCircle2 className="w-8 h-8 text-white" />
@@ -1007,7 +1010,7 @@ export default function IAVocaleLanding() {
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1], damping: 20 }}
                     className="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl"
                   >
                     <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Choisissez votre plan</h3>
@@ -1046,13 +1049,13 @@ export default function IAVocaleLanding() {
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1], damping: 20 }}
                     className="bg-white rounded-3xl p-10 max-w-md w-full text-center shadow-2xl"
                   >
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 300, delay: 0.2 }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
                       className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
                     >
                       <CheckCircle2 className="w-10 h-10 text-white" />
@@ -1544,7 +1547,7 @@ export default function IAVocaleLanding() {
                 initial={{ scale: 0, rotate: -180 }}
                 whileInView={{ scale: 1, rotate: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
+                transition={{ delay: 0.4, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                 className="w-14 h-14 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center my-3"
               >
                 <span className="text-sm font-black text-gray-900 tracking-tight">VS</span>
@@ -1557,7 +1560,7 @@ export default function IAVocaleLanding() {
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: 0.3, type: 'spring' }}
+                transition={{ delay: 0.3, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
                 className="w-12 h-12 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center"
               >
                 <span className="text-xs font-black text-gray-900">VS</span>
