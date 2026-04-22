@@ -317,6 +317,7 @@ export default function IAVocaleLanding() {
   useEffect(() => {
     if (importState !== 'redirecting') return;
     if (countdown <= 0) {
+      try { localStorage.setItem('bp_source', 'ia-vocale'); } catch(e) {}
       window.location.href = STRIPE_LINKS[selectedPlan] || STRIPE_LINKS.decouverte;
       return;
     }

@@ -922,6 +922,7 @@ const ImportSection = () => {
       setCountdown(c);
       if (c <= 0) {
         clearInterval(timer);
+        try { localStorage.setItem('bp_source', 'impact-avis'); } catch(e) {}
         window.location.href = STRIPE_LINKS[plan];
       }
     }, 1000);

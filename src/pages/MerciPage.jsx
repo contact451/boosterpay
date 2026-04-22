@@ -18,6 +18,7 @@ export default function MerciPage() {
       body: JSON.stringify({
         action: 'cardRegistered',
         sessionId: urlParams.get('session_id') || '',
+        source: urlParams.get('source') || (function() { try { var s = localStorage.getItem('bp_source') || ''; localStorage.removeItem('bp_source'); return s; } catch(e) { return ''; } })(),
         timestamp: new Date().toISOString(),
       }),
     }).catch(() => {});
