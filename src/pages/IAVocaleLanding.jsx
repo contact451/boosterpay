@@ -1651,7 +1651,6 @@ export default function IAVocaleLanding() {
       <section className="py-24 md:py-32 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Nouveau"
             title="Ne perdez plus jamais un appel."
             subtitle="Vous êtes sur le terrain. L'IA décroche, qualifie, et vous envoie le lead — prêt à closer."
           />
