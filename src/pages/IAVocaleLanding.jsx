@@ -421,8 +421,8 @@ export default function IAVocaleLanding() {
   const stats = [
     { value: '35', suffix: '%', prefix: '-', label: 'de lapins' },
     { value: '80', suffix: '%', label: 'renouvellements' },
-    { value: '6', suffix: 'x', label: 'rentabilité', prefix: '' },
-    { value: '24', suffix: 'h', label: 'opérationnel' },
+    { value: '97', suffix: '%', label: 'appels décrochés', prefix: '' },
+    { value: '24', suffix: 'h', label: 'disponible', prefix: '' },
   ];
 
   const useCases = [
@@ -570,13 +570,13 @@ export default function IAVocaleLanding() {
               </div>
 
               <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Renouvelez vos dossiers et{' '}
-                <GradientText>sécurisez vos RDV.</GradientText>{' '}
-                Automatiquement.
+                Vos appels sortants.{' '}
+                <GradientText>Vos appels entrants.</GradientText>{' '}
+                L'IA gère tout.
               </h1>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                Notre IA appelle vos clients à votre place pour relancer les renouvellements, confirmer chaque rendez-vous et supprimer les lapins.
+                Relances, confirmations de RDV, et même la réception d'appels quand vous êtes occupé — l'IA prend le relais et vous envoie chaque lead qualifié.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
@@ -689,9 +689,9 @@ export default function IAVocaleLanding() {
                   <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">Appels entrants</span>
                 </div>
                 <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Réception d'appels IA 24/7</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">Vous êtes sur un chantier, en rendez-vous, ou occupé ? L'IA décroche à votre place, qualifie le prospect, prend RDV si c'est chaud, et vous envoie un récap instantané par SMS.</p>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">Vous ne répondez pas ? L'appel est transféré automatiquement à l'IA. Elle décroche en 2 secondes, qualifie le prospect, prend RDV si c'est chaud, et vous envoie le lead par SMS. Une machine à leads qui tourne 24h/24.</p>
                 <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Réponse instantanée 24/7', 'Qualification du lead', 'Prise de RDV auto', 'Récap SMS + Email'].map((d, j) => (
+                  {['Transfert auto', 'Qualification lead', 'Prise de RDV', 'Récap SMS instantané'].map((d, j) => (
                     <span key={j} className="text-xs font-semibold text-amber-700 bg-amber-50 rounded-full px-4 py-2 border border-amber-100">{d}</span>
                   ))}
                 </div>
@@ -1651,8 +1651,8 @@ export default function IAVocaleLanding() {
       <section className="py-24 md:py-32 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
-            title="Ne perdez plus jamais un appel."
-            subtitle="Vous êtes sur le terrain. L'IA décroche, qualifie, et vous envoie le lead — prêt à closer."
+            title="Vous ne décrochez pas ? L'IA prend le relais."
+            subtitle="Transfert automatique quand vous êtes occupé. L'IA qualifie, prend RDV, et vous envoie le lead prêt à closer."
           />
 
           <div className="grid lg:grid-cols-2 gap-16 items-center mt-8">
@@ -1727,7 +1727,7 @@ export default function IAVocaleLanding() {
                   <span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">disponible 24h/24.</span>
                 </h3>
                 <p className="text-gray-500 text-lg leading-relaxed mb-10">
-                  Un prospect appelle pendant que vous êtes les mains dans le cambouis ? L'IA répond, comprend le besoin, qualifie l'urgence, propose un créneau, et vous envoie tout par SMS.
+                  Un prospect appelle et vous ne décrochez pas ? L'appel est automatiquement transféré à votre IA. Elle répond en 2 secondes, comprend le besoin, qualifie l'urgence, propose un créneau, et vous envoie le lead complet par SMS. Chaque appel manqué devient un lead qualifié.
                 </p>
               </ScrollReveal>
 
@@ -1735,8 +1735,8 @@ export default function IAVocaleLanding() {
                 {[
                   {
                     icon: PhoneCall,
-                    title: 'Décroche en 2 secondes',
-                    desc: 'Plus jamais de "Le numéro que vous avez composé ne répond pas." Chaque appel est une opportunité.',
+                    title: 'Transfert automatique',
+                    desc: 'Vous ne répondez pas après 3 sonneries ? L\'appel bascule sur votre IA. Le prospect ne raccroche jamais.',
                     color: 'amber',
                   },
                   {
