@@ -215,14 +215,14 @@ const GoogleCardAnimation = () => {
   const filledStars = Math.round(rating);
 
   const beforeReviews = [
-    { stars: 3, text: "Bof, rien de sp\u00e9cial...", author: 'Paul R.', date: 'il y a 3 mois', avatar: '\ud83d\ude10' },
+    { stars: 3, text: "Bof, rien de spécial...", author: 'Paul R.', date: 'il y a 3 mois', avatar: '\ud83d\ude10' },
     { stars: 2, text: "Pas terrible, long temps d'attente.", author: 'Marc D.', date: 'il y a 5 mois', avatar: '\ud83d\ude12' },
   ];
 
   const afterReviews = [
-    { stars: 5, text: 'Service excellent, je recommande vivement\u00a0!', author: 'Sophie M.', date: 'il y a 2 jours', avatar: '\ud83d\ude0a', isNew: true },
-    { stars: 5, text: '\u00c9quipe au top, parfait de A \u00e0 Z.', author: 'Marie T.', date: 'il y a 1 jour', avatar: '\ud83e\udd29', isNew: true },
-    { stars: 5, text: 'Incroyable\u00a0! Jamais vu un tel service.', author: 'Lucas B.', date: "\u00e0 l'instant", avatar: '\ud83d\udd25', isNew: true },
+    { stars: 5, text: 'Service excellent, je recommande vivement !', author: 'Sophie M.', date: 'il y a 2 jours', avatar: '\ud83d\ude0a', isNew: true },
+    { stars: 5, text: '\u00c9quipe au top, parfait de A à Z.', author: 'Marie T.', date: 'il y a 1 jour', avatar: '\ud83e\udd29', isNew: true },
+    { stars: 5, text: 'Incroyable ! Jamais vu un tel service.', author: 'Lucas B.', date: "à l'instant", avatar: '\ud83d\udd25', isNew: true },
   ];
 
   return (
@@ -262,7 +262,7 @@ const GoogleCardAnimation = () => {
             <span className="transition-transform duration-300" style={{ display: 'inline-block', transform: isAfter ? 'scale(1)' : 'scale(0.8)' }}>
               {isAfter ? '\u2713' : '\u26A0'}
             </span>
-            <span>{isAfter ? 'R\u00e9putation excellente' : 'R\u00e9putation \u00e0 risque'}</span>
+            <span>{isAfter ? 'Réputation excellente' : 'Réputation à risque'}</span>
           </div>
           <span style={{ opacity: isAfter ? 1 : 0.7 }} className="transition-opacity duration-500">
             {isAfter ? '\u2191 Top 5% local' : '\u2193 En dessous de la moyenne'}
@@ -338,7 +338,7 @@ const GoogleCardAnimation = () => {
 
           {/* Quick action buttons */}
           <div className="flex gap-2 mb-5">
-            {['Itin\u00e9raire', 'Avis', 'Appeler'].map((label, i) => (
+            {['Itinéraire', 'Avis', 'Appeler'].map((label, i) => (
               <div key={i} className="flex-1 bg-gray-50 hover:bg-gray-100 rounded-xl py-2 text-center text-xs font-semibold text-gray-600 border border-gray-100 transition-colors cursor-default">
                 {label}
               </div>
@@ -451,7 +451,7 @@ const GoogleCardAnimation = () => {
             borderColor: isAfter ? '#bbf7d0' : '#fecaca',
           }}
         >
-          {isAfter ? '\u2726 APR\u00c8S IMPACT-AVIS' : '\u2727 AVANT'}
+          {isAfter ? '✦ APR\u00c8S IMPACT-AVIS' : '✧ AVANT'}
         </div>
       </motion.div>
     </div>
@@ -1481,27 +1481,27 @@ const FAQSection = () => {
   const faqs = [
     {
       q: "Comment fonctionne Impact Avis ?",
-      a: "Impact Avis fonctionne en 3 étapes simples. D\u2019abord, vous importez votre liste de clients (CSV, Excel ou saisie manuelle). Ensuite, notre IA vocale appelle chacun de vos clients de manière personnalisée, en se présentant au nom de votre commerce. Si le client est satisfait, l\u2019IA le guide directement vers votre fiche Google pour laisser un avis 5 étoiles. Si le client exprime un mécontentement, l\u2019avis est intercepté et redirigé vers vous en privé, protégeant ainsi votre réputation en ligne.",
+      a: "Impact Avis fonctionne en 3 étapes simples. D’abord, vous importez votre liste de clients (CSV, Excel ou saisie manuelle). Ensuite, notre IA vocale appelle chacun de vos clients de manière personnalisée, en se présentant au nom de votre commerce. Si le client est satisfait, l’IA le guide directement vers votre fiche Google pour laisser un avis 5 étoiles. Si le client exprime un mécontentement, l’avis est intercepté et redirigé vers vous en privé, protégeant ainsi votre réputation en ligne.",
     },
     {
       q: "Est-ce légal ? Conforme au RGPD ?",
-      a: "Oui, Impact Avis est 100% conforme au RGPD et à la législation française. Toutes les données de vos clients sont hébergées en France sur des serveurs sécurisés. Chaque client peut refuser l\u2019appel ou demander la suppression de ses données à tout moment (opt-out). Nous ne créons jamais de faux avis : seuls de vrais clients laissent de vrais avis sur Google. Le consentement est géré de manière transparente et traçable pour vous protéger juridiquement.",
+      a: "Oui, Impact Avis est 100% conforme au RGPD et à la législation française. Toutes les données de vos clients sont hébergées en France sur des serveurs sécurisés. Chaque client peut refuser l’appel ou demander la suppression de ses données à tout moment (opt-out). Nous ne créons jamais de faux avis : seuls de vrais clients laissent de vrais avis sur Google. Le consentement est géré de manière transparente et traçable pour vous protéger juridiquement.",
     },
     {
-      q: "Combien d\u2019avis puis-je obtenir ?",
-      a: "Le nombre d\u2019avis dépend directement du volume de clients que vous nous transmettez. En moyenne, nos utilisateurs obtiennent un taux de conversion de 25 à 35% : sur 100 clients contactés, 25 à 35 laissent un avis Google. Plus vous importez de contacts réguliers, plus vos avis augmentent. Certains commerces avec un fort flux de clients récoltent plus de 50 nouveaux avis par mois.",
+      q: "Combien d’avis puis-je obtenir ?",
+      a: "Le nombre d’avis dépend directement du volume de clients que vous nous transmettez. En moyenne, nos utilisateurs obtiennent un taux de conversion de 25 à 35% : sur 100 clients contactés, 25 à 35 laissent un avis Google. Plus vous importez de contacts réguliers, plus vos avis augmentent. Certains commerces avec un fort flux de clients récoltent plus de 50 nouveaux avis par mois.",
     },
     {
       q: "Que se passe-t-il si un client laisse un avis négatif ?",
-      a: "C\u2019est là qu\u2019intervient notre Bouclier Anti-Avis Négatifs. Lorsqu\u2019un client exprime une insatisfaction (note de 1, 2 ou 3 étoiles), l\u2019avis n\u2019est PAS publié sur Google. Au lieu de cela, vous recevez une notification privée avec le détail du retour client, ce qui vous permet de résoudre le problème en direct. Seuls les avis 4 et 5 étoiles sont guidés vers votre fiche Google, ce qui protège votre note moyenne.",
+      a: "C’est là qu’intervient notre Bouclier Anti-Avis Négatifs. Lorsqu’un client exprime une insatisfaction (note de 1, 2 ou 3 étoiles), l’avis n’est PAS publié sur Google. Au lieu de cela, vous recevez une notification privée avec le détail du retour client, ce qui vous permet de résoudre le problème en direct. Seuls les avis 4 et 5 étoiles sont guidés vers votre fiche Google, ce qui protège votre note moyenne.",
     },
     {
       q: "Puis-je annuler à tout moment ?",
-      a: "Absolument, il n\u2019y a aucun engagement de durée. Vous pouvez résilier votre abonnement en 1 clic depuis votre tableau de bord, sans justification et sans frais cachés. Si vous n\u2019êtes pas satisfait dans les 30 premiers jours, nous vous remboursons intégralement. Nous croyons en la qualité de notre service et ne voulons garder que des clients convaincus.",
+      a: "Absolument, il n’y a aucun engagement de durée. Vous pouvez résilier votre abonnement en 1 clic depuis votre tableau de bord, sans justification et sans frais cachés. Si vous n’êtes pas satisfait dans les 30 premiers jours, nous vous remboursons intégralement. Nous croyons en la qualité de notre service et ne voulons garder que des clients convaincus.",
     },
     {
-      q: "Comment fonctionne l\u2019essai gratuit ?",
-      a: "Votre essai gratuit comprend 10 avis offerts pour tester le service sans risque. Lors de l\u2019inscription, un prélèvement de 0,50\u20ac HT est effectué pour vérifier votre carte (via Stripe, 100% sécurisé). Ce montant est automatiquement remboursé sous quelques minutes. Vous recevrez une notification à 80% de consommation de votre essai pour garder le contrôle total. À la fin de l\u2019essai, votre formule choisie s\u2019active automatiquement, ou vous pouvez annuler sans frais avant.",
+      q: "Comment fonctionne l’essai gratuit ?",
+      a: "Votre essai gratuit comprend 10 avis offerts pour tester le service sans risque. Lors de l’inscription, un prélèvement de 0,50€ HT est effectué pour vérifier votre carte (via Stripe, 100% sécurisé). Ce montant est automatiquement remboursé sous quelques minutes. Vous recevrez une notification à 80% de consommation de votre essai pour garder le contrôle total. À la fin de l’essai, votre formule choisie s’active automatiquement, ou vous pouvez annuler sans frais avant.",
     },
   ];
 
@@ -1656,13 +1656,13 @@ const Footer = () => (
 // ============ MAIN ============
 export default function ImpactAvisLanding() {
   useEffect(() => {
-    document.title = 'Impact Avis \u2014 Boostez vos avis Google automatiquement | BoosterPay';
+    document.title = 'Impact Avis — Boostez vos avis Google automatiquement | BoosterPay';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', "Obtenez des avis Google 5 \u00e9toiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.");
+    if (meta) meta.setAttribute('content', "Obtenez des avis Google 5 étoiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.");
     else {
       const m = document.createElement('meta');
       m.name = 'description';
-      m.content = "Obtenez des avis Google 5 \u00e9toiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.";
+      m.content = "Obtenez des avis Google 5 étoiles automatiquement. L'IA appelle vos clients satisfaits et les guide vers votre fiche Google. 10 avis offerts pour tester.";
       document.head.appendChild(m);
     }
   }, []);

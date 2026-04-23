@@ -176,7 +176,7 @@ const HeroAnimation = () => {
           className="flex items-center justify-between mb-6 mt-2"
         >
           <div>
-            <p className="text-xs text-gray-400 font-medium">Aujourd\u2019hui</p>
+            <p className="text-xs text-gray-400 font-medium">Aujourd’hui</p>
             <p className="text-lg font-bold text-gray-900">Mon agenda</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
@@ -237,7 +237,7 @@ const HeroAnimation = () => {
         </div>
         <div>
           <p className="text-xs font-bold text-gray-800">100% automatique</p>
-          <p className="text-[10px] text-gray-400">L\u2019IA appelle pour vous</p>
+          <p className="text-[10px] text-gray-400">L’IA appelle pour vous</p>
         </div>
       </motion.div>
 
@@ -609,105 +609,127 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* ── Trois services. Un seul outil. ── */}
+      {/* ── Quatre services. Un seul outil. ── */}
       <section className="py-32 bg-[#FAFAFA] overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Nos services"
-            title="Trois services. Un seul outil."
-            subtitle="Chaque service s'adapte à votre métier et à vos besoins."
+            title="4 services. Zéro appel manqué."
+            subtitle="Appels sortants, appels entrants — l'IA gère tout pendant que vous travaillez."
           />
-          <div className="grid md:grid-cols-3 gap-10 mt-4">
+
+          {/* Top row — 2 core services side by side */}
+          <div className="grid md:grid-cols-2 gap-8 mt-4">
             {[
               {
                 icon: RefreshCw,
                 title: 'Renouvellement de dossiers',
                 desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance. Zéro oubli, zéro effort.',
                 details: ['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux'],
-                accentBg: 'bg-emerald-50',
-                accentText: 'text-emerald-600',
-                accentBorder: 'border-emerald-100',
                 iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-400',
                 chipBg: 'bg-emerald-50',
                 chipText: 'text-emerald-700',
+                accentBorder: 'border-emerald-100',
                 ctaBg: 'bg-gray-900 hover:bg-gray-800',
+                badge: 'Appels sortants',
+                badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
               },
               {
                 icon: CalendarCheck,
                 title: 'Confirmation de RDV',
                 desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous et supprimer les lapins. Planning fiable, CA protégé.',
                 details: ['Appel J-1 automatique', 'SMS de rappel', 'Gestion des reports', 'Planning mis à jour'],
-                accentBg: 'bg-blue-50',
-                accentText: 'text-blue-600',
-                accentBorder: 'border-blue-100',
                 iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-500',
                 chipBg: 'bg-blue-50',
                 chipText: 'text-blue-700',
+                accentBorder: 'border-blue-100',
                 ctaBg: 'bg-gray-900 hover:bg-gray-800',
-              },
-              {
-                icon: Bot,
-                title: 'Robot IA sur mesure',
-                desc: 'On configure une IA vocale 100% adaptée à vos processus et à votre métier. Du script à l\'intégration CRM.',
-                details: ['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'],
-                accentBg: 'bg-violet-50',
-                accentText: 'text-violet-600',
-                accentBorder: 'border-violet-100',
-                iconBg: 'bg-gradient-to-br from-violet-500 to-purple-500',
-                chipBg: 'bg-violet-50',
-                chipText: 'text-violet-700',
-                ctaBg: 'bg-violet-600 hover:bg-violet-700',
-                isCustom: true,
+                badge: 'Appels sortants',
+                badgeColor: 'bg-blue-50 text-blue-700 border-blue-100',
               },
             ].map((service, i) => (
-              <ScrollReveal key={i} delay={i * 0.15}>
+              <ScrollReveal key={i} delay={i * 0.12}>
                 <motion.div
                   whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
                   className="relative h-full bg-white rounded-[28px] border border-gray-100/80 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-gray-900/[0.08] transition-all duration-500"
                 >
-                  {/* Large icon area */}
-                  <div className={`relative w-20 h-20 rounded-3xl ${service.iconBg} flex items-center justify-center mb-10 shadow-lg`}>
-                    <service.icon className="w-10 h-10 text-white" strokeWidth={1.5} />
+                  <div className="flex items-start justify-between mb-8">
+                    <div className={`relative w-16 h-16 rounded-2xl ${service.iconBg} flex items-center justify-center shadow-lg`}>
+                      <service.icon className="w-8 h-8 text-white" strokeWidth={1.5} />
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${service.badgeColor}`}>{service.badge}</span>
                   </div>
-
-                  {/* Title */}
                   <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">{service.title}</h3>
-
-                  {/* Description */}
                   <p className="text-[15px] text-gray-500 leading-relaxed mb-8">{service.desc}</p>
-
-                  {/* Detail chips */}
                   <div className="flex flex-wrap gap-2 mb-10 mt-auto">
                     {service.details.map((d, j) => (
-                      <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-4 py-2 border ${service.accentBorder}`}>
-                        {d}
-                      </span>
+                      <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-4 py-2 border ${service.accentBorder}`}>{d}</span>
                     ))}
                   </div>
-
-                  {/* CTA Button */}
-                  {service.isCustom ? (
-                    <a
-                      href="https://calendar.app.google/GHtu4ymohWhAXJTG8"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}
-                    >
-                      <CalendarCheck className="w-4 h-4" />
-                      Réserver un appel découverte
-                    </a>
-                  ) : (
-                    <a
-                      href="#import"
-                      className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}
-                    >
-                      Commencer gratuitement
-                      <ArrowRight className="w-4 h-4" />
-                    </a>
-                  )}
+                  <a href="#import" className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}>
+                    Commencer gratuitement <ArrowRight className="w-4 h-4" />
+                  </a>
                 </motion.div>
               </ScrollReveal>
             ))}
+          </div>
+
+          {/* Bottom row — 2 premium services */}
+          <div className="grid md:grid-cols-2 gap-8 mt-8">
+            {/* Réception d'appels IA */}
+            <ScrollReveal delay={0.2}>
+              <motion.div
+                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
+                className="relative h-full bg-white rounded-[28px] border border-amber-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-amber-900/[0.06] transition-all duration-500"
+              >
+                <div className="flex items-start justify-between mb-8">
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
+                    <PhoneCall className="w-8 h-8 text-white" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">Appels entrants</span>
+                </div>
+                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Réception d'appels IA 24/7</h3>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">Vous êtes sur un chantier, en rendez-vous, ou occupé ? L'IA décroche à votre place, qualifie le prospect, prend RDV si c'est chaud, et vous envoie un récap instantané par SMS.</p>
+                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
+                  {['Réponse instantanée 24/7', 'Qualification du lead', 'Prise de RDV auto', 'Récap SMS + Email'].map((d, j) => (
+                    <span key={j} className="text-xs font-semibold text-amber-700 bg-amber-50 rounded-full px-4 py-2 border border-amber-100">{d}</span>
+                  ))}
+                </div>
+                <a href="https://calendar.app.google/GzBmr9MdRRNX7z7U7" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                  <CalendarCheck className="w-4 h-4" />
+                  Réserver un appel découverte
+                </a>
+              </motion.div>
+            </ScrollReveal>
+
+            {/* Robot IA sur mesure */}
+            <ScrollReveal delay={0.3}>
+              <motion.div
+                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
+                className="relative h-full bg-white rounded-[28px] border border-violet-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-violet-900/[0.06] transition-all duration-500"
+              >
+                <div className="flex items-start justify-between mb-8">
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg">
+                    <Bot className="w-8 h-8 text-white" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-violet-50 text-violet-700 border-violet-100">Sur mesure</span>
+                </div>
+                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Robot IA sur mesure</h3>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-3">Un besoin spécifique ? On crée votre robot sur mesure.</p>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">Script personnalisé, voix naturelle, scénarios complexes, intégration CRM — une IA vocale 100% adaptée à vos processus et à votre métier.</p>
+                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
+                  {['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'].map((d, j) => (
+                    <span key={j} className="text-xs font-semibold text-violet-700 bg-violet-50 rounded-full px-4 py-2 border border-violet-100">{d}</span>
+                  ))}
+                </div>
+                <a href="https://calendar.app.google/GzBmr9MdRRNX7z7U7" target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                  <CalendarCheck className="w-4 h-4" />
+                  Réserver un appel découverte
+                </a>
+              </motion.div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -1581,7 +1603,7 @@ export default function IAVocaleLanding() {
                       { icon: Zap, text: '0 minute au téléphone', stat: '0min' },
                       { icon: CheckCircle2, text: 'Seulement 8% de lapins', stat: '8%' },
                       { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés', stat: null },
-                      { icon: Star, text: 'Vous gérez, l\'IA appelle', stat: null },
+                      { icon: PhoneCall, text: '97% des appels décrochés par l\'IA', stat: '97%' },
                     ].map((item, i) => (
                       <motion.div
                         key={i}
@@ -1622,6 +1644,176 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
+
+      {/* ============================================ */}
+      {/* RÉCEPTION D'APPELS IA — SECTION DÉDIÉE       */}
+      {/* ============================================ */}
+      <section className="py-24 md:py-32 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeading
+            tag="Nouveau"
+            title="Ne perdez plus jamais un appel."
+            subtitle="Vous êtes sur le terrain. L'IA décroche, qualifie, et vous envoie le lead — prêt à closer."
+          />
+
+          <div className="grid lg:grid-cols-2 gap-16 items-center mt-8">
+            {/* Left — Phone animation / Visual */}
+            <ScrollReveal delay={0.1}>
+              <div className="relative">
+                {/* Phone mockup */}
+                <div className="bg-gray-900 rounded-[2.5rem] p-6 pt-10 relative overflow-hidden shadow-2xl">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl" />
+
+                  {/* Incoming call screen */}
+                  <div className="text-center mb-6 mt-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30">
+                      <PhoneCall className="w-8 h-8 text-white" />
+                    </div>
+                    <p className="text-white font-bold text-lg">Appel entrant</p>
+                    <p className="text-gray-400 text-sm">06 12 34 56 78</p>
+                  </div>
+
+                  {/* AI conversation simulation */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex gap-2">
+                      <div className="bg-amber-500/20 border border-amber-500/30 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[80%]">
+                        <p className="text-[12px] text-amber-200 font-medium">IA BoosterPay</p>
+                        <p className="text-[13px] text-white mt-0.5">Bonjour, entreprise Martin Plomberie, que puis-je faire pour vous ?</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <div className="bg-white/10 border border-white/10 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[80%]">
+                        <p className="text-[12px] text-gray-400 font-medium">Prospect</p>
+                        <p className="text-[13px] text-gray-200 mt-0.5">J'ai une fuite dans ma salle de bain, vous pouvez intervenir cette semaine ?</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="bg-amber-500/20 border border-amber-500/30 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[80%]">
+                        <p className="text-[12px] text-amber-200 font-medium">IA BoosterPay</p>
+                        <p className="text-[13px] text-white mt-0.5">Bien sûr ! Je peux vous proposer un créneau jeudi à 9h ou vendredi à 14h. Quelle option vous convient ?</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[70%]">
+                        <p className="text-[13px] text-emerald-300 font-semibold">✓ RDV confirmé — Jeudi 9h</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notification bar */}
+                  <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl px-4 py-3 flex items-center gap-3">
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <span className="text-[12px] text-emerald-300 font-semibold">Récap envoyé par SMS + Email</span>
+                  </div>
+                </div>
+
+                {/* Floating notification card */}
+                <div className="absolute -bottom-4 -right-4 bg-white rounded-2xl shadow-xl border border-gray-100 px-5 py-4 flex items-center gap-3 max-w-[260px]">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <Check className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-900">Lead qualifié</p>
+                    <p className="text-[10px] text-gray-400">Fuite SDB — Jeudi 9h — Urgent</p>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Right — Features list */}
+            <div>
+              <ScrollReveal delay={0.05}>
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                  Votre secrétaire IA,<br />
+                  <span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">disponible 24h/24.</span>
+                </h3>
+                <p className="text-gray-500 text-lg leading-relaxed mb-10">
+                  Un prospect appelle pendant que vous êtes les mains dans le cambouis ? L'IA répond, comprend le besoin, qualifie l'urgence, propose un créneau, et vous envoie tout par SMS.
+                </p>
+              </ScrollReveal>
+
+              <div className="space-y-5">
+                {[
+                  {
+                    icon: PhoneCall,
+                    title: 'Décroche en 2 secondes',
+                    desc: 'Plus jamais de "Le numéro que vous avez composé ne répond pas." Chaque appel est une opportunité.',
+                    color: 'amber',
+                  },
+                  {
+                    icon: Target,
+                    title: 'Qualifie le lead automatiquement',
+                    desc: 'Type de travaux, urgence, localisation, budget — l\'IA pose les bonnes questions et classe le lead.',
+                    color: 'emerald',
+                  },
+                  {
+                    icon: CalendarDays,
+                    title: 'Prend RDV dans votre agenda',
+                    desc: 'Si le prospect est chaud, l\'IA propose un créneau et confirme. Vous n\'avez qu\'à vous pointer.',
+                    color: 'blue',
+                  },
+                  {
+                    icon: Zap,
+                    title: 'Récap instantané par SMS',
+                    desc: 'Nom, besoin, urgence, créneau choisi — tout vous arrive en temps réel sur votre téléphone.',
+                    color: 'violet',
+                  },
+                ].map((feature, i) => (
+                  <ScrollReveal key={i} delay={0.1 + i * 0.08}>
+                    <div className="flex items-start gap-4 p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
+                      <div className={`w-11 h-11 rounded-xl bg-${feature.color}-100 flex items-center justify-center flex-shrink-0`}>
+                        <feature.icon className={`w-5 h-5 text-${feature.color}-600`} />
+                      </div>
+                      <div>
+                        <h4 className="text-[15px] font-bold text-gray-900 mb-1">{feature.title}</h4>
+                        <p className="text-[13px] text-gray-500 leading-relaxed">{feature.desc}</p>
+                      </div>
+                    </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <ScrollReveal delay={0.4}>
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                  <a
+                    href="#import"
+                    className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-amber-500/25 hover:scale-105 transition-all duration-200"
+                  >
+                    Activer la réception IA <ArrowRight className="w-5 h-5" />
+                  </a>
+                  <a
+                    href="https://calendar.app.google/GzBmr9MdRRNX7z7U7"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 text-base font-semibold text-gray-700 border-2 border-gray-200 px-8 py-4 rounded-full hover:border-gray-300 transition-all"
+                  >
+                    <CalendarCheck className="w-5 h-5" /> Démo personnalisée
+                  </a>
+                </div>
+              </ScrollReveal>
+
+              {/* Stats bar */}
+              <ScrollReveal delay={0.5}>
+                <div className="mt-10 grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
+                  <div>
+                    <p className="text-2xl font-black text-gray-900">97%</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Appels décrochés</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-gray-900">×3</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Leads qualifiés</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-gray-900">2s</p>
+                    <p className="text-[11px] text-gray-400 mt-1">Temps de réponse</p>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ============================================ */}
       {/* TESTIMONIALS                                 */}
