@@ -147,27 +147,75 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Hero — Minimal Apple-style animation                               */
+/*  Hero — Services showcase animation                                 */
 /* ------------------------------------------------------------------ */
+const services = [
+  {
+    icon: 'RefreshCw',
+    title: 'Renouvellement de dossiers',
+    desc: "L'IA appelle vos clients pour renouveler leurs contrats, dossiers et abonnements.",
+    result: '80% de renouvellements',
+    example: 'Garage MaxMotors — CT renouvelé',
+    color: 'emerald',
+  },
+  {
+    icon: 'CalendarCheck',
+    title: 'Confirmation de RDV',
+    desc: "Chaque RDV est confirmé par appel automatique. Fini les lapins.",
+    result: '-35% de rendez-vous manqués',
+    example: 'Salon Bella — RDV confirmé demain 14h',
+    color: 'blue',
+  },
+  {
+    icon: 'PhoneCall',
+    title: 'Réception d\'appels IA 24/7',
+    desc: "Quand vous ne décrochez pas, l'IA répond, qualifie et vous envoie le lead.",
+    result: '0 appel manqué',
+    example: 'Nouveau prospect — Fuite urgente qualifié',
+    color: 'amber',
+  },
+  {
+    icon: 'Bot',
+    title: 'Robot IA sur mesure',
+    desc: "Un assistant vocal personnalisé pour votre métier, vos scripts, vos process.",
+    result: 'Disponible 7j/7 24h/24',
+    example: 'Courtier — 12 relances auto cette semaine',
+    color: 'violet',
+  },
+];
+
+const iconMap = { RefreshCw, CalendarCheck, PhoneCall, Bot };
+const colorMap = {
+  emerald: { bg: 'bg-emerald-50', ring: 'ring-emerald-200', icon: 'text-emerald-600', accent: 'bg-emerald-500', light: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
+  blue: { bg: 'bg-blue-50', ring: 'ring-blue-200', icon: 'text-blue-600', accent: 'bg-blue-500', light: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
+  amber: { bg: 'bg-amber-50', ring: 'ring-amber-200', icon: 'text-amber-600', accent: 'bg-amber-500', light: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' },
+  violet: { bg: 'bg-violet-50', ring: 'ring-violet-200', icon: 'text-violet-600', accent: 'bg-violet-500', light: 'text-violet-600', badge: 'bg-violet-100 text-violet-700' },
+};
+
 const HeroAnimation = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-20px' });
-  const [step, setStep] = useState(0);
+  const [active, setActive] = useState(-1);
 
   useEffect(() => {
     if (!isInView) return;
-    const timers = [
-      setTimeout(() => setStep(1), 400),
-      setTimeout(() => setStep(2), 2200),
-      setTimeout(() => setStep(3), 4000),
-      setTimeout(() => setStep(4), 5500),
-    ];
-    return () => timers.forEach(clearTimeout);
+    let i = 0;
+    const show = () => {
+      setActive(i);
+      i++;
+      if (i < 4) setTimeout(show, 2400);
+    };
+    const t = setTimeout(show, 500);
+    return () => clearTimeout(t);
   }, [isInView]);
 
+  const svc = active >= 0 ? services[active] : null;
+  const Icon = svc ? iconMap[svc.icon] : null;
+  const c = svc ? colorMap[svc.color] : null;
+
   return (
-    <div ref={ref} className="relative w-full max-w-[320px] mx-auto" style={{ willChange: 'transform' }}>
-      {/* Phone frame */}
+    <div ref={ref} className="relative w-full max-w-[340px] mx-auto" style={{ willChange: 'transform' }}>
+      {/* Phone */}
       <div className="relative bg-gray-950 rounded-[2.8rem] p-[3px] shadow-2xl shadow-gray-900/20">
         <div className="bg-white rounded-[2.6rem] overflow-hidden" style={{ transform: 'translateZ(0)' }}>
           {/* Status bar */}
@@ -181,114 +229,118 @@ const HeroAnimation = () => {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="px-5 pb-8 min-h-[380px] flex flex-col">
-            {/* App header */}
-            <div className="flex items-center justify-between mb-6 pt-1">
+          <div className="px-5 pb-7 min-h-[400px] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5 pt-1">
               <div>
                 <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">BoosterPay</p>
-                <p className="text-[15px] font-bold text-gray-900 mt-0.5">Activité du jour</p>
+                <p className="text-[15px] font-bold text-gray-900 mt-0.5">Vos services IA</p>
               </div>
               <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
             </div>
 
-            {/* KPI row — fades in step 1 */}
-            <div
-              className="grid grid-cols-3 gap-2 mb-5 transition-all duration-700 ease-out"
-              style={{
-                opacity: step >= 1 ? 1 : 0,
-                transform: step >= 1 ? 'translateY(0)' : 'translateY(12px)',
-              }}
-            >
-              {[
-                { value: '12', label: 'Appels', sub: 'passés' },
-                { value: '3', label: 'Appels', sub: 'reçus' },
-                { value: '0', label: 'Appels', sub: 'manqués' },
-              ].map((kpi, i) => (
-                <div
-                  key={i}
-                  className="text-center py-3 rounded-2xl bg-gray-50"
-                  style={{
-                    transitionDelay: `${i * 100}ms`,
-                    opacity: step >= 1 ? 1 : 0,
-                    transform: step >= 1 ? 'translateY(0)' : 'translateY(8px)',
-                    transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                  }}
-                >
-                  <p className="text-2xl font-black text-gray-900">{kpi.value}</p>
-                  <p className="text-[9px] text-gray-400 font-medium mt-0.5">{kpi.label}</p>
-                  <p className="text-[9px] text-gray-400">{kpi.sub}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Activity items — step 2+ */}
-            <div className="space-y-2 flex-1">
-              {[
-                { icon: Phone, text: 'Salon Bella — RDV confirmé', time: '09:12', color: 'emerald', step: 2 },
-                { icon: Phone, text: 'Garage Martin — CT renouvelé', time: '09:31', color: 'emerald', step: 2 },
-                { icon: PhoneCall, text: 'Prospect — Lead qualifié par l’IA', time: '10:15', color: 'blue', step: 3 },
-                { icon: PhoneCall, text: 'Client — Rappel planifié auto', time: '11:02', color: 'amber', step: 3 },
-              ].map((item, i) => {
-                const Icon = item.icon;
-                const colors = {
-                  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-500', badge: 'text-emerald-600' },
-                  blue: { bg: 'bg-blue-50', text: 'text-blue-500', badge: 'text-blue-600' },
-                  amber: { bg: 'bg-amber-50', text: 'text-amber-500', badge: 'text-amber-600' },
-                };
-                const c = colors[item.color];
+            {/* 4 service pills — always visible, active one highlighted */}
+            <div className="grid grid-cols-2 gap-1.5 mb-5">
+              {services.map((s, i) => {
+                const SIcon = iconMap[s.icon];
+                const sc = colorMap[s.color];
+                const isActive = i === active;
                 return (
                   <div
                     key={i}
-                    className="flex items-center gap-3 p-2.5 rounded-2xl bg-gray-50/80 transition-all duration-500 ease-out"
-                    style={{
-                      opacity: step >= item.step ? 1 : 0,
-                      transform: step >= item.step ? 'translateX(0)' : 'translateX(-12px)',
-                      transitionDelay: `${(i % 2) * 120}ms`,
-                    }}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border transition-all duration-500 ${
+                      isActive
+                        ? `${sc.bg} border-transparent ring-2 ${sc.ring} scale-[1.02]`
+                        : i <= active
+                          ? 'bg-gray-50 border-gray-100'
+                          : 'bg-gray-50/50 border-gray-50 opacity-40'
+                    }`}
+                    style={{ transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
                   >
-                    <div className={`w-8 h-8 rounded-xl ${c.bg} flex items-center justify-center shrink-0`}>
-                      <Icon className={`w-3.5 h-3.5 ${c.text}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-semibold text-gray-900 truncate">{item.text}</p>
-                    </div>
-                    <span className="text-[9px] text-gray-300 shrink-0">{item.time}</span>
+                    <SIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? sc.icon : 'text-gray-400'}`} />
+                    <span className={`text-[10px] font-semibold leading-tight ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {s.title.length > 20 ? s.title.split(' ').slice(0, 2).join(' ') : s.title}
+                    </span>
                   </div>
                 );
               })}
             </div>
 
-            {/* Bottom banner — step 4 */}
-            <div
-              className="mt-4 bg-emerald-500 rounded-2xl py-3 px-4 text-center transition-all duration-600 ease-out"
-              style={{
-                opacity: step >= 4 ? 1 : 0,
-                transform: step >= 4 ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.97)',
-                transition: 'all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
-              }}
-            >
-              <p className="text-[12px] font-bold text-white">+15 leads qualifiés aujourd’hui</p>
-              <p className="text-[9px] text-emerald-100 mt-0.5">Pendant que vous étiez sur le terrain</p>
+            {/* Active service detail card */}
+            <div className="flex-1 flex flex-col justify-center">
+              {svc && (
+                <div
+                  key={active}
+                  className="space-y-4"
+                  style={{
+                    animation: 'heroServiceIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) both',
+                  }}
+                >
+                  {/* Service icon + title */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-2xl ${c.bg} flex items-center justify-center`}>
+                      <Icon className={`w-5 h-5 ${c.icon}`} />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-bold text-gray-900">{svc.title}</p>
+                      <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${c.badge}`}>
+                        {svc.result}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-[12px] text-gray-500 leading-relaxed">{svc.desc}</p>
+
+                  {/* Example result */}
+                  <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-gray-50 border border-gray-100">
+                    <div className={`w-7 h-7 rounded-lg ${c.accent} flex items-center justify-center shrink-0`}>
+                      <Check className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-900">{svc.example}</p>
+                      <p className="text-[9px] text-gray-400">Il y a 2 min</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!svc && (
+                <div className="flex items-center justify-center h-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+                </div>
+              )}
+            </div>
+
+            {/* Progress dots */}
+            <div className="flex items-center justify-center gap-2 mt-5">
+              {[0, 1, 2, 3].map(i => (
+                <div
+                  key={i}
+                  className={`h-1 rounded-full transition-all duration-500 ${
+                    i <= active ? `${colorMap[services[i].color].accent} w-5` : 'bg-gray-200 w-1.5'
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Single floating badge — step 4 */}
+      {/* Floating result badge */}
       <div
-        className="absolute -right-2 top-28 bg-white rounded-2xl shadow-lg shadow-gray-900/8 border border-gray-100 px-3.5 py-2.5 transition-all duration-500 ease-out"
+        className="absolute -right-2 top-32 bg-white rounded-2xl shadow-lg shadow-gray-900/8 border border-gray-100 px-3.5 py-2.5 transition-all duration-500 ease-out"
         style={{
-          opacity: step >= 4 ? 1 : 0,
-          transform: step >= 4 ? 'translateX(0) scale(1)' : 'translateX(16px) scale(0.95)',
+          opacity: active >= 3 ? 1 : 0,
+          transform: active >= 3 ? 'translateX(0) scale(1)' : 'translateX(16px) scale(0.95)',
           willChange: 'transform, opacity',
           transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}
       >
-        <p className="text-[10px] font-bold text-gray-900">0 appel perdu</p>
-        <p className="text-[9px] text-emerald-600 font-semibold">7j/7 — 24h/24</p>
+        <p className="text-[10px] font-bold text-gray-900">4 services actifs</p>
+        <p className="text-[9px] text-emerald-600 font-semibold">100% automatis\u00e9</p>
       </div>
     </div>
   );
@@ -455,9 +507,9 @@ export default function IAVocaleLanding() {
   /* ── Data ──────────────────────────────────────────────────── */
   const stats = [
     { value: '0', suffix: '', prefix: '', label: 'appel perdu' },
-    { value: '30', suffix: '%', prefix: '+', label: "d'activité" },
-    { value: '100', suffix: '%', prefix: '', label: 'automatisé' },
-    { value: '7', suffix: 'j/7', prefix: '', label: '24h/24' },
+    { value: '35', suffix: '%', prefix: '+', label: 'de clients' },
+    { value: '10', suffix: 'h', prefix: '', label: 'gagnées/sem.' },
+    { value: '24', suffix: '/7', prefix: '', label: 'disponible' },
   ];
 
   const useCases = [
@@ -585,6 +637,10 @@ export default function IAVocaleLanding() {
               from { opacity: 0; transform: translateY(20px) translateZ(0); }
               to { opacity: 1; transform: translateY(0) translateZ(0); }
             }
+            @keyframes heroServiceIn {
+              from { opacity: 0; transform: translateY(10px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
             .hero-fade { 
               animation: heroFadeUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
               will-change: opacity, transform;
@@ -600,17 +656,17 @@ export default function IAVocaleLanding() {
             <div>
               <div className="hero-fade hero-fade-1">
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-6">
-                  <Bot className="w-4 h-4" /> IA Vocale pour professionnels
+                  <Zap className="w-4 h-4" /> IA Vocale pour professionnels
                 </span>
               </div>
 
               <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Plus de clients.{' '}
-                <GradientText>Zéro appel perdu.</GradientText>
+                Gagnez du temps.{' '}
+                <GradientText>Gagnez des clients.</GradientText>
               </h1>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                Votre IA passe les appels, décroche quand vous êtes occupé, qualifie chaque prospect et vous les envoie — 7 jours sur 7, 24h/24. Vous ne perdez plus un seul lead.
+                L’IA qui relance vos clients, confirme vos RDV, décroche quand vous êtes occupé et qualifie chaque prospect — 7j/7, 24h/24. Zéro appel perdu, zéro temps perdu.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
