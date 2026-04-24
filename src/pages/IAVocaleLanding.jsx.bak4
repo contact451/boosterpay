@@ -340,7 +340,7 @@ const HeroAnimation = () => {
         }}
       >
         <p className="text-[10px] font-bold text-gray-900">4 services actifs</p>
-        <p className="text-[9px] text-emerald-600 font-semibold">100% automatisé</p>
+        <p className="text-[9px] text-emerald-600 font-semibold">100% automatis\u00e9</p>
       </div>
     </div>
   );
@@ -427,60 +427,51 @@ const RobotShowcase = () => {
 /*  Metiers data + MetierSelector component                            */
 /* ------------------------------------------------------------------ */
 const metiers = [
-  { name: 'Garagiste', icon: Wrench, s1: 'Relance CT, vidanges, entretiens', s2: 'Confirmation RDV atelier J-1', s3: 'Réception appels pannes 24/7', s4: 'Robot accueil personnalisé', temps: '12h', clients: '+18', ca: '+8 500€', lapins: '-40%' },
-  { name: 'Courtier assurance', icon: Shield, s1: 'Renouvellement contrats auto/habitation', s2: 'Confirmation RDV signature', s3: 'Réception appels sinistres 24/7', s4: 'Robot qualification souscription', temps: '15h', clients: '+25', ca: '+12 000€', lapins: '-35%' },
-  { name: 'Dentiste', icon: Heart, s1: 'Rappel détartrages & bilans', s2: 'Confirmation RDV patients J-1', s3: 'Réception appels urgences dentaires', s4: 'Robot triage patients', temps: '10h', clients: '+15', ca: '+6 500€', lapins: '-45%' },
-  { name: 'Opticien', icon: Eye, s1: 'Renouvellement lunettes/lentilles', s2: 'Confirmation RDV essayage', s3: 'Réception appels conseils optiques', s4: 'Robot prise de RDV auto', temps: '8h', clients: '+12', ca: '+7 000€', lapins: '-30%' },
-  { name: 'Salon coiffure', icon: Scissors, s1: 'Réactivation clients dormants 3 mois', s2: 'Confirmation RDV coiffure J-1', s3: 'Réception appels réservation', s4: 'Robot conseils personnalisés', temps: '10h', clients: '+20', ca: '+4 500€', lapins: '-50%' },
-  { name: 'Kiné / Ostéopathe', icon: Activity, s1: 'Suivi parcours de soins', s2: 'Confirmation séances', s3: 'Réception appels nouveaux patients', s4: 'Robot orientation patients', temps: '8h', clients: '+10', ca: '+3 800€', lapins: '-35%' },
-  { name: 'Médecin généraliste', icon: Heart, s1: 'Rappel check-up & vaccins', s2: 'Confirmation consultations J-1', s3: 'Réception appels patients 24/7', s4: 'Robot triage & orientation', temps: '14h', clients: '+12', ca: '+5 000€', lapins: '-40%' },
-  { name: 'Vétérinaire', icon: Heart, s1: 'Rappel vaccins & vermifuges', s2: 'Confirmation RDV consultations', s3: 'Réception appels urgences animales', s4: 'Robot conseil vétérinaire', temps: '10h', clients: '+14', ca: '+5 500€', lapins: '-35%' },
-  { name: 'Agent immobilier', icon: Users, s1: 'Relance mandats à échéance', s2: 'Confirmation visites acquéreurs', s3: 'Réception appels acquéreurs 24/7', s4: 'Robot qualification achat/location', temps: '14h', clients: '+30', ca: '+15 000€', lapins: '-25%' },
-  { name: 'Plombier', icon: Wrench, s1: 'Relance entretiens chaudière', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis automatique', temps: '12h', clients: '+22', ca: '+9 000€', lapins: '-30%' },
-  { name: 'Coach sportif', icon: Activity, s1: 'Relance abonnements expirés', s2: 'Confirmation séances', s3: 'Réception appels inscription', s4: 'Robot programme personnalisé', temps: '6h', clients: '+15', ca: '+3 000€', lapins: '-40%' },
-  { name: 'Restaurant', icon: Gift, s1: 'Relance clients fidèles', s2: 'Confirmation réservations J-1', s3: 'Réception appels réservation 24/7', s4: 'Robot commande & réservation', temps: '8h', clients: '+25', ca: '+5 000€', lapins: '-55%' },
-  { name: 'Salon esthétique', icon: Sparkles, s1: 'Réactivation clientes dormantes', s2: 'Confirmation RDV soins', s3: 'Réception appels prise de RDV', s4: 'Robot conseil beauté', temps: '10h', clients: '+18', ca: '+4 800€', lapins: '-45%' },
-  { name: 'Avocat', icon: Shield, s1: 'Relance dossiers en attente', s2: 'Confirmation RDV consultations', s3: 'Réception appels nouveaux clients', s4: 'Robot prise de brief juridique', temps: '12h', clients: '+10', ca: '+10 000€', lapins: '-30%' },
-  { name: 'Expert-comptable', icon: FileText, s1: 'Relance bilans & déclarations', s2: 'Confirmation RDV clients', s3: 'Réception appels questions fiscales', s4: 'Robot collecte pièces', temps: '15h', clients: '+12', ca: '+8 000€', lapins: '-25%' },
-  { name: 'Auto-école', icon: Calendar, s1: 'Relance élèves inactifs', s2: 'Confirmation heures conduite', s3: 'Réception appels inscription', s4: 'Robot planning auto', temps: '10h', clients: '+20', ca: '+6 000€', lapins: '-40%' },
-  { name: 'Électricien', icon: Zap, s1: 'Relance contrôles électriques', s2: 'Confirmation interventions', s3: 'Réception appels dépannage', s4: 'Robot devis électrique', temps: '10h', clients: '+18', ca: '+7 500€', lapins: '-30%' },
-  { name: 'Pharmacie', icon: Heart, s1: 'Rappel renouvellement ordonnances', s2: 'Confirmation préparations', s3: 'Réception appels conseils', s4: 'Robot suivi traitements', temps: '8h', clients: '+10', ca: '+4 500€', lapins: '-20%' },
-  { name: 'Photographe', icon: Eye, s1: 'Relance séances anniversaires', s2: 'Confirmation shoots', s3: 'Réception appels devis', s4: 'Robot portfolio & tarifs', temps: '6h', clients: '+12', ca: '+3 500€', lapins: '-35%' },
-  { name: 'Serrurier', icon: Wrench, s1: 'Relance contrats maintenance', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis serrurerie', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-25%' },
-  { name: 'Notaire', icon: FileText, s1: 'Relance signatures & dossiers', s2: 'Confirmation RDV actes', s3: 'Réception appels nouveaux dossiers', s4: 'Robot accueil étude', temps: '12h', clients: '+8', ca: '+10 000€', lapins: '-30%' },
-  { name: 'Paysagiste', icon: Wrench, s1: 'Relance entretiens saisonniers', s2: 'Confirmation interventions', s3: 'Réception appels devis', s4: 'Robot conseil jardin', temps: '8h', clients: '+15', ca: '+5 500€', lapins: '-30%' },
-  { name: 'Consultant', icon: Users, s1: 'Relance propositions commerciales', s2: 'Confirmation RDV clients', s3: 'Réception appels prospects', s4: 'Robot qualification projet', temps: '10h', clients: '+8', ca: '+12 000€', lapins: '-20%' },
-  { name: 'Centre formation', icon: Users, s1: 'Relance inscriptions', s2: 'Confirmation sessions', s3: 'Réception appels renseignements', s4: 'Robot orientation formation', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-35%' },
+  { name: 'Garagiste / Centre auto', icon: Wrench, desc: "Relance des contrôles techniques, entretiens annuels, vidanges. L'IA appelle vos clients avant l'échéance." },
+  { name: 'Courtier en assurance', icon: Shield, desc: "Renouvellement automatique des contrats auto, habitation, santé. Aucun dossier oublié." },
+  { name: 'Dentiste', icon: Heart, desc: "Rappels détartrages, bilans annuels, prothèses à renouveler. Planning optimisé." },
+  { name: 'Opticien', icon: Eye, desc: "Renouvellement lunettes et lentilles quand l'ordonnance expire. Relance automatique." },
+  { name: 'Salon de coiffure', icon: Scissors, desc: "Réactivation des clients dormants. L'IA rappelle ceux qui n'ont pas pris RDV depuis 3 mois." },
+  { name: 'Kiné / Ostéopathe', icon: Activity, desc: "Suivi des séances, relance pour continuité du parcours. Confirmation de chaque RDV." },
+  { name: 'Médecin généraliste', icon: Heart, desc: "Bilans annuels, vaccinations, renouvellements d'ordonnance. Rappels automatiques." },
+  { name: 'Vétérinaire', icon: Heart, desc: "Rappels vaccins, vermifuges, bilans de santé. L'IA gère les relances pour vous." },
+  { name: 'Agent immobilier', icon: Users, desc: "Relance des mandats arrivant à échéance, suivi acquéreurs, qualification de leads entrants." },
+  { name: 'Plombier / Électricien', icon: Wrench, desc: "Rappels d'entretiens, suivi post-intervention, qualification des urgences entrantes." },
+  { name: 'Coach sportif', icon: Activity, desc: "Relance des abonnements, suivi des séances, réactivation des clients inactifs." },
+  { name: 'Photographe', icon: Eye, desc: "Relance pour séances anniversaires, mariages, events. Confirmation automatique." },
+  { name: 'Architecte / Décorateur', icon: Users, desc: "Suivi de projets, relance devis en attente, qualification de nouveaux prospects." },
+  { name: 'Comptable', icon: FileText, desc: "Rappels de bilans annuels, collecte de pièces, échéances fiscales. Rien n'est oublié." },
+  { name: 'Avocat / Notaire', icon: Shield, desc: "Renouvellements de procurations, rappels d'audiences, suivi de dossiers." },
+  { name: 'Restaurant / Traiteur', icon: Gift, desc: "Confirmation de réservations, relance clients fidèles, events et séminaires." },
+  { name: 'Fleuriste', icon: Gift, desc: "Rappels fêtes (mères, valentines, toussaint), relance abonnements bouquets." },
+  { name: 'Auto-école', icon: Calendar, desc: "Relance des élèves inactifs, confirmation de créneaux conduite, suivi examens." },
+  { name: 'Serrurier', icon: Wrench, desc: "Suivi post-intervention, relance contrats maintenance, qualification urgences." },
+  { name: 'Dermatologue', icon: Heart, desc: "Bilans cutanés annuels, suivi traitements, renouvellements de prescriptions." },
+  { name: 'Audioprothésiste', icon: Heart, desc: "Contrôles annuels, renouvellements appareils, ajustements. Rappels automatiques." },
+  { name: 'Pharmacie', icon: Heart, desc: "Renouvellements d'ordonnances chroniques, rappels de vaccins, matériel médical." },
+  { name: 'Bijoutier / Horloger', icon: Gift, desc: "Rappels révisions montres, nettoyages, anniversaires clients. Fidélisation automatisée." },
+  { name: 'Centre de formation', icon: Users, desc: "Relance des inscriptions, confirmation des sessions, suivi post-formation." },
+  { name: 'Imprimeur / Graphiste', icon: FileText, desc: "Relance des devis, réimpressions périodiques, renouvellements de supports." },
+  { name: 'Paysagiste / Jardinier', icon: Wrench, desc: "Contrats d'entretien saisonniers, relance tonte/taille, devis en attente." },
+  { name: 'Taxi / VTC', icon: Users, desc: "Confirmation de courses, relance clients réguliers, qualification de trajets." },
+  { name: 'Consultant / Freelance', icon: Users, desc: "Relance propositions commerciales, suivi clients, renouvellements de missions." },
+  { name: 'Syndic / Gestionnaire', icon: FileText, desc: "Relance des AG, rappels de charges, renouvellements de contrats de gestion." },
+  { name: 'Pompes funèbres', icon: Heart, desc: "Suivi des familles, renouvellements de concessions, entretien de sépultures." },
 ];
-
-
-const serviceLabels = [
-  { key: 's1', icon: RefreshCw, label: 'Renouvellement', color: 'emerald' },
-  { key: 's2', icon: CalendarCheck, label: 'Confirmation RDV', color: 'blue' },
-  { key: 's3', icon: PhoneCall, label: 'Réception 24/7', color: 'amber' },
-  { key: 's4', icon: Bot, label: 'Robot sur mesure', color: 'violet' },
-];
-
-const svcColors = {
-  emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-700' },
-  blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700' },
-  amber: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700' },
-  violet: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-200', badge: 'bg-violet-100 text-violet-700' },
-};
 
 const MetierSelector = () => {
   const [selected, setSelected] = useState(0);
   const [search, setSearch] = useState('');
   const [userPicked, setUserPicked] = useState(false);
 
-  const featured = [0, 1, 3, 8, 9];
+  const featured = [0, 1, 3, 5, 10];
   useEffect(() => {
     if (userPicked || search) return;
     let idx = 0;
     const timer = setInterval(() => {
       idx = (idx + 1) % featured.length;
       setSelected(featured[idx]);
-    }, 3500);
+    }, 3000);
     return () => clearInterval(timer);
   }, [userPicked, search]);
 
@@ -488,132 +479,70 @@ const MetierSelector = () => {
     ? metiers.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
     : metiers;
 
-  const m = selected !== null && selected < metiers.length ? metiers[selected] : null;
+  const activeMet = selected !== null && selected < metiers.length ? metiers[selected] : null;
 
   return (
-    <div className="mt-6">
+    <div>
       {/* Search */}
-      <div className="max-w-md mx-auto mb-8 relative">
-        <Target className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="max-w-md mx-auto mb-8">
         <input
           type="text"
           placeholder="Rechercher votre métier..."
           value={search}
           onChange={e => { setSearch(e.target.value); setSelected(null); setUserPicked(true); }}
-          className="w-full pl-11 pr-5 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all shadow-sm"
+          className="w-full px-5 py-3.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
         />
       </div>
 
-      {/* Metier pills */}
-      <div className="flex flex-wrap justify-center gap-2 mb-10 max-w-5xl mx-auto">
-        {filtered.map((met, i) => {
-          const realIdx = metiers.indexOf(met);
-          const isActive = realIdx === selected;
-          const MIcon = met.icon;
+      {/* Grid of metiers */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {filtered.map((m, i) => {
+          const realIndex = metiers.indexOf(m);
+          const isActive = realIndex === selected;
           return (
             <button
-              key={realIdx}
-              onClick={() => { setSelected(realIdx); setUserPicked(true); }}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold transition-all duration-300 ${
+              key={realIndex}
+              onClick={() => { setSelected(realIndex); setUserPicked(true); }}
+              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-left transition-all duration-200 ${
                 isActive
-                  ? 'bg-gray-900 text-white shadow-lg shadow-gray-900/20 scale-[1.03]'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                  ? 'bg-emerald-50 border-emerald-300 shadow-sm ring-1 ring-emerald-200'
+                  : 'bg-white border-gray-100 hover:border-gray-200 hover:bg-gray-50'
               }`}
             >
-              <MIcon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : 'text-gray-400'}`} />
-              {met.name}
+              <m.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-emerald-600' : 'text-gray-400'}`} />
+              <span className={`text-xs font-semibold truncate ${isActive ? 'text-gray-900' : 'text-gray-600'}`}>{m.name}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Detail card */}
+      {/* Selected detail */}
       <AnimatePresence mode="wait">
-        {m && (
+        {activeMet && (
           <motion.div
             key={selected}
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-            className="max-w-4xl mx-auto"
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+            className="mt-8 bg-emerald-50/60 rounded-2xl border border-emerald-100 p-8 max-w-2xl mx-auto"
           >
-            {/* Header */}
-            <div className="bg-white rounded-t-[28px] border border-b-0 border-gray-100 px-8 pt-8 pb-6">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="w-14 h-14 rounded-2xl bg-gray-900 flex items-center justify-center shadow-lg">
-                  <m.icon className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-extrabold text-gray-900">{m.name}</h3>
-                  <p className="text-sm text-gray-400">Votre combinaison IA optimale</p>
-                </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <activeMet.icon className="w-5 h-5 text-emerald-600" />
               </div>
+              <h4 className="text-lg font-bold text-gray-900">{activeMet.name}</h4>
             </div>
-
-            {/* 4 services grid */}
-            <div className="grid sm:grid-cols-2 gap-[1px] bg-gray-100">
-              {serviceLabels.map((svc, j) => {
-                const sc = svcColors[svc.color];
-                const SvcIcon = svc.icon;
-                return (
-                  <motion.div
-                    key={j}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: j * 0.08, duration: 0.3 }}
-                    className={`bg-white p-6 ${j === 0 ? '' : ''}`}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-xl ${sc.bg} flex items-center justify-center`}>
-                        <SvcIcon className={`w-5 h-5 ${sc.icon}`} />
-                      </div>
-                      <div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${sc.badge} px-2 py-0.5 rounded-full`}>{svc.label}</span>
-                      </div>
-                    </div>
-                    <p className="text-[14px] text-gray-700 font-medium leading-relaxed">{m[svc.key]}</p>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* KPI bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 bg-gray-900 rounded-b-[28px] overflow-hidden">
-              {[
-                { value: m.temps, label: 'gagnées/semaine', icon: Clock },
-                { value: m.clients, label: 'nouveaux clients/mois', icon: UserPlus },
-                { value: m.ca, label: 'de CA en plus/mois', icon: TrendingUp },
-                { value: m.lapins, label: 'de lapins', icon: Target },
-              ].map((kpi, k) => (
-                <motion.div
-                  key={k}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + k * 0.08, duration: 0.3 }}
-                  className="text-center py-6 px-4 border-r border-white/10 last:border-r-0"
-                >
-                  <kpi.icon className="w-4 h-4 text-emerald-400 mx-auto mb-2" />
-                  <p className="text-2xl font-black text-white">{kpi.value}</p>
-                  <p className="text-[10px] text-gray-400 font-medium mt-1">{kpi.label}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <div className="mt-6 text-center">
-              <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 text-base">
-                Activer l’IA pour mon activité <ArrowRight className="w-5 h-5" />
-              </a>
-              <p className="text-xs text-gray-400 mt-3">100 appels offerts · Sans engagement</p>
-            </div>
+            <p className="text-[15px] text-gray-600 leading-relaxed">{activeMet.desc}</p>
+            <a href="#import" className="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+              Tester pour mon activité <ArrowRight className="w-4 h-4" />
+            </a>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 };
-
 
 
 /*  MAIN COMPONENT                                                     *//* ------------------------------------------------------------------ */
@@ -791,10 +720,9 @@ export default function IAVocaleLanding() {
   ];
 
   const steps = [
-    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts pour les appels sortants.' },
-    { icon: Phone, title: "L'IA appelle pour vous", desc: 'Renouvellements, confirmations de RDV — l\'IA passe les appels avec une voix naturelle et professionnelle.' },
-    { icon: PhoneCall, title: "L'IA décroche pour vous", desc: 'Appels entrants 24/7 — l\'IA répond, qualifie le prospect et prend RDV dans votre agenda.' },
-    { icon: TrendingUp, title: 'Vous récoltez les résultats', desc: 'Agenda rempli, dossiers renouvelés, leads qualifiés — vous ne perdez plus un seul client.' },
+    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts.' },
+    { icon: PhoneCall, title: 'L\'IA appelle à votre place', desc: 'Appels naturels et professionnels. Renouvellements, confirmations, relances.' },
+    { icon: CalendarDays, title: 'Votre agenda se remplit', desc: 'Les RDV confirmés apparaissent. Les renouvellements sont relancés. Vous gérez, on appelle.' },
   ];
 
   const testimonials = [
@@ -1308,211 +1236,6 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* ============================================ */}
-      {/* SERVICE DÉDIÉ — RENOUVELLEMENT                    */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Visual */}
-            <ScrollReveal delay={0.1}>
-              <div className="relative">
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[28px] p-8 border border-emerald-100">
-                  {/* Animated timeline */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
-                        <RefreshCw className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-bold text-gray-900">Relances automatiques</p>
-                        <p className="text-[11px] text-gray-400">Cette semaine</p>
-                      </div>
-                    </div>
-                    {[
-                      { name: 'Martin D. — CT expiré dans 15j', status: 'Appelé → Renouvelé', done: true },
-                      { name: 'Sophie L. — Entretien annuel', status: 'Appelé → RDV pris', done: true },
-                      { name: 'Lucas R. — Vidange 20 000km', status: 'Appelé → Renouvelé', done: true },
-                      { name: 'Claire M. — Assurance à renouveler', status: 'Appel en cours...', done: false },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -15 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 + i * 0.12, duration: 0.4 }}
-                        className="flex items-center gap-3 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-                      >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.done ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-                          {item.done ? <Check className="w-4 h-4 text-emerald-600" /> : <Clock className="w-4 h-4 text-amber-600" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-gray-900 truncate">{item.name}</p>
-                          <p className={`text-[10px] font-medium ${item.done ? 'text-emerald-600' : 'text-amber-600'}`}>{item.status}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {/* Bottom stat */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.8 }}
-                    className="mt-5 bg-emerald-500 rounded-2xl py-3 text-center"
-                  >
-                    <p className="text-sm font-bold text-white">80% renouvelés cette semaine</p>
-                  </motion.div>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Right — Text */}
-            <div>
-              <ScrollReveal>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-6">
-                  <RefreshCw className="w-4 h-4" /> Service 1 — Appels sortants
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                  Renouvellement de dossiers.{' '}
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">Zéro oubli.</span>
-                </h2>
-                <p className="text-lg text-gray-500 leading-relaxed mb-8">
-                  L’IA appelle chaque client dont le dossier arrive à échéance — contrôles techniques, assurances, bilans, abonnements. Tout est couvert, rien ne passe entre les mailles.
-                </p>
-              </ScrollReveal>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[
-                  { val: '80%', label: 'Taux de renouvellement' },
-                  { val: '0', label: 'Dossier oublié' },
-                  { val: '2min', label: 'Par relance' },
-                  { val: '100%', label: 'Automatisé' },
-                ].map((s, i) => (
-                  <ScrollReveal key={i} delay={0.1 + i * 0.06}>
-                    <div className="bg-emerald-50/60 rounded-2xl p-4 text-center border border-emerald-100/50">
-                      <p className="text-2xl font-black text-emerald-600">{s.val}</p>
-                      <p className="text-[11px] font-medium text-gray-500 mt-1">{s.label}</p>
-                    </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-              <ScrollReveal delay={0.3}>
-                <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </a>
-              </ScrollReveal>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* SERVICE DÉDIÉ — CONFIRMATION RDV                  */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-[#FAFAFA] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Text */}
-            <div>
-              <ScrollReveal>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-blue-100 px-4 py-1.5 rounded-full mb-6">
-                  <CalendarCheck className="w-4 h-4" /> Service 2 — Appels sortants
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                  Confirmation de RDV.{' '}
-                  <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">Fini les lapins.</span>
-                </h2>
-                <p className="text-lg text-gray-500 leading-relaxed mb-8">
-                  L’IA appelle la veille de chaque rendez-vous pour confirmer. Le client confirme, reporte ou annule — votre planning est fiable à 92%.
-                </p>
-              </ScrollReveal>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[
-                  { val: '92%', label: 'Taux de présence' },
-                  { val: '-35%', label: 'De lapins' },
-                  { val: 'J-1', label: 'Appel automatique' },
-                  { val: '0min', label: 'De votre temps' },
-                ].map((s, i) => (
-                  <ScrollReveal key={i} delay={0.1 + i * 0.06}>
-                    <div className="bg-blue-50/60 rounded-2xl p-4 text-center border border-blue-100/50">
-                      <p className="text-2xl font-black text-blue-600">{s.val}</p>
-                      <p className="text-[11px] font-medium text-gray-500 mt-1">{s.label}</p>
-                    </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-              <ScrollReveal delay={0.3}>
-                <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </a>
-              </ScrollReveal>
-            </div>
-
-            {/* Right — Visual */}
-            <ScrollReveal delay={0.15}>
-              <div className="relative">
-                <div className="bg-white rounded-[28px] p-8 border border-gray-100 shadow-xl shadow-gray-900/[0.04]">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-[13px] font-bold text-gray-900">Agenda du jour</span>
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.4, duration: 0.3 }}
-                      className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
-                    >
-                      92% confirmés
-                    </motion.span>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { time: '09:00', name: 'Martin D.', ok: true },
-                      { time: '10:30', name: 'Sophie L.', ok: true },
-                      { time: '11:00', name: 'Pierre B.', ok: true },
-                      { time: '14:00', name: 'Claire M.', ok: false },
-                      { time: '15:30', name: 'Lucas R.', ok: true },
-                      { time: '16:30', name: 'Emma T.', ok: true },
-                    ].map((slot, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -8 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.15 + i * 0.08 }}
-                        className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100/40"
-                      >
-                        <span className="text-[11px] font-semibold text-gray-400 w-10 tabular-nums">{slot.time}</span>
-                        <span className="text-[13px] font-medium text-gray-800 flex-1">{slot.name}</span>
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center ${slot.ok ? 'bg-emerald-100' : 'bg-red-50'}`}>
-                          {slot.ok ? <Check className="w-4 h-4 text-emerald-600" /> : <X className="w-4 h-4 text-red-400" />}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {/* Progress bar */}
-                  <div className="mt-5 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-2">
-                      <span>Sans IA : 57%</span>
-                      <span className="text-emerald-600">Avec IA : 92%</span>
-                    </div>
-                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: '57%' }}
-                        whileInView={{ width: '92%' }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4, duration: 0.8 }}
-                        className="h-full bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-
 
       {/* ============================================ */}
       {/* USE CASES BY PROFESSION                      */}
@@ -1521,8 +1244,8 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Cas d'usage"
-            title="Votre métier. Votre IA."
-            subtitle="Découvrez comment nos 4 services IA s'adaptent à votre quotidien — et combien vous allez gagner."
+            title={<>Sélectionnez votre activité.</>}
+            subtitle="Quel que soit votre secteur, l'IA s'adapte à vos besoins de renouvellement et de confirmation."
           />
 
           <MetierSelector />
@@ -1535,15 +1258,15 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Comment ça marche"
-            title="Quatre étapes. Zéro friction."
-            subtitle="De l’import aux leads qualifiés — appels sortants ET entrants, tout est automatisé."
+            title="Trois étapes. Zéro friction."
+            subtitle="De l'import à l'agenda rempli, tout est automatisé."
           />
 
           <div className="relative max-w-4xl mx-auto">
             {/* Connector line */}
             <div className="hidden md:block absolute top-24 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-emerald-200 via-teal-300 to-emerald-200" />
 
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-3 gap-10">
               {steps.map((step, i) => (
                 <ScrollReveal key={i} delay={i * 0.15}>
                   <div className="text-center relative">
