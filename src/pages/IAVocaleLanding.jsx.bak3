@@ -147,252 +147,29 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Métier Selector — Interactive job picker                          */
+/*  Hero — Services showcase animation                                 */
 /* ------------------------------------------------------------------ */
-const MetierSelector = () => {
-  const [selected, setSelected] = useState(null);
-  const [search, setSearch] = useState('');
-
-  const filtered = search
-    ? metiers.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
-    : metiers;
-
-  const svc = selected !== null ? metiers[selected] : null;
-
-  return (
-    <div className="mt-8">
-      {/* Search bar */}
-      <div className="max-w-md mx-auto mb-8">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Rechercher votre métier..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setSelected(null); }}
-            className="w-full px-5 py-3.5 pl-12 rounded-2xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
-          />
-          <Target className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400" />
-        </div>
-      </div>
-
-      {/* Job pills grid */}
-      <div className="flex flex-wrap justify-center gap-2 mb-10">
-        {filtered.map((m, i) => (
-          <button
-            key={i}
-            onClick={() => setSelected(selected === i ? null : i)}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
-              selected === i
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-105'
-                : 'bg-white text-gray-700 border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
-            }`}
-          >
-            <m.icon className="w-4 h-4" />
-            {m.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Selected metier detail card */}
-      <AnimatePresence mode="wait">
-        {svc && (
-          <motion.div
-            key={selected}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            className="max-w-3xl mx-auto bg-white rounded-[28px] border border-gray-100 shadow-xl shadow-gray-900/[0.06] p-8 md:p-10"
-          >
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-lg">
-                <svc.icon className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-extrabold text-gray-900">{svc.name}</h3>
-                <p className="text-sm text-gray-400">Combinaison de services IA recommandée</p>
-              </div>
-            </div>
-
-            {/* Services list */}
-            <div className="space-y-3 mb-8">
-              {svc.services.map((s, j) => (
-                <motion.div
-                  key={j}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: j * 0.1, duration: 0.3 }}
-                  className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100"
-                >
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                    j === 0 ? 'bg-emerald-100' : j === 1 ? 'bg-blue-100' : 'bg-amber-100'
-                  }`}>
-                    {j === 0 ? <RefreshCw className="w-4 h-4 text-emerald-600" /> :
-                     j === 1 ? <CalendarCheck className="w-4 h-4 text-blue-600" /> :
-                     <PhoneCall className="w-4 h-4 text-amber-600" />}
-                  </div>
-                  <span className="text-[14px] font-semibold text-gray-800">{s}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Results */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-emerald-50 rounded-2xl p-5 text-center border border-emerald-100">
-                <p className="text-3xl font-black text-emerald-600">{svc.temps}</p>
-                <p className="text-[12px] font-medium text-gray-500 mt-1">gagnées par semaine</p>
-              </div>
-              <div className="bg-emerald-50 rounded-2xl p-5 text-center border border-emerald-100">
-                <p className="text-3xl font-black text-emerald-600">{svc.ca}</p>
-                <p className="text-[12px] font-medium text-gray-500 mt-1">de CA supplémentaire/mois</p>
-              </div>
-            </div>
-
-            <a href="#import" className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 text-base">
-              Essayer pour mon activité <ArrowRight className="w-5 h-5" />
-            </a>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  Robot Showcase — Animated examples by trade                       */
-/* ------------------------------------------------------------------ */
-const robotExamples = [
-  { trade: 'Garagiste', scenario: "Rappel automatique des CT expirés avec proposition de créneau, relance si pas de réponse après 48h, escalade SMS.", icon: Wrench, color: 'emerald' },
-  { trade: 'Courtier', scenario: "Relance contrats à échéance, qualification du besoin, prise de RDV pour nouveau devis, suivi post-signature.", icon: Shield, color: 'blue' },
-  { trade: 'Dentiste', scenario: "Rappel détartrage annuel, gestion liste d’attente urgences, confirmation RDV J-1, relance patients absents.", icon: Heart, color: 'amber' },
-  { trade: 'Agent immobilier', scenario: "Qualification acquéreurs entrants 24/7, relance mandats, confirmation visites, suivi post-visite automatisé.", icon: Users, color: 'violet' },
-  { trade: 'Restaurant', scenario: "Confirmation réservations, gestion annulations, relance clients fidèles pour événements spéciaux.", icon: Gift, color: 'emerald' },
-];
-
-const robotColors = {
-  emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', border: 'border-emerald-200', accent: 'from-emerald-500 to-teal-500' },
-  blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-200', accent: 'from-blue-500 to-indigo-500' },
-  amber: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-200', accent: 'from-amber-500 to-orange-500' },
-  violet: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-200', accent: 'from-violet-500 to-purple-500' },
-};
-
-const RobotShowcase = () => {
-  const [activeRobot, setActiveRobot] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveRobot(prev => (prev + 1) % robotExamples.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, []);
-
-  const ex = robotExamples[activeRobot];
-  const rc = robotColors[ex.color];
-  const ExIcon = ex.icon;
-
-  return (
-    <div className="max-w-3xl mx-auto">
-      {/* Trade tabs */}
-      <div className="flex flex-wrap justify-center gap-2 mb-8">
-        {robotExamples.map((r, i) => {
-          const RIcon = r.icon;
-          return (
-            <button
-              key={i}
-              onClick={() => setActiveRobot(i)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                i === activeRobot
-                  ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/20'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-violet-300'
-              }`}
-            >
-              <RIcon className="w-3.5 h-3.5" />
-              {r.trade}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Active robot card */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeRobot}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          className={`bg-white rounded-[24px] border ${rc.border} p-8 shadow-lg`}
-        >
-          <div className="flex items-start gap-4 mb-5">
-            <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${rc.accent} flex items-center justify-center shadow-md shrink-0`}>
-              <Bot className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h4 className="text-lg font-bold text-gray-900">Robot IA — {ex.trade}</h4>
-              <p className="text-sm text-gray-400">Scénario automatisé sur mesure</p>
-            </div>
-          </div>
-
-          {/* Scenario as "code block" style */}
-          <div className={`${rc.bg} rounded-2xl p-5 border ${rc.border}`}>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Scénario actif</span>
-            </div>
-            <p className="text-[14px] text-gray-700 leading-relaxed">{ex.scenario}</p>
-          </div>
-
-          {/* Features */}
-          <div className="flex flex-wrap gap-2 mt-5">
-            {['Voix naturelle', 'Script personnalisé', 'Multi-scénario', 'Intégration CRM'].map((f, i) => (
-              <span key={i} className="text-[11px] font-semibold text-violet-700 bg-violet-50 border border-violet-100 px-3 py-1.5 rounded-full">{f}</span>
-            ))}
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Progress dots */}
-      <div className="flex items-center justify-center gap-2 mt-6">
-        {robotExamples.map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 rounded-full transition-all duration-500 ${
-              i === activeRobot ? 'bg-violet-500 w-6' : 'bg-gray-200 w-1.5'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  Hero — Services showcase animation (loop, full mobile)             */
-/* ------------------------------------------------------------------ */
-const heroServices = [
+const services = [
   {
     icon: 'RefreshCw',
     title: 'Renouvellement de dossiers',
-    subtitle: 'Appels sortants',
-    desc: "L’IA appelle vos clients avant l’expiration de leurs dossiers. Zéro oubli.",
-    result: '+80% renouvelés',
+    desc: "L'IA appelle vos clients pour renouveler leurs contrats, dossiers et abonnements.",
+    result: '80% de renouvellements',
     example: 'Garage MaxMotors — CT renouvelé',
     color: 'emerald',
   },
   {
     icon: 'CalendarCheck',
     title: 'Confirmation de RDV',
-    subtitle: 'Appels sortants',
-    desc: "Chaque RDV est confirmé par appel la veille. Fini les lapins.",
-    result: '-35% de lapins',
+    desc: "Chaque RDV est confirmé par appel automatique. Fini les lapins.",
+    result: '-35% de rendez-vous manqués',
     example: 'Salon Bella — RDV confirmé demain 14h',
     color: 'blue',
   },
   {
     icon: 'PhoneCall',
-    title: 'Réception d’appels 24/7',
-    subtitle: 'Appels entrants',
-    desc: "Vous ne décrochez pas ? L’IA répond, qualifie et vous envoie le lead.",
+    title: 'Réception d\'appels IA 24/7',
+    desc: "Quand vous ne décrochez pas, l'IA répond, qualifie et vous envoie le lead.",
     result: '0 appel manqué',
     example: 'Nouveau prospect — Fuite urgente qualifié',
     color: 'amber',
@@ -400,49 +177,44 @@ const heroServices = [
   {
     icon: 'Bot',
     title: 'Robot IA sur mesure',
-    subtitle: 'Sur mesure',
     desc: "Un assistant vocal personnalisé pour votre métier, vos scripts, vos process.",
-    result: '100% personnalisé',
+    result: 'Disponible 7j/7 24h/24',
     example: 'Courtier — 12 relances auto cette semaine',
     color: 'violet',
   },
 ];
 
-const heroIconMap = { RefreshCw, CalendarCheck, PhoneCall, Bot };
-const heroColorMap = {
-  emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', accent: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700', ring: 'ring-emerald-200', dot: 'bg-emerald-500' },
-  blue: { bg: 'bg-blue-50', icon: 'text-blue-600', accent: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700', ring: 'ring-blue-200', dot: 'bg-blue-500' },
-  amber: { bg: 'bg-amber-50', icon: 'text-amber-600', accent: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700', ring: 'ring-amber-200', dot: 'bg-amber-500' },
-  violet: { bg: 'bg-violet-50', icon: 'text-violet-600', accent: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700', ring: 'ring-violet-200', dot: 'bg-violet-500' },
+const iconMap = { RefreshCw, CalendarCheck, PhoneCall, Bot };
+const colorMap = {
+  emerald: { bg: 'bg-emerald-50', ring: 'ring-emerald-200', icon: 'text-emerald-600', accent: 'bg-emerald-500', light: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
+  blue: { bg: 'bg-blue-50', ring: 'ring-blue-200', icon: 'text-blue-600', accent: 'bg-blue-500', light: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
+  amber: { bg: 'bg-amber-50', ring: 'ring-amber-200', icon: 'text-amber-600', accent: 'bg-amber-500', light: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' },
+  violet: { bg: 'bg-violet-50', ring: 'ring-violet-200', icon: 'text-violet-600', accent: 'bg-violet-500', light: 'text-violet-600', badge: 'bg-violet-100 text-violet-700' },
 };
 
 const HeroAnimation = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
+  const isInView = useInView(ref, { once: true, margin: '-20px' });
   const [active, setActive] = useState(-1);
 
   useEffect(() => {
     if (!isInView) return;
-    let idx = 0;
-    let timer;
-    const INTERVAL = 2800;
-
-    const tick = () => {
-      setActive(idx % 4);
-      idx++;
-      timer = setTimeout(tick, INTERVAL);
+    let i = 0;
+    const show = () => {
+      setActive(i);
+      i++;
+      if (i < 4) setTimeout(show, 2400);
     };
-
-    timer = setTimeout(tick, 600);
-    return () => clearTimeout(timer);
+    const t = setTimeout(show, 500);
+    return () => clearTimeout(t);
   }, [isInView]);
 
-  const svc = active >= 0 ? heroServices[active] : null;
-  const Icon = svc ? heroIconMap[svc.icon] : null;
-  const c = svc ? heroColorMap[svc.color] : null;
+  const svc = active >= 0 ? services[active] : null;
+  const Icon = svc ? iconMap[svc.icon] : null;
+  const c = svc ? colorMap[svc.color] : null;
 
   return (
-    <div ref={ref} className="relative w-full max-w-[380px] lg:max-w-[400px] mx-auto" style={{ willChange: 'transform' }}>
+    <div ref={ref} className="relative w-full max-w-[340px] mx-auto" style={{ willChange: 'transform' }}>
       {/* Phone */}
       <div className="relative bg-gray-950 rounded-[2.8rem] p-[3px] shadow-2xl shadow-gray-900/20">
         <div className="bg-white rounded-[2.6rem] overflow-hidden" style={{ transform: 'translateZ(0)' }}>
@@ -457,122 +229,118 @@ const HeroAnimation = () => {
             </div>
           </div>
 
-          <div className="px-5 pb-8 min-h-[440px] flex flex-col">
+          <div className="px-5 pb-7 min-h-[400px] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4 pt-1">
+            <div className="flex items-center justify-between mb-5 pt-1">
               <div>
-                <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">BoosterPay IA</p>
-                <p className="text-[15px] font-bold text-gray-900 mt-0.5">Vos 4 services</p>
+                <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-widest">BoosterPay</p>
+                <p className="text-[15px] font-bold text-gray-900 mt-0.5">Vos services IA</p>
               </div>
               <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
             </div>
 
-            {/* 4 service tabs — always visible */}
-            <div className="grid grid-cols-4 gap-1 mb-5 bg-gray-50 rounded-2xl p-1">
-              {heroServices.map((s, i) => {
-                const SIcon = heroIconMap[s.icon];
-                const sc = heroColorMap[s.color];
+            {/* 4 service pills — always visible, active one highlighted */}
+            <div className="grid grid-cols-2 gap-1.5 mb-5">
+              {services.map((s, i) => {
+                const SIcon = iconMap[s.icon];
+                const sc = colorMap[s.color];
                 const isActive = i === active;
                 return (
                   <div
                     key={i}
-                    className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl transition-all duration-500 ${
-                      isActive ? `bg-white shadow-sm ring-1 ${sc.ring}` : 'opacity-50'
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border transition-all duration-500 ${
+                      isActive
+                        ? `${sc.bg} border-transparent ring-2 ${sc.ring} scale-[1.02]`
+                        : i <= active
+                          ? 'bg-gray-50 border-gray-100'
+                          : 'bg-gray-50/50 border-gray-50 opacity-40'
                     }`}
-                    style={{ transition: 'all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
+                    style={{ transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
                   >
-                    <SIcon className={`w-4 h-4 ${isActive ? sc.icon : 'text-gray-400'}`} />
-                    <span className={`text-[7px] font-bold text-center leading-tight ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {s.title.split(' ')[0]}
+                    <SIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? sc.icon : 'text-gray-400'}`} />
+                    <span className={`text-[10px] font-semibold leading-tight ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {s.title.length > 20 ? s.title.split(' ').slice(0, 2).join(' ') : s.title}
                     </span>
                   </div>
                 );
               })}
             </div>
 
-            {/* Active service detail */}
-            <div className="flex-1 flex flex-col justify-start">
+            {/* Active service detail card */}
+            <div className="flex-1 flex flex-col justify-center">
               {svc && (
                 <div
                   key={active}
                   className="space-y-4"
-                  style={{ animation: 'heroServiceIn 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both' }}
+                  style={{
+                    animation: 'heroServiceIn 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) both',
+                  }}
                 >
-                  {/* Title + badge */}
-                  <div className="flex items-start gap-3">
-                    <div className={`w-12 h-12 rounded-2xl ${c.bg} flex items-center justify-center shrink-0`}>
-                      <Icon className={`w-6 h-6 ${c.icon}`} />
+                  {/* Service icon + title */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-2xl ${c.bg} flex items-center justify-center`}>
+                      <Icon className={`w-5 h-5 ${c.icon}`} />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-bold text-gray-900 leading-tight">{svc.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${c.badge}`}>{svc.subtitle}</span>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${c.badge}`}>{svc.result}</span>
-                      </div>
+                    <div>
+                      <p className="text-[13px] font-bold text-gray-900">{svc.title}</p>
+                      <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${c.badge}`}>
+                        {svc.result}
+                      </span>
                     </div>
                   </div>
 
                   {/* Description */}
-                  <p className="text-[12px] text-gray-500 leading-relaxed pl-0.5">{svc.desc}</p>
+                  <p className="text-[12px] text-gray-500 leading-relaxed">{svc.desc}</p>
 
-                  {/* Example notification */}
-                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
-                    <div className={`w-8 h-8 rounded-xl ${c.accent} flex items-center justify-center shrink-0`}>
-                      <Check className="w-4 h-4 text-white" />
+                  {/* Example result */}
+                  <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-gray-50 border border-gray-100">
+                    <div className={`w-7 h-7 rounded-lg ${c.accent} flex items-center justify-center shrink-0`}>
+                      <Check className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-gray-900 truncate">{svc.example}</p>
-                      <p className="text-[9px] text-gray-400">À l\u2019instant</p>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-900">{svc.example}</p>
+                      <p className="text-[9px] text-gray-400">Il y a 2 min</p>
                     </div>
-                  </div>
-
-                  {/* Mini KPI */}
-                  <div className="grid grid-cols-3 gap-2 pt-1">
-                    {active === 0 && ['80%', 'Renouvel\u00e9s', '0 Oubli\u00e9'].map((v, i) => (
-                      <div key={i} className="text-center py-2 rounded-xl bg-emerald-50/60">
-                        <p className={`text-[13px] font-black ${i === 0 ? 'text-emerald-600' : 'text-gray-500'}`}>{v}</p>
-                      </div>
-                    ))}
-                    {active === 1 && ['92%', 'Pr\u00e9sence', '-35% Lapins'].map((v, i) => (
-                      <div key={i} className="text-center py-2 rounded-xl bg-blue-50/60">
-                        <p className={`text-[13px] font-black ${i === 0 ? 'text-blue-600' : 'text-gray-500'}`}>{v}</p>
-                      </div>
-                    ))}
-                    {active === 2 && ['97%', 'D\u00e9croch\u00e9s', '24/7'].map((v, i) => (
-                      <div key={i} className="text-center py-2 rounded-xl bg-amber-50/60">
-                        <p className={`text-[13px] font-black ${i === 0 ? 'text-amber-600' : 'text-gray-500'}`}>{v}</p>
-                      </div>
-                    ))}
-                    {active === 3 && ['100%', 'Sur mesure', '7j/7'].map((v, i) => (
-                      <div key={i} className="text-center py-2 rounded-xl bg-violet-50/60">
-                        <p className={`text-[13px] font-black ${i === 0 ? 'text-violet-600' : 'text-gray-500'}`}>{v}</p>
-                      </div>
-                    ))}
                   </div>
                 </div>
               )}
+
               {!svc && (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-100 animate-pulse" />
+                <div className="flex items-center justify-center h-full">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
                 </div>
               )}
             </div>
 
             {/* Progress dots */}
-            <div className="flex items-center justify-center gap-2 mt-4">
+            <div className="flex items-center justify-center gap-2 mt-5">
               {[0, 1, 2, 3].map(i => (
                 <div
                   key={i}
                   className={`h-1 rounded-full transition-all duration-500 ${
-                    i === active ? `${heroColorMap[heroServices[i].color].dot} w-6` : 'bg-gray-200 w-1.5'
+                    i <= active ? `${colorMap[services[i].color].accent} w-5` : 'bg-gray-200 w-1.5'
                   }`}
                 />
               ))}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Floating result badge */}
+      <div
+        className="absolute -right-2 top-32 bg-white rounded-2xl shadow-lg shadow-gray-900/8 border border-gray-100 px-3.5 py-2.5 transition-all duration-500 ease-out"
+        style={{
+          opacity: active >= 3 ? 1 : 0,
+          transform: active >= 3 ? 'translateX(0) scale(1)' : 'translateX(16px) scale(0.95)',
+          willChange: 'transform, opacity',
+          transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
+        }}
+      >
+        <p className="text-[10px] font-bold text-gray-900">4 services actifs</p>
+        <p className="text-[9px] text-emerald-600 font-semibold">100% automatis\u00e9</p>
       </div>
     </div>
   );
@@ -741,47 +509,22 @@ export default function IAVocaleLanding() {
     { value: '0', suffix: '', prefix: '', label: 'appel perdu' },
     { value: '35', suffix: '%', prefix: '+', label: 'de clients' },
     { value: '10', suffix: 'h', prefix: '', label: 'gagnées/sem.' },
-    { value: '24', suffix: '/7', prefix: '', label: 'actif non-stop' },
+    { value: '24', suffix: '/7', prefix: '', label: 'disponible' },
   ];
 
-  const metiers = [
-    { name: 'Garagiste', services: ['Renouvellement CT & entretiens', 'Confirmation RDV atelier', 'R\u00e9ception appels urgences m\u00e9ca'], temps: '12h', ca: '+8 000\u20ac', icon: Wrench },
-    { name: 'Courtier assurance', services: ['Renouvellement contrats', 'Confirmation RDV clients', 'R\u00e9ception appels sinistres 24/7'], temps: '15h', ca: '+12 000\u20ac', icon: Shield },
-    { name: 'Dentiste', services: ['Rappel d\u00e9tartrages & bilans', 'Confirmation RDV patients', 'R\u00e9ception appels urgences dentaires'], temps: '10h', ca: '+6 500\u20ac', icon: Heart },
-    { name: 'M\u00e9decin g\u00e9n\u00e9raliste', services: ['Rappel check-up annuels', 'Confirmation consultations', 'R\u00e9ception appels patients'], temps: '14h', ca: '+5 000\u20ac', icon: Activity },
-    { name: 'Opticien', services: ['Renouvellement lunettes/lentilles', 'Confirmation RDV essayage', 'R\u00e9ception appels conseils'], temps: '8h', ca: '+7 000\u20ac', icon: Eye },
-    { name: 'Salon coiffure', services: ['R\u00e9activation clients dormants', 'Confirmation RDV coiffure', 'R\u00e9ception appels r\u00e9servation'], temps: '10h', ca: '+4 500\u20ac', icon: Scissors },
-    { name: 'Kin\u00e9sith\u00e9rapeute', services: ['Suivi parcours de soins', 'Confirmation s\u00e9ances', 'R\u00e9ception appels nouveaux patients'], temps: '8h', ca: '+3 800\u20ac', icon: Activity },
-    { name: 'V\u00e9t\u00e9rinaire', services: ['Rappel vaccins & bilans', 'Confirmation RDV consultations', 'R\u00e9ception appels urgences animales'], temps: '10h', ca: '+5 500\u20ac', icon: Heart },
-    { name: 'Ostéopathe', services: ['Relance patients inactifs', 'Confirmation RDV', 'Réception appels nouveaux patients'], temps: '6h', ca: '+3 200\u20ac', icon: Activity },
-    { name: 'Agent immobilier', services: ['Relance mandats expirés', 'Confirmation visites', 'Réception appels acquéreurs 24/7'], temps: '14h', ca: '+15 000\u20ac', icon: Users },
-    { name: 'Plombier', services: ['Relance entretiens chaudière', 'Confirmation interventions', 'Réception appels urgences 24/7'], temps: '12h', ca: '+9 000\u20ac', icon: Wrench },
-    { name: 'Électricien', services: ['Relance contrôles électriques', 'Confirmation interventions', 'Réception appels dépannage'], temps: '10h', ca: '+7 500\u20ac', icon: Zap },
-    { name: 'Coach sportif', services: ['Relance abonnements', 'Confirmation séances', 'Réception appels inscription'], temps: '6h', ca: '+3 000\u20ac', icon: Activity },
-    { name: 'Restaurant', services: ['Relance clients fidèles', 'Confirmation réservations', 'Réception appels réservation 24/7'], temps: '8h', ca: '+5 000\u20ac', icon: Gift },
-    { name: 'Salon esthétique', services: ['Réactivation clients dormants', 'Confirmation RDV soins', 'Réception appels prise de RDV'], temps: '10h', ca: '+4 800\u20ac', icon: Sparkles },
-    { name: 'Avocat', services: ['Relance dossiers en attente', 'Confirmation RDV consultations', 'Réception appels nouveaux clients'], temps: '12h', ca: '+10 000\u20ac', icon: Shield },
-    { name: 'Expert-comptable', services: ['Relance bilans & déclarations', 'Confirmation RDV clients', 'Réception appels questions fiscales'], temps: '15h', ca: '+8 000\u20ac', icon: FileText },
-    { name: 'Photographe', services: ['Relance clients pour tirages', 'Confirmation séances photo', 'Réception appels devis'], temps: '6h', ca: '+3 500\u20ac', icon: Eye },
-    { name: 'Auto-école', services: ['Relance examens & heures', 'Confirmation heures de conduite', 'Réception appels inscription'], temps: '10h', ca: '+6 000\u20ac', icon: Users },
-    { name: 'Fleuriste', services: ['Relance commandes récurrentes', 'Confirmation livraisons', 'Réception appels commandes'], temps: '6h', ca: '+3 000\u20ac', icon: Gift },
-    { name: 'Boulangerie', services: ['Relance commandes spéciales', 'Confirmation commandes événements', 'Réception appels commandes'], temps: '4h', ca: '+2 500\u20ac', icon: Gift },
-    { name: 'Serrurier', services: ['Relance contrats maintenance', 'Confirmation interventions', 'Réception appels urgences 24/7'], temps: '10h', ca: '+8 000\u20ac', icon: Wrench },
-    { name: 'Paysagiste', services: ['Relance entretiens saisonniers', 'Confirmation interventions', 'Réception appels devis'], temps: '8h', ca: '+5 500\u20ac', icon: Target },
-    { name: 'Notaire', services: ['Relance signatures & dossiers', 'Confirmation RDV actes', 'Réception appels nouveaux dossiers'], temps: '12h', ca: '+10 000\u20ac', icon: FileText },
-    { name: 'Psychologue', services: ['Relance patients inactifs', 'Confirmation séances', 'Réception appels nouveaux patients'], temps: '8h', ca: '+4 000\u20ac', icon: Heart },
-    { name: 'Climaticien', services: ['Relance entretiens climatisation', 'Confirmation interventions', 'Réception appels dépannage'], temps: '10h', ca: '+7 000\u20ac', icon: Wrench },
-    { name: 'Pharmacie', services: ['Rappel renouvellement ordonnances', 'Confirmation préparations', 'Réception appels conseils'], temps: '8h', ca: '+4 500\u20ac', icon: Heart },
-    { name: 'Carrossier', services: ['Relance réparations en attente', 'Confirmation RDV dépôt', 'Réception appels devis'], temps: '8h', ca: '+6 000\u20ac', icon: Wrench },
-    { name: 'Diagnostiqueur immo', services: ['Relance diagnostics expirés', 'Confirmation RDV diagnostics', 'Réception appels devis'], temps: '10h', ca: '+8 000\u20ac', icon: FileText },
-    { name: 'Chauffagiste', services: ['Relance entretiens chaudière', 'Confirmation interventions', 'Réception appels pannes 24/7'], temps: '12h', ca: '+9 000\u20ac', icon: Wrench },
+  const useCases = [
+    { icon: Wrench, title: 'Garagiste', desc: 'Relance des contrôles techniques et entretiens annuels automatiquement.' },
+    { icon: Shield, title: 'Courtier', desc: 'Renouvellements de contrats d\'assurance sans passer un seul appel.' },
+    { icon: Heart, title: 'Dentiste / Médecin', desc: 'Rappels de bilans annuels, détartrages et contrôles périodiques.' },
+    { icon: Eye, title: 'Opticien', desc: 'Renouvellement lunettes et lentilles quand l\'ordonnance expire.' },
+    { icon: Scissors, title: 'Salon coiffure / beauté', desc: 'Réactivation des clients dormants qui n\'ont pas pris RDV depuis 3 mois.' },
+    { icon: Activity, title: 'Coach / Kiné', desc: 'Suivi des séances et relance pour la continuité du parcours.' },
   ];
 
   const steps = [
-    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts pour les appels sortants.' },
-    { icon: Phone, title: 'L\'IA appelle \u00e0 votre place', desc: 'Renouvellements, confirmations de RDV \u2014 l\'IA passe les appels avec une voix naturelle.' },
-    { icon: PhoneCall, title: 'L\'IA d\u00e9croche pour vous', desc: 'Appels entrants 24/7 \u2014 l\'IA r\u00e9pond, qualifie le prospect et prend RDV dans votre agenda.' },
-    { icon: CalendarDays, title: 'Vous r\u00e9coltez les r\u00e9sultats', desc: 'Agenda rempli, dossiers renouvel\u00e9s, leads qualifi\u00e9s \u2014 vous ne perdez plus un seul client.' },
+    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts.' },
+    { icon: PhoneCall, title: 'L\'IA appelle à votre place', desc: 'Appels naturels et professionnels. Renouvellements, confirmations, relances.' },
+    { icon: CalendarDays, title: 'Votre agenda se remplit', desc: 'Les RDV confirmés apparaissent. Les renouvellements sont relancés. Vous gérez, on appelle.' },
   ];
 
   const testimonials = [
@@ -908,7 +651,7 @@ export default function IAVocaleLanding() {
             .hero-fade-4 { animation-delay: 0.24s; }
             .hero-fade-5 { animation-delay: 0.4s; }
           `}</style>
-          <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left — Pure CSS animations, no framer-motion overhead */}
             <div>
               <div className="hero-fade hero-fade-1">
@@ -917,14 +660,13 @@ export default function IAVocaleLanding() {
                 </span>
               </div>
 
-              <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.05] tracking-tight">
-                Vos appels.{' '}<br className="hidden sm:block" />
-                <GradientText>Votre croissance.</GradientText>{' '}<br className="hidden sm:block" />
-                L’IA gère tout.
+              <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
+                Gagnez du temps.{' '}
+                <GradientText>Gagnez des clients.</GradientText>
               </h1>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                Relances, confirmations, réception d’appels, robots sur mesure — 4 services IA qui tournent pour vous 7j/7 24h/24. Plus de clients, zéro temps perdu.
+                L’IA qui relance vos clients, confirme vos RDV, décroche quand vous êtes occupé et qualifie chaque prospect — 7j/7, 24h/24. Zéro appel perdu, zéro temps perdu.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
@@ -949,8 +691,8 @@ export default function IAVocaleLanding() {
               </div>
             </div>
 
-            {/* Hero animation — visible everywhere */}
-            <div className="hero-fade hero-fade-1 w-full flex justify-center" style={{ transform: 'translateZ(0)' }}>
+            {/* Right — Hero animation (desktop only) */}
+            <div className="hero-fade hero-fade-4" style={{ transform: 'translateZ(0)' }}>
               <HeroAnimation />
             </div>
           </div>
@@ -1243,13 +985,27 @@ export default function IAVocaleLanding() {
       <section id="usecases" className="py-24 md:py-32 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Votre métier"
-            title="Sélectionnez votre activité."
-            subtitle="Découvrez comment l’IA s’adapte à votre quotidien, et combien vous allez gagner."
+            tag="Cas d'usage"
+            title="Adapté à votre métier."
+            subtitle="Quel que soit votre secteur, l'IA s'adapte à vos besoins de renouvellement et de confirmation."
           />
 
-          {/* Job selector */}
-          <MetierSelector />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {useCases.map((uc, i) => (
+              <ScrollReveal key={i} delay={i * 0.08}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:shadow-emerald-900/5 transition-shadow duration-300 h-full"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center mb-4">
+                    <uc.icon className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{uc.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{uc.desc}</p>
+                </motion.div>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -1260,15 +1016,15 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Comment ça marche"
-            title="Quatre étapes. Zéro friction."
-            subtitle="De l\u2019import aux leads qualifiés, tout est automatisé."
+            title="Trois étapes. Zéro friction."
+            subtitle="De l'import à l'agenda rempli, tout est automatisé."
           />
 
           <div className="relative max-w-4xl mx-auto">
             {/* Connector line */}
-            <div className="hidden md:block absolute top-24 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-emerald-200 via-teal-300 to-emerald-200" />
+            <div className="hidden md:block absolute top-24 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-emerald-200 via-teal-300 to-emerald-200" />
 
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-3 gap-10">
               {steps.map((step, i) => (
                 <ScrollReveal key={i} delay={i * 0.15}>
                   <div className="text-center relative">
@@ -1298,8 +1054,8 @@ export default function IAVocaleLanding() {
         <div className="max-w-4xl mx-auto px-6">
           <SectionHeading
             tag="Lancez-vous"
-            title="Lancez-vous gratuitement."
-            subtitle="100 appels offerts pour les appels sortants. Pour la r\u00e9ception d\u2019appels IA, r\u00e9servez un appel d\u00e9couverte."
+            title="Activez votre boost gratuit."
+            subtitle="100 appels offerts. Importez vos contacts et laissez l'IA faire le reste."
           />
 
           {/* Multi-step overlay: info → plan → redirect */}
@@ -1871,7 +1627,6 @@ export default function IAVocaleLanding() {
                       { icon: Clock, text: '3h/jour au téléphone', stat: '3h' },
                       { icon: Calendar, text: '43% de lapins non anticipés', stat: '43%' },
                       { icon: TrendingUp, text: 'CA perdu sur dossiers non renouvelés', stat: null },
-                      { icon: PhoneCall, text: 'Appels manqu\u00e9s = prospects perdus', stat: null },
                       { icon: Timer, text: 'Temps perdu, stress, oublis', stat: null },
                     ].map((item, i) => (
                       <motion.div
@@ -1938,7 +1693,7 @@ export default function IAVocaleLanding() {
                       { icon: Zap, text: '0 minute au téléphone', stat: '0min' },
                       { icon: CheckCircle2, text: 'Seulement 8% de lapins', stat: '8%' },
                       { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés', stat: null },
-                      { icon: PhoneCall, text: 'Appels entrants d\u00e9croch\u00e9s 24/7 par l\'IA', stat: '97%' },
+                      { icon: PhoneCall, text: '97% des appels décrochés par l\'IA', stat: '97%' },
                     ].map((item, i) => (
                       <motion.div
                         key={i}
@@ -2238,46 +1993,40 @@ export default function IAVocaleLanding() {
       </section>
 
       {/* ── Section Robot Personnalisé ── */}
-      <section className="py-24 md:py-32 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <ScrollReveal>
-              <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-full px-4 py-1.5 mb-6">
-                <Bot className="w-4 h-4 text-violet-600" />
-                <span className="text-sm font-semibold text-violet-700">Sur mesure</span>
-              </div>
-            </ScrollReveal>
-            <ScrollReveal delay={0.1}>
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
-                Un besoin spécifique ?{' '}
-                <span className="bg-gradient-to-r from-violet-600 to-purple-500 bg-clip-text text-transparent">
-                  On crée votre robot sur mesure.
-                </span>
-              </h2>
-            </ScrollReveal>
-            <ScrollReveal delay={0.2}>
-              <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mt-6 leading-relaxed">
-                Appels chronophages, processus répétitifs, scénarios complexes — notre équipe configure une IA vocale 100% adaptée à votre métier.
-              </p>
-            </ScrollReveal>
-          </div>
-
-          {/* Animated robot examples by trade */}
-          <RobotShowcase />
-
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal>
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 mb-6">
+              <Bot className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-semibold text-emerald-700">Sur mesure</span>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.1}>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Un besoin spécifique ?{' '}
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                On crée votre robot sur mesure.
+              </span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mt-6 leading-relaxed">
+              Appels chronophages, processus répétitifs, scénarios complexes — notre équipe configure une IA vocale 100% adaptée à votre métier et à vos workflows.
+            </p>
+          </ScrollReveal>
           <ScrollReveal delay={0.3}>
-            <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://calendar.app.google/GzBmr9MdRRNX7z7U7"
+                href="https://calendar.app.google/GHtu4ymohWhAXJTG8"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-purple-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-violet-200 transition-all duration-300 hover:scale-105 text-lg"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
               >
                 <CalendarCheck className="w-5 h-5" />
                 Réserver un appel découverte
               </a>
             </div>
-            <p className="text-sm text-gray-400 mt-4 text-center">Gratuit · 15 min · Sans engagement</p>
+            <p className="text-sm text-gray-400 mt-4">Gratuit · 15 min · Sans engagement</p>
           </ScrollReveal>
         </div>
       </section>
