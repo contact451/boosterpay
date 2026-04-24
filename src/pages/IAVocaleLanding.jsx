@@ -632,7 +632,7 @@ const MetierSelector = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-gray-900 leading-tight">Réception d'appels 24/7 & Robot sur mesure</p>
-                      <p className="text-xs text-gray-500">Solution personnalisée — Sur devis</p>
+                      <p className="text-xs text-gray-500">Solution personnalisée</p>
                     </div>
                   </div>
                   <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
