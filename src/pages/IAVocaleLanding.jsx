@@ -602,11 +602,16 @@ const MetierSelector = () => {
             </div>
 
             {/* CTA */}
-            <div className="mt-6 text-center">
-              <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 text-base">
-                Activer l’IA pour mon activité <ArrowRight className="w-5 h-5" />
-              </a>
-              <p className="text-xs text-gray-400 mt-3">100 appels offerts · Sans engagement</p>
+            <div className="mt-8 text-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 text-base">
+                  100 appels offerts — Commencer <ArrowRight className="w-5 h-5" />
+                </a>
+                <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 text-base font-semibold text-gray-600 border-2 border-gray-200 px-7 py-3.5 rounded-full hover:border-gray-300 hover:shadow-sm transition-all duration-300">
+                  <CalendarCheck className="w-5 h-5" /> Réception & Robot — Planifier un call
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 mt-4">Renouvellement & Confirmation : démarrez maintenant · Réception & Robot : planifiez un appel</p>
             </div>
           </motion.div>
         )}
@@ -1101,18 +1106,12 @@ export default function IAVocaleLanding() {
               <ScrollReveal delay={0.4}>
                 <div className="mt-10 flex flex-col sm:flex-row gap-4">
                   <a
-                    href="#import"
-                    className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-amber-500/25 hover:scale-105 transition-all duration-200"
-                  >
-                    Activer la réception IA <ArrowRight className="w-5 h-5" />
-                  </a>
-                  <a
-                    href="https://calendar.app.google/GzBmr9MdRRNX7z7U7"
+                    href="https://calendar.app.google/bsaoar9V1bHi7XKe9"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 text-base font-semibold text-gray-700 border-2 border-gray-200 px-8 py-4 rounded-full hover:border-gray-300 transition-all"
+                    className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-amber-500/25 hover:scale-105 transition-all duration-200"
                   >
-                    <CalendarCheck className="w-5 h-5" /> Démo personnalisée
+                    <CalendarCheck className="w-5 h-5" /> Planifier un appel découverte
                   </a>
                 </div>
               </ScrollReveal>
@@ -1170,7 +1169,7 @@ export default function IAVocaleLanding() {
           <ScrollReveal delay={0.3}>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://calendar.app.google/GHtu4ymohWhAXJTG8"
+                href="https://calendar.app.google/bsaoar9V1bHi7XKe9"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
@@ -1270,7 +1269,7 @@ export default function IAVocaleLanding() {
                     <span key={j} className="text-xs font-semibold text-amber-700 bg-amber-50 rounded-full px-4 py-2 border border-amber-100">{d}</span>
                   ))}
                 </div>
-                <a href="https://calendar.app.google/GzBmr9MdRRNX7z7U7" target="_blank" rel="noopener noreferrer"
+                <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   <CalendarCheck className="w-4 h-4" />
                   Réserver un appel découverte
@@ -1298,7 +1297,7 @@ export default function IAVocaleLanding() {
                     <span key={j} className="text-xs font-semibold text-violet-700 bg-violet-50 rounded-full px-4 py-2 border border-violet-100">{d}</span>
                   ))}
                 </div>
-                <a href="https://calendar.app.google/GzBmr9MdRRNX7z7U7" target="_blank" rel="noopener noreferrer"
+                <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   <CalendarCheck className="w-4 h-4" />
                   Réserver un appel découverte
