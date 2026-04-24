@@ -147,120 +147,315 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Hero appointment animation                                         */
+/*  Hero — Phone animation with 3 phases                               */
 /* ------------------------------------------------------------------ */
 const HeroAnimation = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-30px' });
+  const isInView = useInView(ref, { once: true, margin: '-20px' });
+  const [phase, setPhase] = useState(0); // 0=idle, 1=outgoing, 2=incoming, 3=result
 
-  const appointments = [
-    { name: 'Martin D.', time: '09:00', type: 'Renouvellement' },
-    { name: 'Sophie L.', time: '10:30', type: 'Confirmation RDV' },
-    { name: 'Pierre B.', time: '14:00', type: 'Renouvellement' },
-    { name: 'Claire M.', time: '15:30', type: 'Confirmation RDV' },
-    { name: 'Lucas R.', time: '16:45', type: 'Renouvellement' },
-  ];
+  useEffect(() => {
+    if (!isInView) return;
+    const t1 = setTimeout(() => setPhase(1), 600);
+    const t2 = setTimeout(() => setPhase(2), 4000);
+    const t3 = setTimeout(() => setPhase(3), 7000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [isInView]);
 
   return (
-    <div ref={ref} className="relative w-full max-w-md mx-auto" style={{ willChange: 'transform' }}>
+    <div ref={ref} className="relative w-full max-w-[360px] mx-auto" style={{ willChange: 'transform' }}>
       {/* Phone frame */}
-      <div className="relative bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-6 pt-10 overflow-hidden" style={{ transform: 'translateZ(0)' }}>
-        {/* Notch */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl" />
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.4 }}
-          className="flex items-center justify-between mb-6 mt-2"
-        >
-          <div>
-            <p className="text-xs text-gray-400 font-medium">Aujourd’hui</p>
-            <p className="text-lg font-bold text-gray-900">Mon agenda</p>
+      <div className="relative bg-gray-950 rounded-[2.8rem] p-[3px] shadow-2xl shadow-gray-900/30">
+        <div className="bg-white rounded-[2.6rem] overflow-hidden relative" style={{ transform: 'translateZ(0)' }}>
+          {/* Status bar */}
+          <div className="flex items-center justify-between px-7 pt-4 pb-2">
+            <span className="text-[11px] font-semibold text-gray-900">9:41</span>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[28px] bg-gray-950 rounded-b-[20px]" />
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-2.5 border border-gray-400 rounded-sm relative"><div className="absolute inset-[1px] bg-gray-900 rounded-[1px]" style={{ width: '70%' }} /></div>
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-            <CalendarCheck className="w-5 h-5 text-white" />
-          </div>
-        </motion.div>
 
-        {/* Appointments — staggered with simple easing, no springs */}
-        <div className="space-y-3">
-          {appointments.map((apt, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -15 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ delay: 0.3 + i * 0.15, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100"
-              style={{ willChange: 'transform, opacity' }}
-            >
-              <div className="text-sm font-semibold text-gray-400 w-12">{apt.time}</div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-800">{apt.name}</p>
-                <p className="text-xs text-gray-400">{apt.type}</p>
+          {/* Content area */}
+          <div className="px-5 pb-6 min-h-[420px] relative">
+            {/* App header */}
+            <div className="flex items-center justify-between mb-5 pt-1">
+              <div>
+                <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">BoosterPay IA</p>
+                <p className="text-base font-bold text-gray-900 mt-0.5">Tableau de bord</p>
               </div>
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={isInView ? { scale: 1, opacity: 1 } : {}}
-                transition={{ delay: 0.8 + i * 0.15, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center"
-              >
-                <Check className="w-4 h-4 text-emerald-600" />
-              </motion.div>
-            </motion.div>
-          ))}
-        </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-500/20">
+                <Zap className="w-4 h-4 text-white" />
+              </div>
+            </div>
 
-        {/* Bottom bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 1.5, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          className="mt-6 flex items-center justify-center gap-2 text-emerald-600 text-sm font-medium"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>5 confirmations automatiques</span>
-        </motion.div>
+            {/* Phase 1 — Outgoing calls (Relances + Confirmations) */}
+            <AnimatePresence mode="wait">
+              {phase >= 1 && phase < 2 && (
+                <motion.div
+                  key="outgoing"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="space-y-2.5"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Appels sortants en cours</span>
+                  </div>
+
+                  {[
+                    { name: 'Garage MaxMotors', type: 'Renouvellement CT', status: 'Confirmé', time: '09:12' },
+                    { name: 'Salon Bella', type: 'Confirmation RDV', status: 'Confirmé', time: '09:18' },
+                    { name: 'Dr. Laurent', type: 'Renouvellement', status: 'Rappel demandé', time: '09:24', warn: true },
+                    { name: 'Boulangerie Martin', type: 'Confirmation RDV', status: 'Confirmé', time: '09:31' },
+                  ].map((call, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.2, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-gray-50 border border-gray-100"
+                      style={{ willChange: 'transform, opacity' }}
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${call.warn ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+                        <Phone className={`w-3.5 h-3.5 ${call.warn ? 'text-amber-500' : 'text-emerald-500'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-gray-900 truncate">{call.name}</p>
+                        <p className="text-[10px] text-gray-400">{call.type}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className={`text-[10px] font-bold ${call.warn ? 'text-amber-500' : 'text-emerald-500'}`}>{call.status}</p>
+                        <p className="text-[9px] text-gray-300">{call.time}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2 }}
+                    className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between"
+                  >
+                    <span className="text-[11px] text-gray-400">4 appels passés</span>
+                    <span className="text-[11px] font-bold text-emerald-600">75% confirmés</span>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* Phase 2 — Incoming call (missed → AI picks up) */}
+              {phase >= 2 && phase < 3 && (
+                <motion.div
+                  key="incoming"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="space-y-4"
+                >
+                  {/* Incoming call notification */}
+                  <motion.div
+                    initial={{ y: -20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-4 text-white"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <PhoneCall className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[13px] font-bold">Appel entrant</p>
+                        <p className="text-[11px] text-white/80">06 45 12 89 33 — Nouveau prospect</p>
+                      </div>
+                    </div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.8 }}
+                      className="mt-3 flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2"
+                    >
+                      <Bot className="w-3.5 h-3.5" />
+                      <span className="text-[11px] font-semibold">Transfert auto — L'IA décroche</span>
+                    </motion.div>
+                  </motion.div>
+
+                  {/* AI conversation */}
+                  <div className="space-y-2">
+                    {[
+                      { from: 'ia', text: "Bonjour, entreprise Martin Plomberie, comment puis-je vous aider ?", delay: 1.2 },
+                      { from: 'prospect', text: "J'ai une fuite urgente, vous intervenez sur Perpignan ?", delay: 1.8 },
+                      { from: 'ia', text: "Oui, nous intervenons sur tout Perpignan. Je peux vous proposer un créneau demain à 9h. Ça vous convient ?", delay: 2.4 },
+                    ].map((msg, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: msg.delay, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                        className={`flex ${msg.from === 'prospect' ? 'justify-end' : ''}`}
+                      >
+                        <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
+                          msg.from === 'ia'
+                            ? 'bg-emerald-50 border border-emerald-100 rounded-bl-sm'
+                            : 'bg-gray-100 border border-gray-200 rounded-br-sm'
+                        }`}>
+                          <p className={`text-[10px] font-bold mb-0.5 ${msg.from === 'ia' ? 'text-emerald-600' : 'text-gray-500'}`}>
+                            {msg.from === 'ia' ? 'IA BoosterPay' : 'Prospect'}
+                          </p>
+                          <p className="text-[11px] text-gray-700 leading-snug">{msg.text}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Phase 3 — Result dashboard */}
+              {phase >= 3 && (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="space-y-3"
+                >
+                  <div className="text-center mb-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                      className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-2"
+                    >
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                    </motion.div>
+                    <p className="text-[13px] font-bold text-gray-900">Bilan de la matinée</p>
+                    <p className="text-[10px] text-gray-400">9h00 — 12h00</p>
+                  </div>
+
+                  {/* KPIs */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: '4', label: 'Appels sortants', color: 'emerald' },
+                      { value: '1', label: 'Appel reçu', color: 'amber' },
+                      { value: '5', label: 'Leads qualifiés', color: 'blue' },
+                    ].map((kpi, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + i * 0.1, duration: 0.3 }}
+                        className={`bg-${kpi.color}-50 rounded-xl p-2.5 text-center border border-${kpi.color}-100`}
+                      >
+                        <p className={`text-xl font-black text-${kpi.color}-600`}>{kpi.value}</p>
+                        <p className="text-[9px] font-medium text-gray-500 mt-0.5">{kpi.label}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Activity feed */}
+                  <div className="space-y-1.5 mt-2">
+                    {[
+                      { icon: '✓', text: 'Garage MaxMotors — CT renouvelé', color: 'emerald' },
+                      { icon: '✓', text: 'Salon Bella — RDV confirmé demain 14h', color: 'emerald' },
+                      { icon: '⟳', text: 'Dr. Laurent — Rappel prévu jeudi', color: 'amber' },
+                      { icon: '✓', text: 'Boulangerie Martin — RDV confirmé', color: 'emerald' },
+                      { icon: '★', text: 'Nouveau lead — Fuite urgente Perpignan', color: 'blue' },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.7 + i * 0.08, duration: 0.25 }}
+                        className="flex items-center gap-2.5 py-1.5 px-2.5 rounded-xl bg-gray-50 border border-gray-100"
+                      >
+                        <span className={`text-[11px] w-5 text-center text-${item.color}-500 font-bold`}>{item.icon}</span>
+                        <p className="text-[11px] text-gray-700 font-medium">{item.text}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2 }}
+                    className="mt-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl py-2.5 text-center"
+                  >
+                    <p className="text-[11px] font-bold text-white">+5 leads qualifiés ce matin</p>
+                    <p className="text-[9px] text-emerald-100 mt-0.5">Pendant que vous étiez sur le terrain</p>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Phase indicator dots */}
+            <div className="flex items-center justify-center gap-2 mt-5">
+              {[1, 2, 3].map(p => (
+                <div
+                  key={p}
+                  className={`h-1 rounded-full transition-all duration-500 ${
+                    phase >= p ? 'bg-emerald-500 w-6' : 'bg-gray-200 w-1.5'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Floating badges — simpler easing, no heavy springs */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 1.2, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-        className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-2"
-        style={{ willChange: 'transform, opacity', transform: 'translateZ(0)' }}
-      >
-        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-          <PhoneCall className="w-4 h-4 text-emerald-600" />
-        </div>
-        <div>
-          <p className="text-xs font-bold text-gray-800">100% automatique</p>
-          <p className="text-[10px] text-gray-400">L’IA appelle pour vous</p>
-        </div>
-      </motion.div>
+      {/* Floating notification — appears in phase 2 */}
+      <AnimatePresence>
+        {phase >= 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 30, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            className="absolute -right-3 top-24 bg-white rounded-2xl shadow-xl shadow-amber-900/10 border border-amber-100 px-4 py-3 max-w-[180px]"
+            style={{ willChange: 'transform, opacity' }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <PhoneCall className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-900">Appel manqué ?</p>
+                <p className="text-[9px] text-amber-600 font-semibold">L'IA a décroché</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <motion.div
-        initial={{ opacity: 0, y: -15 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ delay: 1.4, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-        className="absolute -top-2 -right-4 bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-2"
-        style={{ willChange: 'transform, opacity', transform: 'translateZ(0)' }}
-      >
-        <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
-          <TrendingUp className="w-4 h-4 text-teal-600" />
-        </div>
-        <div>
-          <p className="text-xs font-bold text-gray-800">-35% de lapins</p>
-          <p className="text-[10px] text-gray-400">En moyenne</p>
-        </div>
-      </motion.div>
+      {/* Result floating badge — appears in phase 3 */}
+      <AnimatePresence>
+        {phase >= 3 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            className="absolute -left-3 bottom-20 bg-white rounded-2xl shadow-xl shadow-emerald-900/10 border border-emerald-100 px-4 py-3"
+            style={{ willChange: 'transform, opacity' }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-gray-900">0 appel manqué</p>
+                <p className="text-[9px] text-emerald-600 font-semibold">100% traités par l'IA</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 /* ------------------------------------------------------------------ */
+/*  MAIN COMPONENT                                                     *//* ------------------------------------------------------------------ */
 /*  MAIN COMPONENT                                                     */
 /* ------------------------------------------------------------------ */
 export default function IAVocaleLanding() {

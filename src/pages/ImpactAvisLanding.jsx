@@ -221,7 +221,7 @@ const GoogleCardAnimation = () => {
 
   const afterReviews = [
     { stars: 5, text: 'Service excellent, je recommande vivement !', author: 'Sophie M.', date: 'il y a 2 jours', avatar: '\ud83d\ude0a', isNew: true },
-    { stars: 5, text: '\u00c9quipe au top, parfait de A à Z.', author: 'Marie T.', date: 'il y a 1 jour', avatar: '\ud83e\udd29', isNew: true },
+    { stars: 5, text: 'Équipe au top, parfait de A à Z.', author: 'Marie T.', date: 'il y a 1 jour', avatar: '\ud83e\udd29', isNew: true },
     { stars: 5, text: 'Incroyable ! Jamais vu un tel service.', author: 'Lucas B.', date: "à l'instant", avatar: '\ud83d\udd25', isNew: true },
   ];
 
@@ -451,7 +451,7 @@ const GoogleCardAnimation = () => {
             borderColor: isAfter ? '#bbf7d0' : '#fecaca',
           }}
         >
-          {isAfter ? '✦ APR\u00c8S IMPACT-AVIS' : '✧ AVANT'}
+          {isAfter ? '✦ APRÈS IMPACT-AVIS' : '✧ AVANT'}
         </div>
       </motion.div>
     </div>
