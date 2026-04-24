@@ -539,9 +539,9 @@ const MetierSelector = () => {
             className="max-w-4xl mx-auto"
           >
             {/* Header */}
-            <div className="bg-white rounded-t-[28px] border border-b-0 border-gray-100 px-8 pt-8 pb-6">
+            <div className="bg-white rounded-t-[28px] border border-b-0 border-gray-100/80 px-8 pt-8 pb-6 shadow-xl shadow-gray-200/50">
               <div className="flex items-center gap-4 mb-2">
-                <div className="w-14 h-14 rounded-2xl bg-gray-900 flex items-center justify-center shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
                   <m.icon className="w-7 h-7 text-white" />
                 </div>
                 <div>
@@ -552,7 +552,7 @@ const MetierSelector = () => {
             </div>
 
             {/* 4 services grid */}
-            <div className="grid sm:grid-cols-2 gap-[1px] bg-gray-100">
+            <div className="grid sm:grid-cols-2 gap-[1px] bg-gray-100/60 shadow-xl shadow-gray-200/30">
               {serviceLabels.map((svc, j) => {
                 const sc = svcColors[svc.color];
                 const SvcIcon = svc.icon;
@@ -578,8 +578,8 @@ const MetierSelector = () => {
               })}
             </div>
 
-            {/* KPI bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 bg-gray-900 rounded-b-[28px] overflow-hidden">
+            {/* KPI bar — Apple-style gradient */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 rounded-b-[28px] overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600">
               {[
                 { value: m.temps, label: 'gagnées/semaine', icon: Clock },
                 { value: m.clients, label: 'nouveaux clients/mois', icon: UserPlus },
@@ -588,14 +588,15 @@ const MetierSelector = () => {
               ].map((kpi, k) => (
                 <motion.div
                   key={k}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + k * 0.08, duration: 0.3 }}
-                  className="text-center py-6 px-4 border-r border-white/10 last:border-r-0"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + k * 0.1, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                  className="text-center py-7 px-4 border-r border-white/20 last:border-r-0 relative"
                 >
-                  <kpi.icon className="w-4 h-4 text-emerald-400 mx-auto mb-2" />
-                  <p className="text-2xl font-black text-white">{kpi.value}</p>
-                  <p className="text-[10px] text-gray-400 font-medium mt-1">{kpi.label}</p>
+                  <div className="absolute inset-0 bg-white/5 hover:bg-white/10 transition-colors duration-300" />
+                  <kpi.icon className="w-5 h-5 text-white/80 mx-auto mb-2 relative z-10" />
+                  <p className="text-[28px] font-black text-white relative z-10 tracking-tight">{kpi.value}</p>
+                  <p className="text-[11px] text-white/70 font-medium mt-1 relative z-10">{kpi.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -1517,7 +1518,7 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* USE CASES BY PROFESSION                      */}
       {/* ============================================ */}
-      <section id="usecases" className="py-24 md:py-32 bg-gray-50/50">
+      <section id="usecases" className="py-24 md:py-32 bg-gradient-to-b from-white via-gray-50/30 to-white">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Cas d'usage"
@@ -1735,10 +1736,20 @@ export default function IAVocaleLanding() {
       <section id="import" className="py-24 md:py-32 bg-gradient-to-b from-gray-50/50 to-white">
         <div className="max-w-4xl mx-auto px-6">
           <SectionHeading
-            tag="Lancez-vous"
+            tag="Renouvellement & Confirmation RDV"
             title="Activez votre boost gratuit."
-            subtitle="100 appels offerts. Importez vos contacts et laissez l'IA faire le reste."
+            subtitle="100 appels offerts pour vos relances de dossiers et confirmations de RDV. Importez vos contacts, l'IA appelle pour vous."
           />
+
+          {/* Service badges */}
+          <div className="flex flex-wrap justify-center gap-3 mb-10 -mt-4">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold border border-emerald-100">
+              <RefreshCw className="w-4 h-4" /> Renouvellement de dossiers
+            </span>
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold border border-blue-100">
+              <CalendarCheck className="w-4 h-4" /> Confirmation de RDV
+            </span>
+          </div>
 
           {/* Multi-step overlay: info → plan → redirect */}
           <AnimatePresence>
