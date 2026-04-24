@@ -149,6 +149,39 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 /* ------------------------------------------------------------------ */
 /*  Métier Selector — Interactive job picker                          */
 /* ------------------------------------------------------------------ */
+const metiers = [
+    { name: 'Garagiste', services: ['Renouvellement CT & entretiens', 'Confirmation RDV atelier', 'R\u00e9ception appels urgences m\u00e9ca'], temps: '12h', ca: '+8 000\u20ac', icon: Wrench },
+    { name: 'Courtier assurance', services: ['Renouvellement contrats', 'Confirmation RDV clients', 'R\u00e9ception appels sinistres 24/7'], temps: '15h', ca: '+12 000\u20ac', icon: Shield },
+    { name: 'Dentiste', services: ['Rappel d\u00e9tartrages & bilans', 'Confirmation RDV patients', 'R\u00e9ception appels urgences dentaires'], temps: '10h', ca: '+6 500\u20ac', icon: Heart },
+    { name: 'M\u00e9decin g\u00e9n\u00e9raliste', services: ['Rappel check-up annuels', 'Confirmation consultations', 'R\u00e9ception appels patients'], temps: '14h', ca: '+5 000\u20ac', icon: Activity },
+    { name: 'Opticien', services: ['Renouvellement lunettes/lentilles', 'Confirmation RDV essayage', 'R\u00e9ception appels conseils'], temps: '8h', ca: '+7 000\u20ac', icon: Eye },
+    { name: 'Salon coiffure', services: ['R\u00e9activation clients dormants', 'Confirmation RDV coiffure', 'R\u00e9ception appels r\u00e9servation'], temps: '10h', ca: '+4 500\u20ac', icon: Scissors },
+    { name: 'Kin\u00e9sith\u00e9rapeute', services: ['Suivi parcours de soins', 'Confirmation s\u00e9ances', 'R\u00e9ception appels nouveaux patients'], temps: '8h', ca: '+3 800\u20ac', icon: Activity },
+    { name: 'V\u00e9t\u00e9rinaire', services: ['Rappel vaccins & bilans', 'Confirmation RDV consultations', 'R\u00e9ception appels urgences animales'], temps: '10h', ca: '+5 500\u20ac', icon: Heart },
+    { name: 'Ostéopathe', services: ['Relance patients inactifs', 'Confirmation RDV', 'Réception appels nouveaux patients'], temps: '6h', ca: '+3 200\u20ac', icon: Activity },
+    { name: 'Agent immobilier', services: ['Relance mandats expirés', 'Confirmation visites', 'Réception appels acquéreurs 24/7'], temps: '14h', ca: '+15 000\u20ac', icon: Users },
+    { name: 'Plombier', services: ['Relance entretiens chaudière', 'Confirmation interventions', 'Réception appels urgences 24/7'], temps: '12h', ca: '+9 000\u20ac', icon: Wrench },
+    { name: 'Électricien', services: ['Relance contrôles électriques', 'Confirmation interventions', 'Réception appels dépannage'], temps: '10h', ca: '+7 500\u20ac', icon: Zap },
+    { name: 'Coach sportif', services: ['Relance abonnements', 'Confirmation séances', 'Réception appels inscription'], temps: '6h', ca: '+3 000\u20ac', icon: Activity },
+    { name: 'Restaurant', services: ['Relance clients fidèles', 'Confirmation réservations', 'Réception appels réservation 24/7'], temps: '8h', ca: '+5 000\u20ac', icon: Gift },
+    { name: 'Salon esthétique', services: ['Réactivation clients dormants', 'Confirmation RDV soins', 'Réception appels prise de RDV'], temps: '10h', ca: '+4 800\u20ac', icon: Sparkles },
+    { name: 'Avocat', services: ['Relance dossiers en attente', 'Confirmation RDV consultations', 'Réception appels nouveaux clients'], temps: '12h', ca: '+10 000\u20ac', icon: Shield },
+    { name: 'Expert-comptable', services: ['Relance bilans & déclarations', 'Confirmation RDV clients', 'Réception appels questions fiscales'], temps: '15h', ca: '+8 000\u20ac', icon: FileText },
+    { name: 'Photographe', services: ['Relance clients pour tirages', 'Confirmation séances photo', 'Réception appels devis'], temps: '6h', ca: '+3 500\u20ac', icon: Eye },
+    { name: 'Auto-école', services: ['Relance examens & heures', 'Confirmation heures de conduite', 'Réception appels inscription'], temps: '10h', ca: '+6 000\u20ac', icon: Users },
+    { name: 'Fleuriste', services: ['Relance commandes récurrentes', 'Confirmation livraisons', 'Réception appels commandes'], temps: '6h', ca: '+3 000\u20ac', icon: Gift },
+    { name: 'Boulangerie', services: ['Relance commandes spéciales', 'Confirmation commandes événements', 'Réception appels commandes'], temps: '4h', ca: '+2 500\u20ac', icon: Gift },
+    { name: 'Serrurier', services: ['Relance contrats maintenance', 'Confirmation interventions', 'Réception appels urgences 24/7'], temps: '10h', ca: '+8 000\u20ac', icon: Wrench },
+    { name: 'Paysagiste', services: ['Relance entretiens saisonniers', 'Confirmation interventions', 'Réception appels devis'], temps: '8h', ca: '+5 500\u20ac', icon: Target },
+    { name: 'Notaire', services: ['Relance signatures & dossiers', 'Confirmation RDV actes', 'Réception appels nouveaux dossiers'], temps: '12h', ca: '+10 000\u20ac', icon: FileText },
+    { name: 'Psychologue', services: ['Relance patients inactifs', 'Confirmation séances', 'Réception appels nouveaux patients'], temps: '8h', ca: '+4 000\u20ac', icon: Heart },
+    { name: 'Climaticien', services: ['Relance entretiens climatisation', 'Confirmation interventions', 'Réception appels dépannage'], temps: '10h', ca: '+7 000\u20ac', icon: Wrench },
+    { name: 'Pharmacie', services: ['Rappel renouvellement ordonnances', 'Confirmation préparations', 'Réception appels conseils'], temps: '8h', ca: '+4 500\u20ac', icon: Heart },
+    { name: 'Carrossier', services: ['Relance réparations en attente', 'Confirmation RDV dépôt', 'Réception appels devis'], temps: '8h', ca: '+6 000\u20ac', icon: Wrench },
+    { name: 'Diagnostiqueur immo', services: ['Relance diagnostics expirés', 'Confirmation RDV diagnostics', 'Réception appels devis'], temps: '10h', ca: '+8 000\u20ac', icon: FileText },
+    { name: 'Chauffagiste', services: ['Relance entretiens chaudière', 'Confirmation interventions', 'Réception appels pannes 24/7'], temps: '12h', ca: '+9 000\u20ac', icon: Wrench },
+  ];
+
 const MetierSelector = () => {
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
@@ -744,38 +777,6 @@ export default function IAVocaleLanding() {
     { value: '24', suffix: '/7', prefix: '', label: 'actif non-stop' },
   ];
 
-  const metiers = [
-    { name: 'Garagiste', services: ['Renouvellement CT & entretiens', 'Confirmation RDV atelier', 'R\u00e9ception appels urgences m\u00e9ca'], temps: '12h', ca: '+8 000\u20ac', icon: Wrench },
-    { name: 'Courtier assurance', services: ['Renouvellement contrats', 'Confirmation RDV clients', 'R\u00e9ception appels sinistres 24/7'], temps: '15h', ca: '+12 000\u20ac', icon: Shield },
-    { name: 'Dentiste', services: ['Rappel d\u00e9tartrages & bilans', 'Confirmation RDV patients', 'R\u00e9ception appels urgences dentaires'], temps: '10h', ca: '+6 500\u20ac', icon: Heart },
-    { name: 'M\u00e9decin g\u00e9n\u00e9raliste', services: ['Rappel check-up annuels', 'Confirmation consultations', 'R\u00e9ception appels patients'], temps: '14h', ca: '+5 000\u20ac', icon: Activity },
-    { name: 'Opticien', services: ['Renouvellement lunettes/lentilles', 'Confirmation RDV essayage', 'R\u00e9ception appels conseils'], temps: '8h', ca: '+7 000\u20ac', icon: Eye },
-    { name: 'Salon coiffure', services: ['R\u00e9activation clients dormants', 'Confirmation RDV coiffure', 'R\u00e9ception appels r\u00e9servation'], temps: '10h', ca: '+4 500\u20ac', icon: Scissors },
-    { name: 'Kin\u00e9sith\u00e9rapeute', services: ['Suivi parcours de soins', 'Confirmation s\u00e9ances', 'R\u00e9ception appels nouveaux patients'], temps: '8h', ca: '+3 800\u20ac', icon: Activity },
-    { name: 'V\u00e9t\u00e9rinaire', services: ['Rappel vaccins & bilans', 'Confirmation RDV consultations', 'R\u00e9ception appels urgences animales'], temps: '10h', ca: '+5 500\u20ac', icon: Heart },
-    { name: 'Ostéopathe', services: ['Relance patients inactifs', 'Confirmation RDV', 'Réception appels nouveaux patients'], temps: '6h', ca: '+3 200\u20ac', icon: Activity },
-    { name: 'Agent immobilier', services: ['Relance mandats expirés', 'Confirmation visites', 'Réception appels acquéreurs 24/7'], temps: '14h', ca: '+15 000\u20ac', icon: Users },
-    { name: 'Plombier', services: ['Relance entretiens chaudière', 'Confirmation interventions', 'Réception appels urgences 24/7'], temps: '12h', ca: '+9 000\u20ac', icon: Wrench },
-    { name: 'Électricien', services: ['Relance contrôles électriques', 'Confirmation interventions', 'Réception appels dépannage'], temps: '10h', ca: '+7 500\u20ac', icon: Zap },
-    { name: 'Coach sportif', services: ['Relance abonnements', 'Confirmation séances', 'Réception appels inscription'], temps: '6h', ca: '+3 000\u20ac', icon: Activity },
-    { name: 'Restaurant', services: ['Relance clients fidèles', 'Confirmation réservations', 'Réception appels réservation 24/7'], temps: '8h', ca: '+5 000\u20ac', icon: Gift },
-    { name: 'Salon esthétique', services: ['Réactivation clients dormants', 'Confirmation RDV soins', 'Réception appels prise de RDV'], temps: '10h', ca: '+4 800\u20ac', icon: Sparkles },
-    { name: 'Avocat', services: ['Relance dossiers en attente', 'Confirmation RDV consultations', 'Réception appels nouveaux clients'], temps: '12h', ca: '+10 000\u20ac', icon: Shield },
-    { name: 'Expert-comptable', services: ['Relance bilans & déclarations', 'Confirmation RDV clients', 'Réception appels questions fiscales'], temps: '15h', ca: '+8 000\u20ac', icon: FileText },
-    { name: 'Photographe', services: ['Relance clients pour tirages', 'Confirmation séances photo', 'Réception appels devis'], temps: '6h', ca: '+3 500\u20ac', icon: Eye },
-    { name: 'Auto-école', services: ['Relance examens & heures', 'Confirmation heures de conduite', 'Réception appels inscription'], temps: '10h', ca: '+6 000\u20ac', icon: Users },
-    { name: 'Fleuriste', services: ['Relance commandes récurrentes', 'Confirmation livraisons', 'Réception appels commandes'], temps: '6h', ca: '+3 000\u20ac', icon: Gift },
-    { name: 'Boulangerie', services: ['Relance commandes spéciales', 'Confirmation commandes événements', 'Réception appels commandes'], temps: '4h', ca: '+2 500\u20ac', icon: Gift },
-    { name: 'Serrurier', services: ['Relance contrats maintenance', 'Confirmation interventions', 'Réception appels urgences 24/7'], temps: '10h', ca: '+8 000\u20ac', icon: Wrench },
-    { name: 'Paysagiste', services: ['Relance entretiens saisonniers', 'Confirmation interventions', 'Réception appels devis'], temps: '8h', ca: '+5 500\u20ac', icon: Target },
-    { name: 'Notaire', services: ['Relance signatures & dossiers', 'Confirmation RDV actes', 'Réception appels nouveaux dossiers'], temps: '12h', ca: '+10 000\u20ac', icon: FileText },
-    { name: 'Psychologue', services: ['Relance patients inactifs', 'Confirmation séances', 'Réception appels nouveaux patients'], temps: '8h', ca: '+4 000\u20ac', icon: Heart },
-    { name: 'Climaticien', services: ['Relance entretiens climatisation', 'Confirmation interventions', 'Réception appels dépannage'], temps: '10h', ca: '+7 000\u20ac', icon: Wrench },
-    { name: 'Pharmacie', services: ['Rappel renouvellement ordonnances', 'Confirmation préparations', 'Réception appels conseils'], temps: '8h', ca: '+4 500\u20ac', icon: Heart },
-    { name: 'Carrossier', services: ['Relance réparations en attente', 'Confirmation RDV dépôt', 'Réception appels devis'], temps: '8h', ca: '+6 000\u20ac', icon: Wrench },
-    { name: 'Diagnostiqueur immo', services: ['Relance diagnostics expirés', 'Confirmation RDV diagnostics', 'Réception appels devis'], temps: '10h', ca: '+8 000\u20ac', icon: FileText },
-    { name: 'Chauffagiste', services: ['Relance entretiens chaudière', 'Confirmation interventions', 'Réception appels pannes 24/7'], temps: '12h', ca: '+9 000\u20ac', icon: Wrench },
-  ];
 
   const steps = [
     { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts pour les appels sortants.' },
