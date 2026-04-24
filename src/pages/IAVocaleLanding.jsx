@@ -601,17 +601,45 @@ const MetierSelector = () => {
               ))}
             </div>
 
-            {/* CTA */}
-            <div className="mt-8 text-center">
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 text-base">
-                  100 appels offerts — Commencer <ArrowRight className="w-5 h-5" />
-                </a>
-                <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 text-base font-semibold text-gray-600 border-2 border-gray-200 px-7 py-3.5 rounded-full hover:border-gray-300 hover:shadow-sm transition-all duration-300">
-                  <CalendarCheck className="w-5 h-5" /> Réception & Robot — Planifier un call
-                </a>
+            {/* CTA — Two clear paths */}
+            <div className="mt-10 max-w-2xl mx-auto">
+              {/* Path 1: Renouvellement & Confirmation → Import */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-100/80 mb-3">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex -space-x-1 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center ring-2 ring-white"><RefreshCw className="w-4 h-4 text-white" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center ring-2 ring-white"><CalendarCheck className="w-4 h-4 text-white" /></div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 leading-tight">Renouvellement & Confirmation RDV</p>
+                      <p className="text-xs text-gray-500">Appels sortants — 100 appels offerts</p>
+                    </div>
+                  </div>
+                  <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
+                    Démarrer gratuitement <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-4">Renouvellement & Confirmation : démarrez maintenant · Réception & Robot : planifiez un appel</p>
+
+              {/* Path 2: Réception & Robot → Calendar */}
+              <div className="bg-gradient-to-r from-amber-50 to-violet-50 rounded-2xl p-5 border border-amber-100/80">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex -space-x-1 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center ring-2 ring-white"><PhoneCall className="w-4 h-4 text-white" /></div>
+                      <div className="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center ring-2 ring-white"><Bot className="w-4 h-4 text-white" /></div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 leading-tight">Réception d'appels 24/7 & Robot sur mesure</p>
+                      <p className="text-xs text-gray-500">Solution personnalisée — Sur devis</p>
+                    </div>
+                  </div>
+                  <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
+                    <CalendarCheck className="w-4 h-4" /> Planifier un call
+                  </a>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
