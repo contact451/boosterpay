@@ -101,6 +101,55 @@ const GradientText = ({ children, className = '' }) => (
   </span>
 );
 
+/**
+ * Bandeau de preuve sociale + urgence sous la navbar.
+ * Affiche un compteur fictif réaliste qui varie au cours de la journée
+ * (entre 7 et 22 selon l'heure) — donne une sensation de live sans backend.
+ */
+const UrgencyBanner = () => {
+  const [count, setCount] = useState(12);
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    // Compteur réaliste : 7 le matin → 22 en fin de journée
+    const compute = () => {
+      const h = new Date().getHours();
+      const base = h < 9 ? 7 : h < 12 ? 11 : h < 15 ? 15 : h < 18 ? 19 : 22;
+      // Petit jitter entre +0 et +2 pour donner une variation légère
+      const jitter = Math.floor(Math.random() * 3);
+      return base + jitter;
+    };
+    setCount(compute());
+    const id = setInterval(() => setCount(compute()), 45000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (hidden) return null;
+
+  return (
+    <div className="fixed top-0 inset-x-0 z-[51] bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 text-white text-[12.5px] font-medium">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-1.5 flex items-center justify-center gap-3">
+        <span className="relative flex w-2 h-2 shrink-0">
+          <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+        </span>
+        <span className="text-center">
+          <span className="font-bold tabular-nums">{count}</span>
+          <span> professionnels ont activé leur IA vocale aujourd'hui</span>
+          <span className="hidden sm:inline"> · Offre valable ce mois-ci</span>
+        </span>
+        <button
+          onClick={() => setHidden(true)}
+          aria-label="Fermer le bandeau"
+          className="ml-1 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/15 transition-colors shrink-0"
+        >
+          <X className="w-3 h-3" strokeWidth={2.5} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const IA_VOCALE_PLANS = [
   { id: 'decouverte', name: 'Essai Découverte', price: '0€', desc: '100 appels gratuits · Import CSV · Dashboard' },
   { id: 'boost', name: 'Pack Boost', price: '199€ HT', desc: '250 appels · Résultats immédiats', badge: null },
@@ -195,17 +244,17 @@ const services = [
   {
     icon: 'Star',
     title: 'Impact Avis',
-    desc: "L'IA appelle vos clients satisfaits et leur envoie le lien direct vers Google Avis par SMS.",
+    desc: "L'IA appelle vos clients, qualifie leur ressenti. 4★+ → publication Google. Sinon, retour interne.",
     result: '+5 avis Google par mois',
     example: 'Salon Bella — 4,9/5 étoiles · 38 avis ce mois',
-    color: 'orange',
+    color: 'yellow',
   },
   {
     icon: 'Zap',
     title: 'Accélération de paiements',
-    desc: "L'IA relance vos impayés, propose un règlement en 1 clic via Stripe, Klarna ou Billie.",
-    result: '+62% de récupération',
-    example: 'Cabinet Martin — 1 200€ régularisés en 24h',
+    desc: "L'IA relance vos impayés au bon moment, avec le bon ton. Vos délais de paiement raccourcissent.",
+    result: 'Délais de paiement -40%',
+    example: 'Cabinet Martin — 1 200€ réglés en 4 jours',
     color: 'rose',
   },
 ];
@@ -218,6 +267,7 @@ const colorMap = {
   violet: { bg: 'bg-violet-50', ring: 'ring-violet-200', icon: 'text-violet-600', accent: 'bg-violet-500', light: 'text-violet-600', badge: 'bg-violet-100 text-violet-700' },
   orange: { bg: 'bg-orange-50', ring: 'ring-orange-200', icon: 'text-orange-600', accent: 'bg-orange-500', light: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
   rose: { bg: 'bg-rose-50', ring: 'ring-rose-200', icon: 'text-rose-600', accent: 'bg-rose-500', light: 'text-rose-600', badge: 'bg-rose-100 text-rose-700' },
+  yellow: { bg: 'bg-yellow-50', ring: 'ring-yellow-200', icon: 'text-yellow-600', accent: 'bg-yellow-500', light: 'text-yellow-700', badge: 'bg-yellow-100 text-yellow-700' },
 };
 
 const HeroAnimation = () => {
@@ -227,14 +277,21 @@ const HeroAnimation = () => {
 
   useEffect(() => {
     if (!isInView) return;
+    // Boucle infinie sur les 6 services. Chaque slide reste affiché 2.4s,
+    // puis une courte pause (600 ms) avant de reprendre du début.
+    let cancelled = false;
     let i = 0;
-    const show = () => {
-      setActive(i);
+    let timeoutId = null;
+    const tick = () => {
+      if (cancelled) return;
+      setActive(i % services.length);
       i++;
-      if (i < 4) setTimeout(show, 2400);
+      // Cycle complet : pause un peu plus longue avant de reboucler
+      const delay = (i % services.length === 0) ? 3200 : 2400;
+      timeoutId = setTimeout(tick, delay);
     };
-    const t = setTimeout(show, 500);
-    return () => clearTimeout(t);
+    timeoutId = setTimeout(tick, 500);
+    return () => { cancelled = true; if (timeoutId) clearTimeout(timeoutId); };
   }, [isInView]);
 
   const svc = active >= 0 ? services[active] : null;
@@ -455,30 +512,30 @@ const RobotShowcase = () => {
 /*  Metiers data + MetierSelector component                            */
 /* ------------------------------------------------------------------ */
 const metiers = [
-  { name: 'Garagiste', icon: Wrench, s1: 'Relance CT, vidanges, entretiens', s2: 'Confirmation RDV atelier J-1', s3: 'Réception appels pannes 24/7', s4: 'Robot accueil personnalisé', temps: '12h', clients: '+18', ca: '+8 500€', lapins: '-40%' },
-  { name: 'Courtier assurance', icon: Shield, s1: 'Renouvellement contrats auto/habitation', s2: 'Confirmation RDV signature', s3: 'Réception appels sinistres 24/7', s4: 'Robot qualification souscription', temps: '15h', clients: '+25', ca: '+12 000€', lapins: '-35%' },
-  { name: 'Dentiste', icon: Heart, s1: 'Rappel détartrages & bilans', s2: 'Confirmation RDV patients J-1', s3: 'Réception appels urgences dentaires', s4: 'Robot triage patients', temps: '10h', clients: '+15', ca: '+6 500€', lapins: '-45%' },
-  { name: 'Opticien', icon: Eye, s1: 'Renouvellement lunettes/lentilles', s2: 'Confirmation RDV essayage', s3: 'Réception appels conseils optiques', s4: 'Robot prise de RDV auto', temps: '8h', clients: '+12', ca: '+7 000€', lapins: '-30%' },
-  { name: 'Salon coiffure', icon: Scissors, s1: 'Réactivation clients dormants 3 mois', s2: 'Confirmation RDV coiffure J-1', s3: 'Réception appels réservation', s4: 'Robot conseils personnalisés', temps: '10h', clients: '+20', ca: '+4 500€', lapins: '-50%' },
-  { name: 'Kiné / Ostéopathe', icon: Activity, s1: 'Suivi parcours de soins', s2: 'Confirmation séances', s3: 'Réception appels nouveaux patients', s4: 'Robot orientation patients', temps: '8h', clients: '+10', ca: '+3 800€', lapins: '-35%' },
-  { name: 'Médecin généraliste', icon: Heart, s1: 'Rappel check-up & vaccins', s2: 'Confirmation consultations J-1', s3: 'Réception appels patients 24/7', s4: 'Robot triage & orientation', temps: '14h', clients: '+12', ca: '+5 000€', lapins: '-40%' },
-  { name: 'Vétérinaire', icon: Heart, s1: 'Rappel vaccins & vermifuges', s2: 'Confirmation RDV consultations', s3: 'Réception appels urgences animales', s4: 'Robot conseil vétérinaire', temps: '10h', clients: '+14', ca: '+5 500€', lapins: '-35%' },
-  { name: 'Agent immobilier', icon: Users, s1: 'Relance mandats à échéance', s2: 'Confirmation visites acquéreurs', s3: 'Réception appels acquéreurs 24/7', s4: 'Robot qualification achat/location', temps: '14h', clients: '+30', ca: '+15 000€', lapins: '-25%' },
-  { name: 'Plombier', icon: Wrench, s1: 'Relance entretiens chaudière', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis automatique', temps: '12h', clients: '+22', ca: '+9 000€', lapins: '-30%' },
-  { name: 'Coach sportif', icon: Activity, s1: 'Relance abonnements expirés', s2: 'Confirmation séances', s3: 'Réception appels inscription', s4: 'Robot programme personnalisé', temps: '6h', clients: '+15', ca: '+3 000€', lapins: '-40%' },
-  { name: 'Restaurant', icon: Gift, s1: 'Relance clients fidèles', s2: 'Confirmation réservations J-1', s3: 'Réception appels réservation 24/7', s4: 'Robot commande & réservation', temps: '8h', clients: '+25', ca: '+5 000€', lapins: '-55%' },
-  { name: 'Salon esthétique', icon: Sparkles, s1: 'Réactivation clientes dormantes', s2: 'Confirmation RDV soins', s3: 'Réception appels prise de RDV', s4: 'Robot conseil beauté', temps: '10h', clients: '+18', ca: '+4 800€', lapins: '-45%' },
-  { name: 'Avocat', icon: Shield, s1: 'Relance dossiers en attente', s2: 'Confirmation RDV consultations', s3: 'Réception appels nouveaux clients', s4: 'Robot prise de brief juridique', temps: '12h', clients: '+10', ca: '+10 000€', lapins: '-30%' },
-  { name: 'Expert-comptable', icon: FileText, s1: 'Relance bilans & déclarations', s2: 'Confirmation RDV clients', s3: 'Réception appels questions fiscales', s4: 'Robot collecte pièces', temps: '15h', clients: '+12', ca: '+8 000€', lapins: '-25%' },
-  { name: 'Auto-école', icon: Calendar, s1: 'Relance élèves inactifs', s2: 'Confirmation heures conduite', s3: 'Réception appels inscription', s4: 'Robot planning auto', temps: '10h', clients: '+20', ca: '+6 000€', lapins: '-40%' },
-  { name: 'Électricien', icon: Zap, s1: 'Relance contrôles électriques', s2: 'Confirmation interventions', s3: 'Réception appels dépannage', s4: 'Robot devis électrique', temps: '10h', clients: '+18', ca: '+7 500€', lapins: '-30%' },
-  { name: 'Pharmacie', icon: Heart, s1: 'Rappel renouvellement ordonnances', s2: 'Confirmation préparations', s3: 'Réception appels conseils', s4: 'Robot suivi traitements', temps: '8h', clients: '+10', ca: '+4 500€', lapins: '-20%' },
-  { name: 'Photographe', icon: Eye, s1: 'Relance séances anniversaires', s2: 'Confirmation shoots', s3: 'Réception appels devis', s4: 'Robot portfolio & tarifs', temps: '6h', clients: '+12', ca: '+3 500€', lapins: '-35%' },
-  { name: 'Serrurier', icon: Wrench, s1: 'Relance contrats maintenance', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis serrurerie', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-25%' },
-  { name: 'Notaire', icon: FileText, s1: 'Relance signatures & dossiers', s2: 'Confirmation RDV actes', s3: 'Réception appels nouveaux dossiers', s4: 'Robot accueil étude', temps: '12h', clients: '+8', ca: '+10 000€', lapins: '-30%' },
-  { name: 'Paysagiste', icon: Wrench, s1: 'Relance entretiens saisonniers', s2: 'Confirmation interventions', s3: 'Réception appels devis', s4: 'Robot conseil jardin', temps: '8h', clients: '+15', ca: '+5 500€', lapins: '-30%' },
-  { name: 'Consultant', icon: Users, s1: 'Relance propositions commerciales', s2: 'Confirmation RDV clients', s3: 'Réception appels prospects', s4: 'Robot qualification projet', temps: '10h', clients: '+8', ca: '+12 000€', lapins: '-20%' },
-  { name: 'Centre formation', icon: Users, s1: 'Relance inscriptions', s2: 'Confirmation sessions', s3: 'Réception appels renseignements', s4: 'Robot orientation formation', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-35%' },
+  { name: 'Garagiste', icon: Wrench, s1: 'Relance CT, vidanges, entretiens', s2: 'Confirmation RDV atelier J-1', s3: 'Réception appels pannes 24/7', s4: 'Robot accueil personnalisé', temps: '12h', clients: '+18', ca: '+8 500€', lapins: '-40%', s5: 'Avis Google après chaque réparation', s6: 'Relance factures clients' },
+  { name: 'Courtier assurance', icon: Shield, s1: 'Renouvellement contrats auto/habitation', s2: 'Confirmation RDV signature', s3: 'Réception appels sinistres 24/7', s4: 'Robot qualification souscription', temps: '15h', clients: '+25', ca: '+12 000€', lapins: '-35%', s5: 'Avis post-souscription', s6: 'Relance primes en retard' },
+  { name: 'Dentiste', icon: Heart, s1: 'Rappel détartrages & bilans', s2: 'Confirmation RDV patients J-1', s3: 'Réception appels urgences dentaires', s4: 'Robot triage patients', temps: '10h', clients: '+15', ca: '+6 500€', lapins: '-45%', s5: 'Avis post-soins', s6: 'Relance honoraires non réglés' },
+  { name: 'Opticien', icon: Eye, s1: 'Renouvellement lunettes/lentilles', s2: 'Confirmation RDV essayage', s3: 'Réception appels conseils optiques', s4: 'Robot prise de RDV auto', temps: '8h', clients: '+12', ca: '+7 000€', lapins: '-30%', s5: 'Avis après essayage lunettes', s6: 'Relance factures différées' },
+  { name: 'Salon coiffure', icon: Scissors, s1: 'Réactivation clients dormants 3 mois', s2: 'Confirmation RDV coiffure J-1', s3: 'Réception appels réservation', s4: 'Robot conseils personnalisés', temps: '10h', clients: '+20', ca: '+4 500€', lapins: '-50%', s5: 'Avis Google après prestation', s6: 'Relance forfaits impayés' },
+  { name: 'Kiné / Ostéopathe', icon: Activity, s1: 'Suivi parcours de soins', s2: 'Confirmation séances', s3: 'Réception appels nouveaux patients', s4: 'Robot orientation patients', temps: '8h', clients: '+10', ca: '+3 800€', lapins: '-35%', s5: 'Avis post-séance', s6: 'Relance honoraires patients' },
+  { name: 'Médecin généraliste', icon: Heart, s1: 'Rappel check-up & vaccins', s2: 'Confirmation consultations J-1', s3: 'Réception appels patients 24/7', s4: 'Robot triage & orientation', temps: '14h', clients: '+12', ca: '+5 000€', lapins: '-40%', s5: 'Avis Google patients satisfaits', s6: 'Relance dépassements honoraires' },
+  { name: 'Vétérinaire', icon: Heart, s1: 'Rappel vaccins & vermifuges', s2: 'Confirmation RDV consultations', s3: 'Réception appels urgences animales', s4: 'Robot conseil vétérinaire', temps: '10h', clients: '+14', ca: '+5 500€', lapins: '-35%', s5: 'Avis post-consultation', s6: 'Relance factures soins' },
+  { name: 'Agent immobilier', icon: Users, s1: 'Relance mandats à échéance', s2: 'Confirmation visites acquéreurs', s3: 'Réception appels acquéreurs 24/7', s4: 'Robot qualification achat/location', temps: '14h', clients: '+30', ca: '+15 000€', lapins: '-25%', s5: 'Avis vendeurs/acquéreurs', s6: 'Relance honoraires d\'agence'},
+  { name: 'Plombier', icon: Wrench, s1: 'Relance entretiens chaudière', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis automatique', temps: '12h', clients: '+22', ca: '+9 000€', lapins: '-30%', s5: 'Avis Google post-intervention', s6: 'Relance devis & factures' },
+  { name: 'Coach sportif', icon: Activity, s1: 'Relance abonnements expirés', s2: 'Confirmation séances', s3: 'Réception appels inscription', s4: 'Robot programme personnalisé', temps: '6h', clients: '+15', ca: '+3 000€', lapins: '-40%', s5: 'Avis clients fidèles', s6: 'Relance abonnements impayés' },
+  { name: 'Restaurant', icon: Gift, s1: 'Relance clients fidèles', s2: 'Confirmation réservations J-1', s3: 'Réception appels réservation 24/7', s4: 'Robot commande & réservation', temps: '8h', clients: '+25', ca: '+5 000€', lapins: '-55%', s5: 'Avis Google clients satisfaits', s6: 'Relance acomptes événements' },
+  { name: 'Salon esthétique', icon: Sparkles, s1: 'Réactivation clientes dormantes', s2: 'Confirmation RDV soins', s3: 'Réception appels prise de RDV', s4: 'Robot conseil beauté', temps: '10h', clients: '+18', ca: '+4 800€', lapins: '-45%', s5: 'Avis post-soin', s6: 'Relance forfaits non réglés' },
+  { name: 'Avocat', icon: Shield, s1: 'Relance dossiers en attente', s2: 'Confirmation RDV consultations', s3: 'Réception appels nouveaux clients', s4: 'Robot prise de brief juridique', temps: '12h', clients: '+10', ca: '+10 000€', lapins: '-30%', s5: 'Avis dossiers clos', s6: 'Relance honoraires en attente' },
+  { name: 'Expert-comptable', icon: FileText, s1: 'Relance bilans & déclarations', s2: 'Confirmation RDV clients', s3: 'Réception appels questions fiscales', s4: 'Robot collecte pièces', temps: '15h', clients: '+12', ca: '+8 000€', lapins: '-25%', s5: 'Avis clients après bilan', s6: 'Relance honoraires & frais' },
+  { name: 'Auto-école', icon: Calendar, s1: 'Relance élèves inactifs', s2: 'Confirmation heures conduite', s3: 'Réception appels inscription', s4: 'Robot planning auto', temps: '10h', clients: '+20', ca: '+6 000€', lapins: '-40%', s5: 'Avis élèves diplômés', s6: 'Relance forfaits non payés' },
+  { name: 'Électricien', icon: Zap, s1: 'Relance contrôles électriques', s2: 'Confirmation interventions', s3: 'Réception appels dépannage', s4: 'Robot devis électrique', temps: '10h', clients: '+18', ca: '+7 500€', lapins: '-30%', s5: 'Avis Google post-intervention', s6: 'Relance devis & factures' },
+  { name: 'Pharmacie', icon: Heart, s1: 'Rappel renouvellement ordonnances', s2: 'Confirmation préparations', s3: 'Réception appels conseils', s4: 'Robot suivi traitements', temps: '8h', clients: '+10', ca: '+4 500€', lapins: '-20%', s5: 'Avis clients fidèles', s6: 'Relance avances tiers payant' },
+  { name: 'Photographe', icon: Eye, s1: 'Relance séances anniversaires', s2: 'Confirmation shoots', s3: 'Réception appels devis', s4: 'Robot portfolio & tarifs', temps: '6h', clients: '+12', ca: '+3 500€', lapins: '-35%', s5: 'Avis clients après livraison', s6: 'Relance acomptes shootings' },
+  { name: 'Serrurier', icon: Wrench, s1: 'Relance contrats maintenance', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis serrurerie', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-25%', s5: 'Avis Google post-dépannage', s6: 'Relance interventions urgences' },
+  { name: 'Notaire', icon: FileText, s1: 'Relance signatures & dossiers', s2: 'Confirmation RDV actes', s3: 'Réception appels nouveaux dossiers', s4: 'Robot accueil étude', temps: '12h', clients: '+8', ca: '+10 000€', lapins: '-30%', s5: 'Avis clients post-acte', s6: 'Relance émoluments en attente' },
+  { name: 'Paysagiste', icon: Wrench, s1: 'Relance entretiens saisonniers', s2: 'Confirmation interventions', s3: 'Réception appels devis', s4: 'Robot conseil jardin', temps: '8h', clients: '+15', ca: '+5 500€', lapins: '-30%', s5: 'Avis post-aménagement', s6: 'Relance contrats annuels' },
+  { name: 'Consultant', icon: Users, s1: 'Relance propositions commerciales', s2: 'Confirmation RDV clients', s3: 'Réception appels prospects', s4: 'Robot qualification projet', temps: '10h', clients: '+8', ca: '+12 000€', lapins: '-20%', s5: 'Avis missions terminées', s6: 'Relance honoraires à échéance' },
+  { name: 'Centre formation', icon: Users, s1: 'Relance inscriptions', s2: 'Confirmation sessions', s3: 'Réception appels renseignements', s4: 'Robot orientation formation', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-35%', s5: 'Avis stagiaires diplômés', s6: 'Relance financements OPCO' },
 ];
 
 
@@ -487,6 +544,8 @@ const serviceLabels = [
   { key: 's2', icon: CalendarCheck, label: 'Confirmation RDV', color: 'blue' },
   { key: 's3', icon: PhoneCall, label: 'Réception 24/7', color: 'amber' },
   { key: 's4', icon: Bot, label: 'Robot sur mesure', color: 'violet' },
+  { key: 's5', icon: Star, label: 'Impact Avis', color: 'yellow' },
+  { key: 's6', icon: Zap, label: 'Accélération paiements', color: 'rose' },
 ];
 
 const svcColors = {
@@ -494,6 +553,8 @@ const svcColors = {
   blue: { bg: 'bg-blue-50', icon: 'text-blue-600', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700' },
   amber: { bg: 'bg-amber-50', icon: 'text-amber-600', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700' },
   violet: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-200', badge: 'bg-violet-100 text-violet-700' },
+  yellow: { bg: 'bg-yellow-50', icon: 'text-yellow-600', border: 'border-yellow-200', badge: 'bg-yellow-100 text-yellow-700' },
+  rose: { bg: 'bg-rose-50', icon: 'text-rose-600', border: 'border-rose-200', badge: 'bg-rose-100 text-rose-700' },
 };
 
 const MetierSelector = ({ openPopup }) => {
@@ -579,8 +640,8 @@ const MetierSelector = ({ openPopup }) => {
               </div>
             </div>
 
-            {/* 4 services grid */}
-            <div className="grid sm:grid-cols-2 gap-[1px] bg-gray-100/60 shadow-xl shadow-gray-200/30">
+            {/* 6 services grid (3×2 sur desktop, 2×3 sur tablet, 1 colonne sur mobile) */}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-[1px] bg-gray-100/60 shadow-xl shadow-gray-200/30">
               {serviceLabels.map((svc, j) => {
                 const sc = svcColors[svc.color];
                 const SvcIcon = svc.icon;
@@ -888,9 +949,9 @@ export default function IAVocaleLanding() {
       priceAnnuel: 0,
       unit: '',
       calls: '100 appels offerts · 14 jours',
+      noCardBig: true,
       features: [
         'Tous les modules activés',
-        'Sans CB · Sans engagement',
         'Configuration en 5 minutes',
         'Annulation en 1 clic',
       ],
@@ -899,7 +960,7 @@ export default function IAVocaleLanding() {
     },
     {
       id: 'a-la-carte',
-      name: 'À la carte',
+      name: 'Pack découverte',
       tagline: 'Tester sans abonnement',
       priceMensuel: 97,
       priceAnnuel: 97,
@@ -917,7 +978,7 @@ export default function IAVocaleLanding() {
     {
       id: 'pro',
       name: 'Pro',
-      tagline: 'Le plus populaire',
+      tagline: 'Choisi par 73% de nos clients',
       priceMensuel: 97,
       priceAnnuel: 77,
       unit: 'HT / mois',
@@ -958,33 +1019,53 @@ export default function IAVocaleLanding() {
   const [pricingAnnual, setPricingAnnual] = useState(false);
 
   const faqs = [
-    { q: 'Comment l\'IA passe-t-elle les appels ?', a: 'Notre IA utilise une synthèse vocale de dernière génération avec une voix naturelle, fluide et professionnelle. Elle suit un script entièrement personnalisé selon votre métier (garagiste, courtier, praticien de santé, etc.) et adapte la conversation en fonction des réponses du client. À la fin de chaque appel, le résultat (confirmé, reporté, injoignable) est mis à jour automatiquement dans votre tableau de bord en temps réel.' },
-    { q: 'Mes clients vont-ils savoir que c\'est une IA ?', a: 'L\'IA est spécialement conçue pour être indiscernable d\'un appel humain. Elle se présente au nom de votre entreprise, utilise un ton chaleureux et professionnel, et suit un script personnalisé à votre activité. La grande majorité des clients ne font aucune différence avec un appel passé par votre secrétaire ou assistant(e). Vous gardez le contrôle total sur le ton et le contenu des appels.' },
-    { q: 'Quels formats de fichiers sont acceptés ?', a: 'Vous pouvez importer vos contacts via CSV, Excel (.xlsx), ou les saisir manuellement directement depuis l\'interface. Notre système détecte automatiquement les colonnes (nom, téléphone, type, date) et formate les données pour vous. Aucune compétence technique n\'est requise.' },
-    { q: 'Combien de temps pour être opérationnel ?', a: 'Moins de 24 heures, et souvent beaucoup moins. Il suffit d\'importer vos contacts (CSV ou saisie manuelle), et les appels démarrent immédiatement. Aucune installation technique, aucun logiciel à configurer : vous importez, l\'IA appelle, votre agenda se remplit.' },
-    { q: 'Est-ce conforme au RGPD ?', a: 'Absolument, la conformité RGPD est au c\u0153ur de notre solution. Toutes les données sont hébergées en France sur des serveurs sécurisés, chiffrées en transit et au repos (AES-256). Vos clients peuvent exercer leur droit d\'opposition et se désinscrire à tout moment via un simple mécanisme d\'opt-out intégré à chaque appel. Nous ne revendons jamais vos données et respectons strictement le Règlement Général sur la Protection des Données.' },
-    { q: 'Puis-je annuler à tout moment ?', a: 'Oui, vous êtes totalement libre. Les packs (Boost et Business) sont des achats ponctuels sans abonnement ni reconduction automatique : vous payez une fois, vous utilisez vos appels. Le plan Croissance est un abonnement mensuel résiliable à tout moment, sans frais de résiliation ni période d\'engagement.' },
+    {
+      q: "Mes clients vont-ils raccrocher en entendant une IA ?",
+      a: "Non — et c'est toute la différence avec les robots automatisés bas de gamme. Notre IA utilise une voix française naturelle, indistinguable d'un humain pour 94% des appelés selon nos tests. Elle se présente au nom de votre entreprise, écoute, s'adapte aux réponses, et reste polie en toutes circonstances. Aucune coupure brutale, aucune pression. Vos clients ressortent de l'appel avec une impression positive."
+    },
+    {
+      q: "Et si l'IA donne une mauvaise info à mon client ?",
+      a: "L'IA suit strictement le script que vous validez avant le lancement. Elle ne sort pas de son périmètre — si un client pose une question hors-script (par exemple un cas technique très spécifique), elle bascule automatiquement vers un rappel humain de votre part ou prend les coordonnées du client. Vous pouvez aussi écouter chaque appel + lire la transcription dans votre CRM, donc vous gardez 100% de contrôle."
+    },
+    {
+      q: "Combien de temps ça prend vraiment à configurer ?",
+      a: "5 minutes pour démarrer l'essai gratuit — vous renseignez votre email, vous recevez le lien de votre espace, vous importez un CSV de contacts. Pour le module Réception 24/7, on planifie un appel de 15 min avec notre équipe pour configurer le transfert d'appel chez votre opérateur. C'est ce qui prend le plus de temps, mais on s'occupe de tout : vous donnez l'autorisation, on fait le reste."
+    },
+    {
+      q: "Je suis [plombier/coiffeur/garagiste], pas tech — est-ce que je vais y arriver seul ?",
+      a: "Oui. Tout passe par 2 actions simples : (1) un email pour démarrer, (2) un fichier de contacts à uploader (votre liste clients exportée depuis votre logiciel ou même une feuille Excel). Aucun code, aucune installation logicielle, aucune intégration technique à faire vous-même. Et si vous bloquez sur quelque chose, on est joignable au +33 1 77 38 17 11 — réponse en moins de 2h ouvrées."
+    },
+    {
+      q: "Que se passe-t-il après mes 100 appels offerts ?",
+      a: "Rien d'automatique. On vous envoie un email à 80% de votre essai pour vous prévenir, et un autre à 100%. Vous décidez ensuite : passer en Pack découverte (97€ pour 300 appels, paiement unique), Pro (97€/mois pour 500 appels), Business (249€/mois), ou simplement ne rien faire. Aucun prélèvement automatique tant que vous n'avez pas explicitement choisi un plan payant."
+    },
+    {
+      q: "Puis-je annuler à tout moment ?",
+      a: "Oui, en 1 clic depuis votre espace de configuration — sans justification, sans frais, sans période d'engagement. Pour les plans mensuels (Pro, Business), l'annulation prend effet à la fin du mois en cours. Pour le Pack découverte (paiement unique), il n'y a rien à annuler : pas de reconduction."
+    },
+    {
+      q: "Mes données sont-elles sécurisées ?",
+      a: "Hébergement en France et UE, chiffrement AES-256 au repos et TLS 1.3 en transit, conformité RGPD totale. Vos clients peuvent se désinscrire en 1 clic ou en disant simplement « stop » à l'IA. Vos transcriptions vous appartiennent et sont supprimables à tout moment depuis votre espace."
+    },
+    {
+      q: "Et si l'IA n'arrive pas à joindre certains clients ?",
+      a: "L'IA tente jusqu'à 3 rappels intelligemment espacés sur 5 jours, en variant les créneaux horaires (jamais avant 9h ni après 19h). Si malgré ça le client reste injoignable, le contact est marqué « injoignable » dans votre CRM avec toutes les transcriptions des tentatives. Vous pouvez ensuite décider de relancer plus tard ou d'archiver."
+    },
   ];
 
   /* ── Render ────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
 
-      {/* ── Service Navigation Bar ── (renvoie vers les sections internes) */}
-      <div className="bg-gray-950 text-white text-center py-2 text-[13px] font-medium fixed top-0 w-full z-[60]">
-        <div className="flex items-center justify-center gap-6 md:gap-10">
-          <a href="#impact-avis" className="opacity-70 hover:opacity-100 transition-opacity">Impact Avis</a>
-          <span className="opacity-20">|</span>
-          <span className="text-emerald-400 font-semibold">IA Vocale</span>
-          <span className="opacity-20">|</span>
-          <a href="#paiements" className="opacity-70 hover:opacity-100 transition-opacity">Accélération de paiements</a>
-        </div>
-      </div>
+      {/* Barre de navigation services supprimée — la page IA Vocale absorbe les 2 autres services */}
+
+      {/* ── Bandeau urgence / preuve sociale live ── */}
+      <UrgencyBanner />
 
       {/* ============================================ */}
       {/* NAVBAR                                       */}
       {/* ============================================ */}
-      <nav className={`fixed top-8 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100' : 'bg-transparent'}`}>
+      <nav className={`fixed top-7 sm:top-7 inset-x-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="text-xl font-bold tracking-tight">
             <GradientText>BoosterPay</GradientText>
@@ -999,12 +1080,13 @@ export default function IAVocaleLanding() {
             ))}
           </div>
 
+          {/* CTA unique navbar — ultra-visible */}
           <div className="hidden md:block">
             <a
-              href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 rounded-full hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
+              href="#" onClick={(e) => { e.preventDefault(); openPopup('navbar', 'gratuit'); }}
+              className="inline-flex items-center gap-2 text-[14px] font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 rounded-full hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-200"
             >
-              Essai gratuit <ArrowRight className="w-4 h-4" />
+              Essayer gratuitement — 100 appels offerts <ArrowRight className="w-4 h-4" />
             </a>
           </div>
 
@@ -1078,12 +1160,15 @@ export default function IAVocaleLanding() {
               </div>
 
               <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Gagnez du temps.{' '}
-                <GradientText>Gagnez des clients.</GradientText>
+                Chaque appel manqué{' '}
+                <span className="text-gray-900">vous coûte un client.</span>
               </h1>
+              <h2 className="hero-fade hero-fade-2 mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.15] tracking-tight">
+                <GradientText>L'IA de BoosterPay décroche à votre place. 24h/24.</GradientText>
+              </h2>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                L’IA qui relance vos clients, confirme vos RDV, décroche quand vous êtes occupé et qualifie chaque prospect — 7j/7, 24h/24. Zéro appel perdu, zéro temps perdu.
+                L'IA qui relance vos clients, confirme vos RDV, décroche quand vous êtes occupé et qualifie chaque prospect — 7j/7, 24h/24. Zéro appel perdu, zéro temps perdu.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
@@ -1452,25 +1537,34 @@ export default function IAVocaleLanding() {
               <motion.div
                 id="impact-avis"
                 whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
-                className="relative h-full bg-white rounded-[28px] border border-orange-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-orange-900/[0.06] transition-all duration-500 scroll-mt-24"
+                className="relative h-full bg-white rounded-[28px] border border-yellow-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-yellow-900/[0.06] transition-all duration-500 scroll-mt-24"
               >
                 <div className="flex items-start justify-between mb-8">
-                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg">
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-400 flex items-center justify-center shadow-lg">
                     <Star className="w-8 h-8 text-white" strokeWidth={1.5} fill="white" />
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-100">Réputation</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-yellow-50 text-yellow-700 border-yellow-100">Réputation</span>
                 </div>
                 <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Impact Avis</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">L'IA appelle vos clients satisfaits, leur demande leur ressenti et leur envoie le lien direct vers Google Avis par SMS. Plus d'avis 5 étoiles, sans relancer une seule personne à la main.</p>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-4">L'IA appelle vos clients, qualifie leur ressenti et leur envoie le lien direct vers Google Avis. Tout en filtrant intelligemment.</p>
+                <div className="mb-8 p-3.5 rounded-2xl bg-yellow-50/60 border border-yellow-100">
+                  <div className="flex items-start gap-2 text-[13px] text-yellow-900 leading-relaxed">
+                    <Star className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" fill="currentColor" />
+                    <div>
+                      <span className="font-semibold">4 étoiles ou plus</span> &rarr; le client publie sur Google.<br/>
+                      <span className="font-semibold">Moins de 4</span> &rarr; le ressenti reste en interne pour vous permettre d'agir.
+                    </div>
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Appel post-prestation', 'Filtrage 4★+ uniquement', 'Lien Google par SMS', 'Tirage mensuel'].map((d, j) => (
-                    <span key={j} className="text-xs font-semibold text-orange-700 bg-orange-50 rounded-full px-4 py-2 border border-orange-100">{d}</span>
+                  {['Appel post-prestation', 'Filtrage 4★+ → Google', 'Avis < 4★ → interne', 'Lien direct par SMS'].map((d, j) => (
+                    <span key={j} className="text-xs font-semibold text-yellow-700 bg-yellow-50 rounded-full px-4 py-2 border border-yellow-100">{d}</span>
                   ))}
                 </div>
                 <button
                   type="button"
                   onClick={() => openPopup('card-impact-avis', 'gratuit')}
-                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   Commencer gratuitement <ArrowRight className="w-4 h-4" />
                 </button>
               </motion.div>
@@ -1490,9 +1584,9 @@ export default function IAVocaleLanding() {
                   <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-rose-50 text-rose-700 border-rose-100">Recouvrement</span>
                 </div>
                 <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Accélération de paiements</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">L'IA relance vos impayés avec finesse, qualifie chaque dossier (promesse, litige, injoignable) et envoie au débiteur un lien de paiement Stripe en 1 clic — carte, Klarna 3× ou Billie 30 jours.</p>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">L'IA appelle vos clients dont la facture est due, au bon moment, avec le bon ton. Vos délais de paiement raccourcissent, sans relance manuelle.</p>
                 <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Appel + transcription IA', 'Lien Stripe en 1 clic', 'Klarna & Billie inclus', 'Mise en demeure auto'].map((d, j) => (
+                  {['Relance automatique', 'Ton humain & professionnel', 'Suivi multi-tentatives', 'Délais de paiement -40%'].map((d, j) => (
                     <span key={j} className="text-xs font-semibold text-rose-700 bg-rose-50 rounded-full px-4 py-2 border border-rose-100">{d}</span>
                   ))}
                 </div>
@@ -1712,6 +1806,229 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
+      {/* ============================================ */}
+      {/* SERVICE DÉDIÉ — IMPACT AVIS                       */}
+      {/* ============================================ */}
+      <section className="py-24 md:py-32 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left — Visual : timeline d'appels avec filtrage 4★+ */}
+            <ScrollReveal delay={0.1}>
+              <div className="relative order-2 lg:order-1">
+                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-[28px] p-8 border border-yellow-100">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-400 flex items-center justify-center shadow-lg">
+                      <Star className="w-5 h-5 text-white" fill="white" />
+                    </div>
+                    <div>
+                      <p className="text-[13px] font-bold text-gray-900">Appels post-prestation</p>
+                      <p className="text-[11px] text-gray-400">Cette semaine</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      { name: 'Marie D.', note: 5, action: 'Avis Google publié', publish: true },
+                      { name: 'Lucas R.', note: 5, action: 'Avis Google publié', publish: true },
+                      { name: 'Sophie L.', note: 4, action: 'Avis Google publié', publish: true },
+                      { name: 'Pierre M.', note: 3, action: 'Retour interne — RDV à recaler', publish: false },
+                      { name: 'Claire B.', note: 5, action: 'Avis Google publié', publish: true },
+                    ].map((c, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.15 + i * 0.08, duration: 0.4 }}
+                        className="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm"
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${c.publish ? 'bg-yellow-100' : 'bg-slate-100'}`}>
+                          <Star className={`w-4 h-4 ${c.publish ? 'text-yellow-600' : 'text-slate-500'}`} fill={c.publish ? 'currentColor' : 'none'} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-[12.5px] font-semibold text-gray-900 truncate">{c.name}</p>
+                            <span className="text-[11px] font-bold tabular-nums text-yellow-700">{c.note}★</span>
+                          </div>
+                          <p className={`text-[10.5px] font-medium ${c.publish ? 'text-yellow-700' : 'text-slate-500'}`}>{c.action}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.7 }}
+                    className="mt-5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl py-3 text-center"
+                  >
+                    <p className="text-sm font-bold text-white">4 avis Google publiés · 1 retour interne</p>
+                  </motion.div>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Right — Text */}
+            <div className="order-1 lg:order-2">
+              <ScrollReveal>
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 bg-yellow-100 px-4 py-1.5 rounded-full mb-6">
+                  <Star className="w-4 h-4" fill="currentColor" /> Service 5 — Réputation
+                </span>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+                  Impact Avis.{' '}
+                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 bg-clip-text text-transparent">Plus d'étoiles, sans risque.</span>
+                </h2>
+                <p className="text-lg text-gray-500 leading-relaxed mb-6">
+                  L'IA appelle vos clients après chaque prestation. Elle qualifie le ressenti. Si c'est positif, elle envoie le lien Google par SMS. Si c'est négatif, le retour reste en interne pour vous permettre d'agir.
+                </p>
+              </ScrollReveal>
+              <ScrollReveal delay={0.2}>
+                <div className="space-y-3 mb-8">
+                  <div className="flex items-start gap-3 p-4 rounded-2xl bg-yellow-50/60 border border-yellow-100/80">
+                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center shrink-0">
+                      <Star className="w-4 h-4 text-white" fill="white" />
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-bold text-gray-900">4 étoiles ou plus</p>
+                      <p className="text-[13px] text-gray-600 leading-relaxed">L'IA envoie le lien direct vers votre fiche Google par SMS. Le client publie en 30 secondes.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100/80">
+                    <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center shrink-0">
+                      <Shield className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-bold text-gray-900">Moins de 4 étoiles</p>
+                      <p className="text-[13px] text-gray-600 leading-relaxed">Le retour reste confidentiel et arrive dans votre CRM. Vous corrigez avant que l'avis ne devienne public.</p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+              <ScrollReveal delay={0.3}>
+                <button
+                  type="button"
+                  onClick={() => openPopup('section-impact-avis', 'gratuit')}
+                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg"
+                >
+                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
+                </button>
+              </ScrollReveal>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================ */}
+      {/* SERVICE DÉDIÉ — ACCÉLÉRATION DE PAIEMENTS         */}
+      {/* ============================================ */}
+      <section className="py-24 md:py-32 bg-[#FAFAFA] overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left — Text */}
+            <div>
+              <ScrollReveal>
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-rose-700 bg-rose-100 px-4 py-1.5 rounded-full mb-6">
+                  <Zap className="w-4 h-4" /> Service 6 — Trésorerie
+                </span>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
+                  Accélération de paiements.{' '}
+                  <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">Vos délais raccourcissent.</span>
+                </h2>
+                <p className="text-lg text-gray-500 leading-relaxed mb-8">
+                  L'IA appelle vos clients dont la facture est due, au bon moment, avec le bon ton. Pas de menace, pas de relance brutale — juste un rappel humain et professionnel qui fait toute la différence sur vos délais.
+                </p>
+              </ScrollReveal>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {[
+                  { val: '-40%', label: 'Délais de paiement' },
+                  { val: '+62%', label: 'Factures payées à J+0' },
+                  { val: '0min', label: 'De votre temps' },
+                  { val: '24/7', label: 'Tentatives intelligentes' },
+                ].map((s, i) => (
+                  <ScrollReveal key={i} delay={0.1 + i * 0.06}>
+                    <div className="bg-rose-50/60 rounded-2xl p-4 text-center border border-rose-100/50">
+                      <p className="text-2xl font-black text-rose-600">{s.val}</p>
+                      <p className="text-[11px] font-medium text-gray-500 mt-1">{s.label}</p>
+                    </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+              <ScrollReveal delay={0.3}>
+                <button
+                  type="button"
+                  onClick={() => openPopup('section-paiements', 'gratuit')}
+                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg"
+                >
+                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
+                </button>
+              </ScrollReveal>
+            </div>
+
+            {/* Right — Visual : factures en cours de relance */}
+            <ScrollReveal delay={0.15}>
+              <div className="relative">
+                <div className="bg-white rounded-[28px] p-8 border border-gray-100 shadow-xl shadow-gray-900/[0.04]">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="text-[13px] font-bold text-gray-900">Factures relancées</span>
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.4, duration: 0.3 }}
+                      className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
+                    >
+                      8 réglées sur 10
+                    </motion.span>
+                  </div>
+                  <div className="space-y-2.5">
+                    {[
+                      { ref: 'FAC-2026-008', client: 'SARL Dubois', amount: '850 €', status: 'Réglée — J+2', ok: true },
+                      { ref: 'FAC-2026-012', client: 'Cabinet Martin', amount: '1 200 €', status: 'Réglée — J+4', ok: true },
+                      { ref: 'FAC-2026-015', client: 'EURL Lefèvre', amount: '430 €', status: 'Promesse — J+7', ok: 'pending' },
+                      { ref: 'FAC-2026-019', client: 'SAS Renaud', amount: '2 100 €', status: 'Réglée — J+1', ok: true },
+                      { ref: 'FAC-2026-022', client: 'Pharmacie Bertin', amount: '680 €', status: 'Réglée — J+3', ok: true },
+                    ].map((f, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.15 + i * 0.08, duration: 0.4 }}
+                        className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100/40"
+                      >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${f.ok === true ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+                          {f.ok === true ? <Check className="w-4 h-4 text-emerald-600" /> : <Clock className="w-4 h-4 text-amber-600" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[12.5px] font-semibold text-gray-900 truncate">{f.client}</p>
+                            <p className="text-[12px] font-bold text-gray-900 tabular-nums">{f.amount}</p>
+                          </div>
+                          <p className={`text-[10.5px] font-medium ${f.ok === true ? 'text-emerald-600' : 'text-amber-700'}`}>{f.status}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="mt-5 pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-2">
+                      <span>Sans IA : 28 jours</span>
+                      <span className="text-rose-600">Avec IA : 17 jours</span>
+                    </div>
+                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: '90%' }}
+                        whileInView={{ width: '54%' }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.4, duration: 0.8 }}
+                        className="h-full bg-gradient-to-r from-rose-400 to-pink-400 rounded-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
 
 
       {/* ============================================ */}
@@ -1930,569 +2247,8 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* IMPORT & DATA INJECTION                      */}
-      {/* ============================================ */}
-      <section id="import" className="py-24 md:py-32 bg-gradient-to-b from-gray-50/50 to-white">
-        <div className="max-w-4xl mx-auto px-6">
-          <SectionHeading
-            tag="Renouvellement & Confirmation RDV"
-            title="Activez votre boost gratuit."
-            subtitle="100 appels offerts pour vos relances de dossiers et confirmations de RDV. Importez vos contacts, l'IA appelle pour vous."
-          />
+      {/* Section "Activez votre boost gratuit" supprimée — flow remplacé par le popup email + page /configurer */}
 
-          {/* Service badges */}
-          <div className="flex flex-wrap justify-center gap-3 mb-10 -mt-4">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold border border-emerald-100">
-              <RefreshCw className="w-4 h-4" /> Renouvellement de dossiers
-            </span>
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold border border-blue-100">
-              <CalendarCheck className="w-4 h-4" /> Confirmation de RDV
-            </span>
-          </div>
-
-          {/* Multi-step overlay: info → plan → redirect */}
-          <AnimatePresence>
-            {(importState === 'info' || importState === 'plan' || importState === 'redirecting') && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6"
-              >
-                {/* Step: Info (société + email) */}
-                {importState === 'info' && (
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1], damping: 20 }}
-                    className="bg-white rounded-3xl p-10 max-w-md w-full shadow-2xl"
-                  >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
-                      className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
-                    >
-                      <CheckCircle2 className="w-8 h-8 text-white" />
-                    </motion.div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Données reçues !</h3>
-                    <p className="text-gray-500 mb-6 text-center">Plus qu'une étape : dites-nous qui vous êtes.</p>
-                    <form onSubmit={handleInfoSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nom de la société</label>
-                        <input
-                          type="text"
-                          value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
-                          placeholder="Ex: Garage Martin"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Votre email</label>
-                        <input
-                          type="email"
-                          value={companyEmail}
-                          onChange={(e) => setCompanyEmail(e.target.value)}
-                          placeholder="votre@email.fr"
-                          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
-                          required
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300"
-                      >
-                        Continuer
-                      </button>
-                    </form>
-                  </motion.div>
-                )}
-
-                {/* Step: Plan selection */}
-                {importState === 'plan' && (
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1], damping: 20 }}
-                    className="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl"
-                  >
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">Choisissez votre plan</h3>
-                    <p className="text-gray-500 mb-8 text-center">Sélectionnez l'offre adaptée à vos besoins.</p>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {IA_VOCALE_PLANS.map((plan) => (
-                        <motion.button
-                          key={plan.id}
-                          whileHover={{ y: -4 }}
-                          onClick={() => handlePlanSelect(plan.id)}
-                          className={`relative text-left p-6 rounded-2xl border-2 transition-all duration-300 ${
-                            plan.badge
-                              ? 'border-emerald-500 bg-emerald-50/50 shadow-lg shadow-emerald-500/10'
-                              : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {plan.badge && (
-                            <span className="absolute -top-3 left-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                              {plan.badge}
-                            </span>
-                          )}
-                          <div className="text-2xl font-bold text-gray-900 mb-1">{plan.price}</div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">{plan.name}</div>
-                          <div className="text-xs text-gray-500">{plan.desc}</div>
-                        </motion.button>
-                      ))}
-                    </div>
-                    <p className="text-[13px] text-gray-400 text-center mt-6 leading-relaxed max-w-md mx-auto">
-                      La formule choisie sera activée à la fin de votre essai gratuit. Vous serez notifié à 80% de votre essai. Transparence totale, aucune surprise.
-                    </p>
-                  </motion.div>
-                )}
-
-                {/* Step: Redirecting */}
-                {importState === 'redirecting' && (
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1], damping: 20 }}
-                    className="bg-white rounded-3xl p-10 max-w-md w-full text-center shadow-2xl"
-                  >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
-                      className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6"
-                    >
-                      <CheckCircle2 className="w-10 h-10 text-white" />
-                    </motion.div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Félicitations !</h3>
-                    <p className="text-gray-500 mb-4">Redirection vers la vérification de carte sécurisée...</p>
-                    <p className="text-xs text-gray-400 mb-6">Un prélèvement de 0,50€ HT sera effectué pour vérifier votre carte, puis remboursé sous quelques minutes.</p>
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-gray-400">
-                      <p>Redirection dans <span className="font-bold text-emerald-600 text-lg">{countdown}</span>...</p>
-                      <div className="mt-4 w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: '100%' }}
-                          animate={{ width: '0%' }}
-                          transition={{ duration: 3, ease: 'linear' }}
-                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
-                        />
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Uploading overlay */}
-          <AnimatePresence>
-            {importState === 'uploading' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6"
-              >
-                <motion.div
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  className="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl"
-                >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                    className="w-16 h-16 mx-auto border-4 border-emerald-200 border-t-emerald-600 rounded-full mb-6"
-                  />
-                  <p className="text-lg font-semibold text-gray-900">Envoi en cours...</p>
-                  <p className="text-sm text-gray-400 mt-2">Préparation de vos appels gratuits</p>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Import card */}
-          <ScrollReveal>
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-xl shadow-emerald-900/5 overflow-hidden">
-              {/* Tabs */}
-              <div className="flex border-b border-gray-100">
-                {[
-                  { key: 'manual', label: 'Ajout manuel', icon: UserPlus },
-                  { key: 'csv', label: 'Import CSV', icon: FileSpreadsheet },
-                ].map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setImportTab(tab.key)}
-                    className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm font-semibold transition-all ${
-                      importTab === tab.key
-                        ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50/50'
-                        : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <tab.icon className="w-4 h-4" />
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-6 md:p-8">
-                {/* CSV Tab */}
-                {importTab === 'csv' && (
-                  <div>
-                    <div
-                      onDrop={onDrop}
-                      onDragOver={onDragOver}
-                      onDragLeave={onDragLeave}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all duration-200 ${
-                        isDragging
-                          ? 'border-emerald-400 bg-emerald-50'
-                          : csvData
-                            ? 'border-emerald-300 bg-emerald-50/50'
-                            : 'border-gray-200 hover:border-emerald-300 hover:bg-emerald-50/30'
-                      }`}
-                    >
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".csv,.xlsx"
-                        className="hidden"
-                        onChange={(e) => handleCsvFile(e.target.files?.[0])}
-                      />
-
-                      {csvData ? (
-                        <div>
-                          <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                          <p className="text-lg font-semibold text-gray-900">{csvFileName}</p>
-                          <p className="text-sm text-emerald-600 mt-1">{csvData.length} contacts détectés</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <Upload className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                          <p className="text-lg font-semibold text-gray-700">Glissez votre fichier ici</p>
-                          <p className="text-sm text-gray-400 mt-1">ou cliquez pour parcourir — CSV, XLSX</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* CSV Export Help */}
-                    <div className="mt-4">
-                      <button
-                        onClick={() => setCsvHelpOpen(!csvHelpOpen)}
-                        className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        <HelpCircle className="w-4 h-4" />
-                        <span>Comment exporter en CSV ?</span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${csvHelpOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      <AnimatePresence>
-                        {csvHelpOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-3 bg-gray-50 rounded-xl p-5 space-y-4 border border-gray-100">
-                              <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <FileSpreadsheet className="w-4 h-4 text-green-700" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800">Microsoft Excel</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">Fichier → Enregistrer sous → Format : CSV UTF-8 (délimité par des virgules)</p>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <FileSpreadsheet className="w-4 h-4 text-blue-700" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800">Google Sheets</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">Fichier → Télécharger → Valeurs séparées par des virgules (.csv)</p>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <FileSpreadsheet className="w-4 h-4 text-gray-600" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800">Numbers (Mac)</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">Fichier → Exporter vers → CSV</p>
-                                </div>
-                              </div>
-                              <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                  <Wrench className="w-4 h-4 text-amber-700" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800">Logiciel métier</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">Cherchez « Export » ou « Télécharger » dans votre outil. La plupart proposent un export CSV ou Excel.</p>
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    {/* CSV Column Mapping */}
-                    {csvData && csvData.length > 0 && !csvMappingConfirmed && (
-                      <div className="mt-6">
-                        <h4 className="text-sm font-bold text-gray-900 mb-1">Associez vos colonnes</h4>
-                        <p className="text-xs text-gray-400 mb-4">Indiquez quelle colonne correspond à chaque champ requis.</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {[
-                            { key: 'nom', label: 'Nom', required: true },
-                            { key: 'telephone', label: 'Téléphone', required: true },
-                            { key: 'dateRdv', label: 'Date RDV', required: false },
-                          ].map((field) => (
-                            <div key={field.key}>
-                              <label className="block text-xs font-semibold text-gray-600 mb-1">
-                                {field.label} {field.required ? <span className="text-red-400">*</span> : <span className="text-gray-300">(facultatif)</span>}
-                              </label>
-                              <select
-                                value={csvMapping[field.key]}
-                                onChange={(e) => setCsvMapping((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all bg-white"
-                              >
-                                <option value="">-- Sélectionner --</option>
-                                {csvHeaders.map((h) => (
-                                  <option key={h} value={h}>{h}</option>
-                                ))}
-                              </select>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Preview first 3 rows with mapping */}
-                        {csvMapping.nom && csvMapping.telephone && (
-                          <div className="mt-4 overflow-x-auto">
-                            <p className="text-xs font-semibold text-gray-500 mb-2">Aperçu (3 premières lignes)</p>
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b border-gray-100">
-                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Nom</th>
-                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Téléphone</th>
-                                  <th className="text-left py-2 px-3 text-xs font-semibold text-gray-400">Date RDV</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {csvData.slice(0, 3).map((row, i) => (
-                                  <tr key={i} className="border-b border-gray-50">
-                                    <td className="py-2 px-3 text-gray-700 font-medium">{row[csvMapping.nom] || '—'}</td>
-                                    <td className="py-2 px-3 text-gray-600">{row[csvMapping.telephone] || '—'}</td>
-                                    <td className="py-2 px-3 text-gray-600">{csvMapping.dateRdv ? (row[csvMapping.dateRdv] || '—') : '—'}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-
-                        {csvData && csvMapping.telephone && csvData.some(r => r[csvMapping.telephone] && !isMobileFR(r[csvMapping.telephone])) && (
-                          <div className="mt-4 flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                            <Phone className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                            <span>Certains numéros sont des fixes. L'IA appellera sur le fixe directement.</span>
-                          </div>
-                        )}
-
-                        <button
-                          onClick={() => setCsvMappingConfirmed(true)}
-                          disabled={!csvMapping.nom || !csvMapping.telephone}
-                          className="w-full mt-4 py-3 rounded-xl text-white font-semibold bg-gray-900 hover:bg-gray-800 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
-                        >
-                          Valider le mapping
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Confirmed mapping summary + submit */}
-                    {csvData && csvMappingConfirmed && (
-                      <div className="mt-6">
-                        <div className="flex items-center gap-2 mb-3">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                          <span className="text-sm font-semibold text-gray-800">{csvData.length} contacts prêts</span>
-                          <button onClick={() => setCsvMappingConfirmed(false)} className="ml-auto text-xs text-emerald-600 hover:text-emerald-700 font-medium">Modifier le mapping</button>
-                        </div>
-                        {/* Service type selector */}
-                        <div className="mt-4 mb-4">
-                          <h4 className="text-sm font-bold text-gray-900 mb-1">Ce fichier concerne...</h4>
-                          <p className="text-xs text-gray-400 mb-3">Choisissez le type de service pour tous les contacts</p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <button
-                              onClick={() => setServiceType('renouvellement')}
-                              className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                                serviceType === 'renouvellement'
-                                  ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                                  : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                serviceType === 'renouvellement' ? 'bg-emerald-100' : 'bg-gray-100'
-                              }`}>
-                                <RefreshCw className={`w-5 h-5 ${serviceType === 'renouvellement' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                              </div>
-                              <div>
-                                <p className={`font-semibold text-sm ${serviceType === 'renouvellement' ? 'text-emerald-700' : 'text-gray-800'}`}>Renouvellement de dossiers</p>
-                                <p className="text-xs text-gray-400 mt-0.5">Relance des dossiers arrivant à échéance</p>
-                              </div>
-                            </button>
-                            <button
-                              onClick={() => setServiceType('confirmation')}
-                              className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                                serviceType === 'confirmation'
-                                  ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                                  : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                serviceType === 'confirmation' ? 'bg-emerald-100' : 'bg-gray-100'
-                              }`}>
-                                <CalendarCheck className={`w-5 h-5 ${serviceType === 'confirmation' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                              </div>
-                              <div>
-                                <p className={`font-semibold text-sm ${serviceType === 'confirmation' ? 'text-emerald-700' : 'text-gray-800'}`}>Confirmation de RDV</p>
-                                <p className="text-xs text-gray-400 mt-0.5">Appel J-1 pour confirmer les rendez-vous</p>
-                              </div>
-                            </button>
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleSubmit}
-                          disabled={importState !== 'idle' || !serviceType}
-                          className="w-full py-4 rounded-xl text-white font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-                        >
-                          Lancer mes 100 appels gratuits
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Manual Tab */}
-                {importTab === 'manual' && (
-                  <div>
-                    {manualRows.some(r => r.telephone && !isMobileFR(r.telephone)) && (
-                      <div className="mb-4 flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                        <Phone className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <span>Certains numéros sont des fixes. L'IA appellera sur le fixe directement.</span>
-                      </div>
-                    )}
-                    <div className="space-y-4">
-                      {manualRows.map((row, idx) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end"
-                        >
-                          <div className="sm:col-span-4">
-                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Prénom client</label>}
-                            <input
-                              type="text"
-                              value={row.prenom}
-                              onChange={(e) => updateRow(idx, 'prenom', e.target.value)}
-                              placeholder="Jean"
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                            />
-                          </div>
-                          <div className="sm:col-span-4">
-                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Téléphone</label>}
-                            <input
-                              type="tel"
-                              value={row.telephone}
-                              onChange={(e) => updateRow(idx, 'telephone', e.target.value)}
-                              placeholder="06 12 34 56 78"
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                            />
-                          </div>
-                          <div className="sm:col-span-3">
-                            {idx === 0 && <label className="block text-xs font-semibold text-gray-500 mb-1">Date RDV</label>}
-                            <input
-                              type="date"
-                              value={row.dateRdv}
-                              onChange={(e) => updateRow(idx, 'dateRdv', e.target.value)}
-                              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
-                            />
-                          </div>
-                          <div className="sm:col-span-1 flex justify-center">
-                            <button
-                              onClick={() => removeRow(idx)}
-                              disabled={manualRows.length <= 1}
-                              className="p-2.5 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-30"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={addRow}
-                      className="mt-4 flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
-                    >
-                      <Plus className="w-4 h-4" /> Ajouter un contact
-                    </button>
-                    {/* Service type selector */}
-                    <div className="mt-6 mb-2">
-                      <h4 className="text-sm font-bold text-gray-900 mb-1">Ce fichier concerne...</h4>
-                      <p className="text-xs text-gray-400 mb-3">Choisissez le type de service pour tous les contacts</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
-                          onClick={() => setServiceType('renouvellement')}
-                          className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                            serviceType === 'renouvellement'
-                              ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                              : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            serviceType === 'renouvellement' ? 'bg-emerald-100' : 'bg-gray-100'
-                          }`}>
-                            <RefreshCw className={`w-5 h-5 ${serviceType === 'renouvellement' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                          </div>
-                          <div>
-                            <p className={`font-semibold text-sm ${serviceType === 'renouvellement' ? 'text-emerald-700' : 'text-gray-800'}`}>Renouvellement de dossiers</p>
-                            <p className="text-xs text-gray-400 mt-0.5">Relance des dossiers arrivant à échéance</p>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setServiceType('confirmation')}
-                          className={`flex items-start gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 ${
-                            serviceType === 'confirmation'
-                              ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                              : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                            serviceType === 'confirmation' ? 'bg-emerald-100' : 'bg-gray-100'
-                          }`}>
-                            <CalendarCheck className={`w-5 h-5 ${serviceType === 'confirmation' ? 'text-emerald-600' : 'text-gray-400'}`} />
-                          </div>
-                          <div>
-                            <p className={`font-semibold text-sm ${serviceType === 'confirmation' ? 'text-emerald-700' : 'text-gray-800'}`}>Confirmation de RDV</p>
-                            <p className="text-xs text-gray-400 mt-0.5">Appel J-1 pour confirmer les rendez-vous</p>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleSubmit}
-                      disabled={manualRows.every((r) => !r.prenom || !r.telephone) || importState !== 'idle' || !serviceType}
-                      className="w-full mt-6 py-4 rounded-xl text-white font-semibold bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.01] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-                    >
-                      Lancer mes 100 appels gratuits
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
 
       {/* PRICING                                      */}
       {/* ============================================ */}
@@ -2560,6 +2316,14 @@ export default function IAVocaleLanding() {
                         <p className="text-[11.5px] text-emerald-700/80 font-medium mt-0.5">{plan.annualNote}</p>
                       )}
                     </div>
+                    {/* Bandeau "Sans CB" massif uniquement pour l'essai gratuit */}
+                    {plan.noCardBig && (
+                      <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-center">
+                        <div className="text-[13px] font-bold text-emerald-700 tracking-tight leading-tight">
+                          Sans CB · Zéro engagement · Annulation en 1 clic
+                        </div>
+                      </div>
+                    )}
                     <ul className="space-y-2.5 mb-6 flex-1">
                       {plan.features.map((f, j) => (
                         <li key={j} className="flex items-start gap-2 text-[13.5px] text-gray-600">
