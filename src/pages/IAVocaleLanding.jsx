@@ -1379,16 +1379,13 @@ export default function IAVocaleLanding() {
                 </span>
               </div>
 
-              <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Votre business tourne.<br />
-                <span className="text-gray-900">Même quand vous êtes occupé.</span>
+              <h1 className="hero-fade hero-fade-2 text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
+                Occupé ?<br />
+                <GradientText>Votre IA décroche.</GradientText>
               </h1>
-              <h2 className="hero-fade hero-fade-2 mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.15] tracking-tight">
-                <GradientText>Occupé ? Votre IA décroche à votre place, retient le prospect et remplit votre agenda. Vous n'en perdez plus un seul.</GradientText>
-              </h2>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                Sur un chantier, en rendez-vous, avec un client — votre IA répond en 2 secondes, comprend le besoin, propose un créneau et vous envoie le récapitulatif par SMS. Pendant que vous travaillez, elle remplit votre planning.
+                Pendant que vous travaillez, elle qualifie, prend RDV, et vous envoie le récap par SMS.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
@@ -1717,9 +1714,6 @@ export default function IAVocaleLanding() {
             subtitle="Une seule plateforme. La Réception d'appels 24/7 est toujours active. Vous activez les modules dont vous avez besoin — tous sont inclus."
           />
 
-          {/* Animation simplicité : Réception activée + injection contacts → robot appelle */}
-          <SimplicityShowcase />
-
           {/* Top row — 2 core services side by side */}
           <div className="grid md:grid-cols-2 gap-8 mt-4">
             {[
@@ -1732,7 +1726,7 @@ export default function IAVocaleLanding() {
                 chipBg: 'bg-emerald-50',
                 chipText: 'text-emerald-700',
                 accentBorder: 'border-emerald-100',
-                ctaBg: 'bg-gray-900 hover:bg-gray-800',
+                ctaBg: 'bg-gradient-to-br from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500',
                 badge: 'Appels sortants',
                 badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
               },
@@ -1745,7 +1739,7 @@ export default function IAVocaleLanding() {
                 chipBg: 'bg-blue-50',
                 chipText: 'text-blue-700',
                 accentBorder: 'border-blue-100',
-                ctaBg: 'bg-gray-900 hover:bg-gray-800',
+                ctaBg: 'bg-gradient-to-br from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600',
                 badge: 'Appels sortants',
                 badgeColor: 'bg-blue-50 text-blue-700 border-blue-100',
               },
