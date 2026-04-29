@@ -208,10 +208,12 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 /* ------------------------------------------------------------------ */
 // LA BASE de IA Vocale = Réception d'appels IA 24/7 (placée en première position).
 // Les autres entrées sont des MODULES qui s'ajoutent à cette base.
+// "short" = titre compact utilisé dans le mockup phone du hero (évite la troncature).
 const services = [
   {
     icon: 'PhoneCall',
     title: 'Réception d\'appels IA 24/7',
+    short: 'Réception 24/7',
     desc: "La base : quand vous ne décrochez pas, l'IA répond, qualifie et vous envoie le lead.",
     result: '0 appel manqué',
     example: 'Nouveau prospect — Fuite urgente qualifié',
@@ -220,6 +222,7 @@ const services = [
   {
     icon: 'RefreshCw',
     title: 'Renouvellement de dossiers',
+    short: 'Renouvellement',
     desc: "L'IA appelle vos clients pour renouveler leurs contrats, dossiers et abonnements.",
     result: '80% de renouvellements',
     example: 'Garage MaxMotors — CT renouvelé',
@@ -228,6 +231,7 @@ const services = [
   {
     icon: 'CalendarCheck',
     title: 'Confirmation de RDV',
+    short: 'Confirmation RDV',
     desc: "Chaque RDV est confirmé par appel automatique. Fini les lapins.",
     result: '-35% de rendez-vous manqués',
     example: 'Salon Bella — RDV confirmé demain 14h',
@@ -236,6 +240,7 @@ const services = [
   {
     icon: 'Bot',
     title: 'Robot IA sur mesure',
+    short: 'Robot sur mesure',
     desc: "Un assistant vocal personnalisé pour votre métier, vos scripts, vos process.",
     result: 'Disponible 7j/7 24h/24',
     example: 'Courtier — 12 relances auto cette semaine',
@@ -244,6 +249,7 @@ const services = [
   {
     icon: 'Star',
     title: 'Impact Avis',
+    short: 'Impact Avis',
     desc: "L'IA appelle vos clients, qualifie leur ressenti. 4★+ → publication Google. Sinon, retour interne.",
     result: '+5 avis Google par mois',
     example: 'Salon Bella — 4,9/5 étoiles · 38 avis ce mois',
@@ -252,6 +258,7 @@ const services = [
   {
     icon: 'Zap',
     title: 'Accélération de paiements',
+    short: 'Accélération paiements',
     desc: "L'IA relance vos impayés au bon moment, avec le bon ton. Vos délais de paiement raccourcissent.",
     result: 'Délais de paiement -40%',
     example: 'Cabinet Martin — 1 200€ réglés en 4 jours',
@@ -326,7 +333,7 @@ const HeroAnimation = () => {
               </div>
             </div>
 
-            {/* 4 service pills — always visible, active one highlighted */}
+            {/* 6 service pills — always visible, active one highlighted */}
             <div className="grid grid-cols-2 gap-1.5 mb-5">
               {services.map((s, i) => {
                 const SIcon = iconMap[s.icon];
@@ -335,7 +342,7 @@ const HeroAnimation = () => {
                 return (
                   <div
                     key={i}
-                    className={`flex items-center gap-2 px-2.5 py-2 rounded-xl border transition-all duration-500 ${
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-xl border transition-all duration-500 ${
                       isActive
                         ? `${sc.bg} border-transparent ring-2 ${sc.ring} scale-[1.02]`
                         : i <= active
@@ -345,8 +352,8 @@ const HeroAnimation = () => {
                     style={{ transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
                   >
                     <SIcon className={`w-3.5 h-3.5 shrink-0 ${isActive ? sc.icon : 'text-gray-400'}`} />
-                    <span className={`text-[10px] font-semibold leading-tight ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {s.title.length > 20 ? s.title.split(' ').slice(0, 2).join(' ') : s.title}
+                    <span className={`text-[9.5px] font-semibold leading-tight truncate ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                      {s.short || s.title}
                     </span>
                   </div>
                 );
@@ -424,7 +431,7 @@ const HeroAnimation = () => {
           transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
         }}
       >
-        <p className="text-[10px] font-bold text-gray-900">4 services actifs</p>
+        <p className="text-[10px] font-bold text-gray-900">6 services actifs</p>
         <p className="text-[9px] text-emerald-600 font-semibold">100% automatisé</p>
       </div>
     </div>
@@ -690,42 +697,42 @@ const MetierSelector = ({ openPopup }) => {
               ))}
             </div>
 
-            {/* CTA — Two clear paths */}
-            <div className="mt-10 max-w-2xl mx-auto">
-              {/* Path 1: Renouvellement & Confirmation → Import */}
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-100/80 mb-3">
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex -space-x-1 flex-shrink-0">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center ring-2 ring-white"><RefreshCw className="w-4 h-4 text-white" /></div>
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center ring-2 ring-white"><CalendarCheck className="w-4 h-4 text-white" /></div>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-gray-900 leading-tight">Renouvellement & Confirmation RDV</p>
-                      <p className="text-xs text-gray-500">Appels sortants — 100 appels offerts</p>
-                    </div>
-                  </div>
-                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
-                    Démarrer gratuitement <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
-
-              {/* Path 2: Réception & Robot → Calendar */}
-              <div className="bg-gradient-to-r from-amber-50 to-violet-50 rounded-2xl p-5 border border-amber-100/80">
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex -space-x-1 flex-shrink-0">
+            {/* CTA — Une seule card qui présente les 6 modules inclus */}
+            <div className="mt-10 max-w-3xl mx-auto">
+              <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 rounded-2xl p-6 border border-emerald-100/80">
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
+                    <div className="flex items-center gap-1.5">
                       <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center ring-2 ring-white"><PhoneCall className="w-4 h-4 text-white" /></div>
-                      <div className="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center ring-2 ring-white"><Bot className="w-4 h-4 text-white" /></div>
+                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Réception 24/7</span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-gray-900 leading-tight">Réception d'appels 24/7 & Robot sur mesure</p>
-                      <p className="text-xs text-gray-500">Solution personnalisée</p>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center ring-2 ring-white"><RefreshCw className="w-4 h-4 text-white" /></div>
+                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Renouvellement</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center ring-2 ring-white"><CalendarCheck className="w-4 h-4 text-white" /></div>
+                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">RDV</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center ring-2 ring-white"><Bot className="w-4 h-4 text-white" /></div>
+                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Robot</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-yellow-500 flex items-center justify-center ring-2 ring-white"><Star className="w-4 h-4 text-white" fill="white" /></div>
+                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Avis</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center ring-2 ring-white"><Zap className="w-4 h-4 text-white" /></div>
+                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Paiements</span>
                     </div>
                   </div>
-                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
-                    <CalendarCheck className="w-4 h-4" /> Planifier un call
+                  <div className="text-center">
+                    <p className="text-sm font-bold text-gray-900 leading-tight mb-1">Les 6 modules. Tous inclus dès l'essai gratuit.</p>
+                    <p className="text-xs text-gray-500">100 appels offerts · 14 jours · Sans CB</p>
+                  </div>
+                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('hero-cta-card', 'gratuit'); }} className="self-center inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-7 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap">
+                    Démarrer mes 100 appels offerts <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
               </div>
@@ -934,9 +941,60 @@ export default function IAVocaleLanding() {
   ];
 
   const testimonials = [
-    { name: 'Thomas R.', role: 'Garagiste, Rennes', quote: '12 clients réactivés en 1 semaine. Des contrôles techniques que j\'aurais perdus sans les relances IA.', avatar: 'T' },
-    { name: 'Camille D.', role: 'Ostéopathe, Nantes', quote: 'Zéro lapin depuis que les confirmations IA sont en place. Mon planning est enfin fiable.', avatar: 'C' },
-    { name: 'Marc L.', role: 'Courtier, Brest', quote: '80% de contrats renouvelés sans passer un seul appel. La rentabilité est immédiate.', avatar: 'M' },
+    {
+      name: 'Thomas Roux',
+      role: 'Garagiste',
+      city: 'Rennes',
+      quote: '12 clients réactivés la première semaine, des contrôles techniques que j\'aurais perdus sans les relances IA.',
+      result: '+3 200€ de CA / mois',
+      avatar: 'T',
+      color: 'emerald',
+    },
+    {
+      name: 'Camille Durand',
+      role: 'Ostéopathe',
+      city: 'Nantes',
+      quote: 'Zéro lapin depuis que les confirmations IA sont en place. Mon planning est enfin fiable, et j\'ai gagné 1h/jour.',
+      result: 'No-show -42%',
+      avatar: 'C',
+      color: 'blue',
+    },
+    {
+      name: 'Marc Lefranc',
+      role: 'Courtier en assurance',
+      city: 'Brest',
+      quote: '80% de contrats renouvelés sans passer un seul appel. Je me consacre à la prospection, l\'IA fait le reste.',
+      result: '+8 700€ de CA / mois',
+      avatar: 'M',
+      color: 'violet',
+    },
+    {
+      name: 'Sophie Bernard',
+      role: 'Salon de coiffure',
+      city: 'Vannes',
+      quote: 'Impact Avis a fait passer ma fiche Google de 4,1 à 4,7 étoiles en 2 mois. Je reçois 2× plus d\'appels qu\'avant.',
+      result: '+38 avis Google',
+      avatar: 'S',
+      color: 'yellow',
+    },
+    {
+      name: 'Pierre Martin',
+      role: 'Cabinet d\'expertise comptable',
+      city: 'Quimper',
+      quote: 'Mes délais de paiement sont passés de 31 à 19 jours. La trésorerie n\'a jamais été aussi saine.',
+      result: 'Délais -39%',
+      avatar: 'P',
+      color: 'rose',
+    },
+    {
+      name: 'Julie Lemaire',
+      role: 'Cabinet dentaire',
+      city: 'Saint-Malo',
+      quote: 'L\'IA appelle la veille pour confirmer chaque RDV. Mes journées sont enfin remplies, sans temps mort.',
+      result: 'Taux de présence 94%',
+      avatar: 'J',
+      color: 'amber',
+    },
   ];
 
   // Tarification définitive — alignée sur la consommation réelle (130 appels/mois en moyenne)
@@ -2039,7 +2097,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Cas d'usage"
             title="Votre métier. Votre IA."
-            subtitle="Découvrez comment nos 4 services IA s'adaptent à votre quotidien — et combien vous allez gagner."
+            subtitle="Découvrez comment nos 6 services IA s'adaptent à votre quotidien — et combien vous allez gagner."
           />
 
           <MetierSelector openPopup={openPopup} />
@@ -2222,28 +2280,82 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Témoignages"
             title="Ils utilisent BoosterPay."
-            subtitle="Des professionnels comme vous qui ont automatisé leurs relances et confirmations."
+            subtitle="Rejoignez +250 professionnels qui automatisent leurs appels avec l'IA."
           />
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <ScrollReveal key={i} delay={i * 0.12}>
-                <div className="bg-white rounded-2xl border border-gray-100 p-8 h-full flex flex-col">
-                  <p className="text-gray-600 leading-relaxed flex-1">“{t.quote}”</p>
-                  <div className="h-px bg-gray-100 my-6" />
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
-                      {t.avatar}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => {
+              const tc = svcColors[t.color] || svcColors.emerald;
+              const avatarBg = {
+                emerald: 'from-emerald-400 to-teal-500',
+                blue:    'from-blue-400 to-indigo-500',
+                violet:  'from-violet-400 to-purple-500',
+                yellow:  'from-yellow-400 to-amber-500',
+                rose:    'from-rose-400 to-pink-500',
+                amber:   'from-amber-400 to-orange-500',
+              }[t.color] || 'from-emerald-400 to-teal-500';
+              return (
+                <ScrollReveal key={i} delay={(i % 3) * 0.08}>
+                  <div className="bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
+                    {/* Étoiles */}
+                    <div className="flex gap-0.5 mb-4">
+                      {[1,2,3,4,5].map((s) => (
+                        <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" strokeWidth={1} />
+                      ))}
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{t.name}</p>
-                      <p className="text-sm text-gray-400">{t.role}</p>
+
+                    {/* Quote */}
+                    <p className="text-[15px] text-gray-700 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
+
+                    {/* Result chip */}
+                    <div className={`mt-5 inline-flex self-start items-center gap-1.5 px-3 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
+                      <Sparkles className={`w-3 h-3 ${tc.icon}`} />
+                      <span className={`text-[11.5px] font-bold ${tc.icon}`}>{t.result}</span>
+                    </div>
+
+                    <div className="h-px bg-gray-100 my-5" />
+
+                    {/* Auteur */}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                        {t.avatar}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-[14px]">{t.name}</p>
+                        <p className="text-[12.5px] text-gray-500">{t.role} · {t.city}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </ScrollReveal>
-            ))}
+                </ScrollReveal>
+              );
+            })}
           </div>
+
+          {/* Trust line */}
+          <ScrollReveal delay={0.3}>
+            <div className="mt-12 text-center">
+              <p className="text-[13.5px] text-gray-500">
+                <span className="font-bold text-gray-900">+250 professionnels</span> automatisent déjà leurs appels avec BoosterPay.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12px] text-gray-400">
+                <span>Garagistes</span>
+                <span>·</span>
+                <span>Cabinets médicaux</span>
+                <span>·</span>
+                <span>Courtiers</span>
+                <span>·</span>
+                <span>Salons</span>
+                <span>·</span>
+                <span>Plombiers</span>
+                <span>·</span>
+                <span>Avocats</span>
+                <span>·</span>
+                <span>Restaurants</span>
+                <span>·</span>
+                <span>Experts-comptables</span>
+              </div>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
