@@ -288,6 +288,14 @@ body {
   .mb-safe {
     margin-bottom: env(safe-area-inset-bottom, 0);
   }
+  /* Cache la scrollbar tout en gardant le scroll horizontal (utilisé sur les pill switchers mobile) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Smooth scroll with reduced motion preference */

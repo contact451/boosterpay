@@ -122,10 +122,10 @@ export default function Configurer() {
     <div className="min-h-screen bg-[#F7F9FC] text-gray-900">
       {/* HEADER */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100"
             aria-label="Menu"
           >
             <ChevronDown className="w-5 h-5 text-gray-600 rotate-90" />
@@ -150,7 +150,7 @@ export default function Configurer() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {/* TRIAL STATUS BAR */}
         <TrialStatusBar
           trial={trial}
@@ -158,9 +158,9 @@ export default function Configurer() {
           onCancelPlan={() => setCancelModalOpen(true)}
         />
 
-        <div className="mt-8 grid lg:grid-cols-[280px_1fr] gap-6 sm:gap-10">
-          {/* SIDEBAR (desktop) */}
-          <aside className="hidden lg:block">
+        <div className="mt-8 grid md:grid-cols-[260px_1fr] lg:grid-cols-[280px_1fr] gap-6 md:gap-8 lg:gap-10">
+          {/* SIDEBAR (tablette+) */}
+          <aside className="hidden md:block md:sticky md:top-20 md:self-start md:max-h-[calc(100vh-6rem)] md:overflow-y-auto">
             <ModuleNav
               active={activeModule}
               onSelect={setActiveModule}
@@ -173,13 +173,13 @@ export default function Configurer() {
             {sidebarOpen && (
               <>
                 <motion.div
-                  className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+                  className="fixed inset-0 bg-black/30 z-40 md:hidden"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   onClick={() => setSidebarOpen(false)}
                 />
                 <motion.aside
-                  className="fixed top-0 left-0 bottom-0 w-72 bg-white z-50 lg:hidden p-5 overflow-y-auto"
-                  initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }}
+                  className="fixed top-0 left-0 bottom-0 w-[88vw] max-w-xs bg-white z-50 md:hidden p-5 overflow-y-auto"
+                  initial={{ x: -320 }} animate={{ x: 0 }} exit={{ x: -320 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 >
                   <button
@@ -200,24 +200,33 @@ export default function Configurer() {
           </AnimatePresence>
 
           {/* MAIN PANEL */}
-          <main>
-            {/* Mobile : pill module switcher */}
-            <div className="lg:hidden -mx-4 sm:mx-0 mb-5 overflow-x-auto">
-              <div className="flex gap-2 px-4 sm:px-0 pb-2 min-w-max">
-                {MODULES.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => setActiveModule(m.id)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[12.5px] font-medium whitespace-nowrap transition-all ${
-                      activeModule === m.id
-                        ? 'bg-gray-900 text-white shadow-sm'
-                        : 'bg-white text-gray-600 border border-gray-200'
-                    }`}
-                  >
-                    <m.icon className="w-3.5 h-3.5" style={{ color: activeModule === m.id ? 'white' : m.color }} />
-                    {m.label}
-                  </button>
-                ))}
+          <main className="min-w-0">
+            {/* Mobile only : pill module switcher avec scroll horizontal smooth + indicateurs latéraux */}
+            <div className="md:hidden relative mb-5">
+              {/* Fade gauche/droite pour signaler le scroll */}
+              <div className="absolute left-0 top-0 bottom-2 w-6 bg-gradient-to-r from-[#F7F9FC] to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-2 w-6 bg-gradient-to-l from-[#F7F9FC] to-transparent pointer-events-none z-10" />
+              <div className="-mx-4 overflow-x-auto scrollbar-hide" style={{ scrollSnapType: 'x proximity' }}>
+                <div className="flex gap-2 px-4 pb-2 min-w-max">
+                  {MODULES.map(m => {
+                    const isActive = activeModule === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => setActiveModule(m.id)}
+                        style={{ scrollSnapAlign: 'start' }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[12.5px] font-medium whitespace-nowrap transition-all ${
+                          isActive
+                            ? 'bg-gray-900 text-white shadow-sm'
+                            : 'bg-white text-gray-600 border border-gray-200 active:bg-gray-50'
+                        }`}
+                      >
+                        <m.icon className="w-3.5 h-3.5" style={{ color: isActive ? 'white' : m.color }} />
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -328,34 +337,37 @@ function TrialStatusBar({ trial, onChangePlan, onCancelPlan }) {
   const isCancelled = trial.statut === 'annule';
 
   return (
-    <div className={`bg-white border rounded-3xl p-5 sm:p-7 shadow-[0_1px_2px_rgba(0,0,0,0.03)] ${
+    <div className={`bg-white border rounded-3xl p-5 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(0,0,0,0.03)] ${
       isCancelled ? 'border-rose-200 bg-rose-50/30' : 'border-gray-100'
     }`}>
-      <div className="flex flex-wrap items-start gap-x-8 gap-y-5">
+      {/* Grid responsive : 1 col mobile, 3 col tablette+ */}
+      <div className="grid sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1.5fr)_auto] gap-5 sm:gap-6 md:gap-8 items-start">
         {/* Plan + actions */}
-        <div className="flex-1 min-w-[220px]">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="text-[11.5px] font-semibold text-gray-400 uppercase tracking-wider">Mon plan</div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Mon plan</div>
             {isCancelled && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold uppercase tracking-wider">
                 Annulé
               </span>
             )}
           </div>
-          <div className="text-[20px] font-semibold text-gray-900 leading-tight">{planLabels[trial.plan] || trial.plan}</div>
+          <div className="text-[18px] sm:text-[20px] font-semibold text-gray-900 leading-tight truncate">
+            {planLabels[trial.plan] || trial.plan}
+          </div>
           {!isCancelled && (
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={onChangePlan}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12.5px] font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-[12px] sm:text-[12.5px] font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" /> Changer de plan
               </button>
               <button
                 type="button"
                 onClick={onCancelPlan}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[12.5px] font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-[12px] sm:text-[12.5px] font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
               >
                 Annuler mon plan
               </button>
@@ -369,10 +381,10 @@ function TrialStatusBar({ trial, onChangePlan, onCancelPlan }) {
         </div>
 
         {/* Appels */}
-        <div className="flex-1 min-w-[200px]">
-          <div className="flex items-baseline justify-between mb-1.5">
-            <div className="text-[11.5px] font-semibold text-gray-400 uppercase tracking-wider">Appels consommés</div>
-            <div className="text-[12.5px] tabular-nums">
+        <div className="min-w-0">
+          <div className="flex items-baseline justify-between gap-2 mb-1.5">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Appels consommés</div>
+            <div className="text-[12.5px] tabular-nums shrink-0">
               <span className="font-semibold text-gray-900">{trial.appels_consommes}</span>
               <span className="text-gray-400"> / {trial.appels_offerts}</span>
             </div>
@@ -389,9 +401,9 @@ function TrialStatusBar({ trial, onChangePlan, onCancelPlan }) {
         </div>
 
         {/* Reste */}
-        <div>
-          <div className="text-[11.5px] font-semibold text-gray-400 uppercase tracking-wider">Reste</div>
-          <div className="text-[18px] font-semibold text-gray-900 mt-0.5">
+        <div className="text-left sm:text-right shrink-0">
+          <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Reste</div>
+          <div className="text-[18px] font-semibold text-gray-900 mt-0.5 whitespace-nowrap">
             {daysLeft} jour{daysLeft > 1 ? 's' : ''}
           </div>
         </div>
@@ -708,20 +720,20 @@ function CancelModal({ open, onClose, token, currentPlan, onCancelled }) {
 
 function ReceptionPanel({ trial, token, onUpdate }) {
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-      <div className="flex items-start gap-4">
+    <div className="bg-white border border-gray-100 rounded-3xl p-5 sm:p-7 md:p-9 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+      <div className="flex items-start gap-3 sm:gap-4">
         <div
-          className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0"
           style={{ background: 'linear-gradient(135deg, #FCD34D, #F59E0B)' }}
         >
           <PhoneCall className="w-5 h-5 text-white" strokeWidth={2} />
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider mb-1">Service de base · Inclus</div>
-          <h2 className="text-[24px] sm:text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">
+          <h2 className="text-[22px] sm:text-[26px] md:text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">
             Réception d'appels IA 24/7
           </h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed mt-2">
+          <p className="text-[14px] sm:text-[15px] text-gray-500 leading-relaxed mt-2">
             La base de votre espace BoosterPay : quand vous ne décrochez pas, l'IA répond
             en moins de 2 secondes, qualifie le prospect, prend RDV si c'est chaud, et vous
             envoie un récap par SMS.
@@ -729,7 +741,7 @@ function ReceptionPanel({ trial, token, onUpdate }) {
         </div>
       </div>
 
-      <div className="mt-8 grid sm:grid-cols-2 gap-3">
+      <div className="mt-7 grid sm:grid-cols-2 gap-2.5 sm:gap-3">
         {[
           { icon: Phone, t: 'Numéro virtuel ou transfert', d: 'Vous gardez votre numéro existant ou on vous en fournit un dédié.' },
           { icon: Sparkles, t: 'Voix française naturelle', d: 'Vos clients ne se doutent pas qu\'ils parlent à une IA.' },
@@ -738,24 +750,26 @@ function ReceptionPanel({ trial, token, onUpdate }) {
         ].map((f, i) => (
           <div key={i} className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
             <div className="flex items-start gap-3">
-              <f.icon className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" strokeWidth={2} />
-              <div>
-                <div className="text-[14px] font-semibold text-gray-900">{f.t}</div>
-                <div className="text-[12.5px] text-gray-500 mt-0.5 leading-relaxed">{f.d}</div>
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                <f.icon className="w-4 h-4 text-amber-600" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[13.5px] sm:text-[14px] font-semibold text-gray-900 leading-tight">{f.t}</div>
+                <div className="text-[12px] sm:text-[12.5px] text-gray-500 mt-1 leading-relaxed">{f.d}</div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-8 p-5 sm:p-6 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50/40">
+      <div className="mt-7 p-5 sm:p-6 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50/40">
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" strokeWidth={2} />
-          <div className="flex-1">
-            <h3 className="text-[15px] font-semibold text-gray-900">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[14.5px] sm:text-[15px] font-semibold text-gray-900 leading-tight">
               Ce module nécessite un appel de paramétrage
             </h3>
-            <p className="text-[13.5px] text-gray-600 leading-relaxed mt-1">
+            <p className="text-[13px] sm:text-[13.5px] text-gray-600 leading-relaxed mt-1.5">
               Notre équipe configure le transfert d'appel depuis votre opérateur (5 minutes
               au téléphone) puis valide la voix et le script avec vous. C'est rapide et c'est
               ce qui garantit zéro coupure côté client.
@@ -764,7 +778,7 @@ function ReceptionPanel({ trial, token, onUpdate }) {
               href={CALENDAR_RECEPTION}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 px-5 py-3 rounded-full text-[14px] font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+              className="mt-4 inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full text-[13.5px] sm:text-[14px] font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
             >
               <CalendarCheck className="w-4 h-4" />
               Planifier mon appel de paramétrage
@@ -774,8 +788,11 @@ function ReceptionPanel({ trial, token, onUpdate }) {
         </div>
       </div>
 
-      <div className="mt-6 text-[12.5px] text-gray-400 text-center">
-        En attendant, vous pouvez configurer les autres modules dans la barre latérale →
+      <div className="mt-5 text-[12px] sm:text-[12.5px] text-gray-400 text-center hidden md:block">
+        En attendant, configurez les autres modules dans la barre latérale →
+      </div>
+      <div className="mt-5 text-[12px] text-gray-400 text-center md:hidden">
+        En attendant, configurez les autres modules dans les onglets du haut ↑
       </div>
     </div>
   );
@@ -916,17 +933,17 @@ function ModulePanel({ module, token, trial, onActivated }) {
   };
 
   return (
-    <div className="bg-white border border-gray-100 rounded-3xl p-6 sm:p-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <div className="bg-white border border-gray-100 rounded-3xl p-5 sm:p-7 md:p-9 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       {/* Header */}
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0"
           style={{ background: `${module.color}15`, border: `1px solid ${module.color}30` }}>
           <module.icon className="w-5 h-5" style={{ color: module.color }} strokeWidth={1.8} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: module.color }}>Module</div>
-          <h2 className="text-[24px] sm:text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">{module.label}</h2>
-          <p className="text-[14.5px] text-gray-500 leading-relaxed mt-1.5">{module.sub}</p>
+          <h2 className="text-[22px] sm:text-[26px] md:text-[28px] font-semibold text-gray-900 tracking-tight leading-tight">{module.label}</h2>
+          <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 leading-relaxed mt-1.5">{module.sub}</p>
         </div>
       </div>
 
@@ -1123,11 +1140,11 @@ function ManualRow({ row, fields, onChange, onRemove }) {
   };
 
   return (
-    <div className="grid sm:grid-cols-[1fr_auto] gap-2 items-end">
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+    <div className="relative p-3.5 sm:p-4 rounded-2xl bg-gray-50/60 border border-gray-100">
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5 pr-9">
         {fields.map(f => (
-          <div key={f}>
-            <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
+          <div key={f} className="min-w-0">
+            <label className="block text-[10.5px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
               {labels[f]}
             </label>
             <input
@@ -1147,7 +1164,7 @@ function ManualRow({ row, fields, onChange, onRemove }) {
         <button
           type="button"
           onClick={onRemove}
-          className="self-start sm:self-end mt-1 sm:mt-0 p-2.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+          className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-white transition-colors"
           aria-label="Supprimer la ligne"
         >
           <Trash2 className="w-4 h-4" />
