@@ -102,6 +102,122 @@ const GradientText = ({ children, className = '' }) => (
 );
 
 /**
+ * HowItWorksTimeline — Animation Apple-style pour les 4 étapes.
+ * - Ligne connectrice qui se dessine au scroll (SVG stroke-dashoffset)
+ * - Chaque étape apparaît en cascade avec spring physics
+ * - Icône : scale 0.6 → 1 + rotate -90 → 0 + opacity 0 → 1
+ * - Numéro "Étape N" : pop-in après l'icône
+ * - Titre + description : fade up séquentiel
+ * - Hover : lift + ring + glow subtil
+ */
+const HowItWorksTimeline = ({ steps }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-80px' });
+
+  // Easing Apple — cubic-bezier(0.16, 1, 0.3, 1) = easeOutExpo
+  const appleEase = [0.16, 1, 0.3, 1];
+
+  return (
+    <div ref={ref} className="relative max-w-5xl mx-auto mt-4">
+      {/* Connector line (desktop only) — se dessine progressivement */}
+      <svg
+        className="hidden md:block absolute top-[44px] left-0 right-0 mx-auto pointer-events-none"
+        viewBox="0 0 1000 4"
+        preserveAspectRatio="none"
+        style={{ width: 'calc(100% - 17%)', maxWidth: '900px', left: '50%', transform: 'translateX(-50%)' }}
+      >
+        <defs>
+          <linearGradient id="hiw-line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#A7F3D0" />
+            <stop offset="50%" stopColor="#5EEAD4" />
+            <stop offset="100%" stopColor="#A7F3D0" />
+          </linearGradient>
+        </defs>
+        <motion.line
+          x1="0" y1="2" x2="1000" y2="2"
+          stroke="url(#hiw-line)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={inView ? { pathLength: 1 } : {}}
+          transition={{ duration: 1.4, ease: appleEase, delay: 0.2 }}
+        />
+      </svg>
+
+      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-6 md:gap-4">
+        {steps.map((step, i) => {
+          const StepIcon = step.icon;
+          const baseDelay = 0.35 + i * 0.18;
+          return (
+            <div key={i} className="text-center relative group">
+              {/* Glow background pulse subtil au reveal */}
+              <motion.div
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full pointer-events-none"
+                style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.18), transparent 70%)' }}
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={inView ? { opacity: [0, 0.7, 0], scale: [0.4, 1.4, 1.6] } : {}}
+                transition={{ duration: 1.2, ease: appleEase, delay: baseDelay - 0.1, times: [0, 0.5, 1] }}
+              />
+
+              {/* Icône Apple-style */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                animate={inView ? { opacity: 1, scale: 1, rotate: 0 } : {}}
+                transition={{ type: 'spring', stiffness: 280, damping: 22, delay: baseDelay }}
+                whileHover={{ scale: 1.06, transition: { type: 'spring', stiffness: 400, damping: 18 } }}
+                className="relative w-[88px] h-[88px] mx-auto rounded-[24px] flex items-center justify-center mb-6 z-10"
+                style={{
+                  background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
+                  boxShadow: '0 12px 32px -8px rgba(16,185,129,0.45), 0 0 0 1px rgba(255,255,255,0.04) inset',
+                }}
+              >
+                <StepIcon className="w-9 h-9 text-white" strokeWidth={1.6} />
+                {/* Subtle gloss highlight */}
+                <span
+                  className="absolute inset-x-2 top-1.5 h-[18px] rounded-[18px] pointer-events-none opacity-40"
+                  style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.55), transparent)' }}
+                />
+              </motion.div>
+
+              {/* Pin "Étape N" */}
+              <motion.span
+                initial={{ opacity: 0, y: 6, scale: 0.92 }}
+                animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+                transition={{ duration: 0.5, ease: appleEase, delay: baseDelay + 0.12 }}
+                className="inline-block text-[11px] font-bold tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full mb-3 uppercase"
+              >
+                Étape {i + 1}
+              </motion.span>
+
+              {/* Titre */}
+              <motion.h3
+                initial={{ opacity: 0, y: 14 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, ease: appleEase, delay: baseDelay + 0.22 }}
+                className="text-[19px] sm:text-xl font-bold text-gray-900 tracking-tight mb-2 leading-tight"
+              >
+                {step.title}
+              </motion.h3>
+
+              {/* Description */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, ease: appleEase, delay: baseDelay + 0.32 }}
+                className="text-[14px] text-gray-500 leading-relaxed max-w-[240px] mx-auto"
+              >
+                {step.desc}
+              </motion.p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+
+/**
  * SimplicityShowcase — Animation pédagogique 3 étapes :
  * 1. Réception 24/7 toujours active (badge ON)
  * 2. Le commerçant choisit + active les modules dont il a besoin
@@ -1503,7 +1619,7 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* HOW IT WORKS — 3 STEPS                       */}
+      {/* HOW IT WORKS — Animation Apple-style                       */}
       {/* ============================================ */}
       <section className="py-24 md:py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6">
@@ -1513,30 +1629,7 @@ export default function IAVocaleLanding() {
             subtitle="De l’import aux leads qualifiés — appels sortants ET entrants, tout est automatisé."
           />
 
-          <div className="relative max-w-4xl mx-auto">
-            {/* Connector line */}
-            <div className="hidden md:block absolute top-24 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-emerald-200 via-teal-300 to-emerald-200" />
-
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
-              {steps.map((step, i) => (
-                <ScrollReveal key={i} delay={i * 0.15}>
-                  <div className="text-center relative">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-6 relative z-10"
-                    >
-                      <step.icon className="w-9 h-9 text-white" />
-                    </motion.div>
-                    <span className="inline-block text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full mb-3">
-                      Étape {i + 1}
-                    </span>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
+          <HowItWorksTimeline steps={steps} />
         </div>
       </section>
 
