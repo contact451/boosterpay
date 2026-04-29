@@ -95,23 +95,22 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
         >
-          {/* Backdrop blur Apple-style */}
+          {/* Backdrop blur Apple-style — clair au lieu de noir */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-900/30 backdrop-blur-md"
             onClick={onClose}
             aria-hidden
           />
 
-          {/* Card — max-h dynamique pour iOS, scroll interne si besoin */}
+          {/* Card LIGHT THEME — fond blanc, ombres douces, accents verts */}
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-label="Démarrer l'essai gratuit"
-            className="relative w-full max-w-md rounded-3xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-md rounded-3xl overflow-hidden flex flex-col bg-white"
             style={{
-              background: 'linear-gradient(160deg, rgba(20,28,48,0.96) 0%, rgba(12,18,32,0.96) 100%)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 30px 80px -20px rgba(59,130,246,0.25), 0 0 0 1px rgba(255,255,255,0.04)',
+              border: '1px solid rgba(15,23,42,0.06)',
+              boxShadow: '0 30px 80px -20px rgba(15,23,42,0.25), 0 0 0 1px rgba(15,23,42,0.03)',
               maxHeight: 'min(700px, calc(100dvh - 4rem))',
               willChange: 'transform, opacity',
             }}
@@ -123,7 +122,7 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
             {/* Close */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors z-10"
+              className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors z-10"
               aria-label="Fermer"
             >
               <X className="w-4 h-4" />
@@ -133,25 +132,25 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
               {step === 'form' || step === 'sending' || step === 'error' ? (
                 <>
                   {/* Badge plan */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-[11px] font-medium text-blue-300 mb-5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-medium text-emerald-700 mb-5">
                     <Sparkles className="w-3 h-3" />
                     {cur.titre}
                   </div>
 
-                  <h2 className="text-2xl sm:text-[26px] font-semibold text-white tracking-tight leading-tight">
+                  <h2 className="text-2xl sm:text-[26px] font-semibold text-slate-900 tracking-tight leading-tight">
                     Démarrez en 30 secondes
                   </h2>
-                  <p className="text-sm text-white/60 mt-2 mb-7 leading-relaxed">
+                  <p className="text-sm text-slate-500 mt-2 mb-7 leading-relaxed">
                     {cur.sous} On vous envoie le lien pour configurer votre transfert d'appel et activer vos modules par email.
                   </p>
 
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-[11px] font-medium text-white/50 uppercase tracking-wider mb-1.5">
+                      <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
                         Email professionnel
                       </label>
                       <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                           type="email"
                           required
@@ -162,28 +161,13 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="vous@entreprise.fr"
                           style={{ fontSize: 16 }}
-                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-blue-400/60 focus:bg-white/[0.05] transition-colors"
+                          className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-colors"
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-medium text-white/50 uppercase tracking-wider mb-1.5">
-                        Entreprise <span className="text-white/30 normal-case font-normal">(optionnel)</span>
-                      </label>
-                      <input
-                        type="text"
-                        autoComplete="organization"
-                        value={entreprise}
-                        onChange={(e) => setEntreprise(e.target.value)}
-                        placeholder="Nom de votre société"
-                        style={{ fontSize: 16 }}
-                        className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-blue-400/60 focus:bg-white/[0.05] transition-colors"
-                      />
-                    </div>
-
                     {errorMsg && (
-                      <div className="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                      <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
                         {errorMsg}
                       </div>
                     )}
@@ -193,8 +177,8 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
                       disabled={step === 'sending' || !email}
                       className="w-full mt-2 inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-[15px] font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
-                        background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
-                        boxShadow: '0 10px 30px -10px rgba(59,130,246,0.6)',
+                        background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
+                        boxShadow: '0 10px 30px -10px rgba(16,185,129,0.5)',
                       }}
                     >
                       {step === 'sending' ? (
@@ -207,7 +191,7 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
                       )}
                     </button>
 
-                    <p className="text-[11px] text-white/40 text-center mt-3 leading-relaxed">
+                    <p className="text-[11px] text-slate-400 text-center mt-3 leading-relaxed">
                       Sans CB. Sans engagement. Vous gardez la main à 100 %.
                     </p>
                   </form>
@@ -221,34 +205,34 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
                     transition={{ type: 'spring', stiffness: 280, damping: 18 }}
                     className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-5"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(34,197,94,0.18), rgba(34,197,94,0.06))',
-                      border: '1px solid rgba(34,197,94,0.35)',
+                      background: 'linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.04))',
+                      border: '1px solid rgba(16,185,129,0.35)',
                     }}
                   >
-                    <CheckCircle2 className="w-8 h-8 text-emerald-400" strokeWidth={1.8} />
+                    <CheckCircle2 className="w-8 h-8 text-emerald-600" strokeWidth={1.8} />
                   </motion.div>
 
-                  <h3 className="text-xl font-semibold text-white tracking-tight">
+                  <h3 className="text-xl font-semibold text-slate-900 tracking-tight">
                     Vérifiez votre boîte mail
                   </h3>
-                  <p className="text-sm text-white/60 mt-2 leading-relaxed max-w-xs mx-auto">
-                    On vient d'envoyer un lien à <span className="text-white font-medium">{email}</span> pour configurer votre transfert d'appel et activer vos modules.
+                  <p className="text-sm text-slate-500 mt-2 leading-relaxed max-w-xs mx-auto">
+                    On vient d'envoyer un lien à <span className="text-slate-900 font-medium">{email}</span> pour configurer votre transfert d'appel et activer vos modules.
                   </p>
 
-                  <div className="mt-6 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] text-left">
-                    <div className="text-[11px] font-medium text-white/50 uppercase tracking-wider mb-2">
+                  <div className="mt-6 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left">
+                    <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-2">
                       Prochaine étape
                     </div>
-                    <ul className="space-y-2 text-[13px] text-white/75">
-                      <li className="flex gap-2.5"><span className="text-blue-400">1.</span> Cliquez sur le lien dans le mail</li>
-                      <li className="flex gap-2.5"><span className="text-blue-400">2.</span> Configurez le transfert depuis votre numéro</li>
-                      <li className="flex gap-2.5"><span className="text-blue-400">3.</span> Activez les modules dont vous avez besoin</li>
+                    <ul className="space-y-2 text-[13px] text-slate-700">
+                      <li className="flex gap-2.5"><span className="text-emerald-600 font-bold">1.</span> Cliquez sur le lien dans le mail</li>
+                      <li className="flex gap-2.5"><span className="text-emerald-600 font-bold">2.</span> Configurez le transfert depuis votre numéro</li>
+                      <li className="flex gap-2.5"><span className="text-emerald-600 font-bold">3.</span> Activez les modules dont vous avez besoin</li>
                     </ul>
                   </div>
 
                   <button
                     onClick={onClose}
-                    className="mt-6 text-sm text-white/50 hover:text-white/80 transition-colors"
+                    className="mt-6 text-sm text-slate-500 hover:text-slate-800 transition-colors"
                   >
                     Fermer
                   </button>

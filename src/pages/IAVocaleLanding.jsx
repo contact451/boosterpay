@@ -102,6 +102,193 @@ const GradientText = ({ children, className = '' }) => (
 );
 
 /**
+ * SimplicityShowcase — Animation pédagogique 3 étapes :
+ * 1. Réception 24/7 toujours active (badge ON)
+ * 2. Le commerçant choisit + active les modules dont il a besoin
+ * 3. Le robot vocal appelle les contacts injectés
+ *
+ * Cycle infini, illustre la simplicité du choix utilisateur.
+ */
+const SimplicityShowcase = () => {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setStep((s) => (s + 1) % 3), 3200);
+    return () => clearInterval(id);
+  }, []);
+
+  const modules = [
+    { id: 'rdv', label: 'Confirmation RDV', icon: CalendarCheck, color: 'blue', count: '8 contacts' },
+    { id: 'paiements', label: 'Accélération paiements', icon: Zap, color: 'rose', count: '5 factures' },
+  ];
+
+  return (
+    <div className="mb-16 max-w-5xl mx-auto">
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Header — étape en cours */}
+        <div className="px-6 sm:px-8 pt-7 pb-4 border-b border-gray-100">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-1">
+                Étape {step + 1} sur 3
+              </div>
+              <h3 className="text-[18px] sm:text-[20px] font-bold text-gray-900 tracking-tight leading-tight">
+                {step === 0 && 'La Réception d\'appels 24/7 est déjà active.'}
+                {step === 1 && 'Vous activez les modules dont vous avez besoin.'}
+                {step === 2 && 'L\'IA appelle vos contacts. Vous récoltez les résultats.'}
+              </h3>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    i === step ? 'w-8 bg-emerald-500' : 'w-1.5 bg-gray-200'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="grid lg:grid-cols-3 gap-0">
+          {/* Step 1 — Réception 24/7 */}
+          <div
+            className={`p-6 sm:p-7 border-r border-gray-100 transition-all duration-500 ${
+              step === 0 ? 'bg-amber-50/40' : 'bg-white'
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+                step === 0
+                  ? 'bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/30'
+                  : 'bg-amber-100'
+              }`}>
+                <PhoneCall className={`w-5 h-5 ${step === 0 ? 'text-white' : 'text-amber-600'}`} strokeWidth={2} />
+                {step === 0 && (
+                  <span className="absolute inset-0 rounded-2xl animate-ping bg-amber-400/40" />
+                )}
+              </div>
+              <div>
+                <div className="text-[14px] font-bold text-gray-900">Réception 24/7</div>
+                <div className="text-[11.5px] text-emerald-600 font-medium flex items-center gap-1">
+                  <span className="relative flex w-1.5 h-1.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                  </span>
+                  Toujours active
+                </div>
+              </div>
+            </div>
+            <p className="text-[12.5px] text-gray-600 leading-relaxed">
+              C'est la base. Quand vous ne décrochez pas, l'IA répond, qualifie et vous envoie le lead par SMS.
+            </p>
+          </div>
+
+          {/* Step 2 — Modules choisis */}
+          <div
+            className={`p-6 sm:p-7 border-r border-gray-100 transition-all duration-500 ${
+              step === 1 ? 'bg-blue-50/40' : 'bg-white'
+            }`}
+          >
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">
+              Vos contacts injectés
+            </div>
+            <div className="space-y-2">
+              {modules.map((m, i) => {
+                const isShown = step >= 1;
+                return (
+                  <motion.div
+                    key={m.id}
+                    initial={false}
+                    animate={{
+                      opacity: isShown ? 1 : 0.3,
+                      x: isShown ? 0 : -10,
+                    }}
+                    transition={{ delay: step === 1 ? i * 0.2 : 0, duration: 0.4 }}
+                    className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                      isShown ? `bg-${m.color}-50 border-${m.color}-200` : 'bg-gray-50 border-gray-100'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-${m.color}-500`}>
+                      <m.icon className="w-4 h-4 text-white" strokeWidth={2} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-semibold text-gray-900 truncate">{m.label}</div>
+                      <div className="text-[11px] text-gray-500">{m.count}</div>
+                    </div>
+                    {isShown && step === 1 && (
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={3} />
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Step 3 — IA appelle */}
+          <div
+            className={`p-6 sm:p-7 transition-all duration-500 ${
+              step === 2 ? 'bg-emerald-50/40' : 'bg-white'
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all ${
+                step === 2
+                  ? 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/30'
+                  : 'bg-emerald-100'
+              }`}>
+                <Bot className={`w-5 h-5 ${step === 2 ? 'text-white' : 'text-emerald-600'}`} strokeWidth={2} />
+              </div>
+              <div>
+                <div className="text-[14px] font-bold text-gray-900">Robot vocal</div>
+                <div className="text-[11.5px] text-gray-500">{step === 2 ? 'Appelle vos contacts' : 'Prêt à démarrer'}</div>
+              </div>
+            </div>
+
+            {/* Voiceform / waveform animée */}
+            <div className="flex items-end gap-1 h-10 mb-3">
+              {Array.from({ length: 18 }).map((_, i) => (
+                <motion.span
+                  key={i}
+                  className="flex-1 rounded-full"
+                  style={{
+                    background: step === 2
+                      ? 'linear-gradient(180deg, #10B981, #14B8A6)'
+                      : '#E5E7EB',
+                    minHeight: 3,
+                  }}
+                  animate={
+                    step === 2
+                      ? { height: [`${20 + (i * 11) % 70}%`, `${30 + (i * 17) % 60}%`, `${15 + (i * 7) % 80}%`] }
+                      : { height: '20%' }
+                  }
+                  transition={{ duration: 1.2 + (i % 4) * 0.2, repeat: step === 2 ? Infinity : 0, ease: 'easeInOut' }}
+                />
+              ))}
+            </div>
+            <p className="text-[12.5px] text-gray-600 leading-relaxed">
+              {step === 2
+                ? '13 appels en cours · Transcription temps réel · Synthèse dans votre CRM.'
+                : 'L\'IA appelle dès que vous avez injecté vos contacts.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Footer hint */}
+        <div className="px-6 sm:px-8 py-4 bg-gray-50/50 border-t border-gray-100 text-center">
+          <p className="text-[12.5px] text-gray-500">
+            <span className="font-semibold text-gray-900">Vous choisissez les modules.</span> L'IA fait le reste.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+/**
  * Bandeau de preuve sociale + urgence sous la navbar.
  * Affiche un compteur fictif réaliste qui varie au cours de la journée
  * (entre 7 et 22 selon l'heure) — donne une sensation de live sans backend.
@@ -697,45 +884,15 @@ const MetierSelector = ({ openPopup }) => {
               ))}
             </div>
 
-            {/* CTA — Une seule card qui présente les 6 modules inclus */}
-            <div className="mt-10 max-w-3xl mx-auto">
-              <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 rounded-2xl p-6 border border-emerald-100/80">
-                <div className="flex flex-col gap-5">
-                  <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center ring-2 ring-white"><PhoneCall className="w-4 h-4 text-white" /></div>
-                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Réception 24/7</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center ring-2 ring-white"><RefreshCw className="w-4 h-4 text-white" /></div>
-                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Renouvellement</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center ring-2 ring-white"><CalendarCheck className="w-4 h-4 text-white" /></div>
-                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">RDV</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-violet-500 flex items-center justify-center ring-2 ring-white"><Bot className="w-4 h-4 text-white" /></div>
-                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Robot</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-yellow-500 flex items-center justify-center ring-2 ring-white"><Star className="w-4 h-4 text-white" fill="white" /></div>
-                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Avis</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center ring-2 ring-white"><Zap className="w-4 h-4 text-white" /></div>
-                      <span className="text-[11px] font-semibold text-gray-700 hidden sm:inline">Paiements</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-gray-900 leading-tight mb-1">Les 6 modules. Tous inclus dès l'essai gratuit.</p>
-                    <p className="text-xs text-gray-500">100 appels offerts · 14 jours · Sans CB</p>
-                  </div>
-                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('hero-cta-card', 'gratuit'); }} className="self-center inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-7 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap">
-                    Démarrer mes 100 appels offerts <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
+            {/* CTA simple : un seul bouton centré, pas de card "6 modules" */}
+            <div className="mt-10 flex justify-center">
+              <a
+                href="#"
+                onClick={(e) => { e.preventDefault(); openPopup('metier-cta', 'gratuit'); }}
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-7 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap"
+              >
+                Démarrer mes 100 appels offerts <ArrowRight className="w-4 h-4" />
+              </a>
             </div>
           </motion.div>
         )}
@@ -1024,6 +1181,7 @@ export default function IAVocaleLanding() {
       priceAnnuel: 97,
       unit: 'HT · paiement unique',
       calls: '300 appels · 30 jours',
+      pricePerCall: '0,32€/appel',
       features: [
         'Tous les modules inclus',
         'Pas de renouvellement automatique',
@@ -1041,6 +1199,8 @@ export default function IAVocaleLanding() {
       priceAnnuel: 77,
       unit: 'HT / mois',
       calls: '500 appels par mois',
+      pricePerCall: '0,19€/appel',
+      pricePerCallAnnuel: '0,15€/appel',
       features: [
         'Renouvelés automatiquement',
         'Tous les modules inclus',
@@ -1060,6 +1220,8 @@ export default function IAVocaleLanding() {
       priceAnnuel: 199,
       unit: 'HT / mois',
       calls: '2 000 appels par mois',
+      pricePerCall: '0,12€/appel',
+      pricePerCallAnnuel: '0,10€/appel',
       features: [
         'Tout le plan Pro',
         'Multi-sites & multi-utilisateurs',
@@ -1218,15 +1380,15 @@ export default function IAVocaleLanding() {
               </div>
 
               <h1 className="hero-fade hero-fade-2 text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight">
-                Chaque appel manqué{' '}
-                <span className="text-gray-900">vous coûte un client.</span>
+                Votre business tourne.<br />
+                <span className="text-gray-900">Même quand vous êtes occupé.</span>
               </h1>
               <h2 className="hero-fade hero-fade-2 mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold leading-[1.15] tracking-tight">
-                <GradientText>L'IA de BoosterPay décroche à votre place. 24h/24.</GradientText>
+                <GradientText>Occupé ? Votre IA décroche à votre place, retient le prospect et remplit votre agenda. Vous n'en perdez plus un seul.</GradientText>
               </h2>
 
               <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                L'IA qui relance vos clients, confirme vos RDV, décroche quand vous êtes occupé et qualifie chaque prospect — 7j/7, 24h/24. Zéro appel perdu, zéro temps perdu.
+                Sur un chantier, en rendez-vous, avec un client — votre IA répond en 2 secondes, comprend le besoin, propose un créneau et vous envoie le récapitulatif par SMS. Pendant que vous travaillez, elle remplit votre planning.
               </p>
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
@@ -1237,6 +1399,9 @@ export default function IAVocaleLanding() {
                   Essayer gratuitement — 100 appels offerts <ArrowRight className="w-5 h-5" />
                 </a>
               </div>
+              <p className="hero-fade hero-fade-4 mt-3 text-sm text-gray-400">
+                Sans carte bancaire · Sans engagement · Opérationnel en 5 minutes
+              </p>
 
               {/* Stats */}
               <div className="hero-fade hero-fade-5 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6">
@@ -1258,6 +1423,126 @@ export default function IAVocaleLanding() {
           </div>
         </div>
       </section>
+
+      {/* TESTIMONIALS                                 */}
+      {/* ============================================ */}
+      <section className="py-24 md:py-32 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeading
+            tag="Témoignages"
+            title="+250 professionnels font confiance à BoosterPay."
+            subtitle="Garagistes, cabinets médicaux, courtiers, salons, plombiers, avocats — ils ont automatisé leurs appels avec l'IA."
+          />
+
+          {/* Trust strip — secteurs représentés (en tête de section, cadre les témoignages) */}
+          <ScrollReveal>
+            <div className="mb-12 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12px] font-medium text-gray-500">
+              <span>Garagistes</span>
+              <span className="text-gray-300">·</span>
+              <span>Cabinets médicaux</span>
+              <span className="text-gray-300">·</span>
+              <span>Courtiers</span>
+              <span className="text-gray-300">·</span>
+              <span>Salons</span>
+              <span className="text-gray-300">·</span>
+              <span>Plombiers</span>
+              <span className="text-gray-300">·</span>
+              <span>Avocats</span>
+              <span className="text-gray-300">·</span>
+              <span>Restaurants</span>
+              <span className="text-gray-300">·</span>
+              <span>Experts-comptables</span>
+            </div>
+          </ScrollReveal>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.map((t, i) => {
+              const tc = svcColors[t.color] || svcColors.emerald;
+              const avatarBg = {
+                emerald: 'from-emerald-400 to-teal-500',
+                blue:    'from-blue-400 to-indigo-500',
+                violet:  'from-violet-400 to-purple-500',
+                yellow:  'from-yellow-400 to-amber-500',
+                rose:    'from-rose-400 to-pink-500',
+                amber:   'from-amber-400 to-orange-500',
+              }[t.color] || 'from-emerald-400 to-teal-500';
+              return (
+                <ScrollReveal key={i} delay={(i % 3) * 0.08}>
+                  <div className="bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
+                    {/* Étoiles */}
+                    <div className="flex gap-0.5 mb-4">
+                      {[1,2,3,4,5].map((s) => (
+                        <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" strokeWidth={1} />
+                      ))}
+                    </div>
+
+                    {/* Quote */}
+                    <p className="text-[15px] text-gray-700 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
+
+                    {/* Result chip */}
+                    <div className={`mt-5 inline-flex self-start items-center gap-1.5 px-3 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
+                      <Sparkles className={`w-3 h-3 ${tc.icon}`} />
+                      <span className={`text-[11.5px] font-bold ${tc.icon}`}>{t.result}</span>
+                    </div>
+
+                    <div className="h-px bg-gray-100 my-5" />
+
+                    {/* Auteur */}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                        {t.avatar}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-[14px]">{t.name}</p>
+                        <p className="text-[12.5px] text-gray-500">{t.role} · {t.city}</p>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — 3 STEPS                       */}
+      {/* ============================================ */}
+      <section className="py-24 md:py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <SectionHeading
+            tag="Comment ça marche"
+            title="Quatre étapes. Zéro friction."
+            subtitle="De l’import aux leads qualifiés — appels sortants ET entrants, tout est automatisé."
+          />
+
+          <div className="relative max-w-4xl mx-auto">
+            {/* Connector line */}
+            <div className="hidden md:block absolute top-24 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-emerald-200 via-teal-300 to-emerald-200" />
+
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
+              {steps.map((step, i) => (
+                <ScrollReveal key={i} delay={i * 0.15}>
+                  <div className="text-center relative">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-6 relative z-10"
+                    >
+                      <step.icon className="w-9 h-9 text-white" />
+                    </motion.div>
+                    <span className="inline-block text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full mb-3">
+                      Étape {i + 1}
+                    </span>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
+                  </div>
+                </ScrollReveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
 
       {/* ============================================ */}
       {/* RÉCEPTION D'APPELS IA — SECTION DÉDIÉE       */}
@@ -1423,56 +1708,17 @@ export default function IAVocaleLanding() {
 
 
       {/* ── Section Robot Personnalisé ── */}
-      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <ScrollReveal>
-            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 mb-6">
-              <Bot className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-semibold text-emerald-700">Sur mesure</span>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
-              Un besoin spécifique ?{' '}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                On crée votre robot sur mesure.
-              </span>
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={0.2}>
-            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mt-6 leading-relaxed">
-              Appels chronophages, processus répétitifs, scénarios complexes — notre équipe configure une IA vocale 100% adaptée à votre métier et à vos workflows.
-            </p>
-          </ScrollReveal>
-        </div>
-        <div className="max-w-5xl mx-auto px-6">
-          <RobotShowcase />
-        </div>
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <ScrollReveal delay={0.3}>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                type="button"
-                onClick={() => openPopup('cta-robot-mesure', 'gratuit')}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
-              >
-                <CalendarCheck className="w-5 h-5" />
-                Démarrer gratuitement
-              </button>
-            </div>
-            <p className="text-sm text-gray-400 mt-4">Gratuit · 15 min · Sans engagement</p>
-          </ScrollReveal>
-        </div>
-      </section>
-
       {/* ── Quatre services. Un seul outil. ── */}
       <section className="py-32 bg-[#FAFAFA] overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Nos services"
-            title="6 services. Une seule plateforme."
-            subtitle="La base : la Réception d'appels IA 24/7. En plus, 5 modules à activer selon vos besoins — tous inclus dès l'essai gratuit."
+            title="Votre secrétaire IA fait tout ça."
+            subtitle="Une seule plateforme. La Réception d'appels 24/7 est toujours active. Vous activez les modules dont vous avez besoin — tous sont inclus."
           />
+
+          {/* Animation simplicité : Réception activée + injection contacts → robot appelle */}
+          <SimplicityShowcase />
 
           {/* Top row — 2 core services side by side */}
           <div className="grid md:grid-cols-2 gap-8 mt-4">
@@ -1553,8 +1799,7 @@ export default function IAVocaleLanding() {
                 </div>
                 <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  <CalendarCheck className="w-4 h-4" />
-                  Réserver un appel découverte
+                  Démarrer gratuitement <ArrowRight className="w-4 h-4" />
                 </a>
               </motion.div>
             </ScrollReveal>
@@ -1581,8 +1826,7 @@ export default function IAVocaleLanding() {
                 </div>
                 <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center justify-center gap-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  <CalendarCheck className="w-4 h-4" />
-                  Réserver un appel découverte
+                  Démarrer gratuitement <ArrowRight className="w-4 h-4" />
                 </a>
               </motion.div>
             </ScrollReveal>
@@ -2087,6 +2331,48 @@ export default function IAVocaleLanding() {
           </div>
         </div>
       </section>
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal>
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 mb-6">
+              <Bot className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-semibold text-emerald-700">Sur mesure</span>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal delay={0.1}>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Un besoin spécifique ?{' '}
+              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                On crée votre robot sur mesure.
+              </span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal delay={0.2}>
+            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mt-6 leading-relaxed">
+              Appels chronophages, processus répétitifs, scénarios complexes — notre équipe configure une IA vocale 100% adaptée à votre métier et à vos workflows.
+            </p>
+          </ScrollReveal>
+        </div>
+        <div className="max-w-5xl mx-auto px-6">
+          <RobotShowcase />
+        </div>
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <ScrollReveal delay={0.3}>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                type="button"
+                onClick={() => openPopup('cta-robot-mesure', 'gratuit')}
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
+              >
+                <CalendarCheck className="w-5 h-5" />
+                Démarrer gratuitement
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mt-4">Gratuit · 15 min · Sans engagement</p>
+          </ScrollReveal>
+        </div>
+      </section>
+
 
 
       {/* ============================================ */}
@@ -2097,47 +2383,17 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Cas d'usage"
             title="Votre métier. Votre IA."
-            subtitle="Découvrez comment nos 6 services IA s'adaptent à votre quotidien — et combien vous allez gagner."
+            subtitle="Découvrez comment l'IA s'adapte à votre quotidien — et combien ça vous rapporte."
           />
+
+          {/* Phrase d'invitation active */}
+          <ScrollReveal>
+            <p className="text-center text-[15px] sm:text-[16px] text-gray-700 font-medium max-w-2xl mx-auto -mt-6 mb-10">
+              👇 Cliquez sur votre métier — on vous dit exactement ce que l'IA va faire pour vous et combien ça vous rapporte.
+            </p>
+          </ScrollReveal>
 
           <MetierSelector openPopup={openPopup} />
-        </div>
-      </section>
-
-      {/* HOW IT WORKS — 3 STEPS                       */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading
-            tag="Comment ça marche"
-            title="Quatre étapes. Zéro friction."
-            subtitle="De l’import aux leads qualifiés — appels sortants ET entrants, tout est automatisé."
-          />
-
-          <div className="relative max-w-4xl mx-auto">
-            {/* Connector line */}
-            <div className="hidden md:block absolute top-24 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-emerald-200 via-teal-300 to-emerald-200" />
-
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8">
-              {steps.map((step, i) => (
-                <ScrollReveal key={i} delay={i * 0.15}>
-                  <div className="text-center relative">
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-6 relative z-10"
-                    >
-                      <step.icon className="w-9 h-9 text-white" />
-                    </motion.div>
-                    <span className="inline-block text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full mb-3">
-                      Étape {i + 1}
-                    </span>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
@@ -2272,93 +2528,6 @@ export default function IAVocaleLanding() {
           </div>
         </div>
       </section>
-
-      {/* TESTIMONIALS                                 */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading
-            tag="Témoignages"
-            title="Ils utilisent BoosterPay."
-            subtitle="Rejoignez +250 professionnels qui automatisent leurs appels avec l'IA."
-          />
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => {
-              const tc = svcColors[t.color] || svcColors.emerald;
-              const avatarBg = {
-                emerald: 'from-emerald-400 to-teal-500',
-                blue:    'from-blue-400 to-indigo-500',
-                violet:  'from-violet-400 to-purple-500',
-                yellow:  'from-yellow-400 to-amber-500',
-                rose:    'from-rose-400 to-pink-500',
-                amber:   'from-amber-400 to-orange-500',
-              }[t.color] || 'from-emerald-400 to-teal-500';
-              return (
-                <ScrollReveal key={i} delay={(i % 3) * 0.08}>
-                  <div className="bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
-                    {/* Étoiles */}
-                    <div className="flex gap-0.5 mb-4">
-                      {[1,2,3,4,5].map((s) => (
-                        <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" strokeWidth={1} />
-                      ))}
-                    </div>
-
-                    {/* Quote */}
-                    <p className="text-[15px] text-gray-700 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
-
-                    {/* Result chip */}
-                    <div className={`mt-5 inline-flex self-start items-center gap-1.5 px-3 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
-                      <Sparkles className={`w-3 h-3 ${tc.icon}`} />
-                      <span className={`text-[11.5px] font-bold ${tc.icon}`}>{t.result}</span>
-                    </div>
-
-                    <div className="h-px bg-gray-100 my-5" />
-
-                    {/* Auteur */}
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                        {t.avatar}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-[14px]">{t.name}</p>
-                        <p className="text-[12.5px] text-gray-500">{t.role} · {t.city}</p>
-                      </div>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-
-          {/* Trust line */}
-          <ScrollReveal delay={0.3}>
-            <div className="mt-12 text-center">
-              <p className="text-[13.5px] text-gray-500">
-                <span className="font-bold text-gray-900">+250 professionnels</span> automatisent déjà leurs appels avec BoosterPay.
-              </p>
-              <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12px] text-gray-400">
-                <span>Garagistes</span>
-                <span>·</span>
-                <span>Cabinets médicaux</span>
-                <span>·</span>
-                <span>Courtiers</span>
-                <span>·</span>
-                <span>Salons</span>
-                <span>·</span>
-                <span>Plombiers</span>
-                <span>·</span>
-                <span>Avocats</span>
-                <span>·</span>
-                <span>Restaurants</span>
-                <span>·</span>
-                <span>Experts-comptables</span>
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
       {/* Section "Activez votre boost gratuit" supprimée — flow remplacé par le popup email + page /configurer */}
 
 
@@ -2369,7 +2538,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Tarifs"
             title="Une seule plateforme. Tous les modules. Toujours inclus."
-            subtitle="Le commerce local moyen consomme 130 appels par mois. Choisissez le plan qui vous donne 4× cette marge — vous ne stressez jamais le quota."
+            subtitle="Choisissez le plan adapté à votre volume — tous incluent les 6 modules sans restriction."
           />
 
           {/* Toggle annuel / mensuel */}
@@ -2424,6 +2593,11 @@ export default function IAVocaleLanding() {
                         {plan.unit && <span className="text-[12.5px] text-gray-400 font-medium">{plan.unit}</span>}
                       </div>
                       <p className="text-[13px] text-emerald-600 font-medium mt-1">{plan.calls}</p>
+                      {plan.pricePerCall && (
+                        <p className="text-[11.5px] text-gray-500 font-medium mt-0.5">
+                          soit <span className="font-semibold text-gray-700">{(pricingAnnual && plan.pricePerCallAnnuel) ? plan.pricePerCallAnnuel : plan.pricePerCall}</span>
+                        </p>
+                      )}
                       {plan.annualNote && pricingAnnual && (
                         <p className="text-[11.5px] text-emerald-700/80 font-medium mt-0.5">{plan.annualNote}</p>
                       )}
@@ -2552,7 +2726,7 @@ export default function IAVocaleLanding() {
                 <GradientText>BoosterPay</GradientText>
               </h4>
               <p className="text-sm text-gray-400 leading-relaxed">
-                L'IA vocale qui renouvelle vos dossiers et sécurise vos rendez-vous. Automatiquement.
+                L'IA vocale qui décroche, relance, qualifie et convertit — automatiquement.
               </p>
             </div>
             <div>
