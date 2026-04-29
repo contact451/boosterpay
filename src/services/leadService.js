@@ -132,6 +132,186 @@ export const captureLeadFromSite = (data) => {
 };
 
 /**
+ * Démarre un essai gratuit / souscription depuis le popup email de la landing IA Vocale.
+ * Fire-and-forget — ne doit jamais bloquer l'UX.
+ *
+ * @param {Object} data
+ * @param {string} data.email     — email du prospect
+ * @param {string} [data.entreprise]
+ * @param {'gratuit'|'a-la-carte'|'pro'|'business'} [data.plan='gratuit']
+ * @param {string} [data.source]  — origine du clic (hero, pricing, floating…)
+ *
+ * Côté Apps Script, l'action POST attendue est `startTrial` (à ajouter dans
+ * apps-script-api.gs : crée la ligne dans le sheet ESSAIS, envoie le mail
+ * de confirmation avec le lien tokenisé /configurer/{token}).
+ */
+export const submitTrialSignup = async (data) => {
+  if (!CRM_API_URL) {
+    console.warn('CRM_API_URL non configurée — essai non envoyé');
+    return { success: false, error: 'API non configurée' };
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  const payload = {
+    action: 'startTrial',
+    email: data.email,
+    entreprise: data.entreprise || '',
+    plan: data.plan || 'gratuit',
+    source: data.source || 'unknown',
+    appareil: isMobile ? 'mobile' : 'desktop',
+    utm_source: urlParams.get('utm_source') || '',
+    utm_campaign: urlParams.get('utm_campaign') || '',
+    ref: urlParams.get('ref') || '',
+    timestamp: new Date().toISOString(),
+  };
+
+  console.log('📤 Trial signup vers Apps Script:', payload);
+
+  try {
+    const response = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({ success: true }));
+    console.log('✅ Trial signup OK:', result);
+    return result;
+  } catch (error) {
+    console.warn('⚠️ Trial signup échoué (non bloquant):', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Envoie un message de contact depuis le bouton flottant chat-email.
+ *
+ * @param {Object} data
+ * @param {string} data.email
+ * @param {string} data.message
+ * @param {string} [data.source='floating_chat']
+ *
+ * Côté Apps Script, action POST `submitContactMessage` :
+ *   - log dans le sheet CONTACT_MESSAGES
+ *   - email auto-réponse au visiteur
+ *   - notification interne contact@booster-pay.com
+ */
+export const submitContactMessage = async (data) => {
+  if (!CRM_API_URL) {
+    console.warn('CRM_API_URL non configurée');
+    return { success: false, error: 'API non configurée' };
+  }
+
+  const payload = {
+    action: 'submitContactMessage',
+    email: data.email,
+    message: data.message,
+    source: data.source || 'floating_chat',
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    const response = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({ success: true }));
+    return result;
+  } catch (error) {
+    console.warn('⚠️ submitContactMessage échoué:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Récupère un essai par son token (page /configurer/:token).
+ * Action GAS : GET ?action=getEssaiByToken&token=...
+ */
+export const fetchEssaiByToken = async (token) => {
+  if (!CRM_API_URL || !token) return { success: false, error: 'API ou token manquant' };
+  try {
+    const res = await fetch(CRM_API_URL + '?action=getEssaiByToken&token=' + encodeURIComponent(token));
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Injecte une liste de contacts dans un module donné.
+ * @param {Object} payload { token, module, contacts: [{ nom, telephone, email?, dateRdv?, montant?, refFacture?, notes? }] }
+ */
+export const injectContacts = async (payload) => {
+  if (!CRM_API_URL) return { success: false, error: 'API non configurée' };
+  try {
+    const res = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'injectContacts', ...payload, timestamp: new Date().toISOString() }),
+    });
+    return await res.json().catch(() => ({ success: true }));
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Met à jour la config d'un essai (numéro de téléphone de transfert pour Réception 24/7).
+ */
+export const updateTrialConfig = async (payload) => {
+  if (!CRM_API_URL) return { success: false, error: 'API non configurée' };
+  try {
+    const res = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'updateTrialConfig', ...payload, timestamp: new Date().toISOString() }),
+    });
+    return await res.json().catch(() => ({ success: true }));
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Annule l'essai/plan d'un lead. Action GAS : cancelTrial.
+ * @param {Object} data { token, raison? }
+ */
+export const cancelTrial = async (data) => {
+  if (!CRM_API_URL) return { success: false, error: 'API non configurée' };
+  try {
+    const res = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'cancelTrial', ...data, timestamp: new Date().toISOString() }),
+    });
+    return await res.json().catch(() => ({ success: true }));
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/**
+ * Log l'intention de changement de plan AVANT redirection Stripe.
+ * Action GAS : requestPlanChange.
+ * @param {Object} data { token, plan_demande, source? }
+ */
+export const requestPlanChange = async (data) => {
+  if (!CRM_API_URL) return { success: false, error: 'API non configurée' };
+  try {
+    const res = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'requestPlanChange', ...data, timestamp: new Date().toISOString() }),
+    });
+    return await res.json().catch(() => ({ success: true }));
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+};
+
+/**
  * Envoie les données de l'onboarding Step 2.
  * Le Apps Script RETROUVE le lead par email et le met à jour (statut → "Converti").
  */

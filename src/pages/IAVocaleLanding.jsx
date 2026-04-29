@@ -43,6 +43,8 @@ import {
 } from 'lucide-react';
 import { captureLeadFromSite } from '../services/leadService';
 import Papa from 'papaparse';
+import EmailCapturePopup from '../components/EmailCapturePopup';
+import FloatingContact from '../components/FloatingContact';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -105,11 +107,17 @@ const IA_VOCALE_PLANS = [
   { id: 'business', name: 'Pack Business', price: '349€ HT', desc: '500 appels · Manager dédié', badge: 'Le plus populaire' },
   { id: 'croissance', name: 'Croissance', price: '399€ HT/mois', desc: '1000 appels/mois · Support prioritaire' },
 ];
+// URL de checkout Stripe — pour l'instant 1 seule URL pour les 3 plans payants
+// (Stripe capture l'email + les infos du client sur sa page de paiement)
+const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05';
 const STRIPE_LINKS = {
-  decouverte: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
-  boost: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
-  business: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
-  croissance: 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05',
+  decouverte: STRIPE_CHECKOUT_URL,
+  boost: STRIPE_CHECKOUT_URL,
+  business: STRIPE_CHECKOUT_URL,
+  croissance: STRIPE_CHECKOUT_URL,
+  // Nouveaux plans (alignés sur la grille tarifaire)
+  'a-la-carte': STRIPE_CHECKOUT_URL,
+  pro: STRIPE_CHECKOUT_URL,
 };
 
 const navLinks = [
@@ -149,7 +157,17 @@ const AnimatedNumber = ({ value, suffix = '', prefix = '', duration = 2 }) => {
 /* ------------------------------------------------------------------ */
 /*  Hero — Services showcase animation                                 */
 /* ------------------------------------------------------------------ */
+// LA BASE de IA Vocale = Réception d'appels IA 24/7 (placée en première position).
+// Les autres entrées sont des MODULES qui s'ajoutent à cette base.
 const services = [
+  {
+    icon: 'PhoneCall',
+    title: 'Réception d\'appels IA 24/7',
+    desc: "La base : quand vous ne décrochez pas, l'IA répond, qualifie et vous envoie le lead.",
+    result: '0 appel manqué',
+    example: 'Nouveau prospect — Fuite urgente qualifié',
+    color: 'amber',
+  },
   {
     icon: 'RefreshCw',
     title: 'Renouvellement de dossiers',
@@ -167,14 +185,6 @@ const services = [
     color: 'blue',
   },
   {
-    icon: 'PhoneCall',
-    title: 'Réception d\'appels IA 24/7',
-    desc: "Quand vous ne décrochez pas, l'IA répond, qualifie et vous envoie le lead.",
-    result: '0 appel manqué',
-    example: 'Nouveau prospect — Fuite urgente qualifié',
-    color: 'amber',
-  },
-  {
     icon: 'Bot',
     title: 'Robot IA sur mesure',
     desc: "Un assistant vocal personnalisé pour votre métier, vos scripts, vos process.",
@@ -182,14 +192,32 @@ const services = [
     example: 'Courtier — 12 relances auto cette semaine',
     color: 'violet',
   },
+  {
+    icon: 'Star',
+    title: 'Impact Avis',
+    desc: "L'IA appelle vos clients satisfaits et leur envoie le lien direct vers Google Avis par SMS.",
+    result: '+5 avis Google par mois',
+    example: 'Salon Bella — 4,9/5 étoiles · 38 avis ce mois',
+    color: 'orange',
+  },
+  {
+    icon: 'Zap',
+    title: 'Accélération de paiements',
+    desc: "L'IA relance vos impayés, propose un règlement en 1 clic via Stripe, Klarna ou Billie.",
+    result: '+62% de récupération',
+    example: 'Cabinet Martin — 1 200€ régularisés en 24h',
+    color: 'rose',
+  },
 ];
 
-const iconMap = { RefreshCw, CalendarCheck, PhoneCall, Bot };
+const iconMap = { RefreshCw, CalendarCheck, PhoneCall, Bot, Star, Zap };
 const colorMap = {
   emerald: { bg: 'bg-emerald-50', ring: 'ring-emerald-200', icon: 'text-emerald-600', accent: 'bg-emerald-500', light: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
   blue: { bg: 'bg-blue-50', ring: 'ring-blue-200', icon: 'text-blue-600', accent: 'bg-blue-500', light: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
   amber: { bg: 'bg-amber-50', ring: 'ring-amber-200', icon: 'text-amber-600', accent: 'bg-amber-500', light: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' },
   violet: { bg: 'bg-violet-50', ring: 'ring-violet-200', icon: 'text-violet-600', accent: 'bg-violet-500', light: 'text-violet-600', badge: 'bg-violet-100 text-violet-700' },
+  orange: { bg: 'bg-orange-50', ring: 'ring-orange-200', icon: 'text-orange-600', accent: 'bg-orange-500', light: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
+  rose: { bg: 'bg-rose-50', ring: 'ring-rose-200', icon: 'text-rose-600', accent: 'bg-rose-500', light: 'text-rose-600', badge: 'bg-rose-100 text-rose-700' },
 };
 
 const HeroAnimation = () => {
@@ -468,7 +496,7 @@ const svcColors = {
   violet: { bg: 'bg-violet-50', icon: 'text-violet-600', border: 'border-violet-200', badge: 'bg-violet-100 text-violet-700' },
 };
 
-const MetierSelector = () => {
+const MetierSelector = ({ openPopup }) => {
   const [selected, setSelected] = useState(0);
   const [search, setSearch] = useState('');
   const [userPicked, setUserPicked] = useState(false);
@@ -616,7 +644,7 @@ const MetierSelector = () => {
                       <p className="text-xs text-gray-500">Appels sortants — 100 appels offerts</p>
                     </div>
                   </div>
-                  <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
+                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
                     Démarrer gratuitement <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>
@@ -635,7 +663,7 @@ const MetierSelector = () => {
                       <p className="text-xs text-gray-500">Solution personnalisée</p>
                     </div>
                   </div>
-                  <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
+                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-6 py-3 rounded-full text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-300 whitespace-nowrap flex-shrink-0">
                     <CalendarCheck className="w-4 h-4" /> Planifier un call
                   </a>
                 </div>
@@ -656,6 +684,19 @@ const MetierSelector = () => {
 export default function IAVocaleLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Popup capture email — TOUS les CTAs (gratuit ET plans payants) y passent.
+  // L'essai gratuit 100 appels / 14 jours est offert à tous.
+  // Depuis la page /configurer/:token, l'user peut ensuite upgrader vers
+  // un plan payant (redirection Stripe) ou annuler son plan.
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupSource, setPopupSource] = useState('hero');
+  const [popupPlanIntent, setPopupPlanIntent] = useState('gratuit'); // plan d'intérêt (analytics)
+  const openPopup = (source = 'unknown', planIntent = 'gratuit') => {
+    setPopupSource(source);
+    setPopupPlanIntent(planIntent);
+    setPopupOpen(true);
+  };
 
   // Import flow state
   const [importTab, setImportTab] = useState('manual');
@@ -837,12 +878,84 @@ export default function IAVocaleLanding() {
     { name: 'Marc L.', role: 'Courtier, Brest', quote: '80% de contrats renouvelés sans passer un seul appel. La rentabilité est immédiate.', avatar: 'M' },
   ];
 
+  // Tarification définitive — alignée sur la consommation réelle (130 appels/mois en moyenne)
   const pricing = [
-    { name: 'Essai Découverte', price: '0', unit: '', calls: '100 appels gratuits', features: ['Import CSV', 'Appels IA naturels', 'Tableau de bord', 'Support email'], popular: false },
-    { name: 'Pack Boost', price: '199', unit: 'HT', calls: '250 appels', features: ['Tout de l\'essai', 'Reporting avancé', 'Relances multi-canaux', 'Support prioritaire'], popular: false },
-    { name: 'Pack Business', price: '349', unit: 'HT', calls: '500 appels', features: ['Tout du Boost', 'API & intégrations', 'Manager dédié', 'Onboarding personnalisé'], popular: true },
-    { name: 'Croissance', price: '399', unit: 'HT/mois', calls: '1 000 appels/mois', features: ['Tout du Business', 'Appels illimités*', 'Priorité support 24/7', 'Compte multi-utilisateurs'], popular: false },
+    {
+      id: 'gratuit',
+      name: 'Essai gratuit',
+      tagline: 'Voir les résultats avant de payer',
+      priceMensuel: 0,
+      priceAnnuel: 0,
+      unit: '',
+      calls: '100 appels offerts · 14 jours',
+      features: [
+        'Tous les modules activés',
+        'Sans CB · Sans engagement',
+        'Configuration en 5 minutes',
+        'Annulation en 1 clic',
+      ],
+      cta: 'Démarrer gratuitement',
+      popular: false,
+    },
+    {
+      id: 'a-la-carte',
+      name: 'À la carte',
+      tagline: 'Tester sans abonnement',
+      priceMensuel: 97,
+      priceAnnuel: 97,
+      unit: 'HT · paiement unique',
+      calls: '300 appels · 30 jours',
+      features: [
+        'Tous les modules inclus',
+        'Pas de renouvellement automatique',
+        'Idéal pour valider l\'usage',
+        'Support email',
+      ],
+      cta: 'Acheter mes 300 appels',
+      popular: false,
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 'Le plus populaire',
+      priceMensuel: 97,
+      priceAnnuel: 77,
+      unit: 'HT / mois',
+      calls: '500 appels par mois',
+      features: [
+        'Renouvelés automatiquement',
+        'Tous les modules inclus',
+        'Rapport ROI hebdomadaire',
+        'Intégration agenda',
+        'Support prioritaire',
+      ],
+      cta: 'Choisir Pro',
+      popular: true,
+      annualNote: '2 mois offerts',
+    },
+    {
+      id: 'business',
+      name: 'Business',
+      tagline: 'Volumes & multi-sites',
+      priceMensuel: 249,
+      priceAnnuel: 199,
+      unit: 'HT / mois',
+      calls: '2 000 appels par mois',
+      features: [
+        'Tout le plan Pro',
+        'Multi-sites & multi-utilisateurs',
+        'Intégration CRM',
+        'Account manager dédié',
+        'Onboarding personnalisé',
+      ],
+      cta: 'Choisir Business',
+      popular: false,
+      annualNote: '2 mois offerts',
+    },
   ];
+
+  // Toggle annuel/mensuel pour la grille tarifaire
+  const [pricingAnnual, setPricingAnnual] = useState(false);
 
   const faqs = [
     { q: 'Comment l\'IA passe-t-elle les appels ?', a: 'Notre IA utilise une synthèse vocale de dernière génération avec une voix naturelle, fluide et professionnelle. Elle suit un script entièrement personnalisé selon votre métier (garagiste, courtier, praticien de santé, etc.) et adapte la conversation en fonction des réponses du client. À la fin de chaque appel, le résultat (confirmé, reporté, injoignable) est mis à jour automatiquement dans votre tableau de bord en temps réel.' },
@@ -857,14 +970,14 @@ export default function IAVocaleLanding() {
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
 
-      {/* ── Service Navigation Bar ── */}
+      {/* ── Service Navigation Bar ── (renvoie vers les sections internes) */}
       <div className="bg-gray-950 text-white text-center py-2 text-[13px] font-medium fixed top-0 w-full z-[60]">
         <div className="flex items-center justify-center gap-6 md:gap-10">
-          <Link to="/impact-avis" className="opacity-70 hover:opacity-100 transition-opacity">Impact Avis</Link>
+          <a href="#impact-avis" className="opacity-70 hover:opacity-100 transition-opacity">Impact Avis</a>
           <span className="opacity-20">|</span>
-          <Link to="/ia-vocale" className="text-emerald-400 font-semibold">IA Vocale</Link>
+          <span className="text-emerald-400 font-semibold">IA Vocale</span>
           <span className="opacity-20">|</span>
-          <Link to="/" className="opacity-70 hover:opacity-100 transition-opacity">Accélération de paiements</Link>
+          <a href="#paiements" className="opacity-70 hover:opacity-100 transition-opacity">Accélération de paiements</a>
         </div>
       </div>
 
@@ -888,7 +1001,7 @@ export default function IAVocaleLanding() {
 
           <div className="hidden md:block">
             <a
-              href="#import"
+              href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
               className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 rounded-full hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
             >
               Essai gratuit <ArrowRight className="w-4 h-4" />
@@ -916,9 +1029,9 @@ export default function IAVocaleLanding() {
                     {l.label}
                   </a>
                 ))}
-                <a href="#import" onClick={() => setMobileMenuOpen(false)} className="block text-center text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-3 rounded-full font-semibold mt-2">
+                <button type="button" onClick={() => { setMobileMenuOpen(false); openPopup('mobile-menu', 'gratuit'); }} className="block w-full text-center text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-3 rounded-full font-semibold mt-2">
                   Essai gratuit
-                </a>
+                </button>
               </div>
             </motion.div>
           )}
@@ -975,7 +1088,7 @@ export default function IAVocaleLanding() {
 
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
                 <a
-                  href="#import"
+                  href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
                 >
                   Essayer gratuitement — 100 appels offerts <ArrowRight className="w-5 h-5" />
@@ -1133,14 +1246,13 @@ export default function IAVocaleLanding() {
               {/* CTA */}
               <ScrollReveal delay={0.4}>
                 <div className="mt-10 flex flex-col sm:flex-row gap-4">
-                  <a
-                    href="https://calendar.app.google/bsaoar9V1bHi7XKe9"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => openPopup('cta-receptionia', 'gratuit')}
                     className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-amber-500/25 hover:scale-105 transition-all duration-200"
                   >
-                    <CalendarCheck className="w-5 h-5" /> Planifier un appel découverte
-                  </a>
+                    <CalendarCheck className="w-5 h-5" /> Démarrer mes 100 appels
+                  </button>
                 </div>
               </ScrollReveal>
 
@@ -1196,15 +1308,14 @@ export default function IAVocaleLanding() {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <ScrollReveal delay={0.3}>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="https://calendar.app.google/bsaoar9V1bHi7XKe9"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => openPopup('cta-robot-mesure', 'gratuit')}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
               >
                 <CalendarCheck className="w-5 h-5" />
-                Réserver un appel découverte
-              </a>
+                Démarrer gratuitement
+              </button>
             </div>
             <p className="text-sm text-gray-400 mt-4">Gratuit · 15 min · Sans engagement</p>
           </ScrollReveal>
@@ -1216,8 +1327,8 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Nos services"
-            title="4 services. Zéro appel manqué."
-            subtitle="Appels sortants, appels entrants — l'IA gère tout pendant que vous travaillez."
+            title="6 services. Une seule plateforme."
+            subtitle="La base : la Réception d'appels IA 24/7. En plus, 5 modules à activer selon vos besoins — tous inclus dès l'essai gratuit."
           />
 
           {/* Top row — 2 core services side by side */}
@@ -1268,7 +1379,7 @@ export default function IAVocaleLanding() {
                       <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-4 py-2 border ${service.accentBorder}`}>{d}</span>
                     ))}
                   </div>
-                  <a href="#import" className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}>
                     Commencer gratuitement <ArrowRight className="w-4 h-4" />
                   </a>
                 </motion.div>
@@ -1297,7 +1408,7 @@ export default function IAVocaleLanding() {
                     <span key={j} className="text-xs font-semibold text-amber-700 bg-amber-50 rounded-full px-4 py-2 border border-amber-100">{d}</span>
                   ))}
                 </div>
-                <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer"
+                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   <CalendarCheck className="w-4 h-4" />
                   Réserver un appel découverte
@@ -1325,11 +1436,72 @@ export default function IAVocaleLanding() {
                     <span key={j} className="text-xs font-semibold text-violet-700 bg-violet-50 rounded-full px-4 py-2 border border-violet-100">{d}</span>
                   ))}
                 </div>
-                <a href="https://calendar.app.google/bsaoar9V1bHi7XKe9" target="_blank" rel="noopener noreferrer"
+                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center justify-center gap-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   <CalendarCheck className="w-4 h-4" />
                   Réserver un appel découverte
                 </a>
+              </motion.div>
+            </ScrollReveal>
+          </div>
+
+          {/* Third row — Impact Avis + Accélération de paiements (intégrés depuis les anciennes pages dédiées) */}
+          <div className="grid md:grid-cols-2 gap-8 mt-8">
+            {/* Impact Avis */}
+            <ScrollReveal delay={0.1}>
+              <motion.div
+                id="impact-avis"
+                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
+                className="relative h-full bg-white rounded-[28px] border border-orange-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-orange-900/[0.06] transition-all duration-500 scroll-mt-24"
+              >
+                <div className="flex items-start justify-between mb-8">
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg">
+                    <Star className="w-8 h-8 text-white" strokeWidth={1.5} fill="white" />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-orange-50 text-orange-700 border-orange-100">Réputation</span>
+                </div>
+                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Impact Avis</h3>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">L'IA appelle vos clients satisfaits, leur demande leur ressenti et leur envoie le lien direct vers Google Avis par SMS. Plus d'avis 5 étoiles, sans relancer une seule personne à la main.</p>
+                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
+                  {['Appel post-prestation', 'Filtrage 4★+ uniquement', 'Lien Google par SMS', 'Tirage mensuel'].map((d, j) => (
+                    <span key={j} className="text-xs font-semibold text-orange-700 bg-orange-50 rounded-full px-4 py-2 border border-orange-100">{d}</span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPopup('card-impact-avis', 'gratuit')}
+                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
+                </button>
+              </motion.div>
+            </ScrollReveal>
+
+            {/* Accélération de paiements */}
+            <ScrollReveal delay={0.2}>
+              <motion.div
+                id="paiements"
+                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
+                className="relative h-full bg-white rounded-[28px] border border-rose-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-rose-900/[0.06] transition-all duration-500 scroll-mt-24"
+              >
+                <div className="flex items-start justify-between mb-8">
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-lg">
+                    <Zap className="w-8 h-8 text-white" strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-rose-50 text-rose-700 border-rose-100">Recouvrement</span>
+                </div>
+                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Accélération de paiements</h3>
+                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">L'IA relance vos impayés avec finesse, qualifie chaque dossier (promesse, litige, injoignable) et envoie au débiteur un lien de paiement Stripe en 1 clic — carte, Klarna 3× ou Billie 30 jours.</p>
+                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
+                  {['Appel + transcription IA', 'Lien Stripe en 1 clic', 'Klarna & Billie inclus', 'Mise en demeure auto'].map((d, j) => (
+                    <span key={j} className="text-xs font-semibold text-rose-700 bg-rose-50 rounded-full px-4 py-2 border border-rose-100">{d}</span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPopup('card-paiements', 'gratuit')}
+                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
+                </button>
               </motion.div>
             </ScrollReveal>
           </div>
@@ -1425,7 +1597,7 @@ export default function IAVocaleLanding() {
                 ))}
               </div>
               <ScrollReveal delay={0.3}>
-                <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   Commencer gratuitement <ArrowRight className="w-4 h-4" />
                 </a>
               </ScrollReveal>
@@ -1470,7 +1642,7 @@ export default function IAVocaleLanding() {
                 ))}
               </div>
               <ScrollReveal delay={0.3}>
-                <a href="#import" className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
+                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
                   Commencer gratuitement <ArrowRight className="w-4 h-4" />
                 </a>
               </ScrollReveal>
@@ -1553,7 +1725,7 @@ export default function IAVocaleLanding() {
             subtitle="Découvrez comment nos 4 services IA s'adaptent à votre quotidien — et combien vous allez gagner."
           />
 
-          <MetierSelector />
+          <MetierSelector openPopup={openPopup} />
         </div>
       </section>
 
@@ -2328,51 +2500,94 @@ export default function IAVocaleLanding() {
         <div className="max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Tarifs"
-            title="Simple. Transparent. Sans engagement."
-            subtitle="Commencez gratuitement, évoluez quand vous le souhaitez."
+            title="Une seule plateforme. Tous les modules. Toujours inclus."
+            subtitle="Le commerce local moyen consomme 130 appels par mois. Choisissez le plan qui vous donne 4× cette marge — vous ne stressez jamais le quota."
           />
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {pricing.map((plan, i) => (
-              <ScrollReveal key={i} delay={i * 0.08}>
-                <div className={`relative rounded-2xl border p-6 h-full flex flex-col transition-all duration-300 hover:shadow-lg ${
-                  plan.popular
-                    ? 'border-emerald-300 bg-gradient-to-b from-emerald-50 to-white shadow-lg shadow-emerald-900/5'
-                    : 'border-gray-100 bg-white hover:shadow-emerald-900/5'
-                }`}>
-                  {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-1 rounded-full">
-                      POPULAIRE
-                    </span>
-                  )}
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">{plan.name}</h3>
-                  <p className="text-sm text-emerald-600 font-medium mb-4">{plan.calls}</p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold text-gray-900">{plan.price}€</span>
-                    {plan.unit && <span className="text-sm text-gray-400 ml-1">{plan.unit}</span>}
-                  </div>
-                  <ul className="space-y-3 mb-6 flex-1">
-                    {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
-                        <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href="#import"
-                    className={`block text-center py-3 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                      plan.popular
-                        ? 'text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02]'
-                        : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
-                    }`}
-                  >
-                    {plan.price === '0' ? 'Commencer gratuitement' : 'Choisir ce plan'}
-                  </a>
-                </div>
-              </ScrollReveal>
-            ))}
+          {/* Toggle annuel / mensuel */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100 border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setPricingAnnual(false)}
+                className={`px-5 py-2 rounded-full text-[13.5px] font-semibold transition-all ${
+                  !pricingAnnual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Mensuel
+              </button>
+              <button
+                type="button"
+                onClick={() => setPricingAnnual(true)}
+                className={`px-5 py-2 rounded-full text-[13.5px] font-semibold transition-all flex items-center gap-1.5 ${
+                  pricingAnnual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Annuel
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                  −2 mois
+                </span>
+              </button>
+            </div>
           </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {pricing.map((plan, i) => {
+              const price = pricingAnnual ? plan.priceAnnuel : plan.priceMensuel;
+              return (
+                <ScrollReveal key={plan.id} delay={i * 0.08}>
+                  <div className={`relative rounded-3xl border p-7 h-full flex flex-col transition-all duration-300 ${
+                    plan.popular
+                      ? 'border-emerald-300 bg-gradient-to-b from-emerald-50/60 to-white shadow-xl shadow-emerald-900/5 lg:-mt-3'
+                      : 'border-gray-100 bg-white hover:shadow-lg hover:shadow-gray-900/[0.04]'
+                  }`}>
+                    {plan.popular && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10.5px] font-bold tracking-wider uppercase text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-3.5 py-1 rounded-full shadow-md">
+                        Le plus populaire
+                      </span>
+                    )}
+                    <div className="mb-1">
+                      <h3 className="text-[15px] font-semibold text-gray-900">{plan.name}</h3>
+                      <p className="text-[12.5px] text-gray-500 mt-0.5">{plan.tagline}</p>
+                    </div>
+                    <div className="my-5">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-[40px] font-semibold tracking-tight text-gray-900">{price}€</span>
+                        {plan.unit && <span className="text-[12.5px] text-gray-400 font-medium">{plan.unit}</span>}
+                      </div>
+                      <p className="text-[13px] text-emerald-600 font-medium mt-1">{plan.calls}</p>
+                      {plan.annualNote && pricingAnnual && (
+                        <p className="text-[11.5px] text-emerald-700/80 font-medium mt-0.5">{plan.annualNote}</p>
+                      )}
+                    </div>
+                    <ul className="space-y-2.5 mb-6 flex-1">
+                      {plan.features.map((f, j) => (
+                        <li key={j} className="flex items-start gap-2 text-[13.5px] text-gray-600">
+                          <Check className="w-3.5 h-3.5 text-emerald-500 mt-1 flex-shrink-0" strokeWidth={2.4} />
+                          <span className="leading-relaxed">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => openPopup('pricing-' + plan.id, plan.id)}
+                      className={`w-full text-center py-3 rounded-full font-semibold text-[13.5px] transition-all duration-200 ${
+                        plan.popular
+                          ? 'text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02]'
+                          : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                      }`}
+                    >
+                      {plan.cta}
+                    </button>
+                  </div>
+                </ScrollReveal>
+              );
+            })}
+          </div>
+
+          <p className="mt-10 text-center text-[12.5px] text-gray-400">
+            Tous les prix sont HT. Annulation en 1 clic. Pas de frais cachés.
+          </p>
         </div>
       </section>
 
@@ -2439,7 +2654,7 @@ export default function IAVocaleLanding() {
                   Testez l'IA vocale BoosterPay sans risque. Importez vos contacts, lancez vos premiers appels, et constatez les résultats.
                 </p>
                 <a
-                  href="#import"
+                  href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center gap-2 text-base font-semibold text-emerald-700 bg-white px-8 py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-200"
                 >
                   Activer mes 100 appels gratuits <ArrowRight className="w-5 h-5" />
@@ -2496,6 +2711,17 @@ export default function IAVocaleLanding() {
           </div>
         </div>
       </footer>
+
+      {/* ── Popup capture email + bouton flottant Contact (phone + chat) ── */}
+      {/* Toujours en mode "gratuit" : tout le monde commence par l'essai 100 appels.
+          L'upgrade éventuel se fait depuis /configurer/:token. */}
+      <EmailCapturePopup
+        open={popupOpen}
+        onClose={() => setPopupOpen(false)}
+        source={popupSource + (popupPlanIntent !== 'gratuit' ? ':' + popupPlanIntent : '')}
+        plan="gratuit"
+      />
+      <FloatingContact />
     </div>
   );
 }
