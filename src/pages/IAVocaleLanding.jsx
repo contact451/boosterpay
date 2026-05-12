@@ -2347,18 +2347,17 @@ const LiveProspectsFeed = () => {
   };
 
   const [cards, setCards] = useState(() => [makeCard(), makeCard()]);
-  // Compteur "à échelle locale" — un commerçant doit se dire "ça me ressemble, je peux en avoir aussi"
-  // Démarre à 4, plafonne à 9 pour rester réaliste à l'échelle d'un commerce de quartier
+  // Compteur corrélé aux cartes affichées : démarre à 4 (échelle commerce local)
+  // et fait +1 à CHAQUE nouvelle carte qui défile → le visiteur voit le live progresser
   const [counter, setCounter] = useState(4);
   const [now, setNow] = useState(Date.now());
 
-  // Nouvelle carte toutes les 6s — assez lent pour qu'on lise la fiche et que le compteur ne s'emballe pas
+  // Nouvelle carte toutes les 6s — chaque arrivée = +1 sur le compteur
   useEffect(() => {
     if (!inView) return;
     const id = setInterval(() => {
       setCards(prev => [makeCard(), ...prev.slice(0, 1)]);
-      // Le compteur monte mais doucement (proba 50%) et plafonne à 9 — reste humain
-      setCounter(c => (c < 9 && Math.random() < 0.5) ? c + 1 : c);
+      setCounter(c => c + 1);
     }, 6000);
     return () => clearInterval(id);
   }, [inView]);
