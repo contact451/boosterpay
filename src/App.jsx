@@ -1,9 +1,38 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
 // Helper : redirige en gardant search/hash (sinon ?ref=XXX disparaît)
 function NavigatePreserve({ to }) {
   const loc = useLocation();
   return <Navigate to={{ pathname: to, search: loc.search, hash: loc.hash }} replace />;
+}
+
+// Scroll automatique vers l'ancre #id quand on arrive sur la page avec un hash
+// (le navigateur ne le fait pas seul sur une SPA car la section n'existe pas
+//  encore au moment où il essaye de scroller).
+// Retry car la section peut être plus bas dans la page et mounter en différé
+// (animations / scrollReveal / heavy components).
+function ScrollToHash() {
+  const { hash, pathname } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.replace('#', '');
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        // scrollIntoView avec offset top pour compenser la navbar sticky
+        const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+        return;
+      }
+      attempts++;
+      if (attempts < 20) setTimeout(tryScroll, 100); // 2s max de retry
+    };
+    // Premier essai après que React a fini son rendu initial
+    setTimeout(tryScroll, 50);
+  }, [hash, pathname]);
+  return null;
 }
 import BoosterPayLanding from './BoosterPayLanding';
 import OnboardingStep2 from './OnboardingStep2';
@@ -24,6 +53,7 @@ import Configurer from './pages/Configurer';
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToHash />
       <Routes>
         {/* IA Vocale est désormais la page principale.
             Impact Avis et Accélération de paiements sont devenus des modules
