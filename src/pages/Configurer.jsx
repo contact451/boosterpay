@@ -10,8 +10,8 @@ import {
 import { fetchEssaiByToken, injectContacts, cancelTrial, requestPlanChange } from '../services/leadService';
 import FloatingContact from '../components/FloatingContact';
 
-const PHONE_DISPLAY = '+33 1 77 38 17 11';
-const PHONE_TEL = '+33177381711';
+const PHONE_DISPLAY = '+33 4 51 41 05 75';
+const PHONE_TEL = '+33451410575';
 const CALENDAR_RECEPTION = 'https://calendar.app.google/M3BbtZaQGTbzp2cF7';
 const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05';
 
@@ -336,6 +336,16 @@ function TrialStatusBar({ trial, onChangePlan, onCancelPlan }) {
   const pct = trial.appels_offerts > 0 ? Math.min(100, (trial.appels_consommes / trial.appels_offerts) * 100) : 0;
   const isCancelled = trial.statut === 'annule';
 
+  // Format de la date de fin en français : "mardi 14 mai"
+  const expiresDateFR = expiresDate ? expiresDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+
+  // Pour la barre de progression du temps : 14 jours d'essai au total
+  const TOTAL_DAYS = 14;
+  const daysUsed = Math.max(0, TOTAL_DAYS - daysLeft);
+  const timePct = Math.min(100, (daysUsed / TOTAL_DAYS) * 100);
+  const isUrgent = daysLeft <= 3 && daysLeft > 0;
+  const isExpired = daysLeft === 0;
+
   return (
     <div className={`bg-white border rounded-3xl p-5 sm:p-6 md:p-7 shadow-[0_1px_2px_rgba(0,0,0,0.03)] ${
       isCancelled ? 'border-rose-200 bg-rose-50/30' : 'border-gray-100'
@@ -400,12 +410,57 @@ function TrialStatusBar({ trial, onChangePlan, onCancelPlan }) {
           </div>
         </div>
 
-        {/* Reste */}
-        <div className="text-left sm:text-right shrink-0">
-          <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Reste</div>
-          <div className="text-[18px] font-semibold text-gray-900 mt-0.5 whitespace-nowrap">
-            {daysLeft} jour{daysLeft > 1 ? 's' : ''}
+        {/* Reste — avec barre de progression temporelle + date fin essai + push action */}
+        <div className="min-w-0 sm:min-w-[200px]">
+          <div className="flex items-baseline justify-between gap-2 mb-1.5">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+              {isExpired ? 'Essai terminé' : 'Temps restant'}
+            </div>
+            <div className="text-[12.5px] tabular-nums shrink-0">
+              <span className={`font-bold ${isUrgent ? 'text-orange-600' : isExpired ? 'text-rose-600' : 'text-gray-900'}`}>
+                {daysLeft}
+              </span>
+              <span className="text-gray-400"> / {TOTAL_DAYS} j</span>
+            </div>
           </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{
+                background: isExpired
+                  ? 'linear-gradient(90deg, #F43F5E, #E11D48)'
+                  : isUrgent
+                    ? 'linear-gradient(90deg, #F97316, #EA580C)'
+                    : 'linear-gradient(90deg, #10B981, #14B8A6)',
+              }}
+              initial={{ width: 0 }}
+              animate={{ width: timePct + '%' }}
+              transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+            />
+          </div>
+          {expiresDateFR && (
+            <p className="text-[11px] text-gray-500 mt-1.5">
+              {isExpired
+                ? <>Essai terminé le <span className="font-semibold text-rose-600 capitalize">{expiresDateFR}</span></>
+                : <>Fin de l'essai le <span className="font-semibold text-gray-700 capitalize">{expiresDateFR}</span></>
+              }
+            </p>
+          )}
+          {/* Push to action — Apple-style */}
+          {!isCancelled && (isUrgent || isExpired) && (
+            <button
+              type="button"
+              onClick={onChangePlan}
+              className={`mt-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all hover:scale-[1.02] ${
+                isExpired
+                  ? 'bg-gradient-to-r from-rose-500 to-pink-500 shadow-lg shadow-rose-500/30'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/30'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {isExpired ? 'Choisir un plan pour continuer' : 'Passer en plan payant'}
+            </button>
+          )}
         </div>
       </div>
     </div>

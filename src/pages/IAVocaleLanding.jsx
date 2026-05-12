@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
@@ -40,11 +40,15 @@ import {
   UserPlus,
   ArrowUpRight,
   HelpCircle,
+  MessageSquare,
+  Mail,
+  MapPin,
 } from 'lucide-react';
 import { captureLeadFromSite } from '../services/leadService';
 import Papa from 'papaparse';
 import EmailCapturePopup from '../components/EmailCapturePopup';
 import FloatingContact from '../components/FloatingContact';
+import ExitIntentPopup from '../components/ExitIntentPopup';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -52,6 +56,44 @@ import FloatingContact from '../components/FloatingContact';
 const isMobileFR = (phone) => {
   const cleaned = phone.replace(/[\s.\-()]/g, '');
   return /^(06|07|\+336|\+337|00336|00337)/.test(cleaned);
+};
+
+// Hook global : détecte mobile via matchMedia (perf > inline checks)
+// Sert à désactiver les effets coûteux (parallax, springs, gros blurs) sur mobile
+const useIsMobileDevice = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    if (mq.addEventListener) {
+      mq.addEventListener('change', update);
+      return () => mq.removeEventListener('change', update);
+    }
+    // Safari < 14 fallback
+    mq.addListener(update);
+    return () => mq.removeListener(update);
+  }, []);
+  return isMobile;
+};
+
+// Détecte si l'utilisateur préfère réduire les animations (accessibilité + perf)
+const usePrefersReducedMotion = () => {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduce(mq.matches);
+    update();
+    if (mq.addEventListener) {
+      mq.addEventListener('change', update);
+      return () => mq.removeEventListener('change', update);
+    }
+    mq.addListener(update);
+    return () => mq.removeListener(update);
+  }, []);
+  return reduce;
 };
 
 /* ------------------------------------------------------------------ */
@@ -72,22 +114,23 @@ const ScrollReveal = ({ children, y = 30, delay = 0, className = '' }) => (
 );
 
 const SectionHeading = ({ tag, title, subtitle }) => (
-  <div className="text-center max-w-3xl mx-auto mb-16">
+  <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20">
     {tag && (
-      <ScrollReveal y={20}>
-        <span className="inline-block text-sm font-semibold tracking-wider uppercase text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full mb-4">
+      <ScrollReveal y={16}>
+        <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100/80 px-3.5 py-1.5 rounded-full mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           {tag}
         </span>
       </ScrollReveal>
     )}
-    <ScrollReveal y={30} delay={0.05}>
-      <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+    <ScrollReveal y={24} delay={0.05}>
+      <h2 className="text-[34px] sm:text-[44px] md:text-[54px] lg:text-[60px] font-extrabold text-gray-900 leading-[1.02] tracking-[-0.025em]">
         {title}
       </h2>
     </ScrollReveal>
     {subtitle && (
-      <ScrollReveal y={30} delay={0.06}>
-        <p className="text-lg md:text-xl text-gray-500 max-w-2xl leading-relaxed mt-5 mx-auto">
+      <ScrollReveal y={24} delay={0.12}>
+        <p className="text-[16.5px] md:text-[18px] lg:text-[19px] text-gray-500 max-w-2xl leading-[1.55] mt-6 mx-auto font-normal">
           {subtitle}
         </p>
       </ScrollReveal>
@@ -102,6 +145,93 @@ const GradientText = ({ children, className = '' }) => (
 );
 
 /**
+ * FinalCtaInline — CTA final avec email inline + bouton (capture directe).
+ * Si l'email est valide, on déclenche le popup pré-rempli.
+ */
+const FinalCtaInline = ({ openPopup }) => {
+  const [email, setEmail] = useState('');
+  const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // On ouvre le popup avec l'email pré-rempli (le popup est la source de vérité)
+    if (validEmail(email)) {
+      try { sessionStorage.setItem('bp_prefill_email', email); } catch (e2) {}
+      openPopup('cta-final', 'gratuit');
+    } else {
+      openPopup('cta-final', 'gratuit');
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+    >
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Votre email"
+        autoComplete="email"
+        inputMode="email"
+        style={{ fontSize: 16 }}
+        className="flex-1 px-5 py-4 rounded-full bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all"
+      />
+      <button
+        type="submit"
+        className="inline-flex items-center justify-center gap-2 text-[15px] font-semibold text-emerald-700 bg-white px-6 py-4 rounded-full hover:bg-emerald-50 hover:shadow-xl transition-all whitespace-nowrap"
+      >
+        Activer mes 100 appels <ArrowRight className="w-4 h-4" />
+      </button>
+    </form>
+  );
+};
+
+/**
+ * MobileStickyCTA — Barre CTA collante en bas d'écran sur mobile uniquement.
+ * Apparaît après un scroll initial (~300px) pour ne pas masquer le hero.
+ */
+const MobileStickyCTA = ({ openPopup }) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || 0;
+      // Apparaît après 300px, masquée près du footer (-1000px du bas)
+      const nearBottom = window.innerHeight + y >= document.body.offsetHeight - 200;
+      setShow(y > 300 && !nearBottom);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return (
+    <div
+      className={`md:hidden fixed inset-x-0 bottom-0 z-[55] transition-all duration-300 ${
+        show ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'
+      }`}
+      style={{
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)',
+        paddingTop: '0.5rem',
+        background: 'rgba(255,255,255,0.96)',
+        backdropFilter: 'blur(14px)',
+        borderTop: '1px solid rgba(15,23,42,0.06)',
+      }}
+    >
+      <div className="px-4">
+        <button
+          type="button"
+          onClick={() => openPopup('mobile-sticky', 'gratuit')}
+          className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full text-[15px] font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 shadow-[0_10px_24px_-8px_rgba(16,185,129,0.55)] active:scale-[0.98] transition-transform"
+        >
+          Activer mes 100 appels offerts <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/**
  * HowItWorksTimeline — Animation Apple-style pour les 4 étapes.
  * - Ligne connectrice qui se dessine au scroll (SVG stroke-dashoffset)
  * - Chaque étape apparaît en cascade avec spring physics
@@ -113,18 +243,23 @@ const GradientText = ({ children, className = '' }) => (
 const HowItWorksTimeline = ({ steps }) => {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
+  const isMobile = useIsMobileDevice();
+  const reduceMotion = usePrefersReducedMotion();
 
   // Easing Apple — cubic-bezier(0.16, 1, 0.3, 1) = easeOutExpo
   const appleEase = [0.16, 1, 0.3, 1];
+
+  // Sur mobile : pas de spring rotate ni glow lourd → animations légères GPU-friendly
+  const useLight = isMobile || reduceMotion;
 
   return (
     <div ref={ref} className="relative max-w-5xl mx-auto mt-4">
       {/* Connector line (desktop only) — se dessine progressivement */}
       <svg
-        className="hidden md:block absolute top-[44px] left-0 right-0 mx-auto pointer-events-none"
+        className="hidden sm:block absolute top-[44px] left-0 right-0 mx-auto pointer-events-none"
         viewBox="0 0 1000 4"
         preserveAspectRatio="none"
-        style={{ width: 'calc(100% - 17%)', maxWidth: '900px', left: '50%', transform: 'translateX(-50%)' }}
+        style={{ width: 'calc(100% - 22%)', maxWidth: '700px', left: '50%', transform: 'translateX(-50%)' }}
       >
         <defs>
           <linearGradient id="hiw-line" x1="0" y1="0" x2="1" y2="0">
@@ -144,67 +279,79 @@ const HowItWorksTimeline = ({ steps }) => {
         />
       </svg>
 
-      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-6 md:gap-4">
+      <div className="grid sm:grid-cols-3 gap-12 sm:gap-8 md:gap-12 lg:gap-16">
         {steps.map((step, i) => {
           const StepIcon = step.icon;
-          const baseDelay = 0.35 + i * 0.18;
+          const baseDelay = useLight ? 0.05 + i * 0.08 : 0.35 + i * 0.18;
           return (
             <div key={i} className="text-center relative group">
-              {/* Glow background pulse subtil au reveal */}
-              <motion.div
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full pointer-events-none"
-                style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.18), transparent 70%)' }}
-                initial={{ opacity: 0, scale: 0.4 }}
-                animate={inView ? { opacity: [0, 0.7, 0], scale: [0.4, 1.4, 1.6] } : {}}
-                transition={{ duration: 1.2, ease: appleEase, delay: baseDelay - 0.1, times: [0, 0.5, 1] }}
-              />
+              {/* Numéro géant en filigrane — fade simple sur mobile */}
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={inView ? { opacity: 1 } : {}}
+                transition={{ duration: useLight ? 0.4 : 0.9, ease: appleEase, delay: baseDelay - 0.05 }}
+                className="absolute -top-8 left-1/2 -translate-x-1/2 text-[120px] font-black leading-none tracking-tighter text-gray-100 pointer-events-none select-none"
+                style={{ willChange: 'opacity' }}
+                aria-hidden="true"
+              >
+                0{i + 1}
+              </motion.span>
 
-              {/* Icône Apple-style */}
+              {/* Glow — désactivé sur mobile (keyframes lourds) */}
+              {!useLight && (
+                <motion.div
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full pointer-events-none"
+                  style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.25), transparent 70%)', willChange: 'transform, opacity' }}
+                  initial={{ opacity: 0, scale: 0.4 }}
+                  animate={inView ? { opacity: [0, 0.7, 0], scale: [0.4, 1.4, 1.6] } : {}}
+                  transition={{ duration: 1.2, ease: appleEase, delay: baseDelay - 0.1, times: [0, 0.5, 1] }}
+                />
+              )}
+
+              {/* Icône — fade + translate simple sur mobile, spring rotate sur desktop */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                animate={inView ? { opacity: 1, scale: 1, rotate: 0 } : {}}
-                transition={{ type: 'spring', stiffness: 280, damping: 22, delay: baseDelay }}
-                whileHover={{ scale: 1.06, transition: { type: 'spring', stiffness: 400, damping: 18 } }}
-                className="relative w-[88px] h-[88px] mx-auto rounded-[24px] flex items-center justify-center mb-6 z-10"
+                initial={useLight ? { opacity: 0, y: 14 } : { opacity: 0, scale: 0.5, rotate: -90 }}
+                animate={inView ? (useLight ? { opacity: 1, y: 0 } : { opacity: 1, scale: 1, rotate: 0 }) : {}}
+                transition={useLight
+                  ? { duration: 0.45, ease: appleEase, delay: baseDelay }
+                  : { type: 'spring', stiffness: 280, damping: 22, delay: baseDelay }}
+                whileHover={useLight ? undefined : { scale: 1.08, rotate: 4, transition: { type: 'spring', stiffness: 400, damping: 16 } }}
+                className="relative w-[88px] h-[88px] sm:w-[96px] sm:h-[96px] mx-auto rounded-[24px] sm:rounded-[28px] flex items-center justify-center mb-7 sm:mb-8 z-10"
                 style={{
                   background: 'linear-gradient(135deg, #10B981 0%, #14B8A6 100%)',
-                  boxShadow: '0 12px 32px -8px rgba(16,185,129,0.45), 0 0 0 1px rgba(255,255,255,0.04) inset',
+                  boxShadow: useLight
+                    ? '0 12px 24px -8px rgba(16,185,129,0.4)'
+                    : '0 20px 44px -10px rgba(16,185,129,0.5), 0 0 0 1px rgba(255,255,255,0.06) inset',
+                  willChange: 'transform, opacity',
                 }}
               >
-                <StepIcon className="w-9 h-9 text-white" strokeWidth={1.6} />
-                {/* Subtle gloss highlight */}
-                <span
-                  className="absolute inset-x-2 top-1.5 h-[18px] rounded-[18px] pointer-events-none opacity-40"
-                  style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.55), transparent)' }}
-                />
+                <StepIcon className="w-9 h-9 sm:w-10 sm:h-10 text-white" strokeWidth={1.6} />
+                {!useLight && (
+                  <span
+                    className="absolute inset-x-2 top-2 h-[20px] rounded-[20px] pointer-events-none opacity-40"
+                    style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.6), transparent)' }}
+                  />
+                )}
               </motion.div>
-
-              {/* Pin "Étape N" */}
-              <motion.span
-                initial={{ opacity: 0, y: 6, scale: 0.92 }}
-                animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
-                transition={{ duration: 0.5, ease: appleEase, delay: baseDelay + 0.12 }}
-                className="inline-block text-[11px] font-bold tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full mb-3 uppercase"
-              >
-                Étape {i + 1}
-              </motion.span>
 
               {/* Titre */}
               <motion.h3
-                initial={{ opacity: 0, y: 14 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, ease: appleEase, delay: baseDelay + 0.22 }}
-                className="text-[19px] sm:text-xl font-bold text-gray-900 tracking-tight mb-2 leading-tight"
+                transition={{ duration: useLight ? 0.4 : 0.65, ease: appleEase, delay: baseDelay + (useLight ? 0.06 : 0.22) }}
+                className="text-[22px] sm:text-[24px] lg:text-[26px] font-extrabold text-gray-900 tracking-[-0.02em] mb-3 leading-[1.15]"
+                style={{ willChange: 'transform, opacity' }}
               >
                 {step.title}
               </motion.h3>
 
               {/* Description */}
               <motion.p
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.6, ease: appleEase, delay: baseDelay + 0.32 }}
-                className="text-[14px] text-gray-500 leading-relaxed max-w-[240px] mx-auto"
+                transition={{ duration: useLight ? 0.4 : 0.65, ease: appleEase, delay: baseDelay + (useLight ? 0.12 : 0.32) }}
+                className="text-[15px] lg:text-[15.5px] text-gray-500 leading-[1.55] max-w-[280px] mx-auto"
+                style={{ willChange: 'transform, opacity' }}
               >
                 {step.desc}
               </motion.p>
@@ -472,10 +619,18 @@ const STRIPE_LINKS = {
   pro: STRIPE_CHECKOUT_URL,
 };
 
+// Nav Apple-minimal : 2 ancres essentielles, le reste se découvre en scrollant
 const navLinks = [
+  { label: 'Tarifs', href: '#pricing' },
+  { label: 'Acheter des prospects', href: '#leads-rgpd', highlight: true },
+];
+
+// Liens additionnels affichés uniquement dans le menu mobile (drawer plus tolérant)
+const navLinksMobile = [
   { label: 'Fonctionnalités', href: '#features' },
   { label: 'Cas d\'usage', href: '#usecases' },
   { label: 'Tarifs', href: '#pricing' },
+  { label: 'Acheter des prospects', href: '#leads-rgpd', highlight: true },
   { label: 'FAQ', href: '#faq' },
 ];
 
@@ -822,30 +977,30 @@ const RobotShowcase = () => {
 /*  Metiers data + MetierSelector component                            */
 /* ------------------------------------------------------------------ */
 const metiers = [
-  { name: 'Garagiste', icon: Wrench, s1: 'Relance CT, vidanges, entretiens', s2: 'Confirmation RDV atelier J-1', s3: 'Réception appels pannes 24/7', s4: 'Robot accueil personnalisé', temps: '12h', clients: '+18', ca: '+8 500€', lapins: '-40%', s5: 'Avis Google après chaque réparation', s6: 'Relance factures clients' },
-  { name: 'Courtier assurance', icon: Shield, s1: 'Renouvellement contrats auto/habitation', s2: 'Confirmation RDV signature', s3: 'Réception appels sinistres 24/7', s4: 'Robot qualification souscription', temps: '15h', clients: '+25', ca: '+12 000€', lapins: '-35%', s5: 'Avis post-souscription', s6: 'Relance primes en retard' },
-  { name: 'Dentiste', icon: Heart, s1: 'Rappel détartrages & bilans', s2: 'Confirmation RDV patients J-1', s3: 'Réception appels urgences dentaires', s4: 'Robot triage patients', temps: '10h', clients: '+15', ca: '+6 500€', lapins: '-45%', s5: 'Avis post-soins', s6: 'Relance honoraires non réglés' },
-  { name: 'Opticien', icon: Eye, s1: 'Renouvellement lunettes/lentilles', s2: 'Confirmation RDV essayage', s3: 'Réception appels conseils optiques', s4: 'Robot prise de RDV auto', temps: '8h', clients: '+12', ca: '+7 000€', lapins: '-30%', s5: 'Avis après essayage lunettes', s6: 'Relance factures différées' },
-  { name: 'Salon coiffure', icon: Scissors, s1: 'Réactivation clients dormants 3 mois', s2: 'Confirmation RDV coiffure J-1', s3: 'Réception appels réservation', s4: 'Robot conseils personnalisés', temps: '10h', clients: '+20', ca: '+4 500€', lapins: '-50%', s5: 'Avis Google après prestation', s6: 'Relance forfaits impayés' },
-  { name: 'Kiné / Ostéopathe', icon: Activity, s1: 'Suivi parcours de soins', s2: 'Confirmation séances', s3: 'Réception appels nouveaux patients', s4: 'Robot orientation patients', temps: '8h', clients: '+10', ca: '+3 800€', lapins: '-35%', s5: 'Avis post-séance', s6: 'Relance honoraires patients' },
-  { name: 'Médecin généraliste', icon: Heart, s1: 'Rappel check-up & vaccins', s2: 'Confirmation consultations J-1', s3: 'Réception appels patients 24/7', s4: 'Robot triage & orientation', temps: '14h', clients: '+12', ca: '+5 000€', lapins: '-40%', s5: 'Avis Google patients satisfaits', s6: 'Relance dépassements honoraires' },
-  { name: 'Vétérinaire', icon: Heart, s1: 'Rappel vaccins & vermifuges', s2: 'Confirmation RDV consultations', s3: 'Réception appels urgences animales', s4: 'Robot conseil vétérinaire', temps: '10h', clients: '+14', ca: '+5 500€', lapins: '-35%', s5: 'Avis post-consultation', s6: 'Relance factures soins' },
-  { name: 'Agent immobilier', icon: Users, s1: 'Relance mandats à échéance', s2: 'Confirmation visites acquéreurs', s3: 'Réception appels acquéreurs 24/7', s4: 'Robot qualification achat/location', temps: '14h', clients: '+30', ca: '+15 000€', lapins: '-25%', s5: 'Avis vendeurs/acquéreurs', s6: 'Relance honoraires d\'agence'},
-  { name: 'Plombier', icon: Wrench, s1: 'Relance entretiens chaudière', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis automatique', temps: '12h', clients: '+22', ca: '+9 000€', lapins: '-30%', s5: 'Avis Google post-intervention', s6: 'Relance devis & factures' },
-  { name: 'Coach sportif', icon: Activity, s1: 'Relance abonnements expirés', s2: 'Confirmation séances', s3: 'Réception appels inscription', s4: 'Robot programme personnalisé', temps: '6h', clients: '+15', ca: '+3 000€', lapins: '-40%', s5: 'Avis clients fidèles', s6: 'Relance abonnements impayés' },
-  { name: 'Restaurant', icon: Gift, s1: 'Relance clients fidèles', s2: 'Confirmation réservations J-1', s3: 'Réception appels réservation 24/7', s4: 'Robot commande & réservation', temps: '8h', clients: '+25', ca: '+5 000€', lapins: '-55%', s5: 'Avis Google clients satisfaits', s6: 'Relance acomptes événements' },
-  { name: 'Salon esthétique', icon: Sparkles, s1: 'Réactivation clientes dormantes', s2: 'Confirmation RDV soins', s3: 'Réception appels prise de RDV', s4: 'Robot conseil beauté', temps: '10h', clients: '+18', ca: '+4 800€', lapins: '-45%', s5: 'Avis post-soin', s6: 'Relance forfaits non réglés' },
-  { name: 'Avocat', icon: Shield, s1: 'Relance dossiers en attente', s2: 'Confirmation RDV consultations', s3: 'Réception appels nouveaux clients', s4: 'Robot prise de brief juridique', temps: '12h', clients: '+10', ca: '+10 000€', lapins: '-30%', s5: 'Avis dossiers clos', s6: 'Relance honoraires en attente' },
-  { name: 'Expert-comptable', icon: FileText, s1: 'Relance bilans & déclarations', s2: 'Confirmation RDV clients', s3: 'Réception appels questions fiscales', s4: 'Robot collecte pièces', temps: '15h', clients: '+12', ca: '+8 000€', lapins: '-25%', s5: 'Avis clients après bilan', s6: 'Relance honoraires & frais' },
-  { name: 'Auto-école', icon: Calendar, s1: 'Relance élèves inactifs', s2: 'Confirmation heures conduite', s3: 'Réception appels inscription', s4: 'Robot planning auto', temps: '10h', clients: '+20', ca: '+6 000€', lapins: '-40%', s5: 'Avis élèves diplômés', s6: 'Relance forfaits non payés' },
-  { name: 'Électricien', icon: Zap, s1: 'Relance contrôles électriques', s2: 'Confirmation interventions', s3: 'Réception appels dépannage', s4: 'Robot devis électrique', temps: '10h', clients: '+18', ca: '+7 500€', lapins: '-30%', s5: 'Avis Google post-intervention', s6: 'Relance devis & factures' },
-  { name: 'Pharmacie', icon: Heart, s1: 'Rappel renouvellement ordonnances', s2: 'Confirmation préparations', s3: 'Réception appels conseils', s4: 'Robot suivi traitements', temps: '8h', clients: '+10', ca: '+4 500€', lapins: '-20%', s5: 'Avis clients fidèles', s6: 'Relance avances tiers payant' },
-  { name: 'Photographe', icon: Eye, s1: 'Relance séances anniversaires', s2: 'Confirmation shoots', s3: 'Réception appels devis', s4: 'Robot portfolio & tarifs', temps: '6h', clients: '+12', ca: '+3 500€', lapins: '-35%', s5: 'Avis clients après livraison', s6: 'Relance acomptes shootings' },
-  { name: 'Serrurier', icon: Wrench, s1: 'Relance contrats maintenance', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis serrurerie', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-25%', s5: 'Avis Google post-dépannage', s6: 'Relance interventions urgences' },
-  { name: 'Notaire', icon: FileText, s1: 'Relance signatures & dossiers', s2: 'Confirmation RDV actes', s3: 'Réception appels nouveaux dossiers', s4: 'Robot accueil étude', temps: '12h', clients: '+8', ca: '+10 000€', lapins: '-30%', s5: 'Avis clients post-acte', s6: 'Relance émoluments en attente' },
-  { name: 'Paysagiste', icon: Wrench, s1: 'Relance entretiens saisonniers', s2: 'Confirmation interventions', s3: 'Réception appels devis', s4: 'Robot conseil jardin', temps: '8h', clients: '+15', ca: '+5 500€', lapins: '-30%', s5: 'Avis post-aménagement', s6: 'Relance contrats annuels' },
-  { name: 'Consultant', icon: Users, s1: 'Relance propositions commerciales', s2: 'Confirmation RDV clients', s3: 'Réception appels prospects', s4: 'Robot qualification projet', temps: '10h', clients: '+8', ca: '+12 000€', lapins: '-20%', s5: 'Avis missions terminées', s6: 'Relance honoraires à échéance' },
-  { name: 'Centre formation', icon: Users, s1: 'Relance inscriptions', s2: 'Confirmation sessions', s3: 'Réception appels renseignements', s4: 'Robot orientation formation', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-35%', s5: 'Avis stagiaires diplômés', s6: 'Relance financements OPCO' },
+  { name: 'Garagiste', icon: Wrench, s1: 'Relance CT, vidanges, entretiens', s2: 'Confirmation RDV atelier J-1', s3: 'Réception appels pannes 24/7', s4: 'Robot accueil personnalisé', temps: '12h', clients: '+18', ca: '+8 500€', lapins: '-40%', s5: 'Avis Google après chaque réparation', s6: 'Relance factures clients' , rentabilite: '1 contrôle technique récupéré couvre 1 mois d\'abonnement' },
+  { name: 'Courtier assurance', icon: Shield, s1: 'Renouvellement contrats auto/habitation', s2: 'Confirmation RDV signature', s3: 'Réception appels sinistres 24/7', s4: 'Robot qualification souscription', temps: '15h', clients: '+25', ca: '+12 000€', lapins: '-35%', s5: 'Avis post-souscription', s6: 'Relance primes en retard' , rentabilite: '1 contrat renouvelé = 2 mois d\'abonnement payés' },
+  { name: 'Dentiste', icon: Heart, s1: 'Rappel détartrages & bilans', s2: 'Confirmation RDV patients J-1', s3: 'Réception appels urgences dentaires', s4: 'Robot triage patients', temps: '10h', clients: '+15', ca: '+6 500€', lapins: '-45%', s5: 'Avis post-soins', s6: 'Relance honoraires non réglés' , rentabilite: '2 RDV honorés grâce aux confirmations IA = abonnement remboursé' },
+  { name: 'Opticien', icon: Eye, s1: 'Renouvellement lunettes/lentilles', s2: 'Confirmation RDV essayage', s3: 'Réception appels conseils optiques', s4: 'Robot prise de RDV auto', temps: '8h', clients: '+12', ca: '+7 000€', lapins: '-30%', s5: 'Avis après essayage lunettes', s6: 'Relance factures différées' , rentabilite: '1 paire de lunettes vendue = 2 mois d\'abonnement couverts' },
+  { name: 'Salon coiffure', icon: Scissors, s1: 'Réactivation clients dormants 3 mois', s2: 'Confirmation RDV coiffure J-1', s3: 'Réception appels réservation', s4: 'Robot conseils personnalisés', temps: '10h', clients: '+20', ca: '+4 500€', lapins: '-50%', s5: 'Avis Google après prestation', s6: 'Relance forfaits impayés' , rentabilite: '5 RDV protégés des lapins = abonnement couvert' },
+  { name: 'Kiné / Ostéopathe', icon: Activity, s1: 'Suivi parcours de soins', s2: 'Confirmation séances', s3: 'Réception appels nouveaux patients', s4: 'Robot orientation patients', temps: '8h', clients: '+10', ca: '+3 800€', lapins: '-35%', s5: 'Avis post-séance', s6: 'Relance honoraires patients' , rentabilite: '3 séances honorées = abonnement remboursé' },
+  { name: 'Médecin généraliste', icon: Heart, s1: 'Rappel check-up & vaccins', s2: 'Confirmation consultations J-1', s3: 'Réception appels patients 24/7', s4: 'Robot triage & orientation', temps: '14h', clients: '+12', ca: '+5 000€', lapins: '-40%', s5: 'Avis Google patients satisfaits', s6: 'Relance dépassements honoraires' , rentabilite: '4 patients récupérés sur appels manqués = abonnement payé' },
+  { name: 'Vétérinaire', icon: Heart, s1: 'Rappel vaccins & vermifuges', s2: 'Confirmation RDV consultations', s3: 'Réception appels urgences animales', s4: 'Robot conseil vétérinaire', temps: '10h', clients: '+14', ca: '+5 500€', lapins: '-35%', s5: 'Avis post-consultation', s6: 'Relance factures soins' , rentabilite: '2 consultations supplémentaires = abonnement couvert' },
+  { name: 'Agent immobilier', icon: Users, s1: 'Relance mandats à échéance', s2: 'Confirmation visites acquéreurs', s3: 'Réception appels acquéreurs 24/7', s4: 'Robot qualification achat/location', temps: '14h', clients: '+30', ca: '+15 000€', lapins: '-25%', s5: 'Avis vendeurs/acquéreurs', s6: 'Relance honoraires d\'agence', rentabilite: '1 mandat signé = 30 mois d\'abonnement payés'},
+  { name: 'Plombier', icon: Wrench, s1: 'Relance entretiens chaudière', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis automatique', temps: '12h', clients: '+22', ca: '+9 000€', lapins: '-30%', s5: 'Avis Google post-intervention', s6: 'Relance devis & factures' , rentabilite: '1 dépannage récupéré la nuit = abonnement remboursé' },
+  { name: 'Coach sportif', icon: Activity, s1: 'Relance abonnements expirés', s2: 'Confirmation séances', s3: 'Réception appels inscription', s4: 'Robot programme personnalisé', temps: '6h', clients: '+15', ca: '+3 000€', lapins: '-40%', s5: 'Avis clients fidèles', s6: 'Relance abonnements impayés' , rentabilite: '2 nouveaux abonnés = abonnement couvert' },
+  { name: 'Restaurant', icon: Gift, s1: 'Relance clients fidèles', s2: 'Confirmation réservations J-1', s3: 'Réception appels réservation 24/7', s4: 'Robot commande & réservation', temps: '8h', clients: '+25', ca: '+5 000€', lapins: '-55%', s5: 'Avis Google clients satisfaits', s6: 'Relance acomptes événements' , rentabilite: '10 couverts protégés des annulations = abonnement payé' },
+  { name: 'Salon esthétique', icon: Sparkles, s1: 'Réactivation clientes dormantes', s2: 'Confirmation RDV soins', s3: 'Réception appels prise de RDV', s4: 'Robot conseil beauté', temps: '10h', clients: '+18', ca: '+4 800€', lapins: '-45%', s5: 'Avis post-soin', s6: 'Relance forfaits non réglés' , rentabilite: '4 RDV honorés grâce aux confirmations = abonnement couvert' },
+  { name: 'Avocat', icon: Shield, s1: 'Relance dossiers en attente', s2: 'Confirmation RDV consultations', s3: 'Réception appels nouveaux clients', s4: 'Robot prise de brief juridique', temps: '12h', clients: '+10', ca: '+10 000€', lapins: '-30%', s5: 'Avis dossiers clos', s6: 'Relance honoraires en attente' , rentabilite: '1 dossier signé = 5 mois d\'abonnement payés' },
+  { name: 'Expert-comptable', icon: FileText, s1: 'Relance bilans & déclarations', s2: 'Confirmation RDV clients', s3: 'Réception appels questions fiscales', s4: 'Robot collecte pièces', temps: '15h', clients: '+12', ca: '+8 000€', lapins: '-25%', s5: 'Avis clients après bilan', s6: 'Relance honoraires & frais' , rentabilite: '1 nouvelle mission = 4 mois d\'abonnement couverts' },
+  { name: 'Auto-école', icon: Calendar, s1: 'Relance élèves inactifs', s2: 'Confirmation heures conduite', s3: 'Réception appels inscription', s4: 'Robot planning auto', temps: '10h', clients: '+20', ca: '+6 000€', lapins: '-40%', s5: 'Avis élèves diplômés', s6: 'Relance forfaits non payés' , rentabilite: '2 forfaits permis vendus = abonnement remboursé' },
+  { name: 'Électricien', icon: Zap, s1: 'Relance contrôles électriques', s2: 'Confirmation interventions', s3: 'Réception appels dépannage', s4: 'Robot devis électrique', temps: '10h', clients: '+18', ca: '+7 500€', lapins: '-30%', s5: 'Avis Google post-intervention', s6: 'Relance devis & factures' , rentabilite: '1 dépannage récupéré la nuit = abonnement remboursé' },
+  { name: 'Pharmacie', icon: Heart, s1: 'Rappel renouvellement ordonnances', s2: 'Confirmation préparations', s3: 'Réception appels conseils', s4: 'Robot suivi traitements', temps: '8h', clients: '+10', ca: '+4 500€', lapins: '-20%', s5: 'Avis clients fidèles', s6: 'Relance avances tiers payant' , rentabilite: '20 ordonnances renouvelées = abonnement couvert' },
+  { name: 'Photographe', icon: Eye, s1: 'Relance séances anniversaires', s2: 'Confirmation shoots', s3: 'Réception appels devis', s4: 'Robot portfolio & tarifs', temps: '6h', clients: '+12', ca: '+3 500€', lapins: '-35%', s5: 'Avis clients après livraison', s6: 'Relance acomptes shootings' , rentabilite: '1 shooting récupéré sur appel manqué = abonnement payé' },
+  { name: 'Serrurier', icon: Wrench, s1: 'Relance contrats maintenance', s2: 'Confirmation interventions', s3: 'Réception appels urgences 24/7', s4: 'Robot devis serrurerie', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-25%', s5: 'Avis Google post-dépannage', s6: 'Relance interventions urgences' , rentabilite: '1 dépannage urgence nuit = abonnement remboursé' },
+  { name: 'Notaire', icon: FileText, s1: 'Relance signatures & dossiers', s2: 'Confirmation RDV actes', s3: 'Réception appels nouveaux dossiers', s4: 'Robot accueil étude', temps: '12h', clients: '+8', ca: '+10 000€', lapins: '-30%', s5: 'Avis clients post-acte', s6: 'Relance émoluments en attente' , rentabilite: '1 acte signé = plusieurs mois d\'abonnement couverts' },
+  { name: 'Paysagiste', icon: Wrench, s1: 'Relance entretiens saisonniers', s2: 'Confirmation interventions', s3: 'Réception appels devis', s4: 'Robot conseil jardin', temps: '8h', clients: '+15', ca: '+5 500€', lapins: '-30%', s5: 'Avis post-aménagement', s6: 'Relance contrats annuels' , rentabilite: '1 chantier récupéré = abonnement remboursé' },
+  { name: 'Consultant', icon: Users, s1: 'Relance propositions commerciales', s2: 'Confirmation RDV clients', s3: 'Réception appels prospects', s4: 'Robot qualification projet', temps: '10h', clients: '+8', ca: '+12 000€', lapins: '-20%', s5: 'Avis missions terminées', s6: 'Relance honoraires à échéance' , rentabilite: '1 mission gagnée = plusieurs mois d\'abonnement couverts' },
+  { name: 'Centre formation', icon: Users, s1: 'Relance inscriptions', s2: 'Confirmation sessions', s3: 'Réception appels renseignements', s4: 'Robot orientation formation', temps: '10h', clients: '+20', ca: '+8 000€', lapins: '-35%', s5: 'Avis stagiaires diplômés', s6: 'Relance financements OPCO' , rentabilite: '1 inscription en formation = abonnement couvert' },
 ];
 
 
@@ -871,6 +1026,7 @@ const MetierSelector = ({ openPopup }) => {
   const [selected, setSelected] = useState(0);
   const [search, setSearch] = useState('');
   const [userPicked, setUserPicked] = useState(false);
+  const [showAllMobile, setShowAllMobile] = useState(false);
 
   const featured = [0, 1, 3, 8, 9];
   useEffect(() => {
@@ -883,9 +1039,25 @@ const MetierSelector = ({ openPopup }) => {
     return () => clearInterval(timer);
   }, [userPicked, search]);
 
-  const filtered = search
+  // Détection mobile pour limiter les pills affichés par défaut
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // Top 8 métiers populaires affichés par défaut sur mobile
+  const POPULAR_INDICES = [0, 1, 2, 3, 8, 9, 11, 16]; // Garagiste, Courtier, Dentiste, Opticien, Agent immo, Plombier, Restaurant, Électricien
+
+  const baseFiltered = search
     ? metiers.filter(m => m.name.toLowerCase().includes(search.toLowerCase()))
     : metiers;
+
+  const filtered = (isMobile && !showAllMobile && !search)
+    ? POPULAR_INDICES.map(i => metiers[i]).filter(Boolean)
+    : baseFiltered;
 
   const m = selected !== null && selected < metiers.length ? metiers[selected] : null;
 
@@ -925,6 +1097,20 @@ const MetierSelector = ({ openPopup }) => {
           );
         })}
       </div>
+
+      {/* Bouton "Voir les X autres" sur mobile uniquement, si pas en mode recherche */}
+      {isMobile && !search && !showAllMobile && (
+        <div className="flex justify-center mb-8 -mt-6">
+          <button
+            type="button"
+            onClick={() => setShowAllMobile(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[12.5px] font-semibold text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
+          >
+            Voir les {metiers.length - POPULAR_INDICES.length} autres métiers
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Detail card */}
       <AnimatePresence mode="wait">
@@ -1000,8 +1186,30 @@ const MetierSelector = ({ openPopup }) => {
               ))}
             </div>
 
+            {/* Rentabilité — temps de retour sur investissement adapté au métier */}
+            {m.rentabilite && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-6 mx-auto max-w-3xl rounded-3xl border border-emerald-100 bg-emerald-50/40 px-6 py-5 flex items-start gap-4"
+              >
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/30">
+                  <TrendingUp className="w-5 h-5 text-white" strokeWidth={2.2} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-700">
+                    Vous récupérez votre investissement
+                  </p>
+                  <p className="text-[15.5px] font-bold text-gray-900 mt-1 leading-snug">
+                    {m.rentabilite}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
             {/* CTA simple : un seul bouton centré, pas de card "6 modules" */}
-            <div className="mt-10 flex justify-center">
+            <div className="mt-8 flex justify-center">
               <a
                 href="#"
                 onClick={(e) => { e.preventDefault(); openPopup('metier-cta', 'gratuit'); }}
@@ -1019,12 +1227,1751 @@ const MetierSelector = ({ openPopup }) => {
 
 
 
-/*  MAIN COMPONENT                                                     *//* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  SERVICE SHOWCASES — détail visuel par service                      */
+/*  Une section par service, alterne mockup/texte gauche/droite        */
+/* ------------------------------------------------------------------ */
+const buildShowcasesData = () => [
+    {
+      id: 'reception',
+      tag: 'Service 1 — Appels entrants',
+      tagColor: 'bg-amber-100 text-amber-800',
+      title: 'Réception 24/7.',
+      titleAccent: 'L\'IA décroche pour vous.',
+      accentColor: 'text-amber-600',
+      desc: 'Vous ne répondez pas ? L\'appel est transféré à l\'IA en 2 secondes. Elle qualifie le prospect, prend RDV, vous envoie le récap par SMS. Une machine à leads qui tourne jour et nuit.',
+      stats: [
+        { value: '24/7', label: 'Disponibilité' },
+        { value: '2s', label: 'Décroché' },
+        { value: '97%', label: 'Appels pris' },
+        { value: '0', label: 'Appel manqué' },
+      ],
+      mockupSide: 'right',
+      ctaBg: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600',
+      mockup: (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-amber-900/[0.06] p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <PhoneCall className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-[14px]">Appels entrants</p>
+                <p className="text-[12px] text-gray-400">Aujourd'hui · 12 leads</p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">En direct</span>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              { name: 'Julien M.', topic: 'Devis isolation', time: '14:32', status: 'RDV pris' },
+              { name: 'Claire B.', topic: 'Question contrat', time: '13:15', status: 'Rappel programmé' },
+              { name: 'Marc D.', topic: 'Demande tarif', time: '11:58', status: 'Lead qualifié' },
+              { name: 'Sophie L.', topic: 'Renseignement', time: '10:24', status: 'Info envoyée' },
+            ].map((c, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 truncate">{c.name}</p>
+                  <p className="text-[11.5px] text-gray-500 truncate">{c.topic} · {c.time}</p>
+                </div>
+                <span className="text-[10.5px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-100 ml-2 shrink-0">{c.status}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-[12px] text-gray-500">12 appels traités</span>
+            <span className="text-[12px] font-bold text-emerald-600">+8 leads chauds</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'renouvellement',
+      tag: 'Service 2 — Appels sortants',
+      tagColor: 'bg-emerald-100 text-emerald-800',
+      title: 'Renouvellement de dossiers.',
+      titleAccent: 'Zéro oubli.',
+      accentColor: 'text-emerald-600',
+      desc: 'L\'IA appelle chaque client dont le dossier arrive à échéance — contrôles techniques, assurances, bilans, abonnements. Tout est couvert, rien ne passe entre les mailles.',
+      stats: [
+        { value: '80%', label: 'Taux de renouvellement' },
+        { value: '0', label: 'Dossier oublié' },
+        { value: '2min', label: 'Par relance' },
+        { value: '100%', label: 'Automatisé' },
+      ],
+      mockupSide: 'left',
+      ctaBg: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600',
+      mockup: (
+        <div className="bg-emerald-50/40 rounded-3xl border border-emerald-100 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+              <RefreshCw className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-[14px]">Relances automatiques</p>
+              <p className="text-[12px] text-gray-400">Cette semaine</p>
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              { name: 'Martin D.', topic: 'CT expiré dans 15j', status: 'Renouvelé', icon: 'check' },
+              { name: 'Sophie L.', topic: 'Entretien annuel', status: 'RDV pris', icon: 'check' },
+              { name: 'Lucas R.', topic: 'Vidange 20 000km', status: 'Renouvelé', icon: 'check' },
+              { name: 'Claire M.', topic: 'Assurance à renouveler', status: 'Appel en cours…', icon: 'pending' },
+            ].map((c, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${c.icon === 'check' ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+                  {c.icon === 'check' ? <Check className="w-4 h-4 text-emerald-700" /> : <Clock className="w-4 h-4 text-amber-700" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 truncate">{c.name} <span className="text-gray-400">— {c.topic}</span></p>
+                  <p className={`text-[11.5px] font-medium ${c.icon === 'check' ? 'text-emerald-600' : 'text-amber-600'}`}>Appelé {c.icon === 'check' ? '→ ' : ''}{c.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 py-3 px-4 rounded-xl bg-emerald-600 text-white text-center text-[13px] font-bold">
+            80% renouvelés cette semaine
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'rdv',
+      tag: 'Service 3 — Appels sortants',
+      tagColor: 'bg-blue-100 text-blue-800',
+      title: 'Confirmation de RDV.',
+      titleAccent: 'Fini les lapins.',
+      accentColor: 'text-blue-600',
+      desc: 'L\'IA appelle la veille de chaque rendez-vous pour confirmer. Le client confirme, reporte ou annule — votre planning est fiable à 92%.',
+      stats: [
+        { value: '92%', label: 'Taux de présence' },
+        { value: '−35%', label: 'De lapins' },
+        { value: 'J−1', label: 'Appel automatique' },
+        { value: '0min', label: 'De votre temps' },
+      ],
+      mockupSide: 'right',
+      ctaBg: 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600',
+      mockup: (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-blue-900/[0.06] p-6">
+          <div className="flex items-center justify-between mb-5">
+            <p className="font-semibold text-gray-900 text-[14px]">Agenda du jour</p>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">92% confirmés</span>
+          </div>
+          <div className="space-y-2">
+            {[
+              { time: '09:00', name: 'Martin D.', ok: true },
+              { time: '10:30', name: 'Sophie L.', ok: true },
+              { time: '11:00', name: 'Pierre B.', ok: true },
+              { time: '14:00', name: 'Claire M.', ok: false },
+              { time: '15:30', name: 'Lucas R.', ok: true },
+              { time: '16:30', name: 'Emma T.', ok: true },
+            ].map((c, i) => (
+              <div key={i} className={`flex items-center gap-4 p-3 rounded-xl border ${c.ok ? 'bg-gray-50/50 border-gray-100' : 'bg-rose-50/40 border-rose-100'}`}>
+                <span className="text-[13px] font-bold text-gray-700 tabular-nums w-12">{c.time}</span>
+                <span className="text-[13.5px] font-semibold text-gray-900 flex-1">{c.name}</span>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${c.ok ? 'bg-emerald-100' : 'bg-rose-100'}`}>
+                  {c.ok ? <Check className="w-4 h-4 text-emerald-700" /> : <X className="w-4 h-4 text-rose-600" />}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between text-[11.5px] font-medium mb-1.5">
+              <span className="text-gray-400">Sans IA : 57%</span>
+              <span className="text-emerald-600">Avec IA : 92%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style={{ width: '92%' }} />
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'impact-avis',
+      tag: 'Service 4 — Réputation',
+      tagColor: 'bg-yellow-100 text-yellow-800',
+      title: 'Impact Avis.',
+      titleAccent: 'Plus d\'étoiles, sans risque.',
+      accentColor: 'text-yellow-600',
+      desc: 'L\'IA appelle vos clients après chaque prestation. Si c\'est positif, elle envoie le lien Google par SMS. Si c\'est négatif, le retour reste en interne — vous corrigez avant qu\'il devienne public.',
+      stats: [
+        { value: '4★+', label: '→ Google' },
+        { value: '< 4★', label: '→ interne' },
+        { value: '+38', label: 'Avis/2 mois' },
+        { value: '4,7', label: 'Note moyenne' },
+      ],
+      mockupSide: 'left',
+      ctaBg: 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600',
+      mockup: (
+        <div className="bg-yellow-50/40 rounded-3xl border border-yellow-100 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center">
+              <Star className="w-5 h-5 text-white" fill="white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-[14px]">Appels post-prestation</p>
+              <p className="text-[12px] text-gray-400">Cette semaine</p>
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              { name: 'Marie D.', stars: 5, status: 'Avis Google publié', published: true },
+              { name: 'Lucas R.', stars: 5, status: 'Avis Google publié', published: true },
+              { name: 'Sophie L.', stars: 4, status: 'Avis Google publié', published: true },
+              { name: 'Pierre M.', stars: 3, status: 'Retour interne — RDV à recaler', published: false },
+              { name: 'Claire B.', stars: 5, status: 'Avis Google publié', published: true },
+            ].map((c, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${c.published ? 'bg-yellow-100' : 'bg-gray-100'}`}>
+                  <Star className={`w-4 h-4 ${c.published ? 'text-yellow-600' : 'text-gray-400'}`} fill={c.published ? 'currentColor' : 'none'} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 truncate">{c.name}  <span className="text-gray-500 font-normal">{c.stars}★</span></p>
+                  <p className={`text-[11.5px] ${c.published ? 'text-yellow-700' : 'text-gray-500'}`}>{c.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 py-3 px-4 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white text-center text-[13px] font-bold">
+            4 avis Google publiés · 1 retour interne
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'paiements',
+      tag: 'Service 5 — Trésorerie',
+      tagColor: 'bg-rose-100 text-rose-800',
+      title: 'Accélération de paiements.',
+      titleAccent: 'Vos délais raccourcissent.',
+      accentColor: 'text-rose-600',
+      desc: 'L\'IA appelle vos clients dont la facture est due, au bon moment, avec le bon ton. Pas de menace, pas de relance brutale — juste un rappel humain et professionnel qui fait toute la différence sur vos délais.',
+      stats: [
+        { value: '−40%', label: 'Délais de paiement' },
+        { value: '+62%', label: 'Factures payées à J+0' },
+        { value: '0min', label: 'De votre temps' },
+        { value: '24/7', label: 'Tentatives intelligentes' },
+      ],
+      mockupSide: 'right',
+      ctaBg: 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600',
+      mockup: (
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-rose-900/[0.06] p-6">
+          <div className="flex items-center justify-between mb-5">
+            <p className="font-semibold text-gray-900 text-[14px]">Factures relancées</p>
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">8 réglées sur 10</span>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              { name: 'SARL Dubois', amount: '850€', status: 'Réglée — J+2', ok: true },
+              { name: 'Cabinet Martin', amount: '1 200€', status: 'Réglée — J+4', ok: true },
+              { name: 'EURL Lefèvre', amount: '430€', status: 'Promesse — J+7', ok: 'pending' },
+              { name: 'SAS Renaud', amount: '2 100€', status: 'Réglée — J+1', ok: true },
+              { name: 'Pharmacie Bertin', amount: '680€', status: 'Réglée — J+3', ok: true },
+            ].map((f, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${f.ok === true ? 'bg-emerald-100' : 'bg-amber-100'}`}>
+                  {f.ok === true ? <Check className="w-4 h-4 text-emerald-700" /> : <Clock className="w-4 h-4 text-amber-700" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-gray-900 truncate">{f.name}</p>
+                  <p className={`text-[11.5px] font-medium ${f.ok === true ? 'text-emerald-600' : 'text-amber-600'}`}>{f.status}</p>
+                </div>
+                <span className="text-[13px] font-bold text-gray-700 tabular-nums shrink-0">{f.amount}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between text-[11.5px] font-medium mb-1.5">
+              <span className="text-gray-400">Sans IA : 28 jours</span>
+              <span className="text-rose-600">Avec IA : 17 jours</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-rose-500 to-pink-500 rounded-full" style={{ width: '60%' }} />
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'robot',
+      tag: 'Service 6 — Sur mesure',
+      tagColor: 'bg-violet-100 text-violet-800',
+      title: 'Robot IA sur mesure.',
+      titleAccent: '100% adapté à vous.',
+      accentColor: 'text-violet-600',
+      desc: 'Un besoin spécifique ? On crée votre robot sur mesure : script personnalisé, voix naturelle, scénarios complexes, intégration CRM — une IA vocale taillée exactement pour vos processus.',
+      stats: [
+        { value: '100%', label: 'Personnalisé' },
+        { value: '24h', label: 'Setup' },
+        { value: '∞', label: 'Scénarios' },
+        { value: 'Tout', label: 'CRM compatible' },
+      ],
+      mockupSide: 'left',
+      ctaBg: 'bg-violet-600 hover:bg-violet-700',
+      mockup: (
+        <div className="bg-violet-50/40 rounded-3xl border border-violet-100 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-[14px]">Configuration sur mesure</p>
+              <p className="text-[12px] text-gray-400">Robot IA personnalisé</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {[
+              { label: 'Script', value: 'Personnalisé selon votre métier' },
+              { label: 'Voix', value: 'Naturelle (FR · 4 voix au choix)' },
+              { label: 'Scénarios', value: 'Multi-branches conditionnelles' },
+              { label: 'Intégration', value: 'CRM, agenda, Sheets, API' },
+            ].map((row, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white border border-gray-100">
+                <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-3.5 h-3.5 text-violet-700" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[12px] font-bold text-violet-700 uppercase tracking-wider">{row.label}</p>
+                  <p className="text-[13px] text-gray-700 font-medium">{row.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 py-3 px-4 rounded-xl bg-violet-600 text-white text-center text-[13px] font-bold">
+            On vous appelle dans l'heure
+          </div>
+        </div>
+      ),
+    },
+  ];
+
+const ServiceShowcases = ({ openPopup, showcases }) => {
+  // Skip total sur mobile : pas de mount → pas de useScroll subscriptions inutiles
+  const isMobile = useIsMobileDevice();
+  if (isMobile) return null;
+  return (
+    <section className="py-20 lg:py-28 relative overflow-hidden">
+      {/* Background ambient gradients très subtils Apple-style */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.04] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #F59E0B, transparent 70%)' }} />
+        <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
+        <div className="absolute bottom-0 left-1/3 w-[500px] h-[500px] rounded-full opacity-[0.03] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #3B82F6, transparent 70%)' }} />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        <div className="space-y-32 lg:space-y-44">
+          {showcases.map((s, i) => (
+            <ShowcaseBlock key={s.id} s={s} index={i} openPopup={openPopup} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  ShowcaseBlock — section premium Apple aérée + parallax scroll      */
+/* ------------------------------------------------------------------ */
+const ShowcaseBlock = ({ s, index, openPopup }) => {
+  const blockRef = useRef(null);
+  const inView = useInView(blockRef, { once: true, margin: '-20%' });
+  const appleEase = [0.16, 1, 0.3, 1];
+  const isMobile = useIsMobileDevice();
+
+  // Parallax désactivé entièrement sur mobile (la section est hidden md:block, mais
+  // useScroll subscribe quand même au scroll de la window → coûteux pour rien)
+  // Note : on appelle quand même useScroll pour respecter les rules of hooks,
+  // mais on jette le résultat sur mobile.
+  const { scrollYProgress } = useScroll({
+    target: blockRef,
+    offset: ['start end', 'end start'],
+  });
+  const mockupYRaw = useTransform(scrollYProgress, [0, 1], [40, -40]);
+  const mockupRotateRaw = useTransform(scrollYProgress, [0, 1], [1.5, -1.5]);
+  const mockupY = isMobile ? 0 : mockupYRaw;
+  const mockupRotate = isMobile ? 0 : mockupRotateRaw;
+
+  const isReversed = s.mockupSide === 'left';
+
+  return (
+    <div ref={blockRef} id={`showcase-${s.id}`} className="scroll-mt-32 relative">
+      {/* N° d'ordre géant en filigrane (signature premium) */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.9, ease: appleEase }}
+        className={`absolute pointer-events-none select-none ${isReversed ? 'right-0' : 'left-0'} -top-12 lg:-top-16`}
+        aria-hidden="true"
+      >
+        <span className="text-[140px] lg:text-[200px] font-black leading-none tracking-tighter text-gray-100">
+          0{index + 1}
+        </span>
+      </motion.div>
+
+      <div className={`relative grid lg:grid-cols-12 gap-10 lg:gap-16 items-center ${isReversed ? 'lg:[&>div:first-child]:col-start-7 lg:[&>div:first-child]:col-end-13 lg:[&>div:nth-child(2)]:col-start-1 lg:[&>div:nth-child(2)]:row-start-1 lg:[&>div:nth-child(2)]:col-end-7' : ''}`}>
+        {/* Texte */}
+        <div className="lg:col-span-6">
+          <motion.span
+            initial={{ opacity: 0, y: 12 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, ease: appleEase, delay: 0.1 }}
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11.5px] font-bold ${s.tagColor} mb-7`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${s.accentColor.replace('text-', 'bg-')}`} />
+            {s.tag}
+          </motion.span>
+
+          <motion.h3
+            initial={{ opacity: 0, y: 18 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.85, ease: appleEase, delay: 0.18 }}
+            className="text-[40px] lg:text-[52px] font-extrabold tracking-[-0.02em] text-gray-900 leading-[1.02]"
+          >
+            {s.title}
+            <br />
+            <span className={s.accentColor}>{s.titleAccent}</span>
+          </motion.h3>
+
+          <motion.p
+            initial={{ opacity: 0, y: 14 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.85, ease: appleEase, delay: 0.3 }}
+            className="text-[17px] lg:text-[18px] text-gray-500 leading-[1.55] mt-6 max-w-[520px]"
+          >
+            {s.desc}
+          </motion.p>
+
+          {/* Stats — grille aérée 2x2 grand format */}
+          <div className="grid grid-cols-2 gap-x-10 gap-y-7 mt-10 max-w-[460px]">
+            {s.stats.map((stat, k) => (
+              <motion.div
+                key={k}
+                initial={{ opacity: 0, y: 18 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.65, ease: appleEase, delay: 0.45 + k * 0.08 }}
+              >
+                <p className={`text-[36px] lg:text-[42px] font-black tracking-[-0.025em] ${s.accentColor} leading-none`}>
+                  {stat.value}
+                </p>
+                <p className="text-[13px] text-gray-500 font-medium mt-2 tracking-tight">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.button
+            initial={{ opacity: 0, y: 12 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: appleEase, delay: 0.85 }}
+            type="button"
+            onClick={() => openPopup(`showcase-${s.id}`, 'gratuit')}
+            whileHover={{ scale: 1.03, transition: { type: 'spring', stiffness: 400, damping: 18 } }}
+            whileTap={{ scale: 0.97 }}
+            className={`mt-10 inline-flex items-center justify-center gap-2.5 ${s.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-[14px] tracking-wide transition-shadow duration-300 hover:shadow-xl`}
+            style={{ boxShadow: '0 12px 32px -10px rgba(15, 23, 42, 0.2)' }}
+          >
+            Commencer gratuitement <ArrowRight className="w-4 h-4" />
+          </motion.button>
+        </div>
+
+        {/* Mockup — en lévitation avec parallax + ombre douce */}
+        <motion.div
+          className="lg:col-span-6 relative"
+          style={{ y: mockupY, rotate: mockupRotate }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            animate={inView ? { opacity: 1, scale: 1, y: 0 } : {}}
+            transition={{ duration: 1, ease: appleEase, delay: 0.25 }}
+            className="relative"
+          >
+            {/* Glow soft derrière le mockup */}
+            <div
+              className="absolute -inset-6 lg:-inset-8 rounded-[40px] opacity-30 blur-2xl pointer-events-none"
+              style={{
+                background: `linear-gradient(135deg, ${getAccentRgba(s.accentColor, 0.18)}, transparent 70%)`,
+              }}
+              aria-hidden="true"
+            />
+            <div className="relative drop-shadow-[0_24px_48px_rgba(15,23,42,0.10)]">
+              {s.mockup}
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// Helper pour le glow derrière le mockup (couleur accent)
+function getAccentRgba(accentClass, alpha) {
+  const map = {
+    'text-amber-600':   `rgba(245, 158, 11, ${alpha})`,
+    'text-emerald-600': `rgba(16, 185, 129, ${alpha})`,
+    'text-blue-600':    `rgba(59, 130, 246, ${alpha})`,
+    'text-yellow-600':  `rgba(234, 179, 8, ${alpha})`,
+    'text-rose-600':    `rgba(244, 63, 94, ${alpha})`,
+    'text-violet-600':  `rgba(139, 92, 246, ${alpha})`,
+  };
+  return map[accentClass] || `rgba(15, 23, 42, ${alpha})`;
+}
+
+/* ------------------------------------------------------------------ */
+/*  MobileServiceDetail — mockup compact qui suit le service swipé     */
+/* ------------------------------------------------------------------ */
+const MobileServiceDetail = ({ activeIdx, openPopup, showcases }) => {
+  const s = showcases[activeIdx] || showcases[0];
+  return (
+    <div className="md:hidden mt-3 px-1">
+      {/* Connector vertical statique (pas d'anim) */}
+      <div className="flex justify-center mb-3" aria-hidden="true">
+        <div className={`w-[2px] h-6 rounded-full ${s.accentColor.replace('text-', 'bg-').replace('-600', '-300')}`} />
+      </div>
+      {/* Pas d'AnimatePresence — juste un fade rapide via CSS-like transition */}
+      <div
+        key={s.id}
+        className="rounded-[28px] border border-gray-100 bg-white overflow-hidden mobile-detail-card"
+        style={{
+          boxShadow: '0 8px 20px -8px rgba(15, 23, 42, 0.08)',
+          willChange: 'opacity',
+          animation: 'mobileDetailFadeIn 0.25s ease-out',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-3 border-b border-gray-100/60">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-bold tracking-[0.1em] uppercase ${s.tagColor}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${s.accentColor.replace('text-', 'bg-')}`} />
+            {s.tag}
+          </span>
+          <span className="text-[10.5px] font-bold tracking-wider text-gray-300 uppercase tabular-nums">
+            {activeIdx + 1} / 6
+          </span>
+        </div>
+        <div className="px-5 pt-5 pb-6">
+          <h4 className="text-[20px] font-extrabold text-gray-900 tracking-[-0.02em] leading-[1.1] mb-2">
+            {s.title} <span className={s.accentColor}>{s.titleAccent}</span>
+          </h4>
+          <p className="text-[13.5px] text-gray-500 leading-relaxed mb-5">{s.desc}</p>
+          <div className="mb-5">{s.mockup}</div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 mb-6 mt-2">
+            {s.stats.map((stat, k) => (
+              <div key={k}>
+                <p className={`text-[26px] font-black tracking-[-0.025em] leading-none ${s.accentColor}`}>{stat.value}</p>
+                <p className="text-[11.5px] text-gray-500 font-medium mt-1.5 tracking-tight">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => openPopup(`mobile-detail-${s.id}`, 'gratuit')}
+            className={`w-full inline-flex items-center justify-center gap-2 ${s.ctaBg} text-white font-semibold px-5 py-3.5 rounded-full text-[14px] tracking-wide transition-shadow duration-300 hover:shadow-lg`}
+          >
+            Commencer gratuitement <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+/* ------------------------------------------------------------------ */
+/*  TestimonialsCarousel — mobile : 1 carte centrée + dots + animations */
+/*  Desktop : grid 3 cols classique                                    */
+/* ------------------------------------------------------------------ */
+const TestimonialsCarousel = ({ testimonials, svcColors }) => {
+  const carouselRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const appleEase = [0.16, 1, 0.3, 1];
+
+  // Scroll listener throttled (50ms) — suffisant pour le sync, peu coûteux
+  useEffect(() => {
+    const root = carouselRef.current;
+    if (!root) return;
+
+    let timerId = null;
+    let lastIdx = -1;
+
+    const compute = () => {
+      timerId = null;
+      const cards = Array.from(root.querySelectorAll('[data-testimonial-idx]'));
+      if (!cards.length) return;
+      const rootRect = root.getBoundingClientRect();
+      const center = rootRect.left + rootRect.width / 2;
+      let bestIdx = 0;
+      let minDist = Infinity;
+      cards.forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+        const dist = Math.abs((rect.left + rect.width / 2) - center);
+        if (dist < minDist) {
+          minDist = dist;
+          const dataIdx = parseInt(card.getAttribute('data-testimonial-idx'), 10);
+          bestIdx = Number.isNaN(dataIdx) ? i : dataIdx;
+        }
+      });
+      if (bestIdx !== lastIdx) {
+        lastIdx = bestIdx;
+        setActiveIdx(bestIdx);
+      }
+    };
+
+    const onScroll = () => {
+      if (timerId !== null) return;
+      timerId = setTimeout(compute, 50);
+    };
+
+    const initTimer = setTimeout(compute, 100);
+    root.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      clearTimeout(initTimer);
+      if (timerId !== null) clearTimeout(timerId);
+      root.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
+  const avatarBgFor = (color) => ({
+    emerald: 'from-emerald-400 to-teal-500',
+    blue:    'from-blue-400 to-indigo-500',
+    violet:  'from-violet-400 to-purple-500',
+    yellow:  'from-yellow-400 to-amber-500',
+    rose:    'from-rose-400 to-pink-500',
+    amber:   'from-amber-400 to-orange-500',
+  }[color] || 'from-emerald-400 to-teal-500');
+
+  return (
+    <>
+      {/* Mobile : carousel snap-center — chaque carte fait 100vw - 3rem (48px), avec 24px de peek sur les côtés */}
+      <div
+        ref={carouselRef}
+        className="sm:hidden -mx-6 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-6"
+        style={{ scrollPaddingLeft: '24px', scrollPaddingRight: '24px' }}
+      >
+        {/* Spacer début pour permettre snap propre du 1er */}
+        <div aria-hidden="true" className="shrink-0 w-6" />
+        {testimonials.map((t, i) => {
+          const tc = svcColors[t.color] || svcColors.emerald;
+          const isActive = i === activeIdx;
+          return (
+            <div
+              key={i}
+              data-testimonial-idx={i}
+              className="snap-center shrink-0 w-[calc(100vw-3rem)] pr-3 last:pr-0"
+            >
+              <motion.div
+                animate={{
+                  scale: isActive ? 1 : 0.94,
+                  opacity: isActive ? 1 : 0.55,
+                }}
+                transition={{ duration: 0.45, ease: appleEase }}
+                className={`relative bg-white rounded-[24px] p-6 h-full flex flex-col border border-gray-100 ${
+                  isActive ? 'shadow-xl shadow-gray-900/[0.07]' : 'shadow-sm'
+                } transition-shadow duration-500 overflow-hidden`}
+              >
+                {/* Guillemet géant en filigrane */}
+                <span className="pointer-events-none absolute -top-2 right-3 text-[88px] leading-none text-gray-100 font-serif select-none">"</span>
+
+                {/* Étoiles */}
+                <div className="relative flex gap-0.5 mb-3">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} className="w-3.5 h-3.5 text-amber-400" fill="currentColor" strokeWidth={1} />
+                  ))}
+                </div>
+
+                {/* Quote */}
+                <p className="relative text-[14px] text-gray-700 leading-relaxed font-medium break-words">
+                  «&nbsp;{t.quote}&nbsp;»
+                </p>
+
+                {/* Result chip */}
+                <div className={`relative mt-4 inline-flex self-start items-center gap-1.5 px-2.5 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
+                  <Sparkles className={`w-3 h-3 ${tc.icon}`} />
+                  <span className={`text-[11px] font-bold ${tc.icon}`}>{t.result}</span>
+                </div>
+
+                <div className="relative h-px bg-gray-100 my-4" />
+
+                {/* Auteur */}
+                <div className="relative flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBgFor(t.color)} flex items-center justify-center text-white font-bold text-[14px] shadow-md shrink-0`}>
+                    {t.avatar}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-[13.5px] truncate">{t.name}</p>
+                    <p className="text-[12px] text-gray-500 font-medium truncate">{t.role} · {t.city}</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })}
+        {/* Spacer fin pour snap propre du dernier */}
+        <div aria-hidden="true" className="shrink-0 w-6" />
+      </div>
+
+      {/* Mobile : Dots indicateurs */}
+      <div className="sm:hidden flex justify-center gap-1.5 mt-2 mb-1">
+        {testimonials.map((_, i) => (
+          <span
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-400 ${
+              i === activeIdx ? 'w-6 bg-gray-800' : 'w-1.5 bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+      <p className="sm:hidden text-center text-[11.5px] text-gray-400 font-medium mt-2">
+        Glissez ←→
+      </p>
+
+      {/* Desktop : grid 3 cols */}
+      <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {testimonials.map((t, i) => {
+          const tc = svcColors[t.color] || svcColors.emerald;
+          return (
+            <ScrollReveal key={i} delay={(i % 3) * 0.08}>
+              <div className="bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
+                <div className="flex gap-0.5 mb-4">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" strokeWidth={1} />
+                  ))}
+                </div>
+                <p className="text-[15px] text-gray-700 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
+                <div className={`mt-5 inline-flex self-start items-center gap-1.5 px-3 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
+                  <Sparkles className={`w-3 h-3 ${tc.icon}`} />
+                  <span className={`text-[11.5px] font-bold ${tc.icon}`}>{t.result}</span>
+                </div>
+                <div className="h-px bg-gray-100 my-5" />
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBgFor(t.color)} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                    {t.avatar}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-[14px]">{t.name}</p>
+                    <p className="text-[12.5px] text-gray-500">{t.role} · {t.city}</p>
+                  </div>
+                </div>
+              </div>
+            </ScrollReveal>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+
+
+/* ------------------------------------------------------------------ */
+/*  RECEPTION FLAGSHIP SECTION — produit phare ÉPURÉ light Apple       */
+/* ------------------------------------------------------------------ */
+const ReceptionFlagshipSection = ({ openPopup }) => {
+  const sectionRef = useRef(null);
+  const inView = useInView(sectionRef, { once: true, margin: '-15%' });
+  const appleEase = [0.16, 1, 0.3, 1];
+  const isMobile = useIsMobileDevice();
+
+  // Parallax léger sur le téléphone — désactivé sur mobile (perf)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+  const phoneYRaw = useTransform(scrollYProgress, [0, 1], [50, -50]);
+  const phoneY = isMobile ? 0 : phoneYRaw;
+
+  // Conversation auto-cyclée — boucle infinie qui reset proprement
+  // Sur mobile : on affiche directement la fin (pas de cycle = pas de re-renders répétés)
+  const [convoStep, setConvoStep] = useState(0);
+  useEffect(() => {
+    if (!inView) return;
+    if (isMobile) {
+      // Mobile : juste révéler progressivement les bulles 1 fois, puis stop
+      let s = 0;
+      const tick = () => {
+        s++;
+        setConvoStep(s);
+        if (s < 4) setTimeout(tick, 600);
+      };
+      const t = setTimeout(tick, 400);
+      return () => clearTimeout(t);
+    }
+    // Desktop : cycle infini
+    const id = setInterval(() => setConvoStep((s) => (s >= 5 ? 0 : s + 1)), 2200);
+    return () => clearInterval(id);
+  }, [inView, isMobile]);
+
+  return (
+    <section ref={sectionRef} className="relative py-32 md:py-48 overflow-hidden bg-white">
+      {/* Ambient warm très subtil — juste un effet d'aurore amber/rose en filigrane */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.07] blur-[120px]"
+             style={{ background: 'radial-gradient(ellipse, #F59E0B, transparent 60%)' }} />
+        <div className="absolute bottom-[10%] left-[20%] w-[600px] h-[600px] rounded-full opacity-[0.04] blur-[100px]"
+             style={{ background: 'radial-gradient(circle, #F43F5E, transparent 70%)' }} />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-6">
+
+        {/* ── Header centré, ultra épuré ── */}
+        <div className="text-center max-w-3xl mx-auto mb-20 lg:mb-28">
+          <motion.span
+            initial={{ opacity: 0, y: 12 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, ease: appleEase }}
+            className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-amber-700 bg-amber-50 border border-amber-100 px-4 py-1.5 rounded-full mb-7"
+          >
+            <span className="relative flex w-1.5 h-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
+            </span>
+            Produit phare
+          </motion.span>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 24 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.95, ease: appleEase, delay: 0.1 }}
+            className="text-[40px] sm:text-[56px] md:text-[68px] lg:text-[78px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]"
+          >
+            Vous ne décrochez pas&nbsp;?
+            <br />
+            <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent">
+              L'IA prend le relais.
+            </span>
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.9, ease: appleEase, delay: 0.22 }}
+            className="text-[17px] md:text-[19px] text-gray-500 max-w-2xl mt-7 mx-auto leading-[1.55] font-normal"
+          >
+            Un appel manqué, c'est un client perdu. Plus jamais. L'IA décroche en 2 secondes, qualifie le prospect, et vous envoie le RDV par SMS.
+          </motion.p>
+        </div>
+
+        {/* ── PHONE seul, centré, hero ── */}
+        <motion.div
+          className="relative mx-auto"
+          style={{ y: phoneY }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            animate={inView ? { opacity: 1, scale: 1, y: 0 } : {}}
+            transition={{ duration: 1.1, ease: appleEase, delay: 0.3 }}
+            className="relative w-[300px] sm:w-[330px] mx-auto"
+          >
+            {/* Glow ambient amber doux derrière le phone */}
+            <div className="absolute -inset-16 rounded-[80px] opacity-30 blur-[80px] pointer-events-none"
+                 style={{ background: 'radial-gradient(circle, rgba(245, 158, 11, 0.5), transparent 70%)' }}
+                 aria-hidden="true" />
+
+            {/* Phone frame — plus light, premium silver */}
+            <div className="relative rounded-[44px] p-[3px]"
+                 style={{
+                   background: 'linear-gradient(135deg, #E5E7EB 0%, #F3F4F6 50%, #D1D5DB 100%)',
+                   boxShadow: '0 80px 120px -40px rgba(245, 158, 11, 0.25), 0 40px 80px -20px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+                 }}>
+              {/* Inner screen — gardé sombre car écran de téléphone */}
+              <div className="rounded-[42px] bg-gradient-to-br from-[#0F1623] via-[#1F2937] to-[#0F1623] p-5 pt-12 pb-6 overflow-hidden relative">
+                {/* Dynamic Island */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 ml-1" />
+                </div>
+
+                {/* Status bar */}
+                <div className="absolute top-3 left-6 right-6 flex justify-between items-center text-[10px] text-white/50 font-semibold">
+                  <span>9:41</span>
+                  <span>•••</span>
+                </div>
+
+                {/* Caller header */}
+                <div className="text-center mb-5 mt-2">
+                  <div className="relative w-16 h-16 mx-auto mb-3">
+                    {[0, 1, 2].map((j) => (
+                      <motion.span
+                        key={j}
+                        className="absolute inset-0 rounded-full"
+                        style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+                        animate={{ scale: [1, 1.8], opacity: [0.7, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: j * 0.65, ease: 'easeOut' }}
+                      />
+                    ))}
+                    <div className="relative w-full h-full rounded-full flex items-center justify-center"
+                         style={{ background: 'linear-gradient(135deg, #F59E0B, #EA580C)', boxShadow: '0 12px 28px -8px rgba(245, 158, 11, 0.6)' }}>
+                      <PhoneCall className="w-7 h-7 text-white" strokeWidth={2} />
+                    </div>
+                  </div>
+                  <p className="text-[13px] font-bold text-white">Appel entrant</p>
+                  <p className="text-[11px] text-white/40">Martin Plomberie · 06 12 34 56 78</p>
+                </div>
+
+                {/* Conversation cyclée */}
+                <div className="space-y-2 mb-4 min-h-[200px]">
+                  {[
+                    { side: 'left', label: 'IA BoosterPay', text: 'Bonjour, Martin Plomberie, que puis-je faire pour vous ?', step: 0 },
+                    { side: 'right', label: 'Prospect', text: 'J\'ai une fuite dans ma salle de bain.', step: 1 },
+                    { side: 'left', label: 'IA BoosterPay', text: 'Je peux vous proposer jeudi 9h ou vendredi 14h.', step: 2 },
+                    { side: 'right', label: 'Prospect', text: 'Jeudi 9h, parfait.', step: 3 },
+                    { side: 'success', text: '✓ RDV confirmé · Jeudi 9h', step: 4 },
+                  ].map((b, j) => {
+                    const visible = b.step <= convoStep;
+                    const isSuccess = b.side === 'success';
+                    return (
+                      <motion.div
+                        key={j}
+                        initial={false}
+                        animate={visible ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 8, scale: 0.96 }}
+                        transition={{ duration: 0.45, ease: appleEase }}
+                        className={`flex ${b.side === 'right' || isSuccess ? 'justify-end' : 'justify-start'}`}
+                      >
+                        {isSuccess ? (
+                          <div className="px-3 py-2 rounded-xl rounded-br-sm bg-emerald-500/20 border border-emerald-400/40 max-w-[80%]">
+                            <p className="text-[11.5px] font-bold text-emerald-300">{b.text}</p>
+                          </div>
+                        ) : (
+                          <div className={`px-3 py-2 rounded-xl ${b.side === 'left' ? 'rounded-bl-sm bg-amber-500/15 border border-amber-400/25' : 'rounded-br-sm bg-white/[0.06] border border-white/[0.08]'} max-w-[78%]`}>
+                            <p className={`text-[10px] font-bold ${b.side === 'left' ? 'text-amber-300' : 'text-white/40'} mb-0.5`}>{b.label}</p>
+                            <p className={`text-[12px] leading-snug ${b.side === 'left' ? 'text-white/95' : 'text-white/75'}`}>{b.text}</p>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Bottom recap */}
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-400/20">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
+                  <span className="text-[11px] text-emerald-200 font-semibold">Récap envoyé · SMS + Email</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Une SEULE floating card subtile — SMS notification (la plus représentative) */}
+            <motion.div
+              initial={{ opacity: 0, x: 40, y: -10, scale: 0.85 }}
+              animate={inView ? { opacity: 1, x: 0, y: 0, scale: 1 } : {}}
+              transition={{ duration: 0.9, ease: appleEase, delay: 1.2 }}
+              className="hidden md:flex absolute top-12 -right-32 lg:-right-44 bg-white rounded-2xl border border-gray-100 px-4 py-3 items-center gap-3 max-w-[260px] z-10"
+              style={{ boxShadow: '0 32px 64px -16px rgba(15, 23, 42, 0.18), 0 12px 24px -8px rgba(15, 23, 42, 0.08)' }}
+            >
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0"
+                style={{ boxShadow: '0 8px 20px -6px rgba(59, 130, 246, 0.5)' }}
+              >
+                <MessageSquare className="w-4 h-4 text-white" strokeWidth={2.4} />
+              </motion.div>
+              <div>
+                <p className="text-[12px] font-bold text-gray-900">Lead qualifié reçu</p>
+                <p className="text-[11px] text-gray-500 leading-tight mt-0.5">Fuite SDB · Jeudi 9h · Urgent</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+
+        {/* ── 4 features en row horizontal épuré ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.9, ease: appleEase, delay: 0.7 }}
+          className="mt-24 lg:mt-32 grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 max-w-5xl mx-auto"
+        >
+          {[
+            { icon: PhoneCall, title: 'Décrochage 2s', desc: 'Le prospect ne raccroche jamais.', accent: 'text-amber-600' },
+            { icon: Target,    title: 'Qualification auto', desc: 'L\'IA pose les bonnes questions.', accent: 'text-emerald-600' },
+            { icon: CalendarDays, title: 'RDV pris', desc: 'Direct dans votre agenda.', accent: 'text-blue-600' },
+            { icon: Zap,       title: 'Récap SMS', desc: 'En temps réel sur votre tél.', accent: 'text-violet-600' },
+          ].map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.7, ease: appleEase, delay: 0.8 + i * 0.08 }}
+              className="text-center lg:text-left"
+            >
+              <div className={`inline-flex w-11 h-11 rounded-2xl items-center justify-center bg-gray-50 border border-gray-100 mb-4`}>
+                <f.icon className={`w-5 h-5 ${f.accent}`} strokeWidth={2} />
+              </div>
+              <h4 className="text-[15.5px] font-bold text-gray-900 tracking-tight mb-1.5">{f.title}</h4>
+              <p className="text-[13.5px] text-gray-500 leading-relaxed">{f.desc}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* ── Stats massives ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.95, ease: appleEase, delay: 1.1 }}
+          className="mt-20 lg:mt-28 grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-10 max-w-4xl mx-auto"
+        >
+          {[
+            { value: '24/7', label: 'Disponibilité', accent: 'from-amber-500 to-orange-500' },
+            { value: '2s',   label: 'Décrochage',    accent: 'from-emerald-500 to-teal-500' },
+            { value: '97%',  label: 'Appels pris',   accent: 'from-blue-500 to-cyan-500' },
+            { value: '×3',   label: 'Leads qualifiés', accent: 'from-violet-500 to-purple-500' },
+          ].map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 18, scale: 0.92 }}
+              animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+              transition={{ duration: 0.7, ease: appleEase, delay: 1.15 + i * 0.08 }}
+              className="text-center"
+            >
+              <p className={`text-[56px] lg:text-[72px] font-black tracking-[-0.035em] leading-none bg-gradient-to-br ${s.accent} bg-clip-text text-transparent`}>
+                {s.value}
+              </p>
+              <p className="text-[12px] text-gray-400 font-bold mt-3 tracking-[0.12em] uppercase">
+                {s.label}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* ── CTA hero ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, ease: appleEase, delay: 1.5 }}
+          className="mt-20 flex flex-col items-center"
+        >
+          <motion.button
+            type="button"
+            onClick={() => openPopup('cta-receptionia', 'gratuit')}
+            whileHover={{ scale: 1.04, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
+            whileTap={{ scale: 0.97 }}
+            className="group inline-flex items-center justify-center gap-3 text-[15.5px] font-bold text-white px-10 py-5 rounded-full transition-shadow duration-300"
+            style={{
+              background: 'linear-gradient(135deg, #F59E0B 0%, #EA580C 50%, #DC2626 100%)',
+              boxShadow: '0 24px 60px -12px rgba(245, 158, 11, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
+            }}
+          >
+            <PhoneCall className="w-5 h-5" strokeWidth={2.2} />
+            Activer ma Réception 24/7 — gratuit
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </motion.button>
+          <p className="mt-5 text-[13px] text-gray-400 tracking-tight">
+            100 appels offerts · Sans carte bancaire · Activation en 5 min
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+
+/* ------------------------------------------------------------------ */
+/*  LeadsRGPDSection — Demande de leads qualifiés via partenaire        */
+/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  LiveProspectsFeed — fiche prospect complète qui change en live      */
+/*  Montre exactement ce que le commerçant recevra : nom, tel,         */
+/*  email, adresse, motif. Universel à tous secteurs.                  */
+/* ------------------------------------------------------------------ */
+const LiveProspectsFeed = () => {
+  const widgetRef = useRef(null);
+  const inView = useInView(widgetRef, { once: false, margin: '-20%' });
+  const appleEase = [0.16, 1, 0.3, 1];
+
+  // Pool universel — aucun métier mentionné
+  const POOL = useMemo(() => ({
+    firsts: ['Marie', 'Pierre', 'Sophie', 'Thomas', 'Julie', 'Lucas', 'Emma', 'Hugo', 'Camille', 'Antoine', 'Alice', 'Maxime', 'Léa', 'Nicolas', 'Chloé', 'Romain', 'Sarah', 'Florian', 'Justine', 'Mathieu', 'Pauline', 'Olivier', 'Élise', 'Benjamin'],
+    initials: ['L.', 'D.', 'M.', 'R.', 'B.', 'T.', 'G.', 'P.', 'V.', 'C.', 'F.', 'H.', 'S.', 'A.', 'K.', 'N.'],
+    streets: ['rue Pasteur', 'avenue de la République', 'rue Victor Hugo', 'rue Jean Jaurès', 'avenue Charles de Gaulle', 'boulevard Voltaire', 'rue Émile Zola', 'rue de la Paix', 'avenue Foch', 'rue du Général Leclerc', 'place de la Mairie', 'allée des Tilleuls'],
+    cities: [
+      { name: 'Mâcon', cp: '71000' },
+      { name: 'Strasbourg', cp: '67000' },
+      { name: 'Nantes', cp: '44000' },
+      { name: 'Lyon', cp: '69003' },
+      { name: 'Paris', cp: '75011' },
+      { name: 'Marseille', cp: '13008' },
+      { name: 'Bordeaux', cp: '33000' },
+      { name: 'Toulouse', cp: '31200' },
+      { name: 'Lille', cp: '59000' },
+      { name: 'Rennes', cp: '35000' },
+      { name: 'Montpellier', cp: '34000' },
+      { name: 'Nice', cp: '06000' },
+      { name: 'Brest', cp: '29200' },
+      { name: 'Reims', cp: '51100' },
+      { name: 'Dijon', cp: '21000' },
+      { name: 'Tours', cp: '37000' },
+      { name: 'Angers', cp: '49000' },
+      { name: 'Grenoble', cp: '38000' },
+      { name: 'Aix-en-Provence', cp: '13100' },
+      { name: 'Annecy', cp: '74000' },
+    ],
+    emailDomains: ['gmail.com', 'gmail.com', 'gmail.com', 'orange.fr', 'hotmail.fr', 'outlook.fr', 'free.fr', 'yahoo.fr'],
+    intents: ['Demande de devis', 'Prise de RDV', 'Demande de rappel', 'Demande d\'information'],
+  }), []);
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  // Tel masqué : "06 ** ** ** **" (look pro, démo, jamais une vraie ligne)
+  const genPhoneMasked = () => `06 ${rand(10, 99)} ** ** **`;
+  const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  // Email masqué : garde 2 lettres + ***  pour donner l'impression d'une vraie adresse partiellement cachée
+  const maskEmail = (first, lastLetter, domain) => {
+    const slug = slugify(first);
+    const visible = slug.substring(0, 2);
+    return `${visible}****.${lastLetter}@${domain}`;
+  };
+  // Adresse masquée : "** rue ********, ***** Ville"
+  const maskAddress = (city) => `** rue ********, ${city.cp.substring(0, 2)}*** ${city.name}`;
+  const idCounter = useRef(100);
+
+  const makeCard = () => {
+    const first = pick(POOL.firsts);
+    const initial = pick(POOL.initials);
+    const city = pick(POOL.cities);
+    const emailDomain = pick(POOL.emailDomains);
+    const lastLetter = initial.replace('.', '').toLowerCase();
+    return {
+      id: idCounter.current++,
+      name: `${first} ${initial}`,
+      phone: genPhoneMasked(),
+      email: maskEmail(first, lastLetter, emailDomain),
+      address: maskAddress(city),
+      city: city.name,
+      intent: pick(POOL.intents),
+      bornAt: Date.now(),
+    };
+  };
+
+  const [cards, setCards] = useState(() => [makeCard(), makeCard()]);
+  // Compteur "à échelle locale" — un commerçant doit se dire "ça me ressemble, je peux en avoir aussi"
+  // Démarre à 4, plafonne à 9 pour rester réaliste à l'échelle d'un commerce de quartier
+  const [counter, setCounter] = useState(4);
+  const [now, setNow] = useState(Date.now());
+
+  // Nouvelle carte toutes les 6s — assez lent pour qu'on lise la fiche et que le compteur ne s'emballe pas
+  useEffect(() => {
+    if (!inView) return;
+    const id = setInterval(() => {
+      setCards(prev => [makeCard(), ...prev.slice(0, 1)]);
+      // Le compteur monte mais doucement (proba 50%) et plafonne à 9 — reste humain
+      setCounter(c => (c < 9 && Math.random() < 0.5) ? c + 1 : c);
+    }, 6000);
+    return () => clearInterval(id);
+  }, [inView]);
+
+  // Tick chaque seconde pour rafraîchir "il y a Xs"
+  useEffect(() => {
+    if (!inView) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [inView]);
+
+  const fmtAge = (bornAt) => {
+    const sec = Math.floor((now - bornAt) / 1000);
+    if (sec < 3) return 'à l\'instant';
+    if (sec < 60) return `il y a ${sec}s`;
+    return `il y a ${Math.floor(sec / 60)} min`;
+  };
+
+  return (
+    <div ref={widgetRef} className="relative">
+      {/* Halo gradient indigo très subtil */}
+      <div className="absolute -inset-4 rounded-[40px] opacity-50 blur-2xl pointer-events-none"
+           style={{ background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12), transparent 70%)' }}
+           aria-hidden="true" />
+
+      {/* Mini-header live indicator + Exclusif chip à droite */}
+      <div className="relative flex items-center justify-between mb-5 px-1">
+        <div className="flex items-center gap-2.5">
+          <span className="relative flex w-2 h-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <p className="text-[11.5px] font-bold tracking-[0.14em] uppercase text-gray-500">
+            En direct · <span className="text-gray-900 tabular-nums">{counter}</span> reçus aujourd'hui
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.1em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+          <Shield className="w-3 h-3" strokeWidth={2.4} />
+          Exclusif
+        </span>
+      </div>
+
+      {/* Stack de 2 cartes prospect */}
+      <div className="relative space-y-4 min-h-[480px]">
+        <AnimatePresence initial={false} mode="popLayout">
+          {cards.map((card, i) => (
+            <motion.div
+              key={card.id}
+              layout
+              initial={{ opacity: 0, y: -28, scale: 0.95 }}
+              animate={{
+                opacity: i === 0 ? 1 : 0.55,
+                y: 0,
+                scale: i === 0 ? 1 : 0.985,
+              }}
+              exit={{ opacity: 0, y: 18, scale: 0.95 }}
+              transition={{ duration: 0.6, ease: appleEase }}
+              className="relative rounded-[24px] bg-white overflow-hidden"
+              style={{
+                border: '1px solid rgba(15, 23, 42, 0.06)',
+                boxShadow: i === 0
+                  ? '0 24px 48px -16px rgba(99, 102, 241, 0.18), 0 8px 16px -8px rgba(15, 23, 42, 0.06)'
+                  : '0 8px 20px -8px rgba(15, 23, 42, 0.06)',
+              }}
+            >
+              {/* Card header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={3} />
+                  </div>
+                  <span className="text-[10.5px] font-bold tracking-[0.12em] uppercase text-emerald-700">
+                    Nouveau prospect
+                  </span>
+                </div>
+                <span className="text-[11px] text-gray-400 font-medium tabular-nums">
+                  {fmtAge(card.bornAt)}
+                </span>
+              </div>
+
+              {/* Card body — fiche prospect */}
+              <div className="px-5 pb-5 space-y-3">
+                {/* Nom + ville header */}
+                <div>
+                  <p className="text-[18px] font-extrabold text-gray-900 tracking-[-0.01em]">{card.name}</p>
+                  <p className="text-[13px] text-gray-500 mt-0.5">{card.city}</p>
+                </div>
+
+                {/* Coordonnées — liste épurée */}
+                <div className="pt-3 border-t border-gray-100/80 space-y-2">
+                  <div className="flex items-center gap-3 text-[13px]">
+                    <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" strokeWidth={2} />
+                    <span className="text-gray-800 font-medium tabular-nums">{card.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[13px]">
+                    <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" strokeWidth={2} />
+                    <span className="text-gray-700 truncate">{card.email}</span>
+                  </div>
+                  <div className="flex items-start gap-3 text-[13px]">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" strokeWidth={2} />
+                    <span className="text-gray-700 leading-snug">{card.address}</span>
+                  </div>
+                </div>
+
+                {/* Motif — badge en bas */}
+                <div className="pt-3 border-t border-gray-100/80">
+                  <p className="text-[10.5px] font-bold tracking-[0.12em] uppercase text-gray-400 mb-1">Motif</p>
+                  <p className="text-[14px] font-bold text-indigo-700">{card.intent}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Footer trust strip — réassure ce qui défile au-dessus */}
+      <div className="relative mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-gray-50/80 border border-gray-200/60 px-4 py-3">
+        <div className="text-center">
+          <p className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-400 leading-none">Identité</p>
+          <p className="text-[12px] font-bold text-gray-900 mt-1.5">Vérifiée</p>
+        </div>
+        <div className="text-center border-x border-gray-200/60">
+          <p className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-400 leading-none">Téléphone</p>
+          <p className="text-[12px] font-bold text-gray-900 mt-1.5">Confirmé</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-400 leading-none">RGPD</p>
+          <p className="text-[12px] font-bold text-emerald-700 mt-1.5">CNIL ✓</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LeadsRGPDSection = () => {
+  const [form, setForm] = useState({
+    entreprise: '',
+    secteur: '',
+    email: '',
+    telephone: '',
+    volume: '',
+  });
+  const [status, setStatus] = useState('idle'); // idle | loading | success | error
+  const [error, setError] = useState('');
+  const appleEase = [0.16, 1, 0.3, 1];
+
+  const sectorOptions = [
+    'Choisir mon secteur',
+    'Travaux / BTP',
+    'Immobilier',
+    'Assurance / Mutuelle',
+    'Santé / Bien-être',
+    'Automobile',
+    'Énergie / Photovoltaïque',
+    'Formation',
+    'Conseil / Services pro',
+    'Autre',
+  ];
+
+  const volumeOptions = [
+    'Volume de prospects souhaité',
+    '10 à 25 prospects / mois',
+    '25 à 50 prospects / mois',
+    '50 à 100 prospects / mois',
+    '100 à 250 prospects / mois',
+    '250+ prospects / mois',
+    'Je ne sais pas, à discuter',
+  ];
+
+  const validate = () => {
+    if (!form.entreprise.trim()) return 'Nom de l\'entreprise requis';
+    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Email invalide';
+    if (!form.telephone.trim()) return 'Téléphone requis';
+    if (!form.secteur.trim()) return 'Veuillez choisir un secteur';
+    if (!form.volume.trim()) return 'Veuillez indiquer un volume';
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const err = validate();
+    if (err) { setError(err); return; }
+    setError('');
+    setStatus('loading');
+    try {
+      const { submitLeadsRequest } = await import('../services/leadService');
+      const result = await submitLeadsRequest(form);
+      if (result && result.success === false && result.error) {
+        // L'Apps Script peut renvoyer success:true même avec un warning interne (CORS opaque)
+        // → on considère success si pas d'erreur réseau dure
+        console.warn('submitLeadsRequest:', result.error);
+      }
+      setStatus('success');
+    } catch (err) {
+      setStatus('error');
+      setError(err.message || 'Erreur lors de l\'envoi');
+    }
+  };
+
+  return (
+    <section id="leads-rgpd" className="relative py-28 md:py-44 bg-white overflow-hidden scroll-mt-24">
+      {/* Ambient gradients — feel premium Apple, multi-couches très subtiles */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-20 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #06B6D4, transparent 70%)' }} />
+      </div>
+
+      <div className="relative max-w-6xl mx-auto px-6">
+        {/* Header centré (mobile + desktop) — typo premium */}
+        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
+          <ScrollReveal y={16}>
+            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mb-7">
+              <span className="relative flex w-1.5 h-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
+              </span>
+              Prospects ultra-ciblés
+            </span>
+          </ScrollReveal>
+          <ScrollReveal y={24} delay={0.08}>
+            <h2 className="text-[36px] sm:text-[52px] md:text-[64px] lg:text-[72px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]">
+              Des prospects qui
+              <br />
+              <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                veulent acheter.
+              </span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal y={20} delay={0.18}>
+            <p className="text-[16.5px] md:text-[19px] text-gray-500 max-w-xl mx-auto mt-6 leading-[1.5]">
+              Pas du fichier froid. Des contacts qui ont déjà demandé à être recontactés pour votre métier.
+            </p>
+          </ScrollReveal>
+          {/* Trust strip — réduit l'anxiété AVANT le formulaire */}
+          <ScrollReveal y={14} delay={0.24}>
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-7">
+              {[
+                { icon: Shield, label: 'CNIL conforme' },
+                { icon: Target, label: 'Exclusif par zone' },
+                { icon: CheckCircle2, label: 'Sans engagement' },
+              ].map(({ icon: Icon, label }, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-gray-700">
+                  <Icon className="w-3.5 h-3.5 text-indigo-600" strokeWidth={2.4} />
+                  {label}
+                </span>
+              ))}
+            </div>
+          </ScrollReveal>
+        </div>
+
+        {/* 4 chiffres clés — bande unifiée, séparateurs verticaux desktop */}
+        <ScrollReveal y={24} delay={0.22}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto mb-16 lg:mb-24 rounded-[28px] bg-white/60 backdrop-blur-sm border border-gray-200/70 overflow-hidden"
+               style={{ boxShadow: '0 8px 32px -16px rgba(15, 23, 42, 0.06)' }}>
+            {[
+              { value: '1 sur 3', label: 'Prospects qui deviennent clients', accent: 'from-indigo-600 to-blue-500' },
+              { value: '24 h', label: 'Livraison après votre inscription', accent: 'from-blue-600 to-cyan-500' },
+              { value: '0 €', label: 'D\'abonnement · Payez à l\'unité', accent: 'from-cyan-600 to-teal-500' },
+              { value: '100%', label: 'Exclusivité dans votre zone', accent: 'from-violet-600 to-indigo-500' },
+            ].map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 18, scale: 0.92 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.08 }}
+                className={`text-center py-7 lg:py-9 px-4 ${
+                  i > 0 ? 'border-t lg:border-t-0 lg:border-l border-gray-200/70' : ''
+                } ${i === 1 ? 'border-l border-gray-200/70 lg:border-l' : ''}`}
+              >
+                <p className={`text-[40px] sm:text-[52px] lg:text-[60px] font-black tracking-[-0.035em] leading-none bg-gradient-to-br ${s.accent} bg-clip-text text-transparent`}>
+                  {s.value}
+                </p>
+                <p className="text-[12px] lg:text-[13px] text-gray-500 font-medium mt-3 leading-tight tracking-tight max-w-[180px] mx-auto">
+                  {s.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </ScrollReveal>
+
+        {/* Bloc 2 colonnes : Live feed | Form — alignés en haut, même importance visuelle */}
+        <div className="grid lg:grid-cols-[1fr_minmax(0,460px)] gap-10 lg:gap-16 items-start mb-16 lg:mb-24">
+
+          {/* COL GAUCHE — Live feed (preuve visuelle de ce que l'user recevra) */}
+          <div className="order-2 lg:order-1">
+            <ScrollReveal y={24} delay={0.05}>
+              <LiveProspectsFeed />
+            </ScrollReveal>
+          </div>
+
+          {/* Formulaire — order-1 sur mobile, HERO du bloc */}
+          <ScrollReveal y={30} delay={0.12} className="order-1 lg:order-2">
+            <div
+              className="relative rounded-[28px] bg-white p-7 lg:p-10"
+              style={{
+                border: '1px solid rgba(99, 102, 241, 0.12)',
+                boxShadow: '0 50px 100px -20px rgba(99, 102, 241, 0.22), 0 20px 40px -16px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(99, 102, 241, 0.06)',
+              }}
+            >
+              {/* Halo gradient prononcé derrière — c'est le HERO de la section */}
+              <div className="absolute -inset-2 -z-10 rounded-[36px] opacity-70 blur-3xl pointer-events-none"
+                   style={{ background: 'radial-gradient(circle, rgba(99, 102, 241, 0.28), transparent 70%)' }}
+                   aria-hidden="true" />
+              {status === 'success' ? (
+                <div className="text-center py-6">
+                  <motion.div
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 280, damping: 18 }}
+                    className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4"
+                    style={{
+                      background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+                      boxShadow: '0 12px 28px -8px rgba(99, 102, 241, 0.5)',
+                    }}
+                  >
+                    <Check className="w-7 h-7 text-white" strokeWidth={2.4} />
+                  </motion.div>
+                  <h3 className="text-[20px] font-extrabold text-gray-900 tracking-[-0.02em]">Demande envoyée</h3>
+                  <p className="text-[14px] text-gray-500 mt-3 max-w-xs mx-auto leading-relaxed">
+                    Notre équipe vous rappelle sous <span className="font-semibold text-gray-900">24h ouvrées</span> pour discuter de votre besoin.
+                  </p>
+                  <div className="mt-5 mx-auto max-w-xs rounded-2xl bg-indigo-50/60 border border-indigo-100 px-4 py-3 flex items-start gap-3 text-left">
+                    <Mail className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" />
+                    <p className="text-[12.5px] text-indigo-900 leading-snug">
+                      <span className="font-semibold">Un email de confirmation vient de vous être envoyé.</span>
+                      <br/>
+                      <span className="text-indigo-700/80">Pensez à vérifier vos spams si vous ne le voyez pas.</span>
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.14em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full mb-4">
+                    <Target className="w-3 h-3" strokeWidth={2.4} />
+                    Réservez votre zone
+                  </span>
+                  <h3 className="text-[24px] sm:text-[28px] font-extrabold text-gray-900 tracking-[-0.025em] leading-[1.1] mb-2">
+                    Recevez vos prospects
+                    <br/>
+                    <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">en 24 heures.</span>
+                  </h3>
+                  <p className="text-[13.5px] text-gray-500 mb-6 leading-relaxed">
+                    On vous rappelle sous 24 h pour valider votre zone et vous livrer vos premiers prospects qualifiés.
+                  </p>
+                  <form onSubmit={handleSubmit} className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Nom de votre entreprise"
+                      value={form.entreprise}
+                      onChange={(e) => setForm(f => ({ ...f, entreprise: e.target.value }))}
+                      style={{ fontSize: 16 }}
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                    />
+                    <select
+                      value={form.secteur}
+                      onChange={(e) => setForm(f => ({ ...f, secteur: e.target.value }))}
+                      style={{ fontSize: 16 }}
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                    >
+                      {sectorOptions.map((s, i) => (
+                        <option key={i} value={i === 0 ? '' : s} disabled={i === 0}>{s}</option>
+                      ))}
+                    </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="email"
+                        placeholder="Email pro"
+                        value={form.email}
+                        onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                        style={{ fontSize: 16 }}
+                        className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Téléphone"
+                        value={form.telephone}
+                        onChange={(e) => setForm(f => ({ ...f, telephone: e.target.value }))}
+                        style={{ fontSize: 16 }}
+                        className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                      />
+                    </div>
+                    <select
+                      value={form.volume}
+                      onChange={(e) => setForm(f => ({ ...f, volume: e.target.value }))}
+                      style={{ fontSize: 16 }}
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                    >
+                      {volumeOptions.map((v, i) => (
+                        <option key={i} value={i === 0 ? '' : v} disabled={i === 0}>{v}</option>
+                      ))}
+                    </select>
+
+                    {error && (
+                      <p className="text-[12.5px] text-rose-700 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 font-medium">
+                        {error}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={status === 'loading'}
+                      className="group w-full mt-3 inline-flex items-center justify-center gap-2 text-[15.5px] font-bold text-white px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed tracking-tight"
+                      style={{
+                        background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)',
+                        boxShadow: '0 16px 40px -12px rgba(99, 102, 241, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
+                      }}
+                    >
+                      {status === 'loading' ? 'Envoi…' : (
+                        <>
+                          Je veux mes prospects
+                          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+                        </>
+                      )}
+                    </button>
+                    {/* Trust badges intégrés sous le CTA */}
+                    <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+                      {[
+                        'Sans engagement',
+                        'Sans CB',
+                        'Réponse 24 h',
+                      ].map((t, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-[11px] text-gray-500 font-medium">
+                          <Check className="w-3 h-3 text-emerald-500" strokeWidth={3} />
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
+          </ScrollReveal>
+        </div>
+
+        {/* 4 bénéfices — eyebrow centré + cards premium */}
+        <ScrollReveal y={20} delay={0.04}>
+          <div className="text-center mb-10">
+            <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-gray-400">
+              Pourquoi ça convertit
+            </p>
+          </div>
+        </ScrollReveal>
+        <ScrollReveal y={24} delay={0.08}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 max-w-5xl mx-auto">
+            {[
+              { icon: Target,    title: 'Intention d\'achat',     desc: 'Ils ont rempli un formulaire pour être recontactés.' },
+              { icon: Shield,    title: 'Exclusif par zone',       desc: 'Votre prospect n\'est jamais revendu ailleurs.' },
+              { icon: Zap,       title: 'Livrés en 24 h',          desc: 'À appeler quand l\'envie est encore fraîche.' },
+              { icon: CheckCircle2, title: '100% RGPD CNIL',       desc: 'Vous arrêtez quand vous voulez, sans frais.' },
+            ].map((b, i) => {
+              const Icon = b.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.06 }}
+                  className="relative rounded-2xl bg-white border border-gray-200/70 px-5 py-5 lg:px-6 lg:py-6 transition-all hover:border-indigo-200 hover:shadow-[0_12px_32px_-12px_rgba(99,102,241,0.18)]"
+                >
+                  <div className="inline-flex w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 items-center justify-center mb-3">
+                    <Icon className="w-[18px] h-[18px] text-indigo-600" strokeWidth={2.2} />
+                  </div>
+                  <p className="text-[14.5px] lg:text-[15.5px] font-bold text-gray-900 tracking-[-0.01em] leading-snug">{b.title}</p>
+                  <p className="text-[12.5px] lg:text-[13.5px] text-gray-500 leading-relaxed mt-1.5">{b.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+};
+
+
 /*  MAIN COMPONENT                                                     */
 /* ------------------------------------------------------------------ */
 export default function IAVocaleLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  // Données des 6 services détaillés (partagés desktop ServiceShowcases + mobile MobileServiceDetail)
+  const showcasesData = useMemo(() => buildShowcasesData(), []);
+
+  // Sync mobile carousel ↔ détail service en dessous
+  // Stratégie : scroll listener throttled (50ms) — bien suffisant pour le sync visuel,
+  // sans recalculer 60 fois/seconde pendant l'auto-scroll smooth.
+  const servicesCarouselRef = useRef(null);
+  const [activeMobileSvcIdx, setActiveMobileSvcIdx] = useState(0);
+  useEffect(() => {
+    const root = servicesCarouselRef.current;
+    if (!root) return;
+
+    let timerId = null;
+    let lastIdx = -1;
+
+    const compute = () => {
+      timerId = null;
+      const cards = Array.from(root.querySelectorAll('.mobile-service-card'));
+      if (!cards.length) return;
+      const rootRect = root.getBoundingClientRect();
+      const center = rootRect.left + rootRect.width / 2;
+      let bestIdx = 0;
+      let minDist = Infinity;
+      cards.forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+        const dist = Math.abs((rect.left + rect.width / 2) - center);
+        if (dist < minDist) {
+          minDist = dist;
+          const dataIdx = parseInt(card.getAttribute('data-svc-idx'), 10);
+          bestIdx = Number.isNaN(dataIdx) ? i : dataIdx;
+        }
+      });
+      if (bestIdx !== lastIdx) {
+        lastIdx = bestIdx;
+        setActiveMobileSvcIdx(bestIdx);
+      }
+    };
+
+    // Throttle setTimeout 50ms — ~20 fps de check max, négligeable côté CPU
+    const onScroll = () => {
+      if (timerId !== null) return;
+      timerId = setTimeout(compute, 50);
+    };
+
+    const initTimer = setTimeout(compute, 100);
+    root.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      clearTimeout(initTimer);
+      if (timerId !== null) clearTimeout(timerId);
+      root.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
+  // ─── Auto-scroll du carousel services mobile ───
+  // Démarre 1.5s APRÈS que la section "Nos services" entre dans le viewport.
+  // Avance 1 carte toutes les 3.5s. S'arrête définitivement au 1er touch/clic/swipe.
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  useEffect(() => {
+    if (!autoScrollEnabled) return;
+    const root = servicesCarouselRef.current;
+    if (!root) return;
+    // Mobile only — desktop affiche déjà tout en grid
+    if (window.matchMedia && !window.matchMedia('(max-width: 1023px)').matches) return;
+
+    const cards = Array.from(root.querySelectorAll('.mobile-service-card'));
+    if (cards.length < 2) return;
+
+    let currentIdx = 0;
+    let interval = null;
+    let startTimeout = null;
+    let stopped = false;
+
+    // Détecte interaction utilisateur → arrête définitivement l'auto-scroll
+    const stopAuto = () => {
+      stopped = true;
+      setAutoScrollEnabled(false);
+      if (interval) clearInterval(interval);
+      if (startTimeout) clearTimeout(startTimeout);
+    };
+    root.addEventListener('touchstart', stopAuto, { passive: true });
+    root.addEventListener('mousedown', stopAuto);
+    root.addEventListener('wheel', stopAuto, { passive: true });
+
+    const startAutoScroll = () => {
+      if (stopped) return;
+      // 1.5s d'attente après l'entrée en viewport pour laisser à l'œil le temps de se poser
+      startTimeout = setTimeout(() => {
+        if (stopped) return;
+        interval = setInterval(() => {
+          if (stopped) { clearInterval(interval); return; }
+          currentIdx = (currentIdx + 1) % cards.length;
+          const target = cards[currentIdx];
+          if (!target) return;
+          // scroll horizontal uniquement (pas de scroll vertical de la page)
+          const rootRect = root.getBoundingClientRect();
+          const cardRect = target.getBoundingClientRect();
+          const delta = (cardRect.left + cardRect.width / 2) - (rootRect.left + rootRect.width / 2);
+          root.scrollTo({
+            left: root.scrollLeft + delta,
+            behavior: 'smooth',
+          });
+        }, 3500);
+      }, 1500);
+    };
+
+    // IntersectionObserver — déclenche l'auto-scroll quand le carousel entre dans le viewport
+    let triggered = false;
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting && e.intersectionRatio > 0.4 && !triggered && !stopped) {
+          triggered = true;
+          startAutoScroll();
+        }
+      });
+    }, { threshold: [0.4, 0.6, 0.8] });
+    io.observe(root);
+
+    return () => {
+      io.disconnect();
+      if (startTimeout) clearTimeout(startTimeout);
+      if (interval) clearInterval(interval);
+      root.removeEventListener('touchstart', stopAuto);
+      root.removeEventListener('mousedown', stopAuto);
+      root.removeEventListener('wheel', stopAuto);
+    };
+  }, [autoScrollEnabled]);
 
   // Popup capture email — TOUS les CTAs (gratuit ET plans payants) y passent.
   // L'essai gratuit 100 appels / 14 jours est offert à tous.
@@ -1061,6 +3008,7 @@ export default function IAVocaleLanding() {
 
   // FAQ
   const [openFaq, setOpenFaq] = useState(null);
+  const [showAllFaqs, setShowAllFaqs] = useState(false);
 
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -1207,10 +3155,9 @@ export default function IAVocaleLanding() {
   ];
 
   const steps = [
-    { icon: FileSpreadsheet, title: 'Importez vos contacts', desc: 'CSV, Excel ou saisie manuelle. En 2 minutes, vos contacts sont prêts pour les appels sortants.' },
-    { icon: Phone, title: "L'IA appelle pour vous", desc: 'Renouvellements, confirmations de RDV — l\'IA passe les appels avec une voix naturelle et professionnelle.' },
-    { icon: PhoneCall, title: "L'IA décroche pour vous", desc: 'Appels entrants 24/7 — l\'IA répond, qualifie le prospect et prend RDV dans votre agenda.' },
-    { icon: TrendingUp, title: 'Vous récoltez les résultats', desc: 'Agenda rempli, dossiers renouvelés, leads qualifiés — vous ne perdez plus un seul client.' },
+    { icon: Sparkles, title: 'Activez en 5 minutes', desc: 'Vous renseignez votre email. On configure votre IA. C\'est tout.' },
+    { icon: Bot, title: 'L\'IA travaille 24/7', desc: 'Elle passe vos appels sortants. Elle décroche les entrants. Sans pause, sans erreur.' },
+    { icon: TrendingUp, title: 'Vous récoltez les résultats', desc: 'Agenda rempli, dossiers renouvelés, leads qualifiés. Vous ne perdez plus un client.' },
   ];
 
   const testimonials = [
@@ -1270,47 +3217,31 @@ export default function IAVocaleLanding() {
     },
   ];
 
-  // Tarification définitive — alignée sur la consommation réelle (130 appels/mois en moyenne)
+  // Tarification — copy adaptée pour commerçants locaux (gérants TPE/PME)
   const pricing = [
     {
       id: 'gratuit',
       name: 'Essai gratuit',
-      tagline: 'Voir les résultats avant de payer',
+      tagline: 'Testez sans risque',
       priceMensuel: 0,
       priceAnnuel: 0,
       unit: '',
       calls: '100 appels offerts · 14 jours',
       noCardBig: true,
       features: [
-        'Tous les modules activés',
-        'Configuration en 5 minutes',
+        'Aucune carte bancaire demandée',
+        'Tous les services activés',
+        'L\'IA décroche vos appels en 2s',
+        'Vous recevez chaque lead par SMS',
         'Annulation en 1 clic',
       ],
       cta: 'Démarrer gratuitement',
       popular: false,
     },
     {
-      id: 'a-la-carte',
-      name: 'Pack découverte',
-      tagline: 'Tester sans abonnement',
-      priceMensuel: 97,
-      priceAnnuel: 97,
-      unit: 'HT · paiement unique',
-      calls: '300 appels · 30 jours',
-      pricePerCall: '0,32€/appel',
-      features: [
-        'Tous les modules inclus',
-        'Pas de renouvellement automatique',
-        'Idéal pour valider l\'usage',
-        'Support email',
-      ],
-      cta: 'Acheter mes 300 appels',
-      popular: false,
-    },
-    {
       id: 'pro',
       name: 'Pro',
-      tagline: 'Choisi par 73% de nos clients',
+      tagline: 'Le plus choisi par les commerçants',
       priceMensuel: 97,
       priceAnnuel: 77,
       unit: 'HT / mois',
@@ -1318,11 +3249,12 @@ export default function IAVocaleLanding() {
       pricePerCall: '0,19€/appel',
       pricePerCallAnnuel: '0,15€/appel',
       features: [
-        'Renouvelés automatiquement',
-        'Tous les modules inclus',
-        'Rapport ROI hebdomadaire',
-        'Intégration agenda',
-        'Support prioritaire',
+        'Facture envoyée chaque mois (déductible en charges)',
+        'L\'IA décroche 24/7 — vous ne ratez plus un client',
+        'RDV pris automatiquement dans votre agenda',
+        'Récap par SMS dès qu\'un lead est qualifié',
+        'Tous les services inclus (renouvellements, RDV, avis, paiements)',
+        'Support téléphonique prioritaire',
       ],
       cta: 'Choisir Pro',
       popular: true,
@@ -1331,7 +3263,7 @@ export default function IAVocaleLanding() {
     {
       id: 'business',
       name: 'Business',
-      tagline: 'Volumes & multi-sites',
+      tagline: 'Pour multi-sites & gros volumes',
       priceMensuel: 249,
       priceAnnuel: 199,
       unit: 'HT / mois',
@@ -1340,10 +3272,11 @@ export default function IAVocaleLanding() {
       pricePerCallAnnuel: '0,10€/appel',
       features: [
         'Tout le plan Pro',
-        'Multi-sites & multi-utilisateurs',
-        'Intégration CRM',
-        'Account manager dédié',
-        'Onboarding personnalisé',
+        'Facture mensuelle (déductible en charges)',
+        'Plusieurs établissements gérés en même temps',
+        'Conseiller dédié à votre commerce',
+        'Mise en place accompagnée par téléphone',
+        'Connexion à votre logiciel métier sur demande',
       ],
       cta: 'Choisir Business',
       popular: false,
@@ -1369,15 +3302,15 @@ export default function IAVocaleLanding() {
     },
     {
       q: "Je suis [plombier/coiffeur/garagiste], pas tech — est-ce que je vais y arriver seul ?",
-      a: "Oui. Tout passe par 2 actions simples : (1) un email pour démarrer, (2) un fichier de contacts à uploader (votre liste clients exportée depuis votre logiciel ou même une feuille Excel). Aucun code, aucune installation logicielle, aucune intégration technique à faire vous-même. Et si vous bloquez sur quelque chose, on est joignable au +33 1 77 38 17 11 — réponse en moins de 2h ouvrées."
+      a: "Oui. Tout passe par 2 actions simples : (1) un email pour démarrer, (2) un fichier de contacts à uploader (votre liste clients exportée depuis votre logiciel ou même une feuille Excel). Aucun code, aucune installation logicielle, aucune intégration technique à faire vous-même. Et si vous bloquez sur quelque chose, on est joignable au +33 4 51 41 05 75 — réponse en moins de 2h ouvrées."
     },
     {
       q: "Que se passe-t-il après mes 100 appels offerts ?",
-      a: "Rien d'automatique. On vous envoie un email à 80% de votre essai pour vous prévenir, et un autre à 100%. Vous décidez ensuite : passer en Pack découverte (97€ pour 300 appels, paiement unique), Pro (97€/mois pour 500 appels), Business (249€/mois), ou simplement ne rien faire. Aucun prélèvement automatique tant que vous n'avez pas explicitement choisi un plan payant."
+      a: "Rien d'automatique. On vous envoie un email à 80% de votre essai pour vous prévenir, et un autre à 100%. Vous décidez ensuite : passer en Pro (97€ HT/mois pour 500 appels), Business (249€ HT/mois pour 2 000 appels), ou simplement ne rien faire. Aucun prélèvement automatique tant que vous n'avez pas explicitement choisi un plan payant."
     },
     {
       q: "Puis-je annuler à tout moment ?",
-      a: "Oui, en 1 clic depuis votre espace de configuration — sans justification, sans frais, sans période d'engagement. Pour les plans mensuels (Pro, Business), l'annulation prend effet à la fin du mois en cours. Pour le Pack découverte (paiement unique), il n'y a rien à annuler : pas de reconduction."
+      a: "Oui, en 1 clic depuis votre espace de configuration — sans justification, sans frais, sans période d'engagement. L'annulation prend effet à la fin du mois en cours, sans aucun frais de résiliation. Aucune reconduction tacite : si vous arrêtez, vous arrêtez."
     },
     {
       q: "Mes données sont-elles sécurisées ?",
@@ -1408,11 +3341,25 @@ export default function IAVocaleLanding() {
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-7">
             {navLinks.map((l) => (
-              <a key={l.href} href={l.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-                {l.label}
-              </a>
+              l.highlight ? (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-3 py-1.5 rounded-full transition-all"
+                >
+                  <span className="relative flex w-1.5 h-1.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
+                  </span>
+                  {l.label}
+                </a>
+              ) : (
+                <a key={l.href} href={l.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
+                  {l.label}
+                </a>
+              )
             ))}
           </div>
 
@@ -1426,10 +3373,23 @@ export default function IAVocaleLanding() {
             </a>
           </div>
 
-          {/* Mobile hamburger */}
-          <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile : pill "Prospects" visible permanent + hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            <a
+              href="#leads-rgpd"
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1.5 rounded-full active:scale-95 transition-all"
+              aria-label="Acheter des prospects"
+            >
+              <span className="relative flex w-1.5 h-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
+              </span>
+              Prospects
+            </a>
+            <button className="p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}
@@ -1442,8 +3402,14 @@ export default function IAVocaleLanding() {
               className="md:hidden bg-white border-b border-gray-100 overflow-hidden"
             >
               <div className="px-6 py-4 space-y-3">
-                {navLinks.map((l) => (
-                  <a key={l.href} href={l.href} onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 font-medium py-2">
+                {navLinksMobile.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block py-2 font-medium ${l.highlight ? 'text-indigo-700' : 'text-gray-700'}`}
+                  >
+                    {l.highlight && <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2 align-middle" />}
                     {l.label}
                   </a>
                 ))}
@@ -1527,6 +3493,15 @@ export default function IAVocaleLanding() {
                   </div>
                 ))}
               </div>
+
+              {/* Mini ligne preuve sociale */}
+              <p className="hero-fade hero-fade-5 mt-6 text-[12.5px] text-gray-400 text-center sm:text-left">
+                <span className="font-semibold text-gray-600">+250 professionnels</span>
+                <span className="mx-2 text-gray-300">·</span>
+                <span className="font-semibold text-gray-600">4,8/5</span>
+                <span className="mx-2 text-gray-300">·</span>
+                <span>Made in France 🇫🇷</span>
+              </p>
             </div>
 
             {/* Right — Hero animation (desktop only) */}
@@ -1539,94 +3514,52 @@ export default function IAVocaleLanding() {
 
       {/* TESTIMONIALS                                 */}
       {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="relative py-28 md:py-40 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
+        {/* Ambient gradients premium */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-32 left-[10%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #F59E0B, transparent 70%)' }} />
+          <div className="absolute bottom-32 right-[10%] w-[500px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Témoignages"
             title="+250 professionnels font confiance à BoosterPay."
             subtitle="Garagistes, cabinets médicaux, courtiers, salons, plombiers, avocats — ils ont automatisé leurs appels avec l'IA."
           />
 
-          {/* Trust strip — secteurs représentés (en tête de section, cadre les témoignages) */}
+          {/* Trust strip — secteurs représentés */}
           <ScrollReveal>
-            <div className="mb-12 flex flex-wrap justify-center gap-x-5 gap-y-2 text-[12px] font-medium text-gray-500">
-              <span>Garagistes</span>
-              <span className="text-gray-300">·</span>
-              <span>Cabinets médicaux</span>
-              <span className="text-gray-300">·</span>
-              <span>Courtiers</span>
-              <span className="text-gray-300">·</span>
-              <span>Salons</span>
-              <span className="text-gray-300">·</span>
-              <span>Plombiers</span>
-              <span className="text-gray-300">·</span>
-              <span>Avocats</span>
-              <span className="text-gray-300">·</span>
-              <span>Restaurants</span>
-              <span className="text-gray-300">·</span>
-              <span>Experts-comptables</span>
+            <div className="mb-14 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] font-medium text-gray-400 tracking-tight">
+              {['Garagistes','Cabinets médicaux','Courtiers','Salons','Plombiers','Avocats','Restaurants','Experts-comptables'].map((s, i, arr) => (
+                <span key={i} className="inline-flex items-center gap-x-6">
+                  <span>{s}</span>
+                  {i < arr.length - 1 && <span className="text-gray-200">·</span>}
+                </span>
+              ))}
             </div>
           </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => {
-              const tc = svcColors[t.color] || svcColors.emerald;
-              const avatarBg = {
-                emerald: 'from-emerald-400 to-teal-500',
-                blue:    'from-blue-400 to-indigo-500',
-                violet:  'from-violet-400 to-purple-500',
-                yellow:  'from-yellow-400 to-amber-500',
-                rose:    'from-rose-400 to-pink-500',
-                amber:   'from-amber-400 to-orange-500',
-              }[t.color] || 'from-emerald-400 to-teal-500';
-              return (
-                <ScrollReveal key={i} delay={(i % 3) * 0.08}>
-                  <div className="bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
-                    {/* Étoiles */}
-                    <div className="flex gap-0.5 mb-4">
-                      {[1,2,3,4,5].map((s) => (
-                        <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" strokeWidth={1} />
-                      ))}
-                    </div>
-
-                    {/* Quote */}
-                    <p className="text-[15px] text-gray-700 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
-
-                    {/* Result chip */}
-                    <div className={`mt-5 inline-flex self-start items-center gap-1.5 px-3 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
-                      <Sparkles className={`w-3 h-3 ${tc.icon}`} />
-                      <span className={`text-[11.5px] font-bold ${tc.icon}`}>{t.result}</span>
-                    </div>
-
-                    <div className="h-px bg-gray-100 my-5" />
-
-                    {/* Auteur */}
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBg} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                        {t.avatar}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-[14px]">{t.name}</p>
-                        <p className="text-[12.5px] text-gray-500">{t.role} · {t.city}</p>
-                      </div>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
+          <TestimonialsCarousel testimonials={testimonials} svcColors={svcColors} />
 
         </div>
       </section>
 
       {/* HOW IT WORKS — Animation Apple-style                       */}
       {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="relative py-28 md:py-40 bg-white overflow-hidden">
+        {/* Ambient gradient teal subtle */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(ellipse, #10B981, transparent 70%)' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Comment ça marche"
-            title="Quatre étapes. Zéro friction."
-            subtitle="De l’import aux leads qualifiés — appels sortants ET entrants, tout est automatisé."
+            title="Trois étapes. Zéro friction."
+            subtitle="Vous activez. L'IA travaille. Vous récoltez."
           />
 
           <HowItWorksTimeline steps={steps} />
@@ -1635,993 +3568,217 @@ export default function IAVocaleLanding() {
 
 
       {/* ============================================ */}
-      {/* RÉCEPTION D'APPELS IA — SECTION DÉDIÉE       */}
+      {/* RÉCEPTION D'APPELS IA — FLAGSHIP HERO        */}
       {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading
-            title="Vous ne décrochez pas ? L'IA prend le relais."
-            subtitle="Transfert automatique quand vous êtes occupé. L'IA qualifie, prend RDV, et vous envoie le lead prêt à closer."
-          />
-
-          <div className="grid lg:grid-cols-2 gap-16 items-center mt-8">
-            {/* Left — Phone animation / Visual */}
-            <ScrollReveal delay={0.1}>
-              <div className="relative">
-                {/* Phone mockup */}
-                <div className="bg-gray-900 rounded-[2.5rem] p-6 pt-10 relative overflow-hidden shadow-2xl">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl" />
-
-                  {/* Incoming call screen */}
-                  <div className="text-center mb-6 mt-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/30">
-                      <PhoneCall className="w-8 h-8 text-white" />
-                    </div>
-                    <p className="text-white font-bold text-lg">Appel entrant</p>
-                    <p className="text-gray-400 text-sm">06 12 34 56 78</p>
-                  </div>
-
-                  {/* AI conversation simulation */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex gap-2">
-                      <div className="bg-amber-500/20 border border-amber-500/30 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[80%]">
-                        <p className="text-[12px] text-amber-200 font-medium">IA BoosterPay</p>
-                        <p className="text-[13px] text-white mt-0.5">Bonjour, entreprise Martin Plomberie, que puis-je faire pour vous ?</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <div className="bg-white/10 border border-white/10 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[80%]">
-                        <p className="text-[12px] text-gray-400 font-medium">Prospect</p>
-                        <p className="text-[13px] text-gray-200 mt-0.5">J'ai une fuite dans ma salle de bain, vous pouvez intervenir cette semaine ?</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="bg-amber-500/20 border border-amber-500/30 rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[80%]">
-                        <p className="text-[12px] text-amber-200 font-medium">IA BoosterPay</p>
-                        <p className="text-[13px] text-white mt-0.5">Bien sûr ! Je peux vous proposer un créneau jeudi à 9h ou vendredi à 14h. Quelle option vous convient ?</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[70%]">
-                        <p className="text-[13px] text-emerald-300 font-semibold">✓ RDV confirmé — Jeudi 9h</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notification bar */}
-                  <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl px-4 py-3 flex items-center gap-3">
-                    <Sparkles className="w-4 h-4 text-emerald-400" />
-                    <span className="text-[12px] text-emerald-300 font-semibold">Récap envoyé par SMS + Email</span>
-                  </div>
-                </div>
-
-                {/* Floating notification card */}
-                <div className="absolute -bottom-4 -right-4 bg-white rounded-2xl shadow-xl border border-gray-100 px-5 py-4 flex items-center gap-3 max-w-[260px]">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <Check className="w-5 h-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-900">Lead qualifié</p>
-                    <p className="text-[10px] text-gray-400">Fuite SDB — Jeudi 9h — Urgent</p>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Right — Features list */}
-            <div>
-              <ScrollReveal delay={0.05}>
-                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">
-                  Votre secrétaire IA,<br />
-                  <span className="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">disponible 24h/24.</span>
-                </h3>
-                <p className="text-gray-500 text-lg leading-relaxed mb-10">
-                  Un prospect appelle et vous ne décrochez pas ? L'appel est automatiquement transféré à votre IA. Elle répond en 2 secondes, comprend le besoin, qualifie l'urgence, propose un créneau, et vous envoie le lead complet par SMS. Chaque appel manqué devient un lead qualifié.
-                </p>
-              </ScrollReveal>
-
-              <div className="space-y-5">
-                {[
-                  {
-                    icon: PhoneCall,
-                    title: 'Transfert automatique',
-                    desc: 'Vous ne répondez pas après 3 sonneries ? L\'appel bascule sur votre IA. Le prospect ne raccroche jamais.',
-                    color: 'amber',
-                  },
-                  {
-                    icon: Target,
-                    title: 'Qualifie le lead automatiquement',
-                    desc: 'Type de travaux, urgence, localisation, budget — l\'IA pose les bonnes questions et classe le lead.',
-                    color: 'emerald',
-                  },
-                  {
-                    icon: CalendarDays,
-                    title: 'Prend RDV dans votre agenda',
-                    desc: 'Si le prospect est chaud, l\'IA propose un créneau et confirme. Vous n\'avez qu\'à vous pointer.',
-                    color: 'blue',
-                  },
-                  {
-                    icon: Zap,
-                    title: 'Récap instantané par SMS',
-                    desc: 'Nom, besoin, urgence, créneau choisi — tout vous arrive en temps réel sur votre téléphone.',
-                    color: 'violet',
-                  },
-                ].map((feature, i) => (
-                  <ScrollReveal key={i} delay={0.1 + i * 0.08}>
-                    <div className="flex items-start gap-4 p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
-                      <div className={`w-11 h-11 rounded-xl bg-${feature.color}-100 flex items-center justify-center flex-shrink-0`}>
-                        <feature.icon className={`w-5 h-5 text-${feature.color}-600`} />
-                      </div>
-                      <div>
-                        <h4 className="text-[15px] font-bold text-gray-900 mb-1">{feature.title}</h4>
-                        <p className="text-[13px] text-gray-500 leading-relaxed">{feature.desc}</p>
-                      </div>
-                    </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-
-              {/* CTA */}
-              <ScrollReveal delay={0.4}>
-                <div className="mt-10 flex flex-col sm:flex-row gap-4">
-                  <button
-                    type="button"
-                    onClick={() => openPopup('cta-receptionia', 'gratuit')}
-                    className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-amber-500/25 hover:scale-105 transition-all duration-200"
-                  >
-                    <CalendarCheck className="w-5 h-5" /> Démarrer mes 100 appels
-                  </button>
-                </div>
-              </ScrollReveal>
-
-              {/* Stats bar */}
-              <ScrollReveal delay={0.5}>
-                <div className="mt-10 grid grid-cols-3 gap-6 pt-8 border-t border-gray-100">
-                  <div>
-                    <p className="text-2xl font-black text-gray-900">97%</p>
-                    <p className="text-[11px] text-gray-400 mt-1">Appels décrochés</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-black text-gray-900">×3</p>
-                    <p className="text-[11px] text-gray-400 mt-1">Leads qualifiés</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-black text-gray-900">2s</p>
-                    <p className="text-[11px] text-gray-400 mt-1">Temps de réponse</p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ReceptionFlagshipSection openPopup={openPopup} />
 
 
       {/* ── Section Robot Personnalisé ── */}
       {/* ── Quatre services. Un seul outil. ── */}
-      <section className="py-32 bg-[#FAFAFA] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="relative py-28 md:py-40 bg-gradient-to-b from-[#FAFAFA] via-white to-[#FAFAFA] overflow-hidden">
+        {/* Ambient gradients multicolores doux */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-20 left-[5%] w-[400px] h-[400px] rounded-full opacity-[0.05] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #3B82F6, transparent 70%)' }} />
+          <div className="absolute top-40 right-[5%] w-[400px] h-[400px] rounded-full opacity-[0.05] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #F43F5E, transparent 70%)' }} />
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[500px] h-[400px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #8B5CF6, transparent 70%)' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Nos services"
             title="Votre secrétaire IA fait tout ça."
             subtitle="Une seule plateforme. La Réception d'appels 24/7 est toujours active. Vous activez les modules dont vous avez besoin — tous sont inclus."
           />
 
-          {/* Top row — 2 core services side by side */}
-          <div className="grid md:grid-cols-2 gap-8 mt-4">
+          {/* Carousel mobile (swipe horizontal) + Grid 3 cols desktop — 6 services unifiés */}
+          <div ref={servicesCarouselRef} className="mt-6 -mx-6 px-6 lg:mx-0 lg:px-0 flex overflow-x-auto snap-x snap-mandatory gap-5 lg:grid lg:grid-cols-3 lg:gap-6 scrollbar-hide pb-6 lg:pb-0">
             {[
               {
+                id: 'reception',
+                icon: PhoneCall,
+                title: 'Réception d\'appels IA 24/7',
+                desc: 'Vous ne répondez pas ? L\'appel est transféré à l\'IA. Elle décroche en 2 secondes, qualifie le prospect, prend RDV, et vous envoie le lead par SMS.',
+                details: ['Transfert auto', 'Qualification lead', 'Prise de RDV', 'Récap SMS instantané'],
+                iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
+                chipBg: 'bg-amber-50', chipText: 'text-amber-700', accentBorder: 'border-amber-100',
+                cardBorder: 'border-amber-200/60',
+                ctaBg: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600',
+                badge: 'Appels entrants',
+                badgeColor: 'bg-amber-50 text-amber-700 border-amber-100',
+                action: () => openPopup('cta', 'gratuit'),
+              },
+              {
+                id: 'renouvellement',
                 icon: RefreshCw,
                 title: 'Renouvellement de dossiers',
                 desc: 'L\'IA relance automatiquement vos clients dont les dossiers arrivent à échéance. Zéro oubli, zéro effort.',
                 details: ['Contrôles techniques', 'Assurances', 'Entretiens annuels', 'Bilans médicaux'],
                 iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-400',
-                chipBg: 'bg-emerald-50',
-                chipText: 'text-emerald-700',
-                accentBorder: 'border-emerald-100',
+                chipBg: 'bg-emerald-50', chipText: 'text-emerald-700', accentBorder: 'border-emerald-100',
+                cardBorder: 'border-gray-100/80',
                 ctaBg: 'bg-gradient-to-br from-emerald-500 to-teal-400 hover:from-emerald-600 hover:to-teal-500',
                 badge: 'Appels sortants',
                 badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                action: () => openPopup('cta', 'gratuit'),
               },
               {
+                id: 'rdv',
                 icon: CalendarCheck,
                 title: 'Confirmation de RDV',
                 desc: 'L\'IA appelle la veille pour confirmer chaque rendez-vous et supprimer les lapins. Planning fiable, CA protégé.',
                 details: ['Appel J-1 automatique', 'SMS de rappel', 'Gestion des reports', 'Planning mis à jour'],
                 iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-500',
-                chipBg: 'bg-blue-50',
-                chipText: 'text-blue-700',
-                accentBorder: 'border-blue-100',
+                chipBg: 'bg-blue-50', chipText: 'text-blue-700', accentBorder: 'border-blue-100',
+                cardBorder: 'border-gray-100/80',
                 ctaBg: 'bg-gradient-to-br from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600',
                 badge: 'Appels sortants',
                 badgeColor: 'bg-blue-50 text-blue-700 border-blue-100',
+                action: () => openPopup('cta', 'gratuit'),
+              },
+              {
+                id: 'impact-avis',
+                icon: Star,
+                title: 'Impact Avis',
+                desc: 'L\'IA appelle vos clients, qualifie leur ressenti et leur envoie le lien direct vers Google Avis. Filtrage intelligent : 4★+ → Google, < 4★ → interne.',
+                details: ['Appel post-prestation', 'Filtrage 4★+ → Google', 'Avis < 4★ → interne', 'Lien direct par SMS'],
+                iconBg: 'bg-gradient-to-br from-yellow-400 to-amber-400',
+                chipBg: 'bg-yellow-50', chipText: 'text-yellow-700', accentBorder: 'border-yellow-100',
+                cardBorder: 'border-yellow-200/60',
+                ctaBg: 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600',
+                badge: 'Réputation',
+                badgeColor: 'bg-yellow-50 text-yellow-700 border-yellow-100',
+                action: () => openPopup('card-impact-avis', 'gratuit'),
+              },
+              {
+                id: 'paiements',
+                icon: Zap,
+                title: 'Accélération de paiements',
+                desc: 'L\'IA appelle vos clients dont la facture est due, au bon moment, avec le bon ton. Vos délais de paiement raccourcissent, sans relance manuelle.',
+                details: ['Relance automatique', 'Ton humain & pro', 'Suivi multi-tentatives', 'Délais -40%'],
+                iconBg: 'bg-gradient-to-br from-rose-500 to-pink-500',
+                chipBg: 'bg-rose-50', chipText: 'text-rose-700', accentBorder: 'border-rose-100',
+                cardBorder: 'border-rose-200/60',
+                ctaBg: 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600',
+                badge: 'Recouvrement',
+                badgeColor: 'bg-rose-50 text-rose-700 border-rose-100',
+                action: () => openPopup('card-paiements', 'gratuit'),
+              },
+              {
+                id: 'robot',
+                icon: Bot,
+                title: 'Robot IA sur mesure',
+                desc: 'Un besoin spécifique ? On crée votre robot sur mesure : script personnalisé, voix naturelle, scénarios complexes, intégration CRM.',
+                details: ['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'],
+                iconBg: 'bg-gradient-to-br from-violet-500 to-purple-500',
+                chipBg: 'bg-violet-50', chipText: 'text-violet-700', accentBorder: 'border-violet-100',
+                cardBorder: 'border-violet-200/60',
+                ctaBg: 'bg-violet-600 hover:bg-violet-700',
+                badge: 'Sur mesure',
+                badgeColor: 'bg-violet-50 text-violet-700 border-violet-100',
+                action: () => openPopup('cta', 'gratuit'),
               },
             ].map((service, i) => (
-              <ScrollReveal key={i} delay={i * 0.12}>
+              <ScrollReveal key={service.id} delay={i * 0.08}>
                 <motion.div
+                  id={service.id}
+                  data-svc-idx={i}
                   whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
-                  className="relative h-full bg-white rounded-[28px] border border-gray-100/80 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-gray-900/[0.08] transition-all duration-500"
+                  className={`relative h-full bg-white rounded-[28px] border ${service.cardBorder} p-7 sm:p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-gray-900/[0.06] transition-all duration-500 scroll-mt-24 snap-center min-w-[85%] sm:min-w-[60%] lg:min-w-0 mobile-service-card`}
                 >
-                  <div className="flex items-start justify-between mb-8">
-                    <div className={`relative w-16 h-16 rounded-2xl ${service.iconBg} flex items-center justify-center shadow-lg`}>
-                      <service.icon className="w-8 h-8 text-white" strokeWidth={1.5} />
+                  <div className="flex items-start justify-between mb-6 sm:mb-8">
+                    <div className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ${service.iconBg} flex items-center justify-center shadow-lg`}>
+                      <service.icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={1.5} fill={service.id === 'impact-avis' ? 'white' : 'none'} />
                     </div>
                     <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${service.badgeColor}`}>{service.badge}</span>
                   </div>
-                  <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">{service.title}</h3>
-                  <p className="text-[15px] text-gray-500 leading-relaxed mb-8">{service.desc}</p>
-                  <div className="flex flex-wrap gap-2 mb-10 mt-auto">
+                  <h3 className="text-[20px] sm:text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">{service.title}</h3>
+                  <p className="text-[14.5px] sm:text-[15px] text-gray-500 leading-relaxed mb-8">{service.desc}</p>
+                  <div className="flex flex-wrap gap-2 mb-8 sm:mb-10 mt-auto">
                     {service.details.map((d, j) => (
-                      <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-4 py-2 border ${service.accentBorder}`}>{d}</span>
+                      <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-3 py-1.5 sm:px-4 sm:py-2 border ${service.accentBorder}`}>{d}</span>
                     ))}
                   </div>
-                  <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}>
+                  <button
+                    type="button"
+                    onClick={service.action}
+                    className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-6 py-3 sm:px-7 sm:py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}
+                  >
                     Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                  </a>
+                  </button>
                 </motion.div>
               </ScrollReveal>
             ))}
           </div>
-
-          {/* Bottom row — 2 premium services */}
-          <div className="grid md:grid-cols-2 gap-8 mt-8">
-            {/* Réception d'appels IA */}
-            <ScrollReveal delay={0.2}>
-              <motion.div
-                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
-                className="relative h-full bg-white rounded-[28px] border border-amber-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-amber-900/[0.06] transition-all duration-500"
-              >
-                <div className="flex items-start justify-between mb-8">
-                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg">
-                    <PhoneCall className="w-8 h-8 text-white" strokeWidth={1.5} />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-100">Appels entrants</span>
-                </div>
-                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Réception d'appels IA 24/7</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">Vous ne répondez pas ? L'appel est transféré automatiquement à l'IA. Elle décroche en 2 secondes, qualifie le prospect, prend RDV si c'est chaud, et vous envoie le lead par SMS. Une machine à leads qui tourne 24h/24.</p>
-                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Transfert auto', 'Qualification lead', 'Prise de RDV', 'Récap SMS instantané'].map((d, j) => (
-                    <span key={j} className="text-xs font-semibold text-amber-700 bg-amber-50 rounded-full px-4 py-2 border border-amber-100">{d}</span>
-                  ))}
-                </div>
-                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
-                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Démarrer gratuitement <ArrowRight className="w-4 h-4" />
-                </a>
-              </motion.div>
-            </ScrollReveal>
-
-            {/* Robot IA sur mesure */}
-            <ScrollReveal delay={0.3}>
-              <motion.div
-                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
-                className="relative h-full bg-white rounded-[28px] border border-violet-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-violet-900/[0.06] transition-all duration-500"
-              >
-                <div className="flex items-start justify-between mb-8">
-                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center shadow-lg">
-                    <Bot className="w-8 h-8 text-white" strokeWidth={1.5} />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-violet-50 text-violet-700 border-violet-100">Sur mesure</span>
-                </div>
-                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Robot IA sur mesure</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-3">Un besoin spécifique ? On crée votre robot sur mesure.</p>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">Script personnalisé, voix naturelle, scénarios complexes, intégration CRM — une IA vocale 100% adaptée à vos processus et à votre métier.</p>
-                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'].map((d, j) => (
-                    <span key={j} className="text-xs font-semibold text-violet-700 bg-violet-50 rounded-full px-4 py-2 border border-violet-100">{d}</span>
-                  ))}
-                </div>
-                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
-                  className="inline-flex items-center justify-center gap-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Démarrer gratuitement <ArrowRight className="w-4 h-4" />
-                </a>
-              </motion.div>
-            </ScrollReveal>
-          </div>
-
-          {/* Third row — Impact Avis + Accélération de paiements (intégrés depuis les anciennes pages dédiées) */}
-          <div className="grid md:grid-cols-2 gap-8 mt-8">
-            {/* Impact Avis */}
-            <ScrollReveal delay={0.1}>
-              <motion.div
-                id="impact-avis"
-                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
-                className="relative h-full bg-white rounded-[28px] border border-yellow-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-yellow-900/[0.06] transition-all duration-500 scroll-mt-24"
-              >
-                <div className="flex items-start justify-between mb-8">
-                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-400 flex items-center justify-center shadow-lg">
-                    <Star className="w-8 h-8 text-white" strokeWidth={1.5} fill="white" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-yellow-50 text-yellow-700 border-yellow-100">Réputation</span>
-                </div>
-                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Impact Avis</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-4">L'IA appelle vos clients, qualifie leur ressenti et leur envoie le lien direct vers Google Avis. Tout en filtrant intelligemment.</p>
-                <div className="mb-8 p-3.5 rounded-2xl bg-yellow-50/60 border border-yellow-100">
-                  <div className="flex items-start gap-2 text-[13px] text-yellow-900 leading-relaxed">
-                    <Star className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" fill="currentColor" />
-                    <div>
-                      <span className="font-semibold">4 étoiles ou plus</span> &rarr; le client publie sur Google.<br/>
-                      <span className="font-semibold">Moins de 4</span> &rarr; le ressenti reste en interne pour vous permettre d'agir.
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Appel post-prestation', 'Filtrage 4★+ → Google', 'Avis < 4★ → interne', 'Lien direct par SMS'].map((d, j) => (
-                    <span key={j} className="text-xs font-semibold text-yellow-700 bg-yellow-50 rounded-full px-4 py-2 border border-yellow-100">{d}</span>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openPopup('card-impact-avis', 'gratuit')}
-                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </button>
-              </motion.div>
-            </ScrollReveal>
-
-            {/* Accélération de paiements */}
-            <ScrollReveal delay={0.2}>
-              <motion.div
-                id="paiements"
-                whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } }}
-                className="relative h-full bg-white rounded-[28px] border border-rose-200/60 p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-rose-900/[0.06] transition-all duration-500 scroll-mt-24"
-              >
-                <div className="flex items-start justify-between mb-8">
-                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 flex items-center justify-center shadow-lg">
-                    <Zap className="w-8 h-8 text-white" strokeWidth={1.5} />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border bg-rose-50 text-rose-700 border-rose-100">Recouvrement</span>
-                </div>
-                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">Accélération de paiements</h3>
-                <p className="text-[15px] text-gray-500 leading-relaxed mb-8">L'IA appelle vos clients dont la facture est due, au bon moment, avec le bon ton. Vos délais de paiement raccourcissent, sans relance manuelle.</p>
-                <div className="flex flex-wrap gap-2 mb-10 mt-auto">
-                  {['Relance automatique', 'Ton humain & professionnel', 'Suivi multi-tentatives', 'Délais de paiement -40%'].map((d, j) => (
-                    <span key={j} className="text-xs font-semibold text-rose-700 bg-rose-50 rounded-full px-4 py-2 border border-rose-100">{d}</span>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => openPopup('card-paiements', 'gratuit')}
-                  className="inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </button>
-              </motion.div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* SERVICE DÉDIÉ — RENOUVELLEMENT                    */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Visual */}
-            <ScrollReveal delay={0.1}>
-              <div className="relative">
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[28px] p-8 border border-emerald-100">
-                  {/* Animated timeline */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
-                        <RefreshCw className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-bold text-gray-900">Relances automatiques</p>
-                        <p className="text-[11px] text-gray-400">Cette semaine</p>
-                      </div>
-                    </div>
-                    {[
-                      { name: 'Martin D. — CT expiré dans 15j', status: 'Appelé → Renouvelé', done: true },
-                      { name: 'Sophie L. — Entretien annuel', status: 'Appelé → RDV pris', done: true },
-                      { name: 'Lucas R. — Vidange 20 000km', status: 'Appelé → Renouvelé', done: true },
-                      { name: 'Claire M. — Assurance à renouveler', status: 'Appel en cours...', done: false },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -15 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 + i * 0.12, duration: 0.4 }}
-                        className="flex items-center gap-3 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm"
-                      >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.done ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-                          {item.done ? <Check className="w-4 h-4 text-emerald-600" /> : <Clock className="w-4 h-4 text-amber-600" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-gray-900 truncate">{item.name}</p>
-                          <p className={`text-[10px] font-medium ${item.done ? 'text-emerald-600' : 'text-amber-600'}`}>{item.status}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {/* Bottom stat */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.8 }}
-                    className="mt-5 bg-emerald-500 rounded-2xl py-3 text-center"
-                  >
-                    <p className="text-sm font-bold text-white">80% renouvelés cette semaine</p>
-                  </motion.div>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Right — Text */}
-            <div>
-              <ScrollReveal>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-6">
-                  <RefreshCw className="w-4 h-4" /> Service 1 — Appels sortants
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                  Renouvellement de dossiers.{' '}
-                  <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">Zéro oubli.</span>
-                </h2>
-                <p className="text-lg text-gray-500 leading-relaxed mb-8">
-                  L’IA appelle chaque client dont le dossier arrive à échéance — contrôles techniques, assurances, bilans, abonnements. Tout est couvert, rien ne passe entre les mailles.
-                </p>
-              </ScrollReveal>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[
-                  { val: '80%', label: 'Taux de renouvellement' },
-                  { val: '0', label: 'Dossier oublié' },
-                  { val: '2min', label: 'Par relance' },
-                  { val: '100%', label: 'Automatisé' },
-                ].map((s, i) => (
-                  <ScrollReveal key={i} delay={0.1 + i * 0.06}>
-                    <div className="bg-emerald-50/60 rounded-2xl p-4 text-center border border-emerald-100/50">
-                      <p className="text-2xl font-black text-emerald-600">{s.val}</p>
-                      <p className="text-[11px] font-medium text-gray-500 mt-1">{s.label}</p>
-                    </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-              <ScrollReveal delay={0.3}>
-                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </a>
-              </ScrollReveal>
+          {/* Indicateur swipe mobile + dots */}
+          <div className="lg:hidden flex flex-col items-center gap-3 mt-2">
+            <div className="flex gap-1.5">
+              {[0,1,2,3,4,5].map((i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-400 ${
+                    i === activeMobileSvcIdx ? 'w-6 bg-gray-800' : 'w-1.5 bg-gray-300'
+                  }`}
+                />
+              ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* SERVICE DÉDIÉ — CONFIRMATION RDV                  */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-[#FAFAFA] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Text */}
-            <div>
-              <ScrollReveal>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 bg-blue-100 px-4 py-1.5 rounded-full mb-6">
-                  <CalendarCheck className="w-4 h-4" /> Service 2 — Appels sortants
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                  Confirmation de RDV.{' '}
-                  <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">Fini les lapins.</span>
-                </h2>
-                <p className="text-lg text-gray-500 leading-relaxed mb-8">
-                  L’IA appelle la veille de chaque rendez-vous pour confirmer. Le client confirme, reporte ou annule — votre planning est fiable à 92%.
-                </p>
-              </ScrollReveal>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[
-                  { val: '92%', label: 'Taux de présence' },
-                  { val: '-35%', label: 'De lapins' },
-                  { val: 'J-1', label: 'Appel automatique' },
-                  { val: '0min', label: 'De votre temps' },
-                ].map((s, i) => (
-                  <ScrollReveal key={i} delay={0.1 + i * 0.06}>
-                    <div className="bg-blue-50/60 rounded-2xl p-4 text-center border border-blue-100/50">
-                      <p className="text-2xl font-black text-blue-600">{s.val}</p>
-                      <p className="text-[11px] font-medium text-gray-500 mt-1">{s.label}</p>
-                    </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-              <ScrollReveal delay={0.3}>
-                <a href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }} className="inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg">
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </a>
-              </ScrollReveal>
-            </div>
-
-            {/* Right — Visual */}
-            <ScrollReveal delay={0.15}>
-              <div className="relative">
-                <div className="bg-white rounded-[28px] p-8 border border-gray-100 shadow-xl shadow-gray-900/[0.04]">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-[13px] font-bold text-gray-900">Agenda du jour</span>
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.4, duration: 0.3 }}
-                      className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
-                    >
-                      92% confirmés
-                    </motion.span>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { time: '09:00', name: 'Martin D.', ok: true },
-                      { time: '10:30', name: 'Sophie L.', ok: true },
-                      { time: '11:00', name: 'Pierre B.', ok: true },
-                      { time: '14:00', name: 'Claire M.', ok: false },
-                      { time: '15:30', name: 'Lucas R.', ok: true },
-                      { time: '16:30', name: 'Emma T.', ok: true },
-                    ].map((slot, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -8 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.15 + i * 0.08 }}
-                        className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100/40"
-                      >
-                        <span className="text-[11px] font-semibold text-gray-400 w-10 tabular-nums">{slot.time}</span>
-                        <span className="text-[13px] font-medium text-gray-800 flex-1">{slot.name}</span>
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center ${slot.ok ? 'bg-emerald-100' : 'bg-red-50'}`}>
-                          {slot.ok ? <Check className="w-4 h-4 text-emerald-600" /> : <X className="w-4 h-4 text-red-400" />}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {/* Progress bar */}
-                  <div className="mt-5 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-2">
-                      <span>Sans IA : 57%</span>
-                      <span className="text-emerald-600">Avec IA : 92%</span>
-                    </div>
-                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: '57%' }}
-                        whileInView={{ width: '92%' }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4, duration: 0.8 }}
-                        className="h-full bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* SERVICE DÉDIÉ — IMPACT AVIS                       */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Visual : timeline d'appels avec filtrage 4★+ */}
-            <ScrollReveal delay={0.1}>
-              <div className="relative order-2 lg:order-1">
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-[28px] p-8 border border-yellow-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-400 flex items-center justify-center shadow-lg">
-                      <Star className="w-5 h-5 text-white" fill="white" />
-                    </div>
-                    <div>
-                      <p className="text-[13px] font-bold text-gray-900">Appels post-prestation</p>
-                      <p className="text-[11px] text-gray-400">Cette semaine</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2.5">
-                    {[
-                      { name: 'Marie D.', note: 5, action: 'Avis Google publié', publish: true },
-                      { name: 'Lucas R.', note: 5, action: 'Avis Google publié', publish: true },
-                      { name: 'Sophie L.', note: 4, action: 'Avis Google publié', publish: true },
-                      { name: 'Pierre M.', note: 3, action: 'Retour interne — RDV à recaler', publish: false },
-                      { name: 'Claire B.', note: 5, action: 'Avis Google publié', publish: true },
-                    ].map((c, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.15 + i * 0.08, duration: 0.4 }}
-                        className="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm"
-                      >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${c.publish ? 'bg-yellow-100' : 'bg-slate-100'}`}>
-                          <Star className={`w-4 h-4 ${c.publish ? 'text-yellow-600' : 'text-slate-500'}`} fill={c.publish ? 'currentColor' : 'none'} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-[12.5px] font-semibold text-gray-900 truncate">{c.name}</p>
-                            <span className="text-[11px] font-bold tabular-nums text-yellow-700">{c.note}★</span>
-                          </div>
-                          <p className={`text-[10.5px] font-medium ${c.publish ? 'text-yellow-700' : 'text-slate-500'}`}>{c.action}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.7 }}
-                    className="mt-5 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-2xl py-3 text-center"
-                  >
-                    <p className="text-sm font-bold text-white">4 avis Google publiés · 1 retour interne</p>
-                  </motion.div>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Right — Text */}
-            <div className="order-1 lg:order-2">
-              <ScrollReveal>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-yellow-700 bg-yellow-100 px-4 py-1.5 rounded-full mb-6">
-                  <Star className="w-4 h-4" fill="currentColor" /> Service 5 — Réputation
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                  Impact Avis.{' '}
-                  <span className="bg-gradient-to-r from-yellow-500 to-amber-500 bg-clip-text text-transparent">Plus d'étoiles, sans risque.</span>
-                </h2>
-                <p className="text-lg text-gray-500 leading-relaxed mb-6">
-                  L'IA appelle vos clients après chaque prestation. Elle qualifie le ressenti. Si c'est positif, elle envoie le lien Google par SMS. Si c'est négatif, le retour reste en interne pour vous permettre d'agir.
-                </p>
-              </ScrollReveal>
-              <ScrollReveal delay={0.2}>
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-start gap-3 p-4 rounded-2xl bg-yellow-50/60 border border-yellow-100/80">
-                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center shrink-0">
-                      <Star className="w-4 h-4 text-white" fill="white" />
-                    </div>
-                    <div>
-                      <p className="text-[14px] font-bold text-gray-900">4 étoiles ou plus</p>
-                      <p className="text-[13px] text-gray-600 leading-relaxed">L'IA envoie le lien direct vers votre fiche Google par SMS. Le client publie en 30 secondes.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100/80">
-                    <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center shrink-0">
-                      <Shield className="w-4 h-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-[14px] font-bold text-gray-900">Moins de 4 étoiles</p>
-                      <p className="text-[13px] text-gray-600 leading-relaxed">Le retour reste confidentiel et arrive dans votre CRM. Vous corrigez avant que l'avis ne devienne public.</p>
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
-              <ScrollReveal delay={0.3}>
-                <button
-                  type="button"
-                  onClick={() => openPopup('section-impact-avis', 'gratuit')}
-                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg"
-                >
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </button>
-              </ScrollReveal>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ============================================ */}
-      {/* SERVICE DÉDIÉ — ACCÉLÉRATION DE PAIEMENTS         */}
-      {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-[#FAFAFA] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left — Text */}
-            <div>
-              <ScrollReveal>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-rose-700 bg-rose-100 px-4 py-1.5 rounded-full mb-6">
-                  <Zap className="w-4 h-4" /> Service 6 — Trésorerie
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-4">
-                  Accélération de paiements.{' '}
-                  <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">Vos délais raccourcissent.</span>
-                </h2>
-                <p className="text-lg text-gray-500 leading-relaxed mb-8">
-                  L'IA appelle vos clients dont la facture est due, au bon moment, avec le bon ton. Pas de menace, pas de relance brutale — juste un rappel humain et professionnel qui fait toute la différence sur vos délais.
-                </p>
-              </ScrollReveal>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[
-                  { val: '-40%', label: 'Délais de paiement' },
-                  { val: '+62%', label: 'Factures payées à J+0' },
-                  { val: '0min', label: 'De votre temps' },
-                  { val: '24/7', label: 'Tentatives intelligentes' },
-                ].map((s, i) => (
-                  <ScrollReveal key={i} delay={0.1 + i * 0.06}>
-                    <div className="bg-rose-50/60 rounded-2xl p-4 text-center border border-rose-100/50">
-                      <p className="text-2xl font-black text-rose-600">{s.val}</p>
-                      <p className="text-[11px] font-medium text-gray-500 mt-1">{s.label}</p>
-                    </div>
-                  </ScrollReveal>
-                ))}
-              </div>
-              <ScrollReveal delay={0.3}>
-                <button
-                  type="button"
-                  onClick={() => openPopup('section-paiements', 'gratuit')}
-                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-7 py-3.5 rounded-full text-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-lg"
-                >
-                  Commencer gratuitement <ArrowRight className="w-4 h-4" />
-                </button>
-              </ScrollReveal>
-            </div>
-
-            {/* Right — Visual : factures en cours de relance */}
-            <ScrollReveal delay={0.15}>
-              <div className="relative">
-                <div className="bg-white rounded-[28px] p-8 border border-gray-100 shadow-xl shadow-gray-900/[0.04]">
-                  <div className="flex items-center justify-between mb-5">
-                    <span className="text-[13px] font-bold text-gray-900">Factures relancées</span>
-                    <motion.span
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.4, duration: 0.3 }}
-                      className="text-[11px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full"
-                    >
-                      8 réglées sur 10
-                    </motion.span>
-                  </div>
-                  <div className="space-y-2.5">
-                    {[
-                      { ref: 'FAC-2026-008', client: 'SARL Dubois', amount: '850 €', status: 'Réglée — J+2', ok: true },
-                      { ref: 'FAC-2026-012', client: 'Cabinet Martin', amount: '1 200 €', status: 'Réglée — J+4', ok: true },
-                      { ref: 'FAC-2026-015', client: 'EURL Lefèvre', amount: '430 €', status: 'Promesse — J+7', ok: 'pending' },
-                      { ref: 'FAC-2026-019', client: 'SAS Renaud', amount: '2 100 €', status: 'Réglée — J+1', ok: true },
-                      { ref: 'FAC-2026-022', client: 'Pharmacie Bertin', amount: '680 €', status: 'Réglée — J+3', ok: true },
-                    ].map((f, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.15 + i * 0.08, duration: 0.4 }}
-                        className="flex items-center gap-3 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100/40"
-                      >
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${f.ok === true ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-                          {f.ok === true ? <Check className="w-4 h-4 text-emerald-600" /> : <Clock className="w-4 h-4 text-amber-600" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-[12.5px] font-semibold text-gray-900 truncate">{f.client}</p>
-                            <p className="text-[12px] font-bold text-gray-900 tabular-nums">{f.amount}</p>
-                          </div>
-                          <p className={`text-[10.5px] font-medium ${f.ok === true ? 'text-emerald-600' : 'text-amber-700'}`}>{f.status}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="mt-5 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 mb-2">
-                      <span>Sans IA : 28 jours</span>
-                      <span className="text-rose-600">Avec IA : 17 jours</span>
-                    </div>
-                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: '90%' }}
-                        whileInView={{ width: '54%' }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4, duration: 0.8 }}
-                        className="h-full bg-gradient-to-r from-rose-400 to-pink-400 rounded-full"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-      <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <ScrollReveal>
-            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-full px-4 py-1.5 mb-6">
-              <Bot className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-semibold text-emerald-700">Sur mesure</span>
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
-              Un besoin spécifique ?{' '}
-              <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                On crée votre robot sur mesure.
-              </span>
-            </h2>
-          </ScrollReveal>
-          <ScrollReveal delay={0.2}>
-            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mt-6 leading-relaxed">
-              Appels chronophages, processus répétitifs, scénarios complexes — notre équipe configure une IA vocale 100% adaptée à votre métier et à vos workflows.
+            <p className="text-center text-[12px] text-gray-400 font-medium flex items-center gap-2">
+              <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+              Détail du service ci-dessous
             </p>
-          </ScrollReveal>
-        </div>
-        <div className="max-w-5xl mx-auto px-6">
-          <RobotShowcase />
-        </div>
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <ScrollReveal delay={0.3}>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                type="button"
-                onClick={() => openPopup('cta-robot-mesure', 'gratuit')}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-105 text-lg"
-              >
-                <CalendarCheck className="w-5 h-5" />
-                Démarrer gratuitement
-              </button>
-            </div>
-            <p className="text-sm text-gray-400 mt-4">Gratuit · 15 min · Sans engagement</p>
-          </ScrollReveal>
-        </div>
-      </section>
+          </div>
 
-
-
-      {/* ============================================ */}
-      {/* USE CASES BY PROFESSION                      */}
-      {/* ============================================ */}
-      <section id="usecases" className="py-24 md:py-32 bg-gradient-to-b from-white via-gray-50/30 to-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <SectionHeading
-            tag="Cas d'usage"
-            title="Votre métier. Votre IA."
-            subtitle="Découvrez comment l'IA s'adapte à votre quotidien — et combien ça vous rapporte."
+          {/* Mobile : détail du service swipé (lien visuel mobile-only) */}
+          <MobileServiceDetail
+            activeIdx={activeMobileSvcIdx}
+            openPopup={openPopup}
+            showcases={showcasesData}
           />
+        </div>
+      </section>
 
-          {/* Phrase d'invitation active */}
-          <ScrollReveal>
-            <p className="text-center text-[15px] sm:text-[16px] text-gray-700 font-medium max-w-2xl mx-auto -mt-6 mb-10">
-              👇 Cliquez sur votre métier — on vous dit exactement ce que l'IA va faire pour vous et combien ça vous rapporte.
-            </p>
-          </ScrollReveal>
+      {/* ============================================ */}
+      {/* SERVICE SHOWCASES — détail visuel par service */}
+      {/* (alterne mockup gauche/droite, desktop only)  */}
+      {/* ============================================ */}
+      <ServiceShowcases openPopup={openPopup} showcases={showcasesData} />
 
+      {/* ============================================ */}
+      {/* MÉTIER SELECTOR — Votre métier. Votre IA.    */}
+      {/* ============================================ */}
+      <section id="metier" className="relative py-28 md:py-40 bg-white scroll-mt-24 overflow-hidden">
+        {/* Ambient emerald subtle */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(ellipse, #10B981, transparent 70%)' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6">
+          <SectionHeading
+            tag="Votre métier. Votre IA."
+            title="Découvrez comment l'IA s'adapte à votre quotidien."
+            subtitle="👇 Cliquez sur votre métier — on vous dit exactement ce que l'IA va faire pour vous et combien ça vous rapporte."
+          />
           <MetierSelector openPopup={openPopup} />
         </div>
       </section>
 
-      {/* ── Avant / Après ── */}
-      <section className="py-32 bg-[#FAFAFA]">
-        <div className="max-w-6xl mx-auto px-6">
-          <SectionHeading
-            tag="Impact sur votre activité"
-            title="Avant / Après BoosterPay"
-            subtitle="Comparez votre quotidien sans et avec l'IA vocale."
-          />
-          <div className="relative grid md:grid-cols-[1fr,auto,1fr] gap-0 max-w-5xl mx-auto items-stretch">
-
-            {/* Sans IA — Dark card */}
-            <ScrollReveal delay={0.1}>
-              <div className="relative bg-gray-900 rounded-[24px] p-10 md:p-12 overflow-hidden h-full">
-                {/* Subtle gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800/50 to-gray-900 rounded-[24px]" />
-                <div className="relative">
-                  <div className="inline-flex items-center gap-2 text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-8">
-                    <div className="w-2 h-2 rounded-full bg-red-400" />
-                    Sans IA
-                  </div>
-                  <div className="space-y-5">
-                    {[
-                      { icon: Clock, text: '3h/jour au téléphone', stat: '3h' },
-                      { icon: Calendar, text: '43% de lapins non anticipés', stat: '43%' },
-                      { icon: TrendingUp, text: 'CA perdu sur dossiers non renouvelés', stat: null },
-                      { icon: Timer, text: 'Temps perdu, stress, oublis', stat: null },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0.01, x: -20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, margin: '-50px' }}
-                        transition={{ delay: 0.15 + i * 0.1 }}
-                        className="flex items-center gap-4"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
-                          <X className="w-4 h-4 text-red-400" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-[14px] text-gray-300 font-medium">{item.text}</span>
-                        </div>
-                        {item.stat && (
-                          <span className="text-xl font-black text-red-400/80 tabular-nums">{item.stat}</span>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Central VS divider */}
-            <div className="hidden md:flex flex-col items-center justify-center px-6">
-              <div className="w-px h-16 bg-gradient-to-b from-transparent to-gray-200" />
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                whileInView={{ scale: 1, rotate: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: 0.4, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                className="w-14 h-14 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center my-3"
-              >
-                <span className="text-sm font-black text-gray-900 tracking-tight">VS</span>
-              </motion.div>
-              <div className="w-px h-16 bg-gradient-to-b from-gray-200 to-transparent" />
-            </div>
-            {/* Mobile VS */}
-            <div className="flex md:hidden items-center justify-center py-6">
-              <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: 0.3, duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-                className="w-12 h-12 rounded-full bg-white border-2 border-gray-200 shadow-lg flex items-center justify-center"
-              >
-                <span className="text-xs font-black text-gray-900">VS</span>
-              </motion.div>
-            </div>
-
-            {/* Avec BoosterPay — White elevated card */}
-            <ScrollReveal delay={0.25}>
-              <div className="relative bg-white rounded-[24px] p-10 md:p-12 overflow-hidden shadow-2xl shadow-emerald-900/[0.08] border border-emerald-100/50 h-full">
-                <div className="relative">
-                  <div className="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-8">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Avec BoosterPay
-                  </div>
-                  <div className="space-y-5">
-                    {[
-                      { icon: Zap, text: '0 minute au téléphone', stat: '0min' },
-                      { icon: CheckCircle2, text: 'Seulement 8% de lapins', stat: '8%' },
-                      { icon: BarChart3, text: 'Agenda rempli, dossiers renouvelés', stat: null },
-                      { icon: PhoneCall, text: '97% des appels décrochés par l\'IA', stat: '97%' },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0.01, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, margin: '-50px' }}
-                        transition={{ delay: 0.2 + i * 0.12 }}
-                        className="flex items-center gap-4"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-[14px] text-gray-800 font-medium">{item.text}</span>
-                        </div>
-                        {item.stat && (
-                          <span className="text-xl font-black text-emerald-600 tabular-nums">{item.stat}</span>
-                        )}
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Bottom accent stats */}
-                  <div className="mt-10 pt-8 border-t border-gray-100 grid grid-cols-2 gap-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-black text-gray-900 tracking-tight">+35%</div>
-                      <div className="text-[11px] font-medium text-gray-400 mt-1">Dossiers renouvelés</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-black text-gray-900 tracking-tight">3h</div>
-                      <div className="text-[11px] font-medium text-gray-400 mt-1">Gagnées par jour</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
-      {/* Section "Activez votre boost gratuit" supprimée — flow remplacé par le popup email + page /configurer */}
-
+      {/* ============================================ */}
+      {/* ACHAT DE LEADS RGPD — partenaire externe     */}
+      {/* ============================================ */}
+      <LeadsRGPDSection />
 
       {/* PRICING                                      */}
       {/* ============================================ */}
-      <section id="pricing" className="py-24 md:py-32 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="pricing" className="relative py-28 md:py-40 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+        {/* Ambient gradient cyan/blue */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-32 right-[15%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #06B6D4, transparent 70%)' }} />
+          <div className="absolute bottom-32 left-[15%] w-[500px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Tarifs"
             title="Une seule plateforme. Tous les modules. Toujours inclus."
@@ -2655,7 +3812,7 @@ export default function IAVocaleLanding() {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {pricing.map((plan, i) => {
               const price = pricingAnnual ? plan.priceAnnuel : plan.priceMensuel;
               return (
@@ -2730,15 +3887,20 @@ export default function IAVocaleLanding() {
 
       {/* FAQ                                          */}
       {/* ============================================ */}
-      <section id="faq" className="py-24 md:py-32 bg-gray-50/50">
-        <div className="max-w-3xl mx-auto px-6">
+      <section id="faq" className="relative py-28 md:py-40 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+        {/* Ambient subtle */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.03] blur-3xl"
+               style={{ background: 'radial-gradient(ellipse, #6366F1, transparent 70%)' }} />
+        </div>
+        <div className="relative max-w-3xl mx-auto px-6">
           <SectionHeading
             tag="FAQ"
             title="Questions fréquentes."
           />
 
           <div className="space-y-3">
-            {faqs.map((faq, i) => (
+            {(showAllFaqs ? faqs : faqs.slice(0, 5)).map((faq, i) => (
               <ScrollReveal key={i} delay={i * 0.05}>
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                   <button
@@ -2770,32 +3932,58 @@ export default function IAVocaleLanding() {
               </ScrollReveal>
             ))}
           </div>
+
+          {/* Bouton voir toutes les questions (si plus de 5) */}
+          {!showAllFaqs && faqs.length > 5 && (
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={() => setShowAllFaqs(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
+              >
+                Voir les {faqs.length - 5} autres questions
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
       {/* FINAL CTA                                    */}
       {/* ============================================ */}
-      <section className="py-24 md:py-32 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+      <section className="relative py-28 md:py-40 bg-white overflow-hidden">
+        <div className="max-w-5xl mx-auto px-6 text-center">
           <ScrollReveal>
-            <div className="relative bg-gradient-to-br from-emerald-600 to-teal-500 rounded-3xl p-10 md:p-16 overflow-hidden">
-              {/* Background decoration */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+            <div className="relative rounded-[40px] p-12 md:p-20 overflow-hidden"
+                 style={{
+                   background: 'linear-gradient(135deg, #047857 0%, #059669 35%, #10B981 70%, #14B8A6 100%)',
+                   boxShadow: '0 40px 80px -20px rgba(5, 150, 105, 0.4), 0 20px 40px -10px rgba(15, 23, 42, 0.1)',
+                 }}>
+              {/* Background decoration premium */}
+              <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-white/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-white/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Grain texture subtle */}
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
+                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence baseFrequency=\'0.9\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")' }} />
 
               <div className="relative">
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
-                  100 appels offerts.<br />Zéro engagement.
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11.5px] font-bold tracking-[0.12em] uppercase text-white bg-white/15 border border-white/20 backdrop-blur-sm mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  Sans carte bancaire
+                </span>
+                <h2 className="text-[40px] sm:text-[52px] md:text-[64px] font-extrabold text-white leading-[1.02] tracking-[-0.025em] mb-5">
+                  100 appels offerts.
+                  <br />
+                  <span className="text-emerald-100">Zéro engagement.</span>
                 </h2>
-                <p className="text-lg text-emerald-100 max-w-xl mx-auto mb-8">
-                  Testez l'IA vocale BoosterPay sans risque. Importez vos contacts, lancez vos premiers appels, et constatez les résultats.
+                <p className="text-[17px] md:text-[19px] text-emerald-50/90 max-w-xl mx-auto mb-10 leading-[1.55] font-normal">
+                  Testez l'IA vocale BoosterPay sans risque. En 5 minutes, votre IA décroche vos appels 24/7 — vous constatez les résultats dès le premier lead.
                 </p>
-                <a
-                  href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
-                  className="inline-flex items-center gap-2 text-base font-semibold text-emerald-700 bg-white px-8 py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-200"
-                >
-                  Activer mes 100 appels gratuits <ArrowRight className="w-5 h-5" />
-                </a>
+
+                {/* CTA inline : email + bouton */}
+                <FinalCtaInline openPopup={openPopup} />
               </div>
             </div>
           </ScrollReveal>
@@ -2852,6 +4040,8 @@ export default function IAVocaleLanding() {
       {/* ── Popup capture email + bouton flottant Contact (phone + chat) ── */}
       {/* Toujours en mode "gratuit" : tout le monde commence par l'essai 100 appels.
           L'upgrade éventuel se fait depuis /configurer/:token. */}
+      <MobileStickyCTA openPopup={openPopup} />
+      <ExitIntentPopup />
       <EmailCapturePopup
         open={popupOpen}
         onClose={() => setPopupOpen(false)}

@@ -1,23 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { X, Mail, ArrowRight, CheckCircle2, Sparkles, Building2, Phone } from 'lucide-react';
 import { submitTrialSignup } from '../services/leadService';
 
 /**
  * EmailCapturePopup — Capture email pour essai gratuit 100 appels / 14 jours.
- * Style Apple/Qonto : verre dépoli, animations soft, 2 étapes (formulaire → confirmation).
+ * Style Apple/Qonto : fond clair, animations soft, 2 étapes (formulaire → confirmation).
+ *
+ * Logique des champs :
+ *  - Si l'URL contient ?id=xxx (lead venant d'une campagne, on a déjà ses infos) :
+ *      → Juste email demandé.
+ *  - Sinon (lead organique, on n'a aucune info) :
+ *      → Email + Nom du commerce + Téléphone mobile demandés.
  *
  * Props :
- *  - open: boolean
- *  - onClose: () => void
- *  - source: string  (ex: 'hero', 'pricing', 'floating') — tracé pour analytics
- *  - plan?: 'gratuit' | 'a-la-carte' | 'pro' | 'business' (par défaut 'gratuit')
+ *  - open, onClose, source, plan
  */
 export default function EmailCapturePopup({ open, onClose, source = 'unknown', plan = 'gratuit' }) {
   const [email, setEmail] = useState('');
   const [entreprise, setEntreprise] = useState('');
-  const [step, setStep] = useState('form'); // 'form' | 'sending' | 'success' | 'error'
+  const [telephone, setTelephone] = useState('');
+  const [step, setStep] = useState('form');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Détecte la présence d'un id (ref campagne) dans l'URL
+  const hasUrlId = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return Boolean(params.get('id') || params.get('ref') || params.get('lead'));
+  }, [open]);
 
   // Reset à la fermeture
   useEffect(() => {
@@ -25,10 +36,20 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
       const t = setTimeout(() => {
         setEmail('');
         setEntreprise('');
+        setTelephone('');
         setStep('form');
         setErrorMsg('');
       }, 300);
       return () => clearTimeout(t);
+    } else {
+      // Préremplissage depuis le CTA inline final (sessionStorage)
+      try {
+        const pre = sessionStorage.getItem('bp_prefill_email');
+        if (pre) {
+          setEmail(pre);
+          sessionStorage.removeItem('bp_prefill_email');
+        }
+      } catch (e) {}
     }
   }, [open]);
 
@@ -47,20 +68,31 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
 
   const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
+  const validPhone = (p) => /^(\+?33|0)[1-9](\s?\d{2}){4}$/.test(String(p).replace(/[\s.-]/g, ''));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validEmail(email)) {
       setErrorMsg('Adresse email invalide.');
       return;
     }
+    // Si pas d'id URL, exiger nom commerce + téléphone
+    if (!hasUrlId) {
+      if (!entreprise || entreprise.trim().length < 2) {
+        setErrorMsg('Renseigne le nom de ton commerce.');
+        return;
+      }
+      if (!telephone || !validPhone(telephone)) {
+        setErrorMsg('Numéro de mobile invalide (format 06 xx xx xx xx).');
+        return;
+      }
+    }
     setStep('sending');
     setErrorMsg('');
 
     try {
       // Envoi vers Google Apps Script (action: 'startTrial')
-      // Côté GAS : insertion sheet ESSAIS + envoi du mail de confirmation
-      // avec lien tokenisé vers la page /configurer/{token}
-      const result = await submitTrialSignup({ email, entreprise, plan, source });
+      const result = await submitTrialSignup({ email, entreprise, telephone, plan, source });
 
       // On reste positif : même si l'API renvoie une erreur réseau, on affiche
       // le succès (le lead est récupérable via les logs et l'utilisateur n'est
@@ -165,6 +197,50 @@ export default function EmailCapturePopup({ open, onClose, source = 'unknown', p
                         />
                       </div>
                     </div>
+
+                    {/* Champs supplémentaires uniquement si on n'a pas d'ID dans l'URL */}
+                    {!hasUrlId && (
+                      <>
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                            Nom de votre commerce
+                          </label>
+                          <div className="relative">
+                            <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                              type="text"
+                              required
+                              autoComplete="organization"
+                              value={entreprise}
+                              onChange={(e) => setEntreprise(e.target.value)}
+                              placeholder="Garage Martin, Cabinet Dupont…"
+                              style={{ fontSize: 16 }}
+                              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-colors"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+                            Téléphone mobile
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                              type="tel"
+                              required
+                              autoComplete="tel"
+                              inputMode="tel"
+                              value={telephone}
+                              onChange={(e) => setTelephone(e.target.value)}
+                              placeholder="06 12 34 56 78"
+                              style={{ fontSize: 16 }}
+                              className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-colors"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     {errorMsg && (
                       <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">

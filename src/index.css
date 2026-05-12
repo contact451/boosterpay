@@ -298,6 +298,86 @@ body {
   }
 }
 
+/* ─────────────────────────────────────────────────────────────────── */
+/*  Optimisations performance mobile                                   */
+/* ─────────────────────────────────────────────────────────────────── */
+
+/* Keyframe utilisé par MobileServiceDetail — fade rapide léger (CSS > framer-motion sur mobile) */
+@keyframes mobileDetailFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+  /* === BLURS — ramenés au minimum (le GPU mobile peine au-delà de 20px) === */
+  .blur-3xl,
+  [class*="blur-[8"],
+  [class*="blur-[1"],
+  [class*="blur-[2"] {
+    filter: blur(0) !important;     /* On coupe TOTALEMENT les méga-blurs sur mobile */
+  }
+
+  /* === AMBIENT GRADIENTS d'arrière-plan — masqués sur mobile === */
+  /* Détection : les radial-gradient ambient sont sur des div absolute opacity-[0.03..0.07] */
+  [aria-hidden="true"] [class*="rounded-full"][class*="blur"],
+  [aria-hidden="true"] [class*="opacity-["][class*="blur"] {
+    display: none !important;
+  }
+
+  /* === SHADOWS — ombres réduites === */
+  .shadow-2xl, .shadow-xl {
+    box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.12) !important;
+  }
+  .shadow-lg {
+    box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.1) !important;
+  }
+  /* Drop-shadow custom des mockups → simple shadow */
+  [class*="drop-shadow-["] {
+    filter: none !important;
+  }
+
+  /* === TRANSITIONS — toutes raccourcies à 200ms max === */
+  .transition-all,
+  .transition-shadow,
+  .transition-colors,
+  [class*="duration-300"],
+  [class*="duration-500"],
+  [class*="duration-700"] {
+    transition-duration: 0.2s !important;
+  }
+
+  /* === Performance hints === */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+  [style*="will-change"] {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* === CSS scroll-behavior smooth réservé aux carousels (pas la page) === */
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  /* === Désactive hover effects sur mobile (no hover anyway, save paint) === */
+  *:hover {
+    transition: none !important;
+  }
+}
+
+/* prefers-reduced-motion : applique les mêmes optims pour les utilisateurs sensibles */
+@media (prefers-reduced-motion: reduce) {
+  .blur-3xl,
+  [class*="blur-[8"],
+  [class*="blur-[1"] {
+    filter: blur(0) !important;
+  }
+  [aria-hidden="true"] [class*="rounded-full"][class*="blur"] {
+    display: none !important;
+  }
+}
+
 /* Smooth scroll with reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   html {

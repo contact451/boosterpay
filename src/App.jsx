@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+// Helper : redirige en gardant search/hash (sinon ?ref=XXX disparaît)
+function NavigatePreserve({ to }) {
+  const loc = useLocation();
+  return <Navigate to={{ pathname: to, search: loc.search, hash: loc.hash }} replace />;
+}
 import BoosterPayLanding from './BoosterPayLanding';
 import OnboardingStep2 from './OnboardingStep2';
 import OnboardingSuccess from './OnboardingSuccess';
@@ -23,9 +29,11 @@ function App() {
             Impact Avis et Accélération de paiements sont devenus des modules
             internes — leurs anciennes URLs redirigent vers les sections ancrées. */}
         <Route path="/" element={<IAVocaleLanding />} />
-        <Route path="/ia-vocale" element={<Navigate to="/" replace />} />
-        <Route path="/impact-avis" element={<Navigate to="/#impact-avis" replace />} />
-        <Route path="/acceleration-paiements" element={<Navigate to="/#paiements" replace />} />
+        {/* /ia-vocale et autres anciennes URLs : on préserve ?ref=, ?id=, ?lead= etc.
+            sinon les flows SMS/Email perdraient leur ID au passage. */}
+        <Route path="/ia-vocale" element={<NavigatePreserve to="/" />} />
+        <Route path="/impact-avis" element={<NavigatePreserve to="/" />} />
+        <Route path="/acceleration-paiements" element={<NavigatePreserve to="/" />} />
         {/* L'ancienne BoosterPayLanding reste accessible en /legacy-home si nécessaire */}
         <Route path="/legacy-home" element={<BoosterPayLanding />} />
         <Route path="/legacy-impact-avis" element={<ImpactAvisLanding />} />

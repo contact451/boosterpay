@@ -1,17 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#22D3EE;stop-opacity:1" />
+    <linearGradient id="bp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#0D9488"/>
+    </linearGradient>
+    <linearGradient id="bp-gloss" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="20" fill="#0A0A0F"/>
-  <g transform="translate(20, 20)">
-    <!-- Phone icon -->
-    <path d="M55 45c-3.5 3.5-7.5 6.5-11.5 8.5-2 1-4.5 0.5-6-1l-5.5-5.5c-1.5-1.5-4-1.5-5.5 0l-8 8c-1.5 1.5-1.5 4 0 5.5l3 3c10 10 26 10 36 0l8-8c1.5-1.5 1.5-4 0-5.5l-5-5c-1.5-1.5-4-1.5-5.5 0z" fill="url(#grad)"/>
-    <!-- Wave lines -->
-    <path d="M42 15c8 0 15 3.5 20 9" stroke="#3B82F6" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
-    <path d="M42 25c5 0 9.5 2 12.5 5.5" stroke="#22D3EE" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
-    <circle cx="42" cy="35" r="3" fill="#22D3EE"/>
-  </g>
+  <!-- Squircle background avec gradient emerald -->
+  <rect width="100" height="100" rx="24" fill="url(#bp-grad)"/>
+  <!-- Gloss top subtil Apple-style -->
+  <rect width="100" height="50" rx="24" fill="url(#bp-gloss)"/>
+  <!-- Lettre B blanche centrée, font bold geometric -->
+  <path d="M32 22 h22 c8 0 14 5.5 14 13 c0 4-2 7-5 9 c5 1.5 8 5 8 11 c0 8.5-6.5 14-15 14 H32 V22 Z M44 38 h9 c3 0 5-1.5 5-4 c0-2.5-2-4-5-4 h-9 V38 Z M44 58 h11 c3.5 0 5.5-2 5.5-5 c0-3-2-5-5.5-5 H44 V58 Z" fill="#FFFFFF"/>
+  <!-- Petit dot vert accent en bas droite (signature) -->
+  <circle cx="78" cy="78" r="6" fill="#FFFFFF" opacity="0.95"/>
+  <circle cx="78" cy="78" r="3" fill="#10B981"/>
 </svg>

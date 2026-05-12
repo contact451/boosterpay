@@ -322,103 +322,141 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
     }
   };
 
+  const appleEase = [0.16, 1, 0.3, 1];
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          {/* Overlay */}
+          {/* Overlay light glassmorphism */}
           <motion.div
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            transition={{ duration: 0.3, ease: appleEase }}
+            className="absolute inset-0"
+            style={{
+              background: 'rgba(15, 23, 42, 0.35)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+            }}
             onClick={handleClose}
           />
 
-          {/* Modal */}
+          {/* Modal — light Apple style */}
           <motion.div
             variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative z-10 w-full max-w-md"
+            className="relative z-10 w-full max-w-[440px]"
           >
-            {/* Gradient border effect */}
-            <div className="absolute -inset-[1px] bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 rounded-2xl opacity-50 blur-sm" />
+            <div
+              className="relative bg-white rounded-[28px] overflow-hidden"
+              style={{
+                border: '1px solid rgba(15, 23, 42, 0.06)',
+                boxShadow: '0 40px 80px -20px rgba(15, 23, 42, 0.25), 0 16px 32px -12px rgba(15, 23, 42, 0.1)',
+              }}
+            >
+              {/* Ambient glow subtle en haut */}
+              <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none opacity-50"
+                   style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245, 158, 11, 0.18), transparent 70%)' }}
+                   aria-hidden="true" />
 
-            <div className="relative bg-gradient-to-b from-[#0f172a] to-[#0a0f1a] rounded-2xl border border-white/10 overflow-hidden">
               {/* Close button */}
               <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors z-20"
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors z-20"
                 aria-label="Fermer"
               >
-                <X className="w-5 h-5 text-gray-400" />
+                <X className="w-4 h-4 text-gray-600" strokeWidth={2.4} />
               </button>
 
-              <div className={`${isMobile && isKeyboardOpen ? 'p-4' : 'p-6 md:p-8'}`}>
+              <div className={`relative ${isMobile && isKeyboardOpen ? 'p-5' : 'p-7 md:p-9'}`}>
                 {status === 'success' ? (
-                  // Success state with confetti
+                  /* Success state */
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="relative text-center py-4"
+                    transition={{ duration: 0.5, ease: appleEase }}
+                    className="relative text-center py-2"
                   >
-                    {/* Confetti animation */}
                     <SuccessConfetti isMobile={isMobile} />
-
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', damping: 15, delay: 0.1 }}
-                      className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 flex items-center justify-center"
+                      className="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center"
+                      style={{
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        boxShadow: '0 16px 32px -8px rgba(16, 185, 129, 0.5)',
+                      }}
                     >
-                      <Check className="w-8 h-8 text-white" />
+                      <Check className="w-8 h-8 text-white" strokeWidth={2.4} />
                     </motion.div>
-                    <h3 className="text-xl font-bold text-white mb-2">
-                      Guide envoyé ! 📚
+                    <h3 className="text-[22px] font-extrabold text-gray-900 tracking-[-0.02em] mb-2">
+                      Guide envoyé !
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-[14px] text-gray-500 leading-relaxed max-w-xs mx-auto">
                       Vérifiez votre boîte mail<br/>
-                      (pensez aux spams)
+                      <span className="text-gray-400">(pensez à regarder dans les spams)</span>
                     </p>
                   </motion.div>
                 ) : (
                   <>
-                    {/* Header - compact when keyboard open */}
-                    <div className={`text-center ${isMobile && isKeyboardOpen ? 'mb-3' : 'mb-6'}`}>
-                      {/* Gift icon - hidden when keyboard open on mobile */}
+                    {/* Header */}
+                    <div className={`text-center ${isMobile && isKeyboardOpen ? 'mb-4' : 'mb-7'}`}>
+                      {/* Tag pill — Guide offert */}
                       {!(isMobile && isKeyboardOpen) && (
-                        <motion.div
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          transition={{ type: 'spring', damping: 15, delay: 0.1 }}
-                          className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/30"
+                        <motion.span
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, ease: appleEase, delay: 0.1 }}
+                          className="inline-flex items-center gap-2 text-[10.5px] font-bold tracking-[0.16em] uppercase text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full mb-5"
                         >
-                          <Gift className="w-8 h-8 text-white" />
-                        </motion.div>
+                          <Gift className="w-3 h-3" />
+                          Guide offert
+                        </motion.span>
                       )}
 
-                      <h2 className={`font-bold text-white ${isMobile && isKeyboardOpen ? 'text-lg mb-1' : 'text-2xl mb-2'}`}>
-                        Attendez !
-                      </h2>
-                      <p className="text-gray-400 text-sm md:text-base">
-                        Recevez notre guide gratuit :
-                      </p>
+                      <motion.h2
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: appleEase, delay: 0.18 }}
+                        className={`font-extrabold text-gray-900 tracking-[-0.025em] leading-[1.05] ${
+                          isMobile && isKeyboardOpen ? 'text-[20px] mb-2' : 'text-[26px] md:text-[30px] mb-3'
+                        }`}
+                      >
+                        Une dernière chose.
+                      </motion.h2>
+
                       {!(isMobile && isKeyboardOpen) && (
-                        <p className="text-white font-semibold mt-1 flex items-center justify-center gap-2">
-                          <FileText className="w-4 h-4 text-blue-400" />
-                          5 techniques pour récupérer vos impayés
-                        </p>
+                        <motion.p
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, ease: appleEase, delay: 0.26 }}
+                          className="text-[14.5px] text-gray-500 leading-relaxed max-w-[340px] mx-auto"
+                        >
+                          Recevez gratuitement notre guide :{' '}
+                          <span className="text-gray-900 font-semibold">
+                            « Comment ne plus jamais perdre un client à cause d'un appel manqué »
+                          </span>
+                        </motion.p>
                       )}
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleEmailSubmit} className="space-y-4">
+                    <motion.form
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, ease: appleEase, delay: 0.34 }}
+                      onSubmit={handleEmailSubmit}
+                      className="space-y-3"
+                    >
                       {/* Email input */}
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={2.2} />
                         <input
                           ref={emailInputRef}
                           type="email"
@@ -428,46 +466,56 @@ const ExitIntentPopup = ({ onEmailCapture, isLeadFormOpen = false }) => {
                             setError('');
                           }}
                           placeholder="votre@email.fr"
-                          className={`w-full pl-12 pr-4 py-4 rounded-xl bg-white/5 border ${
+                          style={{ fontSize: 16 }}
+                          className={`w-full pl-11 pr-4 py-3.5 rounded-2xl bg-gray-50 border text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:bg-white ${
                             error
-                              ? 'border-red-500/50 focus:border-red-500'
-                              : 'border-white/10 focus:border-blue-500/50'
-                          } text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
-                            error ? 'focus:ring-red-500/20' : 'focus:ring-blue-500/20'
-                          } transition-all text-base`}
+                              ? 'border-rose-300 focus:border-rose-400 focus:ring-4 focus:ring-rose-500/10'
+                              : 'border-gray-200 focus:border-amber-400 focus:ring-4 focus:ring-amber-500/10'
+                          }`}
                           disabled={status === 'loading'}
                         />
-                        {error && (
-                          <p className="text-red-400 text-xs mt-1.5 pl-1">{error}</p>
-                        )}
                       </div>
+                      {error && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-[12.5px] text-rose-700 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 font-medium"
+                        >
+                          {error}
+                        </motion.p>
+                      )}
 
                       <motion.button
                         type="submit"
                         disabled={status === 'loading'}
                         whileHover={{ scale: status === 'loading' ? 1 : 1.02 }}
                         whileTap={{ scale: status === 'loading' ? 1 : 0.98 }}
-                        className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/40 transition-shadow disabled:opacity-70 disabled:cursor-not-allowed"
+                        transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+                        className="w-full py-3.5 rounded-2xl text-white font-semibold text-[15px] flex items-center justify-center gap-2 transition-shadow disabled:opacity-60 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'linear-gradient(135deg, #F59E0B 0%, #EA580C 100%)',
+                          boxShadow: '0 12px 32px -10px rgba(245, 158, 11, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+                        }}
                       >
                         {status === 'loading' ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Envoi...
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Envoi…
                           </>
                         ) : (
                           <>
-                            Recevoir le guide
-                            <ArrowRight className="w-5 h-5" />
+                            Recevoir mon guide
+                            <ArrowRight className="w-4 h-4" />
                           </>
                         )}
                       </motion.button>
 
                       {!(isMobile && isKeyboardOpen) && (
-                        <p className="text-center text-xs text-gray-500">
-                          Pas de spam • Désabonnement en 1 clic
+                        <p className="text-center text-[11.5px] text-gray-400 font-medium pt-1">
+                          Pas de spam · Désabonnement en 1 clic
                         </p>
                       )}
-                    </form>
+                    </motion.form>
                   </>
                 )}
               </div>

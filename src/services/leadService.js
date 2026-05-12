@@ -158,12 +158,13 @@ export const submitTrialSignup = async (data) => {
     action: 'startTrial',
     email: data.email,
     entreprise: data.entreprise || '',
+    telephone: data.telephone || '',
     plan: data.plan || 'gratuit',
     source: data.source || 'unknown',
     appareil: isMobile ? 'mobile' : 'desktop',
     utm_source: urlParams.get('utm_source') || '',
     utm_campaign: urlParams.get('utm_campaign') || '',
-    ref: urlParams.get('ref') || '',
+    ref: urlParams.get('ref') || urlParams.get('id') || '',
     timestamp: new Date().toISOString(),
   };
 
@@ -197,6 +198,42 @@ export const submitTrialSignup = async (data) => {
  *   - email auto-réponse au visiteur
  *   - notification interne contact@booster-pay.com
  */
+/**
+ * Soumet une demande d'achat de leads RGPD via le formulaire de la landing.
+ * Côté Apps Script, action POST `submitLeadsRequest` :
+ *   - log dans une sheet "🎯 Demandes Leads"
+ *   - notification email contact@booster-pay.com
+ *   - auto-reply optionnel au visiteur
+ */
+export const submitLeadsRequest = async (data) => {
+  if (!CRM_API_URL) {
+    console.warn('CRM_API_URL non configurée');
+    return { success: false, error: 'API non configurée' };
+  }
+  const payload = {
+    action: 'submitLeadsRequest',
+    entreprise: data.entreprise || '',
+    secteur: data.secteur || '',
+    email: data.email || '',
+    telephone: data.telephone || '',
+    volume: data.volume || '',
+    source: data.source || 'landing_leads_rgpd',
+    timestamp: new Date().toISOString(),
+  };
+  try {
+    const response = await fetch(CRM_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({ success: true }));
+    return result;
+  } catch (error) {
+    console.warn('submitLeadsRequest échoué:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 export const submitContactMessage = async (data) => {
   if (!CRM_API_URL) {
     console.warn('CRM_API_URL non configurée');
