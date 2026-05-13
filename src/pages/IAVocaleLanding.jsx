@@ -43,6 +43,9 @@ import {
   MessageSquare,
   Mail,
   MapPin,
+  Search,
+  Package,
+  Quote,
 } from 'lucide-react';
 import { captureLeadFromSite } from '../services/leadService';
 import Papa from 'papaparse';
@@ -1848,14 +1851,14 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
 
   return (
     <>
-      {/* Mobile : carousel snap-center — chaque carte fait 100vw - 3rem (48px), avec 24px de peek sur les côtés */}
+      {/* Mobile : carousel snap-center — chaque carte fait 100vw - 5rem (80px) → ~40px peek de la 2e carte */}
       <div
         ref={carouselRef}
         className="sm:hidden -mx-6 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-6"
-        style={{ scrollPaddingLeft: '24px', scrollPaddingRight: '24px' }}
+        style={{ scrollPaddingLeft: '20px', scrollPaddingRight: '20px' }}
       >
         {/* Spacer début pour permettre snap propre du 1er */}
-        <div aria-hidden="true" className="shrink-0 w-6" />
+        <div aria-hidden="true" className="shrink-0 w-5" />
         {testimonials.map((t, i) => {
           const tc = svcColors[t.color] || svcColors.emerald;
           const isActive = i === activeIdx;
@@ -1863,7 +1866,7 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
             <div
               key={i}
               data-testimonial-idx={i}
-              className="snap-center shrink-0 w-[calc(100vw-3rem)] pr-3 last:pr-0"
+              className="snap-center shrink-0 w-[calc(100vw-5rem)] pr-3 last:pr-0"
             >
               <motion.div
                 animate={{
@@ -1913,22 +1916,22 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
           );
         })}
         {/* Spacer fin pour snap propre du dernier */}
-        <div aria-hidden="true" className="shrink-0 w-6" />
+        <div aria-hidden="true" className="shrink-0 w-5" />
       </div>
 
-      {/* Mobile : Dots indicateurs */}
-      <div className="sm:hidden flex justify-center gap-1.5 mt-2 mb-1">
+      {/* Mobile : Dots indicateurs — agrandis pour être bien visibles */}
+      <div className="sm:hidden flex justify-center gap-2 mt-3 mb-1">
         {testimonials.map((_, i) => (
           <span
             key={i}
-            className={`h-1.5 rounded-full transition-all duration-400 ${
-              i === activeIdx ? 'w-6 bg-gray-800' : 'w-1.5 bg-gray-300'
+            className={`h-2.5 rounded-full transition-all duration-400 ${
+              i === activeIdx ? 'w-8 bg-gray-900' : 'w-2.5 bg-gray-300'
             }`}
           />
         ))}
       </div>
-      <p className="sm:hidden text-center text-[11.5px] text-gray-400 font-medium mt-2">
-        Glissez ←→
+      <p className="sm:hidden text-center text-[12.5px] text-gray-500 font-semibold mt-3">
+        ← Glissez pour voir d'autres témoignages →
       </p>
 
       {/* Desktop : grid 3 cols */}
@@ -2007,7 +2010,7 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
   }, [inView, isMobile]);
 
   return (
-    <section ref={sectionRef} className="relative py-32 md:py-48 overflow-hidden bg-white">
+    <section id="ia-reception" ref={sectionRef} className="relative pt-16 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-white scroll-mt-24">
       {/* Ambient warm très subtil — juste un effet d'aurore amber/rose en filigrane */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.07] blur-[120px]"
@@ -2270,6 +2273,265 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
 
 
 /* ------------------------------------------------------------------ */
+/*  TwoApproachesSection — Positionne IA vs Prospects (clarté)         */
+/*  Répond à la question rationnelle : "pourquoi les deux ?"           */
+/* ------------------------------------------------------------------ */
+const TwoApproachesSection = () => {
+  return (
+    <section className="relative pt-28 pb-16 md:pt-44 md:pb-20 bg-white overflow-hidden">
+      {/* Ambient gradient orbs — blue à gauche, indigo à droite, signal subtil du dualisme */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute top-1/3 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.05] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #3B82F6, transparent 70%)' }} />
+        <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
+      </div>
+
+      <div className="relative max-w-5xl mx-auto px-6">
+        {/* Header — Apple typography */}
+        <div className="text-center max-w-3xl mx-auto mb-14 lg:mb-20">
+          <ScrollReveal y={16}>
+            <span className="inline-flex items-center gap-3 text-[11px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-7">
+              <span className="w-8 h-px bg-gradient-to-r from-transparent to-gray-300" />
+              2 leviers · 1 objectif
+              <span className="w-8 h-px bg-gradient-to-l from-transparent to-gray-300" />
+            </span>
+          </ScrollReveal>
+          <ScrollReveal y={24} delay={0.08}>
+            <h2 className="text-[38px] sm:text-[54px] md:text-[64px] lg:text-[72px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]">
+              Deux façons de
+              <br />
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 bg-clip-text text-transparent">
+                remplir votre agenda.
+              </span>
+            </h2>
+          </ScrollReveal>
+          <ScrollReveal y={20} delay={0.18}>
+            <p className="text-[16.5px] md:text-[19px] text-gray-500 mt-6 leading-[1.55] max-w-xl mx-auto">
+              Vous avez le choix. Ou les deux — ils se complètent à la perfection.
+            </p>
+          </ScrollReveal>
+        </div>
+
+        {/* 2 cards premium côte à côte avec numéros fantômes en arrière-plan */}
+        <div className="grid md:grid-cols-2 gap-5 lg:gap-7 mb-10 lg:mb-14">
+          {/* CARD 01 — IA */}
+          <ScrollReveal y={28} delay={0.12}>
+            <div className="relative rounded-[32px] bg-white p-8 lg:p-10 h-full flex flex-col overflow-hidden transition-all duration-500 hover:translate-y-[-3px]"
+                 style={{
+                   border: '1px solid rgba(15, 23, 42, 0.06)',
+                   boxShadow: '0 30px 60px -20px rgba(15, 23, 42, 0.1), 0 12px 24px -12px rgba(15, 23, 42, 0.06)',
+                 }}>
+              {/* Orb décoratif top-right */}
+              <div className="absolute -top-20 -right-20 w-[320px] h-[320px] rounded-full opacity-[0.07] blur-3xl pointer-events-none"
+                   style={{ background: 'radial-gradient(circle, #3B82F6, transparent 70%)' }} />
+              {/* Numéro fantôme — Apple style */}
+              <div className="absolute top-6 right-7 text-[120px] font-black leading-none select-none pointer-events-none"
+                   style={{ color: 'rgba(59, 130, 246, 0.05)', letterSpacing: '-0.05em' }}>
+                1
+              </div>
+
+              <div className="relative flex flex-col h-full">
+                <div className="inline-flex w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mb-6"
+                     style={{ boxShadow: '0 8px 24px -8px rgba(59, 130, 246, 0.25)' }}>
+                  <Bot className="w-7 h-7 text-blue-600" strokeWidth={1.8} />
+                </div>
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-blue-700 mb-3">
+                  Service principal
+                </p>
+                <h3 className="text-[24px] lg:text-[28px] font-extrabold text-gray-900 tracking-[-0.025em] mb-4 leading-[1.05]">
+                  Vous gardez la main.<br/>L'IA prend le relais.
+                </h3>
+                <p className="text-[14.5px] text-gray-500 leading-[1.6] mb-7">
+                  Vous décrochez quand vous pouvez. Quand vous ne décrochez pas, <strong className="text-gray-700 font-semibold">l'IA prend le relais</strong> — elle qualifie le prospect et prend le RDV à votre place.
+                </p>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {[
+                    'Vous décrochez d\'abord, l\'IA après',
+                    'Plus aucun appel perdu',
+                    'Active jour, nuit, week-ends',
+                  ].map((b, i) => (
+                    <li key={i} className="flex items-center gap-3 text-[13.5px] text-gray-700">
+                      <div className="w-[18px] h-[18px] rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-blue-700" strokeWidth={3.5} />
+                      </div>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                <a href="#ia-reception" className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-blue-700 hover:text-blue-800 group/cta">
+                  Voir le service IA
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/cta:translate-x-0.5" strokeWidth={2.5} />
+                </a>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          {/* CARD 02 — Prospects */}
+          <ScrollReveal y={28} delay={0.18}>
+            <div className="relative rounded-[32px] bg-white p-8 lg:p-10 h-full flex flex-col overflow-hidden transition-all duration-500 hover:translate-y-[-3px]"
+                 style={{
+                   border: '1px solid rgba(99, 102, 241, 0.1)',
+                   boxShadow: '0 30px 60px -20px rgba(99, 102, 241, 0.18), 0 12px 24px -12px rgba(99, 102, 241, 0.1)',
+                 }}>
+              <div className="absolute -top-20 -right-20 w-[320px] h-[320px] rounded-full opacity-[0.08] blur-3xl pointer-events-none"
+                   style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
+              <div className="absolute top-6 right-7 text-[120px] font-black leading-none select-none pointer-events-none"
+                   style={{ color: 'rgba(99, 102, 241, 0.06)', letterSpacing: '-0.05em' }}>
+                2
+              </div>
+
+              <div className="relative flex flex-col h-full">
+                <div className="inline-flex w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 items-center justify-center mb-6"
+                     style={{ boxShadow: '0 8px 24px -8px rgba(99, 102, 241, 0.3)' }}>
+                  <Target className="w-7 h-7 text-indigo-600" strokeWidth={1.8} />
+                </div>
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-indigo-700 mb-3">
+                  Service complémentaire
+                </p>
+                <h3 className="text-[24px] lg:text-[28px] font-extrabold text-gray-900 tracking-[-0.025em] mb-4 leading-[1.05]">
+                  Acquérir de nouveaux<br/>clients qualifiés.
+                </h3>
+                <p className="text-[14.5px] text-gray-500 leading-[1.6] mb-7">
+                  Vous voulez <strong className="text-gray-700 font-semibold">plus de volume</strong>. On livre des contacts qui demandent à être rappelés — exclusifs à votre zone.
+                </p>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {[
+                    'Contacts qualifiés et RGPD',
+                    'Exclusivité par zone (1 entreprise)',
+                    'Livrés en 24 h, pas plus',
+                  ].map((b, i) => (
+                    <li key={i} className="flex items-center gap-3 text-[13.5px] text-gray-700">
+                      <div className="w-[18px] h-[18px] rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 text-indigo-700" strokeWidth={3.5} />
+                      </div>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                <a href="#leads-rgpd" className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-indigo-700 hover:text-indigo-800 group/cta">
+                  Voir l'offre Prospects
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/cta:translate-x-0.5" strokeWidth={2.5} />
+                </a>
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+
+        {/* Visual connector — ligne descendante + label */}
+        <ScrollReveal y={20} delay={0.24}>
+          <div className="flex justify-center mb-6 lg:mb-8">
+            <div className="flex flex-col items-center gap-2.5">
+              <span className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-gray-400">
+                Ensemble ?
+              </span>
+              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-indigo-300" />
+              <div className="w-2 h-2 rounded-full bg-indigo-400" style={{ boxShadow: '0 0 12px rgba(99, 102, 241, 0.4)' }} />
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* POWER COMBO — synthèse hero, traitement renforcé pour ce différenciateur clé */}
+        <ScrollReveal y={28} delay={0.28}>
+          <div className="relative max-w-4xl mx-auto rounded-[32px] overflow-hidden"
+               style={{
+                 background: 'linear-gradient(135deg, #E0E7FF 0%, #DBEAFE 40%, #CFFAFE 100%)',
+                 border: '1px solid rgba(99, 102, 241, 0.22)',
+                 boxShadow: '0 40px 80px -24px rgba(99, 102, 241, 0.3), 0 12px 24px -12px rgba(99, 102, 241, 0.12)',
+               }}>
+            {/* Pattern décoratif + glow inner */}
+            <div className="absolute inset-0 pointer-events-none opacity-40"
+                 style={{
+                   backgroundImage: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,0.8), transparent 45%), radial-gradient(circle at 85% 85%, rgba(99,102,241,0.12), transparent 45%)',
+                 }} />
+            {/* Top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-1"
+                 style={{ background: 'linear-gradient(90deg, #6366F1 0%, #3B82F6 50%, #06B6D4 100%)' }} />
+
+            <div className="relative px-7 py-10 lg:px-14 lg:py-14 text-center">
+              {/* Badge POWER COMBO */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white mb-6"
+                   style={{
+                     border: '1px solid rgba(99, 102, 241, 0.18)',
+                     boxShadow: '0 8px 20px -6px rgba(99, 102, 241, 0.28)',
+                   }}>
+                <Zap className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600" strokeWidth={2.5} />
+                <span className="text-[11px] font-black tracking-[0.18em] uppercase bg-gradient-to-r from-indigo-700 via-blue-700 to-cyan-700 bg-clip-text text-transparent">
+                  Power Combo
+                </span>
+              </div>
+
+              <h3 className="text-[26px] lg:text-[36px] font-extrabold text-gray-900 tracking-[-0.03em] leading-[1.08] max-w-2xl mx-auto">
+                Pendant que vous travaillez,<br/>
+                <span className="bg-gradient-to-r from-indigo-600 to-blue-700 bg-clip-text text-transparent">
+                  l'IA prend les RDV.
+                </span>
+              </h3>
+              <p className="text-[15px] lg:text-[17px] text-gray-700 mt-5 leading-[1.55] max-w-xl mx-auto">
+                Vos prospects appelés dès leur livraison. Qualifiés. Avec le RDV bloqué dans votre agenda. Vous arrivez juste pour conclure.
+              </p>
+
+              {/* 3 metrics inline — l'argument concret */}
+              <div className="mt-8 grid grid-cols-3 gap-3 max-w-2xl mx-auto">
+                {[
+                  { value: '1 clic', label: 'Activation' },
+                  { value: '0 min', label: 'Au téléphone' },
+                  { value: 'Auto', label: 'RDV bloqués' },
+                ].map((m, i) => (
+                  <div key={i} className="rounded-2xl bg-white/70 backdrop-blur-sm border border-white/80 px-3 py-3 lg:py-4"
+                       style={{ boxShadow: '0 4px 12px -4px rgba(99, 102, 241, 0.1)' }}>
+                    <p className="text-[18px] lg:text-[22px] font-black tracking-[-0.02em] bg-gradient-to-br from-indigo-600 to-blue-700 bg-clip-text text-transparent leading-none">
+                      {m.value}
+                    </p>
+                    <p className="text-[10.5px] lg:text-[11.5px] font-bold tracking-[0.08em] uppercase text-gray-500 mt-2">
+                      {m.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Résultat tangible — ce que le combo rapporte vraiment */}
+              <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm"
+                   style={{ border: '1px solid rgba(99, 102, 241, 0.18)', boxShadow: '0 6px 16px -6px rgba(99, 102, 241, 0.18)' }}>
+                <TrendingUp className="w-4 h-4 text-indigo-600" strokeWidth={2.4} />
+                <span className="text-[13px] font-bold text-gray-900 tracking-tight">
+                  +22 nouveaux clients <span className="text-gray-500 font-semibold">/ mois en moyenne</span>
+                </span>
+              </div>
+
+              {/* Double CTA — poids visuel équivalent : IA (gradient indigo plein) vs Prospects (blanc plein gradient text) */}
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="#ia-reception" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[14px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
+                   style={{
+                     background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)',
+                     boxShadow: '0 12px 28px -8px rgba(99, 102, 241, 0.5)',
+                   }}>
+                  Découvrir l'IA
+                  <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+                </a>
+                <a href="#leads-rgpd" className="group/cta2 w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[14px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
+                   style={{
+                     background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)',
+                     boxShadow: '0 12px 28px -8px rgba(124, 58, 237, 0.55)',
+                   }}>
+                  <Target className="w-4 h-4 text-white" strokeWidth={2.4} />
+                  Voir les Prospects
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/cta2:translate-x-0.5" strokeWidth={2.5} />
+                </a>
+              </div>
+
+              <p className="text-[12px] text-gray-500 mt-5">
+                Par défaut désactivé · Activable / désactivable d'un clic
+              </p>
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+};
+
+/* ------------------------------------------------------------------ */
 /*  LeadsRGPDSection — Demande de leads qualifiés via partenaire        */
 /* ------------------------------------------------------------------ */
 /* ------------------------------------------------------------------ */
@@ -2492,6 +2754,159 @@ const LiveProspectsFeed = () => {
   );
 };
 
+/* ------------------------------------------------------------------ */
+/*  ProspectsTestimonials — Carousel mobile + grid desktop             */
+/*  Même UX que TestimonialsCarousel : peek 2e carte, dots agrandis,   */
+/*  scroll-snap, hint clair. Optimisé conversion mobile.                */
+/* ------------------------------------------------------------------ */
+const ProspectsTestimonials = () => {
+  const carouselRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const appleEase = [0.16, 1, 0.3, 1];
+
+  const testimonials = useMemo(() => ([
+    {
+      quote: "15 prospects reçus la première semaine, 6 sont devenus clients. À ce prix-là c'est dingue.",
+      name: 'Olivier R.',
+      role: 'Couvreur · Lyon',
+    },
+    {
+      quote: "On a testé d'autres fichiers avant. Ici ce sont des vrais contacts qui rappellent vraiment.",
+      name: 'Sophie M.',
+      role: 'Salon de coiffure · Mâcon',
+    },
+    {
+      quote: "22 prospects, 9 RDV et 4 ventes le premier mois. Et c'est exclusif à ma zone, donc pas de concurrence.",
+      name: 'Mathieu B.',
+      role: 'Conseiller énergie · Strasbourg',
+    },
+  ]), []);
+
+  // Sync dots avec scroll (throttle 50ms)
+  useEffect(() => {
+    const root = carouselRef.current;
+    if (!root) return;
+    let timerId = null;
+    let lastIdx = -1;
+
+    const compute = () => {
+      timerId = null;
+      const cards = Array.from(root.querySelectorAll('[data-pro-testi-idx]'));
+      if (!cards.length) return;
+      const rootRect = root.getBoundingClientRect();
+      const center = rootRect.left + rootRect.width / 2;
+      let bestIdx = 0;
+      let minDist = Infinity;
+      cards.forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+        const dist = Math.abs((rect.left + rect.width / 2) - center);
+        if (dist < minDist) {
+          minDist = dist;
+          const dataIdx = parseInt(card.getAttribute('data-pro-testi-idx'), 10);
+          bestIdx = Number.isNaN(dataIdx) ? i : dataIdx;
+        }
+      });
+      if (bestIdx !== lastIdx) {
+        lastIdx = bestIdx;
+        setActiveIdx(bestIdx);
+      }
+    };
+    const onScroll = () => {
+      if (timerId !== null) return;
+      timerId = setTimeout(compute, 50);
+    };
+    const initTimer = setTimeout(compute, 100);
+    root.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      clearTimeout(initTimer);
+      if (timerId !== null) clearTimeout(timerId);
+      root.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+
+  const CardContent = ({ t, isActive }) => (
+    <motion.div
+      animate={{
+        scale: isActive ? 1 : 0.95,
+        opacity: isActive ? 1 : 0.6,
+      }}
+      transition={{ duration: 0.45, ease: appleEase }}
+      className={`relative rounded-2xl bg-white border border-gray-200/70 p-6 lg:p-7 flex flex-col h-full ${
+        isActive ? 'shadow-[0_16px_36px_-12px_rgba(15,23,42,0.1)]' : 'shadow-sm'
+      } transition-shadow duration-500`}
+    >
+      <Quote className="w-4 h-4 text-indigo-300 mb-3" strokeWidth={2.4} />
+      <p className="text-[14px] lg:text-[14.5px] text-gray-700 leading-[1.6] flex-1">{t.quote}</p>
+      <div className="mt-5 pt-4 border-t border-gray-100">
+        <p className="text-[13px] font-bold text-gray-900 tracking-[-0.01em]">{t.name}</p>
+        <p className="text-[11.5px] text-gray-500 mt-0.5">{t.role}</p>
+      </div>
+    </motion.div>
+  );
+
+  return (
+    <>
+      {/* Mobile : carousel snap-center — peek ~40px de la 2e carte */}
+      <div
+        ref={carouselRef}
+        className="md:hidden -mx-6 flex overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2"
+        style={{ scrollPaddingLeft: '20px', scrollPaddingRight: '20px' }}
+      >
+        <div aria-hidden="true" className="shrink-0 w-5" />
+        {testimonials.map((t, i) => (
+          <div
+            key={i}
+            data-pro-testi-idx={i}
+            className="snap-center shrink-0 w-[calc(100vw-5rem)] pr-3 last:pr-0"
+          >
+            <CardContent t={t} isActive={i === activeIdx} />
+          </div>
+        ))}
+        <div aria-hidden="true" className="shrink-0 w-5" />
+      </div>
+
+      {/* Mobile : Dots agrandis + hint clair */}
+      <div className="md:hidden flex justify-center gap-2 mt-3 mb-1">
+        {testimonials.map((_, i) => (
+          <span
+            key={i}
+            className={`h-2.5 rounded-full transition-all duration-400 ${
+              i === activeIdx ? 'w-8 bg-gray-900' : 'w-2.5 bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+      <p className="md:hidden text-center text-[12.5px] text-gray-500 font-semibold mt-3">
+        ← Glissez pour voir d'autres avis →
+      </p>
+
+      {/* Desktop : grid 3 cols */}
+      <div className="hidden md:grid md:grid-cols-3 gap-4 lg:gap-5">
+        {testimonials.map((t, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5, ease: appleEase, delay: 0.04 + i * 0.06 }}
+            className="relative rounded-2xl bg-white border border-gray-200/70 p-6 lg:p-7 flex flex-col"
+            style={{ boxShadow: '0 8px 24px -12px rgba(15, 23, 42, 0.06)' }}
+          >
+            <Quote className="w-4 h-4 text-indigo-300 mb-3" strokeWidth={2.4} />
+            <p className="text-[13.5px] lg:text-[14px] text-gray-700 leading-[1.6] flex-1">{t.quote}</p>
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              <p className="text-[13px] font-bold text-gray-900 tracking-[-0.01em]">{t.name}</p>
+              <p className="text-[11.5px] text-gray-500 mt-0.5">{t.role}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </>
+  );
+};
+
 const LeadsRGPDSection = () => {
   const [form, setForm] = useState({
     entreprise: '',
@@ -2558,39 +2973,49 @@ const LeadsRGPDSection = () => {
   };
 
   return (
-    <section id="leads-rgpd" className="relative py-28 md:py-44 bg-white overflow-hidden scroll-mt-24">
+    <section id="leads-rgpd" className="relative py-28 md:py-44 overflow-hidden scroll-mt-24"
+             style={{
+               // Fond tinté indigo/bleu très léger — différencie visuellement de la section IA
+               // tout en restant lumineux. Style Apple "off-white tinted".
+               background: 'linear-gradient(180deg, #F5F6FB 0%, #FAFBFE 30%, #F8FAFD 70%, #F4F6FB 100%)',
+             }}>
       {/* Ambient gradients — feel premium Apple, multi-couches très subtiles */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-20 left-1/4 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
+        <div className="absolute -top-20 left-1/4 w-[700px] h-[700px] rounded-full opacity-[0.08] blur-3xl"
              style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full opacity-[0.07] blur-3xl"
              style={{ background: 'radial-gradient(circle, #06B6D4, transparent 70%)' }} />
+        {/* Top fine line de transition douce */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200/70 to-transparent" />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6">
         {/* Header centré (mobile + desktop) — typo premium */}
         <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
           <ScrollReveal y={16}>
-            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mb-7">
+            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mb-7 whitespace-nowrap">
               <span className="relative flex w-1.5 h-1.5">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
               </span>
-              Prospects ultra-ciblés
+              {/* Mobile : version courte qui tient sur 1 ligne */}
+              <span className="sm:hidden">Prospects qualifiés</span>
+              {/* Desktop : version complète */}
+              <span className="hidden sm:inline">Service indépendant · Prospects qualifiés</span>
             </span>
           </ScrollReveal>
           <ScrollReveal y={24} delay={0.08}>
             <h2 className="text-[36px] sm:text-[52px] md:text-[64px] lg:text-[72px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]">
-              Des prospects qui
+              Des clients qui veulent
               <br />
               <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                veulent acheter.
+                déjà vous appeler.
               </span>
             </h2>
           </ScrollReveal>
           <ScrollReveal y={20} delay={0.18}>
             <p className="text-[16.5px] md:text-[19px] text-gray-500 max-w-xl mx-auto mt-6 leading-[1.5]">
-              Pas du fichier froid. Des contacts qui ont déjà demandé à être recontactés pour votre métier.
+              Pas du fichier froid. Des contacts qui ont rempli un formulaire pour demander à être rappelés — pour votre métier, dans votre zone.
             </p>
           </ScrollReveal>
           {/* Trust strip — réduit l'anxiété AVANT le formulaire */}
@@ -2608,12 +3033,43 @@ const LeadsRGPDSection = () => {
               ))}
             </div>
           </ScrollReveal>
+
+          {/* CTA primaire visible dès le 1er écran — réserve la zone avant de scroller */}
+          <ScrollReveal y={16} delay={0.32}>
+            <div className="mt-8 flex flex-col items-center">
+              <a
+                href="#leads-form"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Scroll smooth vers le formulaire situé plus bas dans la section
+                  const section = document.getElementById('leads-rgpd');
+                  if (section) {
+                    const forms = section.querySelectorAll('form');
+                    const target = forms.length ? forms[0] : section;
+                    const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                  }
+                }}
+                className="group inline-flex items-center justify-center gap-2 text-[14.5px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
+                style={{
+                  background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)',
+                  boxShadow: '0 16px 36px -10px rgba(99, 102, 241, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
+                }}
+              >
+                Réserver ma zone
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+              </a>
+              <p className="text-[11.5px] text-gray-500 mt-2.5">
+                Vérification de disponibilité sous 24 h ouvrées · Gratuit
+              </p>
+            </div>
+          </ScrollReveal>
         </div>
 
         {/* 4 chiffres clés — bande unifiée, séparateurs verticaux desktop */}
         <ScrollReveal y={24} delay={0.22}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto mb-16 lg:mb-24 rounded-[28px] bg-white/60 backdrop-blur-sm border border-gray-200/70 overflow-hidden"
-               style={{ boxShadow: '0 8px 32px -16px rgba(15, 23, 42, 0.06)' }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto mb-16 lg:mb-24 rounded-[28px] bg-white/85 backdrop-blur-md border border-gray-200/60 overflow-hidden"
+               style={{ boxShadow: '0 24px 48px -20px rgba(15, 23, 42, 0.08), 0 8px 16px -8px rgba(15, 23, 42, 0.04)' }}>
             {[
               { value: '1 sur 3', label: 'Prospects qui deviennent clients', accent: 'from-indigo-600 to-blue-500' },
               { value: '24 h', label: 'Livraison après votre inscription', accent: 'from-blue-600 to-cyan-500' },
@@ -2638,6 +3094,101 @@ const LeadsRGPDSection = () => {
                 </p>
               </motion.div>
             ))}
+          </div>
+        </ScrollReveal>
+
+        {/* Process 4 étapes — Apple feature flow avec connecteurs animés desktop */}
+        <ScrollReveal y={24} delay={0.05}>
+          <div className="max-w-5xl mx-auto mb-14 lg:mb-20">
+            <p className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-gray-400 text-center mb-10">
+              Comment ça marche
+            </p>
+            <div className="relative">
+              {/* Ligne de fond desktop qui relie les 4 étapes */}
+              <div className="hidden lg:block absolute top-[64px] left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent" aria-hidden="true" />
+
+              <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 lg:gap-x-6">
+                {[
+                  { num: '01', icon: Search,    title: 'On source',    desc: 'Campagnes ciblées sur votre secteur.' },
+                  { num: '02', icon: Shield,    title: 'On qualifie',  desc: 'Identité, téléphone et RGPD vérifiés.' },
+                  { num: '03', icon: Package,   title: 'On livre',     desc: 'Vos prospects sous 24 h max.' },
+                  { num: '04', icon: PhoneCall, title: 'Vous appelez', desc: 'Avant qu\'ils ne perdent l\'envie.' },
+                ].map((s, i) => {
+                  const Icon = s.icon;
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: '-50px' }}
+                      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.1 }}
+                      className="relative flex flex-col items-center text-center"
+                    >
+                      {/* Step number badge */}
+                      <span className="mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full bg-white border border-gray-200 text-[11px] font-black tracking-tight text-gray-500 tabular-nums"
+                            style={{ boxShadow: '0 4px 12px -4px rgba(15, 23, 42, 0.08)' }}>
+                        {s.num}
+                      </span>
+                      {/* Icon circle — anchor point sur la ligne de connexion desktop */}
+                      <div className="relative w-14 h-14 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center mb-4 z-10"
+                           style={{ boxShadow: '0 12px 28px -10px rgba(99, 102, 241, 0.28), 0 4px 8px -4px rgba(99, 102, 241, 0.1)' }}>
+                        <Icon className="w-6 h-6 text-indigo-600" strokeWidth={1.9} />
+                        {/* Halo subtle */}
+                        <div className="absolute inset-0 rounded-2xl opacity-50 blur-md pointer-events-none -z-10"
+                             style={{ background: 'radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%)' }} />
+                      </div>
+                      <p className="text-[15px] font-bold text-gray-900 tracking-[-0.01em] leading-tight">{s.title}</p>
+                      <p className="text-[12.5px] text-gray-500 mt-2 leading-snug max-w-[180px]">{s.desc}</p>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Bandeau prix transparent — ticket premium qui débloque la décision */}
+        <ScrollReveal y={24} delay={0.08}>
+          <div className="max-w-2xl mx-auto mb-16 lg:mb-24">
+            <div className="relative rounded-[28px] bg-white overflow-hidden"
+                 style={{
+                   border: '1px solid rgba(15, 23, 42, 0.06)',
+                   boxShadow: '0 24px 48px -20px rgba(15, 23, 42, 0.08), 0 8px 16px -8px rgba(15, 23, 42, 0.04)',
+                 }}>
+              {/* Subtle gradient orb décoratif */}
+              <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full opacity-[0.06] blur-3xl pointer-events-none"
+                   style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
+              <div className="relative px-7 py-7 lg:px-10 lg:py-9 text-center">
+                <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.18em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full mb-5">
+                  <Check className="w-3 h-3" strokeWidth={3} />
+                  Tarifs transparents
+                </span>
+                <div className="flex items-baseline justify-center gap-1.5 mb-1">
+                  <span className="text-[14px] font-semibold text-gray-500">À partir de</span>
+                  <span className="text-[52px] lg:text-[64px] font-black tracking-[-0.04em] leading-none bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 bg-clip-text text-transparent">15&nbsp;€</span>
+                </div>
+                <p className="text-[14.5px] lg:text-[15.5px] font-bold text-gray-900 tracking-[-0.01em]">
+                  le prospect qualifié
+                </p>
+                <p className="text-[12.5px] text-gray-500 mt-1.5">
+                  selon votre secteur et votre zone
+                </p>
+                {/* Séparateur ticket-style */}
+                <div className="my-5 flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-gray-200" />
+                  <div className="flex-1 h-px border-t border-dashed border-gray-200" />
+                  <span className="w-2 h-2 rounded-full bg-gray-200" />
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                  {['Pas d\'abonnement', 'Pas d\'engagement', 'Payez ce que vous recevez'].map((t, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 text-[12px] text-gray-600 font-medium">
+                      <Check className="w-3 h-3 text-emerald-500" strokeWidth={3} />
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </ScrollReveal>
 
@@ -2794,6 +3345,20 @@ const LeadsRGPDSection = () => {
             </div>
           </ScrollReveal>
         </div>
+
+        {/* Témoignages dédiés Prospects — preuve sociale spécifique */}
+        <ScrollReveal y={20} delay={0.04}>
+          <div className="text-center mb-10">
+            <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-gray-400">
+              Ce qu'en disent les commerçants
+            </p>
+          </div>
+        </ScrollReveal>
+        <ScrollReveal y={24} delay={0.08}>
+          <div className="max-w-5xl mx-auto mb-16 lg:mb-24">
+            <ProspectsTestimonials />
+          </div>
+        </ScrollReveal>
 
         {/* 4 bénéfices — eyebrow centré + cards premium */}
         <ScrollReveal y={20} delay={0.04}>
@@ -3307,6 +3872,21 @@ export default function IAVocaleLanding() {
       q: "Que se passe-t-il après mes 100 appels offerts ?",
       a: "Rien d'automatique. On vous envoie un email à 80% de votre essai pour vous prévenir, et un autre à 100%. Vous décidez ensuite : passer en Pro (97€ HT/mois pour 500 appels), Business (249€ HT/mois pour 2 000 appels), ou simplement ne rien faire. Aucun prélèvement automatique tant que vous n'avez pas explicitement choisi un plan payant."
     },
+
+    /* ── Questions Prospects (service indépendant) — placées dans le top 8 pour visibilité ── */
+    {
+      q: "Achat de prospects : ces contacts ont-ils vraiment demandé à être rappelés ?",
+      a: "Oui. Chaque prospect a rempli un formulaire en ligne (Google Ads, Meta Ads, site spécialisé) en indiquant son besoin et en cochant explicitement la case « Je consens à être recontacté pour mon projet ». Vous recevez son téléphone vérifié, son email, son adresse et le motif exact de sa demande. Aucun fichier scrapé, aucune cold list. 100 % opt-in, 100 % RGPD CNIL."
+    },
+    {
+      q: "Achat de prospects : et si je suis déçu d'un prospect livré ?",
+      a: "Tous les prospects sont vérifiés (identité, téléphone valide, intention confirmée) avant livraison. Si un prospect s'avère faux numéro, doublon ou injoignable malgré 3 tentatives, il est automatiquement remplacé sans frais supplémentaire. Vous payez uniquement les prospects qualifiés que vous recevez."
+    },
+    {
+      q: "Achat de prospects : ma zone géographique est-elle disponible ?",
+      a: "Un seul commerce par secteur et par zone géographique (exclusivité totale). Quand vous remplissez le formulaire « Acheter des prospects », notre équipe vérifie sous 24 h ouvrées que votre zone est libre et vous rappelle. Si elle est déjà prise par un confrère, on vous met sur liste d'attente — sans engagement, sans frais."
+    },
+
     {
       q: "Puis-je annuler à tout moment ?",
       a: "Oui, en 1 clic depuis votre espace de configuration — sans justification, sans frais, sans période d'engagement. L'annulation prend effet à la fin du mois en cours, sans aucun frais de résiliation. Aucune reconduction tacite : si vous arrêtez, vous arrêtez."
@@ -3481,6 +4061,15 @@ export default function IAVocaleLanding() {
                 Sans carte bancaire · Sans engagement · Opérationnel en 5 minutes
               </p>
 
+              {/* Lien discret Prospects — pour visiteurs orientés acquisition de leads dès l'above-the-fold */}
+              <a
+                href="#leads-rgpd"
+                className="hero-fade hero-fade-4 group mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-indigo-700 hover:text-indigo-800 transition-colors"
+              >
+                Ou achetez directement des prospects qualifiés
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+              </a>
+
               {/* Stats */}
               <div className="hero-fade hero-fade-5 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6">
                 {stats.map((s, i) => (
@@ -3511,60 +4100,11 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
-      {/* TESTIMONIALS                                 */}
       {/* ============================================ */}
-      <section className="relative py-28 md:py-40 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
-        {/* Ambient gradients premium */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute top-32 left-[10%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
-               style={{ background: 'radial-gradient(circle, #F59E0B, transparent 70%)' }} />
-          <div className="absolute bottom-32 right-[10%] w-[500px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
-               style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-6">
-          <SectionHeading
-            tag="Témoignages"
-            title="+250 professionnels font confiance à BoosterPay."
-            subtitle="Garagistes, cabinets médicaux, courtiers, salons, plombiers, avocats — ils ont automatisé leurs appels avec l'IA."
-          />
-
-          {/* Trust strip — secteurs représentés */}
-          <ScrollReveal>
-            <div className="mb-14 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] font-medium text-gray-400 tracking-tight">
-              {['Garagistes','Cabinets médicaux','Courtiers','Salons','Plombiers','Avocats','Restaurants','Experts-comptables'].map((s, i, arr) => (
-                <span key={i} className="inline-flex items-center gap-x-6">
-                  <span>{s}</span>
-                  {i < arr.length - 1 && <span className="text-gray-200">·</span>}
-                </span>
-              ))}
-            </div>
-          </ScrollReveal>
-
-          <TestimonialsCarousel testimonials={testimonials} svcColors={svcColors} />
-
-        </div>
-      </section>
-
-      {/* HOW IT WORKS — Animation Apple-style                       */}
+      {/* TWO APPROACHES — IA vs Prospects (positioning) */}
+      {/* Posé tout de suite : visiteur comprend les 2 offres avant les deep dives */}
       {/* ============================================ */}
-      <section className="relative py-28 md:py-40 bg-white overflow-hidden">
-        {/* Ambient gradient teal subtle */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.04] blur-3xl"
-               style={{ background: 'radial-gradient(ellipse, #10B981, transparent 70%)' }} />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-6">
-          <SectionHeading
-            tag="Comment ça marche"
-            title="Trois étapes. Zéro friction."
-            subtitle="Vous activez. L'IA travaille. Vous récoltez."
-          />
-
-          <HowItWorksTimeline steps={steps} />
-        </div>
-      </section>
-
+      <TwoApproachesSection />
 
       {/* ============================================ */}
       {/* RÉCEPTION D'APPELS IA — FLAGSHIP HERO        */}
@@ -3574,7 +4114,7 @@ export default function IAVocaleLanding() {
 
       {/* ── Section Robot Personnalisé ── */}
       {/* ── Quatre services. Un seul outil. ── */}
-      <section className="relative py-28 md:py-40 bg-gradient-to-b from-[#FAFAFA] via-white to-[#FAFAFA] overflow-hidden">
+      <section className="relative pt-16 pb-28 md:pt-24 md:pb-32 bg-gradient-to-b from-[#FAFAFA] via-white to-[#FAFAFA] overflow-hidden">
         {/* Ambient gradients multicolores doux */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-20 left-[5%] w-[400px] h-[400px] rounded-full opacity-[0.05] blur-3xl"
@@ -3744,9 +4284,49 @@ export default function IAVocaleLanding() {
       <ServiceShowcases openPopup={openPopup} showcases={showcasesData} />
 
       {/* ============================================ */}
+      {/* RAPPEL CONTEXTUEL PROSPECTS                  */}
+      {/* Évite que le visiteur croie BoosterPay = IA seulement */}
+      {/* Style Apple : strip discret, élégant, light bg */}
+      {/* ============================================ */}
+      <section className="relative py-10 lg:py-14 bg-white overflow-hidden">
+        <div className="relative max-w-4xl mx-auto px-6">
+          <ScrollReveal y={16}>
+            <a href="#leads-rgpd" className="group block">
+              <div className="relative rounded-[20px] overflow-hidden transition-all duration-300 group-hover:translate-y-[-2px]"
+                   style={{
+                     background: 'linear-gradient(135deg, #FAFBFE 0%, #F4F6FB 100%)',
+                     border: '1px solid rgba(99, 102, 241, 0.12)',
+                     boxShadow: '0 8px 24px -12px rgba(99, 102, 241, 0.12)',
+                   }}>
+                <div className="relative px-5 py-4 lg:px-7 lg:py-5 flex items-center gap-4">
+                  <div className="shrink-0 inline-flex w-10 h-10 rounded-xl bg-white border border-indigo-100 items-center justify-center"
+                       style={{ boxShadow: '0 4px 12px -4px rgba(99, 102, 241, 0.2)' }}>
+                    <Target className="w-5 h-5 text-indigo-600" strokeWidth={2} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 mb-0.5">
+                      Et aussi · Service indépendant
+                    </p>
+                    <p className="text-[14px] lg:text-[15px] font-bold text-gray-900 tracking-[-0.01em]">
+                      Vous voulez aussi de nouveaux contacts ?
+                    </p>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[13px] font-bold text-indigo-700 transition-all group-hover:gap-2">
+                    <span className="hidden sm:inline">Voir l'offre Prospects</span>
+                    <span className="sm:hidden">Prospects</span>
+                    <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  </span>
+                </div>
+              </div>
+            </a>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ============================================ */}
       {/* MÉTIER SELECTOR — Votre métier. Votre IA.    */}
       {/* ============================================ */}
-      <section id="metier" className="relative py-28 md:py-40 bg-white scroll-mt-24 overflow-hidden">
+      <section id="metier" className="relative pt-14 pb-20 md:py-40 bg-white scroll-mt-24 overflow-hidden">
         {/* Ambient emerald subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
@@ -3762,14 +4342,67 @@ export default function IAVocaleLanding() {
         </div>
       </section>
 
+      {/* HOW IT WORKS — Animation Apple-style                       */}
+      {/* Placé après les deep dives : "voilà comme c'est simple à démarrer" */}
+      {/* Padding resserré : transition fluide MetierSelector → HowItWorks → Testimonials */}
       {/* ============================================ */}
-      {/* ACHAT DE LEADS RGPD — partenaire externe     */}
-      {/* ============================================ */}
-      <LeadsRGPDSection />
+      <section className="relative pt-16 pb-20 md:pt-24 md:pb-24 bg-white overflow-hidden">
+        {/* Ambient gradient teal subtle */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(ellipse, #10B981, transparent 70%)' }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6">
+          <SectionHeading
+            tag="IA Vocale · Comment ça marche"
+            title="Trois étapes. Zéro friction."
+            subtitle="Vous activez. L'IA travaille. Vous récoltez."
+          />
 
-      {/* PRICING                                      */}
+          <HowItWorksTimeline steps={steps} />
+        </div>
+      </section>
+
+      {/* TESTIMONIALS — preuve sociale juste avant la conversion    */}
+      {/* Padding-bottom réduit pour resserrer la transition vers Pricing */}
       {/* ============================================ */}
-      <section id="pricing" className="relative py-28 md:py-40 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+      <section className="relative pt-28 pb-16 md:pt-40 md:pb-20 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
+        {/* Ambient gradients premium */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-32 left-[10%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #F59E0B, transparent 70%)' }} />
+          <div className="absolute bottom-32 right-[10%] w-[500px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
+               style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6">
+          <SectionHeading
+            tag="Témoignages"
+            title="+250 professionnels font confiance à BoosterPay."
+            subtitle="Garagistes, cabinets médicaux, courtiers, salons, plombiers, avocats — ils ont automatisé leurs appels avec l'IA."
+          />
+
+          {/* Trust strip — secteurs représentés */}
+          <ScrollReveal>
+            <div className="mb-14 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] font-medium text-gray-400 tracking-tight">
+              {['Garagistes','Cabinets médicaux','Courtiers','Salons','Plombiers','Avocats','Restaurants','Experts-comptables'].map((s, i, arr) => (
+                <span key={i} className="inline-flex items-center gap-x-6">
+                  <span>{s}</span>
+                  {i < arr.length - 1 && <span className="text-gray-200">·</span>}
+                </span>
+              ))}
+            </div>
+          </ScrollReveal>
+
+          <TestimonialsCarousel testimonials={testimonials} svcColors={svcColors} />
+
+        </div>
+      </section>
+
+      {/* PRICING IA — vient juste après la preuve sociale (témoignages)         */}
+      {/* Padding-top réduit : transition fluide depuis les témoignages          */}
+      {/* ============================================ */}
+      <section id="pricing" className="relative pt-16 pb-28 md:pt-20 md:pb-40 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
         {/* Ambient gradient cyan/blue */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-32 right-[15%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
@@ -3779,9 +4412,9 @@ export default function IAVocaleLanding() {
         </div>
         <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Tarifs"
-            title="Une seule plateforme. Tous les modules. Toujours inclus."
-            subtitle="Choisissez le plan adapté à votre volume — tous incluent les 6 modules sans restriction."
+            tag="Tarifs IA"
+            title="Une plateforme. Les 6 modules IA. Toujours inclus."
+            subtitle="Choisissez le plan adapté à votre volume d'appels — tous incluent les 6 modules IA sans restriction."
           />
 
           {/* Toggle annuel / mensuel */}
@@ -3881,12 +4514,50 @@ export default function IAVocaleLanding() {
           <p className="mt-10 text-center text-[12.5px] text-gray-400">
             Tous les prix sont HT. Annulation en 1 clic. Pas de frais cachés.
           </p>
+
+          {/* Pont upsell vers Prospects — service indépendant mais complémentaire */}
+          <ScrollReveal y={16}>
+            <a href="#leads-rgpd" className="group block mt-10 lg:mt-12 max-w-3xl mx-auto">
+              <div className="relative rounded-[20px] overflow-hidden transition-all duration-300 group-hover:translate-y-[-2px]"
+                   style={{
+                     background: 'linear-gradient(135deg, #FAFBFE 0%, #F4F6FB 100%)',
+                     border: '1px solid rgba(99, 102, 241, 0.14)',
+                     boxShadow: '0 8px 24px -12px rgba(99, 102, 241, 0.14)',
+                   }}>
+                <div className="relative px-5 py-4 lg:px-7 lg:py-5 flex items-center gap-4">
+                  <div className="shrink-0 inline-flex w-10 h-10 rounded-xl bg-white border border-indigo-100 items-center justify-center"
+                       style={{ boxShadow: '0 4px 12px -4px rgba(99, 102, 241, 0.22)' }}>
+                    <Target className="w-5 h-5 text-indigo-600" strokeWidth={2} />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 mb-0.5">
+                      Boostez encore · Service indépendant
+                    </p>
+                    <p className="text-[14px] lg:text-[15px] font-bold text-gray-900 tracking-[-0.01em]">
+                      Achetez aussi des prospects qualifiés <span className="text-indigo-700">à partir de 15&nbsp;€</span>
+                    </p>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[13px] font-bold text-indigo-700 transition-all group-hover:gap-2">
+                    <span className="hidden sm:inline">Voir l'offre Prospects</span>
+                    <span className="sm:hidden">Voir</span>
+                    <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  </span>
+                </div>
+              </div>
+            </a>
+          </ScrollReveal>
         </div>
       </section>
 
+      {/* ============================================ */}
+      {/* ACHAT DE LEADS RGPD — service indépendant     */}
+      {/* Placé APRÈS le pricing IA : signal visuel que c'est un service séparé */}
+      {/* ============================================ */}
+      <LeadsRGPDSection />
+
       {/* FAQ                                          */}
       {/* ============================================ */}
-      <section id="faq" className="relative py-28 md:py-40 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+      <section id="faq" className="relative pt-24 pb-20 md:pt-32 md:pb-24 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
         {/* Ambient subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.03] blur-3xl"
@@ -3899,7 +4570,7 @@ export default function IAVocaleLanding() {
           />
 
           <div className="space-y-3">
-            {(showAllFaqs ? faqs : faqs.slice(0, 5)).map((faq, i) => (
+            {(showAllFaqs ? faqs : faqs.slice(0, 8)).map((faq, i) => (
               <ScrollReveal key={i} delay={i * 0.05}>
                 <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                   <button
@@ -3932,15 +4603,15 @@ export default function IAVocaleLanding() {
             ))}
           </div>
 
-          {/* Bouton voir toutes les questions (si plus de 5) */}
-          {!showAllFaqs && faqs.length > 5 && (
+          {/* Bouton voir toutes les questions (si plus de 8) */}
+          {!showAllFaqs && faqs.length > 8 && (
             <div className="mt-6 text-center">
               <button
                 type="button"
                 onClick={() => setShowAllFaqs(true)}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold text-gray-700 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all"
               >
-                Voir les {faqs.length - 5} autres questions
+                Voir les {faqs.length - 8} autres questions
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -3949,8 +4620,9 @@ export default function IAVocaleLanding() {
       </section>
 
       {/* FINAL CTA                                    */}
+      {/* Padding top resserré : transition fluide FAQ → Close */}
       {/* ============================================ */}
-      <section className="relative py-28 md:py-40 bg-white overflow-hidden">
+      <section className="relative pt-14 pb-20 md:pt-24 md:pb-40 bg-white overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <ScrollReveal>
             <div className="relative rounded-[40px] p-12 md:p-20 overflow-hidden"
@@ -3983,6 +4655,29 @@ export default function IAVocaleLanding() {
 
                 {/* CTA inline : email + bouton */}
                 <FinalCtaInline openPopup={openPopup} />
+
+                {/* Séparation visuelle + CTA Prospects (poids visuel équivalent au CTA IA) */}
+                <div className="mt-8 max-w-md mx-auto">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex-1 h-px bg-white/15" />
+                    <span className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-white/60">
+                      Ou
+                    </span>
+                    <div className="flex-1 h-px bg-white/15" />
+                  </div>
+                  <a href="#leads-rgpd"
+                     className="group inline-flex items-center justify-center gap-2 w-full px-5 py-4 rounded-2xl bg-white transition-all hover:scale-[1.02] active:scale-[0.99]"
+                     style={{ boxShadow: '0 16px 36px -10px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3) inset' }}>
+                    <Target className="w-4 h-4 text-indigo-600" strokeWidth={2.4} />
+                    <span className="text-[14.5px] font-bold bg-gradient-to-r from-indigo-700 to-blue-700 bg-clip-text text-transparent">
+                      Réserver votre zone Prospects
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-indigo-700 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+                  </a>
+                  <p className="text-[11.5px] text-white/70 mt-2.5 text-center">
+                    À partir de 15 € le prospect · Sans abonnement
+                  </p>
+                </div>
               </div>
             </div>
           </ScrollReveal>
