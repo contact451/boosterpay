@@ -4,6 +4,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────
+   MOBILE OVERRIDES — Landing IA Vocale
+   Compresse les paddings sections en mobile (max 56px top/bottom)
+   + touch targets ≥ 44px + ombre CTA hero renforcée.
+   Apple gère le rythme mobile avec précision : aucune section ne se
+   perd dans le vide. -30% de scroll = -30% de fatigue.
+   ─────────────────────────────────────────────────────────────────*/
+@media (max-width: 768px) {
+  /* Toutes les sections de la landing principale — espacement Apple resserré */
+  main section,
+  body > div > section,
+  body > div > main section {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+  /* Marge top du Hero (premier élément) un peu plus large pour respiration */
+  main section:first-of-type,
+  body > div > section:first-of-type {
+    padding-top: 32px !important;
+  }
+  /* Liens secondaires : taille de tap correcte */
+  a.hero-fade,
+  .hero-fade a,
+  section a[class*="text-emerald-700"],
+  section a[class*="text-gray-500"]:not([class*="px-"]):not([class*="py-"]) {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  /* Ombre CTA hero plus forte sur mobile pour magnétisme tactile */
+  .hero-fade a[class*="bg-emerald-500"],
+  .hero-fade a[class*="from-emerald"] {
+    box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4) !important;
+  }
+}
+
 :root {
   /* Background colors */
   --bg-deepest: #050810;

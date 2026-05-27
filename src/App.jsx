@@ -49,6 +49,15 @@ import NotationClient from './pages/NotationClient';
 import IAVocaleLanding from './pages/IAVocaleLanding';
 import MerciPage from './pages/MerciPage';
 import Configurer from './pages/Configurer';
+import InscriptionTrial from './pages/InscriptionTrial';
+import EspaceAbonne from './pages/EspaceAbonne';
+// Pages dédiées par service (mini landings Apple-style)
+import Reception247 from './pages/services/Reception247';
+import Renouvellement from './pages/services/Renouvellement';
+import ConfirmationRdv from './pages/services/ConfirmationRdv';
+import ImpactAvisService from './pages/services/ImpactAvis';
+import Paiements from './pages/services/Paiements';
+import RobotMesure from './pages/services/RobotMesure';
 
 function App() {
   return (
@@ -69,9 +78,19 @@ function App() {
         <Route path="/legacy-impact-avis" element={<ImpactAvisLanding />} />
         <Route path="/avis/:partnerId" element={<NotationClient />} />
         <Route path="/merci" element={<MerciPage />} />
+        {/* Tunnel d'inscription au trial 7 jours (avant Stripe Checkout) */}
+        <Route path="/inscription-trial" element={<InscriptionTrial />} />
+        {/* Pages dédiées par service (mini-landings) */}
+        <Route path="/services/reception" element={<Reception247 />} />
+        <Route path="/services/renouvellement" element={<Renouvellement />} />
+        <Route path="/services/rdv" element={<ConfirmationRdv />} />
+        <Route path="/services/impact-avis" element={<ImpactAvisService />} />
+        <Route path="/services/paiements" element={<Paiements />} />
+        <Route path="/services/robot" element={<RobotMesure />} />
         {/* Espace de configuration tokenisé envoyé par mail au lead après essai */}
         <Route path="/configurer/:token" element={<Configurer />} />
-        <Route path="/configurer" element={<Navigate to="/" replace />} />
+        {/* /configurer?id=BP-XXX → nouvelle page espace abonné post-paiement */}
+        <Route path="/configurer" element={<EspaceAbonne />} />
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />

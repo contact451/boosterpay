@@ -52,6 +52,7 @@ import Papa from 'papaparse';
 import EmailCapturePopup from '../components/EmailCapturePopup';
 import FloatingContact from '../components/FloatingContact';
 import ExitIntentPopup from '../components/ExitIntentPopup';
+import SignupModal from '../components/SignupModal';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -179,15 +180,50 @@ const FinalCtaInline = ({ openPopup }) => {
         autoComplete="email"
         inputMode="email"
         style={{ fontSize: 16 }}
-        className="flex-1 px-5 py-4 rounded-full bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-white/30 transition-all"
+        className="flex-1 px-5 py-4 rounded-full bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 border border-gray-200 transition-all"
       />
       <button
         type="submit"
-        className="inline-flex items-center justify-center gap-2 text-[15px] font-semibold text-emerald-700 bg-white px-6 py-4 rounded-full hover:bg-emerald-50 hover:shadow-xl transition-all whitespace-nowrap"
+        className="inline-flex items-center justify-center gap-2 text-[15px] font-semibold text-white bg-emerald-500 hover:bg-emerald-600 px-6 py-4 rounded-full transition-all whitespace-nowrap hover:scale-[1.02]"
+        style={{ boxShadow: '0 12px 32px -8px rgba(16, 185, 129, 0.5)' }}
       >
-        Activer mes 100 appels <ArrowRight className="w-4 h-4" />
+        Démarrer mon essai 7 jours <ArrowRight className="w-4 h-4" />
       </button>
     </form>
+  );
+};
+
+/**
+ * LiveCounter — Compteur live FOMO : "X appels traités par l'IA en ce moment".
+ * Incrémente le compteur "cette semaine" toutes les 8-15 secondes pour donner
+ * une sensation de plateforme vivante et active. Pulse vert animé.
+ */
+const LiveCounter = () => {
+  const [liveNow, setLiveNow] = useState(() => Math.floor(Math.random() * 4) + 2); // 2-5
+  const [weekTotal, setWeekTotal] = useState(() => 847 + Math.floor(Math.random() * 30));
+
+  useEffect(() => {
+    const tick = () => {
+      // Légère variation aléatoire pour "live"
+      setLiveNow(() => Math.floor(Math.random() * 5) + 1); // 1-5
+      setWeekTotal((prev) => prev + Math.floor(Math.random() * 3) + 1); // +1-3
+    };
+    const id = setInterval(tick, 8000 + Math.random() * 7000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="hero-fade hero-fade-4 mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60">
+      <span className="relative flex w-2 h-2">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 animate-ping" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+      </span>
+      <span className="text-[12.5px] text-emerald-800 font-medium">
+        <span className="font-bold tabular-nums">{liveNow}</span> appels traités par l'IA en ce moment
+        <span className="text-emerald-600/70 mx-1.5">·</span>
+        <span className="font-bold tabular-nums">{weekTotal.toLocaleString('fr-FR')}</span> cette semaine
+      </span>
+    </div>
   );
 };
 
@@ -227,7 +263,7 @@ const MobileStickyCTA = ({ openPopup }) => {
           onClick={() => openPopup('mobile-sticky', 'gratuit')}
           className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full text-[15px] font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 shadow-[0_10px_24px_-8px_rgba(16,185,129,0.55)] active:scale-[0.98] transition-transform"
         >
-          Activer mes 100 appels offerts <ArrowRight className="w-4 h-4" />
+          Démarrer mon essai 7 jours <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -604,36 +640,37 @@ const UrgencyBanner = () => {
 };
 
 const IA_VOCALE_PLANS = [
-  { id: 'decouverte', name: 'Essai Découverte', price: '0€', desc: '100 appels gratuits · Import CSV · Dashboard' },
+  { id: 'decouverte', name: 'Essai 7 jours', price: '0€', desc: '7 jours offerts · Numéro local actif · Tous modules' },
   { id: 'boost', name: 'Pack Boost', price: '199€ HT', desc: '250 appels · Résultats immédiats', badge: null },
   { id: 'business', name: 'Pack Business', price: '349€ HT', desc: '500 appels · Manager dédié', badge: 'Le plus populaire' },
   { id: 'croissance', name: 'Croissance', price: '399€ HT/mois', desc: '1000 appels/mois · Support prioritaire' },
 ];
-// URL de checkout Stripe — pour l'instant 1 seule URL pour les 3 plans payants
-// (Stripe capture l'email + les infos du client sur sa page de paiement)
-const STRIPE_CHECKOUT_URL = 'https://buy.stripe.com/bJedRbfwG88D6qQ9NMf3a05';
+// Tous les CTAs landing pointent vers la page d'inscription trial qui collecte
+// les 5 champs (nom, mobile, email, code postal, nom commerce) puis crée la
+// session Stripe subscription (trial 7j + 99€ HT/mois ensuite).
+const TRIAL_INSCRIPTION_URL = '/inscription-trial';
+const STRIPE_CHECKOUT_URL = TRIAL_INSCRIPTION_URL;
 const STRIPE_LINKS = {
-  decouverte: STRIPE_CHECKOUT_URL,
-  boost: STRIPE_CHECKOUT_URL,
-  business: STRIPE_CHECKOUT_URL,
-  croissance: STRIPE_CHECKOUT_URL,
-  // Nouveaux plans (alignés sur la grille tarifaire)
-  'a-la-carte': STRIPE_CHECKOUT_URL,
-  pro: STRIPE_CHECKOUT_URL,
+  decouverte: TRIAL_INSCRIPTION_URL,
+  boost: TRIAL_INSCRIPTION_URL,
+  business: TRIAL_INSCRIPTION_URL,
+  croissance: TRIAL_INSCRIPTION_URL,
+  'ia-vocale': TRIAL_INSCRIPTION_URL,
+  // Anciens plans (redirigés vers le même tunnel)
+  'a-la-carte': TRIAL_INSCRIPTION_URL,
+  pro: TRIAL_INSCRIPTION_URL,
 };
 
 // Nav Apple-minimal : 2 ancres essentielles, le reste se découvre en scrollant
 const navLinks = [
-  { label: 'Tarifs', href: '#pricing' },
-  { label: 'Acheter des prospects', href: '#leads-rgpd', highlight: true },
+  { label: 'Acheter des prospects', href: '#leads-rgpd' },
 ];
 
 // Liens additionnels affichés uniquement dans le menu mobile (drawer plus tolérant)
 const navLinksMobile = [
   { label: 'Fonctionnalités', href: '#features' },
   { label: 'Cas d\'usage', href: '#usecases' },
-  { label: 'Tarifs', href: '#pricing' },
-  { label: 'Acheter des prospects', href: '#leads-rgpd', highlight: true },
+  { label: 'Acheter des prospects', href: '#leads-rgpd' },
   { label: 'FAQ', href: '#faq' },
 ];
 
@@ -728,14 +765,16 @@ const services = [
 ];
 
 const iconMap = { RefreshCw, CalendarCheck, PhoneCall, Bot, Star, Zap };
+// Toutes les "couleurs" pointent vers emerald — un seul langage visuel Apple sur le iPhone mockup
+const _emeraldSet = { bg: 'bg-emerald-50', ring: 'ring-emerald-200', icon: 'text-emerald-600', accent: 'bg-emerald-500', light: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' };
 const colorMap = {
-  emerald: { bg: 'bg-emerald-50', ring: 'ring-emerald-200', icon: 'text-emerald-600', accent: 'bg-emerald-500', light: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700' },
-  blue: { bg: 'bg-blue-50', ring: 'ring-blue-200', icon: 'text-blue-600', accent: 'bg-blue-500', light: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
-  amber: { bg: 'bg-amber-50', ring: 'ring-amber-200', icon: 'text-amber-600', accent: 'bg-amber-500', light: 'text-amber-600', badge: 'bg-amber-100 text-amber-700' },
-  violet: { bg: 'bg-violet-50', ring: 'ring-violet-200', icon: 'text-violet-600', accent: 'bg-violet-500', light: 'text-violet-600', badge: 'bg-violet-100 text-violet-700' },
-  orange: { bg: 'bg-orange-50', ring: 'ring-orange-200', icon: 'text-orange-600', accent: 'bg-orange-500', light: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
-  rose: { bg: 'bg-rose-50', ring: 'ring-rose-200', icon: 'text-rose-600', accent: 'bg-rose-500', light: 'text-rose-600', badge: 'bg-rose-100 text-rose-700' },
-  yellow: { bg: 'bg-yellow-50', ring: 'ring-yellow-200', icon: 'text-yellow-600', accent: 'bg-yellow-500', light: 'text-yellow-700', badge: 'bg-yellow-100 text-yellow-700' },
+  emerald: _emeraldSet,
+  blue: _emeraldSet,
+  amber: _emeraldSet,
+  violet: _emeraldSet,
+  orange: _emeraldSet,
+  rose: _emeraldSet,
+  yellow: _emeraldSet,
 };
 
 const HeroAnimation = () => {
@@ -867,13 +906,13 @@ const HeroAnimation = () => {
               )}
             </div>
 
-            {/* Progress dots */}
+            {/* Progress dots — vert uniforme Apple */}
             <div className="flex items-center justify-center gap-2 mt-5">
               {[0, 1, 2, 3].map(i => (
                 <div
                   key={i}
                   className={`h-1 rounded-full transition-all duration-500 ${
-                    i <= active ? `${colorMap[services[i].color].accent} w-5` : 'bg-gray-200 w-1.5'
+                    i <= active ? 'bg-emerald-500 w-5' : 'bg-emerald-100 w-1.5'
                   }`}
                 />
               ))}
@@ -1153,11 +1192,12 @@ const MetierSelector = ({ openPopup }) => {
                     className={`bg-white p-6 ${j === 0 ? '' : ''}`}
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-xl ${sc.bg} flex items-center justify-center`}>
-                        <SvcIcon className={`w-5 h-5 ${sc.icon}`} />
+                      {/* Tous les services en vert uniforme — cohérence Apple */}
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                        <SvcIcon className="w-5 h-5 text-emerald-600" strokeWidth={2.2} />
                       </div>
                       <div>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${sc.badge} px-2 py-0.5 rounded-full`}>{svc.label}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60 px-2 py-0.5 rounded-md">{svc.label}</span>
                       </div>
                     </div>
                     <p className="text-[14px] text-gray-700 font-medium leading-relaxed">{m[svc.key]}</p>
@@ -1166,8 +1206,8 @@ const MetierSelector = ({ openPopup }) => {
               })}
             </div>
 
-            {/* KPI bar — Apple-style gradient */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 rounded-b-[28px] overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600">
+            {/* KPI bar — fond vert TRÈS CLAIR Apple (zéro fond sombre) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 rounded-b-[28px] overflow-hidden" style={{ backgroundColor: '#F0FDF4', borderTop: '1px solid rgba(16,185,129,0.15)' }}>
               {[
                 { value: m.temps, label: 'gagnées/semaine', icon: Clock },
                 { value: m.clients, label: 'nouveaux clients/mois', icon: UserPlus },
@@ -1179,12 +1219,12 @@ const MetierSelector = ({ openPopup }) => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3 + k * 0.1, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="text-center py-7 px-4 border-r border-white/20 last:border-r-0 relative"
+                  className="text-center py-7 px-4 relative"
+                  style={{ borderRight: k < 3 ? '1px solid rgba(16,185,129,0.15)' : 'none' }}
                 >
-                  <div className="absolute inset-0 bg-white/5 hover:bg-white/10 transition-colors duration-300" />
-                  <kpi.icon className="w-5 h-5 text-white/80 mx-auto mb-2 relative z-10" />
-                  <p className="text-[28px] font-black text-white relative z-10 tracking-tight">{kpi.value}</p>
-                  <p className="text-[11px] text-white/70 font-medium mt-1 relative z-10">{kpi.label}</p>
+                  <kpi.icon className="w-5 h-5 text-emerald-600 mx-auto mb-2" strokeWidth={2.2} />
+                  <p className="text-[28px] font-extrabold text-emerald-600 tracking-tight">{kpi.value}</p>
+                  <p className="text-[11px] text-gray-500 font-medium mt-1">{kpi.label}</p>
                 </motion.div>
               ))}
             </div>
@@ -1218,7 +1258,7 @@ const MetierSelector = ({ openPopup }) => {
                 onClick={(e) => { e.preventDefault(); openPopup('metier-cta', 'gratuit'); }}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-semibold px-7 py-3 rounded-full text-sm hover:shadow-lg hover:shadow-emerald-500/25 hover:scale-[1.02] transition-all duration-300 whitespace-nowrap"
               >
-                Démarrer mes 100 appels offerts <ArrowRight className="w-4 h-4" />
+                Démarrer mon essai 7 jours <ArrowRight className="w-4 h-4" />
               </a>
             </div>
           </motion.div>
@@ -1878,8 +1918,12 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
                   isActive ? 'shadow-xl shadow-gray-900/[0.07]' : 'shadow-sm'
                 } transition-shadow duration-500 overflow-hidden`}
               >
-                {/* Guillemet géant en filigrane */}
-                <span className="pointer-events-none absolute -top-2 right-3 text-[88px] leading-none text-gray-100 font-serif select-none">"</span>
+                {/* Logo secteur en haut à droite — vert uniforme Apple */}
+                {t.sectorIcon && (
+                  <div className="absolute top-5 right-5 w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                    <t.sectorIcon className="w-4.5 h-4.5 text-emerald-600" strokeWidth={2} />
+                  </div>
+                )}
 
                 {/* Étoiles */}
                 <div className="relative flex gap-0.5 mb-3">
@@ -1888,28 +1932,24 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
                   ))}
                 </div>
 
-                {/* Quote */}
-                <p className="relative text-[14px] text-gray-700 leading-relaxed font-medium break-words">
+                {/* Result en GROS vert UNIFORME — cohérence Apple */}
+                <div className="relative mb-3">
+                  <div className="text-[24px] font-extrabold leading-tight text-emerald-600 tracking-tight">
+                    {t.result}
+                  </div>
+                </div>
+
+                {/* Quote (en gris, plus petite) */}
+                <p className="relative text-[13.5px] text-gray-500 leading-relaxed font-normal break-words flex-1">
                   «&nbsp;{t.quote}&nbsp;»
                 </p>
 
-                {/* Result chip */}
-                <div className={`relative mt-4 inline-flex self-start items-center gap-1.5 px-2.5 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
-                  <Sparkles className={`w-3 h-3 ${tc.icon}`} />
-                  <span className={`text-[11px] font-bold ${tc.icon}`}>{t.result}</span>
-                </div>
-
                 <div className="relative h-px bg-gray-100 my-4" />
 
-                {/* Auteur */}
-                <div className="relative flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBgFor(t.color)} flex items-center justify-center text-white font-bold text-[14px] shadow-md shrink-0`}>
-                    {t.avatar}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-900 text-[13.5px] truncate">{t.name}</p>
-                    <p className="text-[12px] text-gray-500 font-medium truncate">{t.role} · {t.city}</p>
-                  </div>
+                {/* Auteur — minimaliste Apple : pas d'avatar, juste nom + métadonnées */}
+                <div className="relative">
+                  <p className="font-bold text-gray-900 text-[14px] tracking-tight">{t.name}</p>
+                  <p className="text-[12px] text-gray-500 font-medium mt-0.5">{t.role} · {t.city}</p>
                 </div>
               </motion.div>
             </div>
@@ -1919,13 +1959,13 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
         <div aria-hidden="true" className="shrink-0 w-5" />
       </div>
 
-      {/* Mobile : Dots indicateurs — agrandis pour être bien visibles */}
+      {/* Mobile : Dots indicateurs — vert uniforme Apple */}
       <div className="sm:hidden flex justify-center gap-2 mt-3 mb-1">
         {testimonials.map((_, i) => (
           <span
             key={i}
             className={`h-2.5 rounded-full transition-all duration-400 ${
-              i === activeIdx ? 'w-8 bg-gray-900' : 'w-2.5 bg-gray-300'
+              i === activeIdx ? 'w-8 bg-emerald-500' : 'w-2.5 bg-emerald-100'
             }`}
           />
         ))}
@@ -1940,26 +1980,31 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
           const tc = svcColors[t.color] || svcColors.emerald;
           return (
             <ScrollReveal key={i} delay={(i % 3) * 0.08}>
-              <div className="bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
+              <div className="relative bg-white rounded-2xl border border-gray-100 p-7 h-full flex flex-col hover:shadow-lg hover:shadow-gray-900/[0.04] transition-shadow">
+                {/* Logo secteur en haut à droite — vert uniforme Apple */}
+                {t.sectorIcon && (
+                  <div className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                    <t.sectorIcon className="w-5 h-5 text-emerald-600" strokeWidth={2} />
+                  </div>
+                )}
+                {/* Étoiles */}
                 <div className="flex gap-0.5 mb-4">
                   {[1,2,3,4,5].map((s) => (
                     <Star key={s} className="w-4 h-4 text-amber-400" fill="currentColor" strokeWidth={1} />
                   ))}
                 </div>
-                <p className="text-[15px] text-gray-700 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
-                <div className={`mt-5 inline-flex self-start items-center gap-1.5 px-3 py-1 rounded-full ${tc.bg} border ${tc.border}`}>
-                  <Sparkles className={`w-3 h-3 ${tc.icon}`} />
-                  <span className={`text-[11.5px] font-bold ${tc.icon}`}>{t.result}</span>
+                {/* Result en GROS vert UNIFORME au-dessus de la quote */}
+                <div className="text-[28px] font-extrabold leading-tight text-emerald-600 tracking-tight mb-4">
+                  {t.result}
                 </div>
+                {/* Quote en plus petit et gris */}
+                <p className="text-[14px] text-gray-500 leading-relaxed flex-1">«&nbsp;{t.quote}&nbsp;»</p>
+
                 <div className="h-px bg-gray-100 my-5" />
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarBgFor(t.color)} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                    {t.avatar}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 text-[14px]">{t.name}</p>
-                    <p className="text-[12.5px] text-gray-500">{t.role} · {t.city}</p>
-                  </div>
+                {/* Auteur — minimaliste Apple : pas d'avatar, juste nom + métadonnées */}
+                <div>
+                  <p className="font-bold text-gray-900 text-[14.5px] tracking-tight">{t.name}</p>
+                  <p className="text-[12.5px] text-gray-500 mt-0.5">{t.role} · {t.city}</p>
                 </div>
               </div>
             </ScrollReveal>
@@ -2027,11 +2072,11 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, ease: appleEase }}
-            className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-amber-700 bg-amber-50 border border-amber-100 px-4 py-1.5 rounded-full mb-7"
+            className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-4 py-1.5 rounded-full mb-7"
           >
             <span className="relative flex w-1.5 h-1.5">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-ping" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
             </span>
             Produit phare
           </motion.span>
@@ -2040,11 +2085,11 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
             initial={{ opacity: 0, y: 24 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.95, ease: appleEase, delay: 0.1 }}
-            className="text-[40px] sm:text-[56px] md:text-[68px] lg:text-[78px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]"
+            className="text-[40px] sm:text-[56px] md:text-[68px] lg:text-[78px] font-semibold text-gray-900 leading-[0.98] tracking-[-0.03em]"
           >
             Vous ne décrochez pas&nbsp;?
             <br />
-            <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent">
+            <span className="text-emerald-600">
               L'IA prend le relais.
             </span>
           </motion.h2>
@@ -2070,16 +2115,16 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
             transition={{ duration: 1.1, ease: appleEase, delay: 0.3 }}
             className="relative w-[300px] sm:w-[330px] mx-auto"
           >
-            {/* Glow ambient amber doux derrière le phone */}
+            {/* Glow ambient emerald doux derrière le phone */}
             <div className="absolute -inset-16 rounded-[80px] opacity-30 blur-[80px] pointer-events-none"
-                 style={{ background: 'radial-gradient(circle, rgba(245, 158, 11, 0.5), transparent 70%)' }}
+                 style={{ background: 'radial-gradient(circle, rgba(16, 185, 129, 0.5), transparent 70%)' }}
                  aria-hidden="true" />
 
             {/* Phone frame — plus light, premium silver */}
             <div className="relative rounded-[44px] p-[3px]"
                  style={{
                    background: 'linear-gradient(135deg, #E5E7EB 0%, #F3F4F6 50%, #D1D5DB 100%)',
-                   boxShadow: '0 80px 120px -40px rgba(245, 158, 11, 0.25), 0 40px 80px -20px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+                   boxShadow: '0 80px 120px -40px rgba(16, 185, 129, 0.22), 0 40px 80px -20px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(15, 23, 42, 0.04)',
                  }}>
               {/* Inner screen — gardé sombre car écran de téléphone */}
               <div className="rounded-[42px] bg-gradient-to-br from-[#0F1623] via-[#1F2937] to-[#0F1623] p-5 pt-12 pb-6 overflow-hidden relative">
@@ -2189,10 +2234,10 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
           className="mt-24 lg:mt-32 grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 max-w-5xl mx-auto"
         >
           {[
-            { icon: PhoneCall, title: 'Décrochage 2s', desc: 'Le prospect ne raccroche jamais.', accent: 'text-amber-600' },
-            { icon: Target,    title: 'Qualification auto', desc: 'L\'IA pose les bonnes questions.', accent: 'text-emerald-600' },
-            { icon: CalendarDays, title: 'RDV pris', desc: 'Direct dans votre agenda.', accent: 'text-blue-600' },
-            { icon: Zap,       title: 'Récap SMS', desc: 'En temps réel sur votre tél.', accent: 'text-violet-600' },
+            { icon: PhoneCall,    title: 'Décrochage 2s',     desc: 'Le prospect ne raccroche jamais.' },
+            { icon: Target,       title: 'Qualification auto', desc: 'L\'IA pose les bonnes questions.' },
+            { icon: CalendarDays, title: 'RDV pris',           desc: 'Direct dans votre agenda.' },
+            { icon: Zap,          title: 'Récap SMS',          desc: 'En temps réel sur votre tél.' },
           ].map((f, i) => (
             <motion.div
               key={i}
@@ -2201,8 +2246,9 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
               transition={{ duration: 0.7, ease: appleEase, delay: 0.8 + i * 0.08 }}
               className="text-center lg:text-left"
             >
-              <div className={`inline-flex w-11 h-11 rounded-2xl items-center justify-center bg-gray-50 border border-gray-100 mb-4`}>
-                <f.icon className={`w-5 h-5 ${f.accent}`} strokeWidth={2} />
+              {/* Icône uniforme verte — un seul langage visuel Apple */}
+              <div className="inline-flex w-11 h-11 rounded-2xl items-center justify-center mb-4 border border-emerald-100" style={{ backgroundColor: '#F0FDF4' }}>
+                <f.icon className="w-5 h-5 text-emerald-600" strokeWidth={2.2} />
               </div>
               <h4 className="text-[15.5px] font-bold text-gray-900 tracking-tight mb-1.5">{f.title}</h4>
               <p className="text-[13.5px] text-gray-500 leading-relaxed">{f.desc}</p>
@@ -2218,10 +2264,10 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
           className="mt-20 lg:mt-28 grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-10 max-w-4xl mx-auto"
         >
           {[
-            { value: '24/7', label: 'Disponibilité', accent: 'from-amber-500 to-orange-500' },
-            { value: '2s',   label: 'Décrochage',    accent: 'from-emerald-500 to-teal-500' },
-            { value: '97%',  label: 'Appels pris',   accent: 'from-blue-500 to-cyan-500' },
-            { value: '×3',   label: 'Leads qualifiés', accent: 'from-violet-500 to-purple-500' },
+            { value: '24/7', label: 'Disponibilité' },
+            { value: '2s',   label: 'Décrochage' },
+            { value: '97%',  label: 'Appels pris' },
+            { value: '×3',   label: 'Leads qualifiés' },
           ].map((s, i) => (
             <motion.div
               key={i}
@@ -2230,7 +2276,7 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
               transition={{ duration: 0.7, ease: appleEase, delay: 1.15 + i * 0.08 }}
               className="text-center"
             >
-              <p className={`text-[56px] lg:text-[72px] font-black tracking-[-0.035em] leading-none bg-gradient-to-br ${s.accent} bg-clip-text text-transparent`}>
+              <p className="text-[56px] lg:text-[72px] font-black tracking-[-0.035em] leading-none text-emerald-500">
                 {s.value}
               </p>
               <p className="text-[12px] text-gray-400 font-bold mt-3 tracking-[0.12em] uppercase">
@@ -2250,12 +2296,12 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
           <motion.button
             type="button"
             onClick={() => openPopup('cta-receptionia', 'gratuit')}
-            whileHover={{ scale: 1.04, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
+            whileHover={{ scale: 1.04, y: -2, transition: { type: 'spring', stiffness: 380, damping: 20 } }}
             whileTap={{ scale: 0.97 }}
             className="group inline-flex items-center justify-center gap-3 text-[15.5px] font-bold text-white px-10 py-5 rounded-full transition-shadow duration-300"
             style={{
-              background: 'linear-gradient(135deg, #F59E0B 0%, #EA580C 50%, #DC2626 100%)',
-              boxShadow: '0 24px 60px -12px rgba(245, 158, 11, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 16px 40px -8px rgba(16, 185, 129, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
             }}
           >
             <PhoneCall className="w-5 h-5" strokeWidth={2.2} />
@@ -2263,7 +2309,7 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </motion.button>
           <p className="mt-5 text-[13px] text-gray-400 tracking-tight">
-            100 appels offerts · Sans carte bancaire · Activation en 5 min
+            7 jours gratuits · Annulation libre · 99 € HT/mois ensuite
           </p>
         </motion.div>
       </div>
@@ -2273,256 +2319,182 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
 
 
 /* ------------------------------------------------------------------ */
-/*  TwoApproachesSection — Positionne IA vs Prospects (clarté)         */
-/*  Répond à la question rationnelle : "pourquoi les deux ?"           */
+/*  TwoApproachesSection — REFONTE GRANDIOSE APPLE KEYNOTE              */
+/*  Fond clair + ambient gradient orbs · Profondeur Apple keynote      */
+/*  Section théâtrale : tag premium, titre XXL, cartes immersives      */
 /* ------------------------------------------------------------------ */
 const TwoApproachesSection = () => {
   return (
-    <section className="relative pt-28 pb-16 md:pt-44 md:pb-20 bg-white overflow-hidden">
-      {/* Ambient gradient orbs — blue à gauche, indigo à droite, signal subtil du dualisme */}
+    <section className="relative pt-20 pb-20 md:pt-24 md:pb-24 overflow-hidden bg-white">
+      {/* Ambient gradient orbs Apple-style — profondeur sans gris plat */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/3 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.05] blur-3xl"
-             style={{ background: 'radial-gradient(circle, #3B82F6, transparent 70%)' }} />
-        <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.08] blur-3xl"
+             style={{ background: 'radial-gradient(ellipse, #10B981 0%, transparent 60%)' }} />
+        <div className="absolute top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
              style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
+        <div className="absolute bottom-20 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.05] blur-3xl"
+             style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
       </div>
 
       <div className="relative max-w-5xl mx-auto px-6">
-        {/* Header — Apple typography */}
+        {/* Header keynote — titre XXL impact maximal */}
         <div className="text-center max-w-3xl mx-auto mb-14 lg:mb-20">
           <ScrollReveal y={16}>
-            <span className="inline-flex items-center gap-3 text-[11px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-7">
-              <span className="w-8 h-px bg-gradient-to-r from-transparent to-gray-300" />
-              2 leviers · 1 objectif
-              <span className="w-8 h-px bg-gradient-to-l from-transparent to-gray-300" />
+            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-4 py-1.5 rounded-full mb-7">
+              <Sparkles className="w-3 h-3" strokeWidth={2.5} />
+              Vos deux leviers
             </span>
           </ScrollReveal>
-          <ScrollReveal y={24} delay={0.08}>
-            <h2 className="text-[38px] sm:text-[54px] md:text-[64px] lg:text-[72px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]">
-              Deux façons de
-              <br />
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 bg-clip-text text-transparent">
-                remplir votre agenda.
+          <ScrollReveal y={20} delay={0.08}>
+            <h2 className="text-[40px] sm:text-[56px] md:text-[68px] lg:text-[76px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.035em]">
+              Deux façons de remplir<br/>
+              <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 bg-clip-text text-transparent">
+                votre agenda.
               </span>
             </h2>
           </ScrollReveal>
-          <ScrollReveal y={20} delay={0.18}>
-            <p className="text-[16.5px] md:text-[19px] text-gray-500 mt-6 leading-[1.55] max-w-xl mx-auto">
-              Vous avez le choix. Ou les deux — ils se complètent à la perfection.
+          <ScrollReveal y={16} delay={0.18}>
+            <p className="text-[18px] md:text-[20px] text-gray-500 mt-7 leading-[1.55] max-w-xl mx-auto">
+              Choisissez ce qui vous correspond. Ou cumulez les deux pour multiplier l'impact.
             </p>
           </ScrollReveal>
         </div>
 
-        {/* 2 cards premium côte à côte avec numéros fantômes en arrière-plan */}
-        <div className="grid md:grid-cols-2 gap-5 lg:gap-7 mb-10 lg:mb-14">
-          {/* CARD 01 — IA */}
-          <ScrollReveal y={28} delay={0.12}>
-            <div className="relative rounded-[32px] bg-white p-8 lg:p-10 h-full flex flex-col overflow-hidden transition-all duration-500 hover:translate-y-[-3px]"
-                 style={{
-                   border: '1px solid rgba(15, 23, 42, 0.06)',
-                   boxShadow: '0 30px 60px -20px rgba(15, 23, 42, 0.1), 0 12px 24px -12px rgba(15, 23, 42, 0.06)',
-                 }}>
-              {/* Orb décoratif top-right */}
-              <div className="absolute -top-20 -right-20 w-[320px] h-[320px] rounded-full opacity-[0.07] blur-3xl pointer-events-none"
-                   style={{ background: 'radial-gradient(circle, #3B82F6, transparent 70%)' }} />
-              {/* Numéro fantôme — Apple style */}
-              <div className="absolute top-6 right-7 text-[120px] font-black leading-none select-none pointer-events-none"
-                   style={{ color: 'rgba(59, 130, 246, 0.05)', letterSpacing: '-0.05em' }}>
-                1
+        {/* Grille 2 cartes — hiérarchie visuelle CLAIRE : IA verte = produit phare */}
+        <div className="grid md:grid-cols-2 gap-5 lg:gap-6 mb-6">
+          {/* ═══ CARTE 01 — IA VOCALE (Produit phare, fond vert pâle) ═══ */}
+          <ScrollReveal y={24} delay={0.12}>
+            <div
+              className="relative rounded-[28px] overflow-hidden h-full flex flex-col p-8 lg:p-10 transition-all duration-500 hover:-translate-y-1"
+              style={{
+                backgroundColor: '#F0FDF4',
+                border: '1.5px solid #10B981',
+                boxShadow: '0 20px 50px -15px rgba(16, 185, 129, 0.25), 0 4px 16px -8px rgba(16, 185, 129, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.06)',
+              }}
+            >
+              {/* Barre verte vif top — signature produit recommandé */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+
+              {/* Badge "Produit phare" — top right */}
+              <div className="absolute top-6 right-6 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[10.5px] font-bold tracking-wider uppercase">
+                <Sparkles className="w-2.5 h-2.5" strokeWidth={2.6} />
+                Produit phare
               </div>
 
-              <div className="relative flex flex-col h-full">
-                <div className="inline-flex w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 items-center justify-center mb-6"
-                     style={{ boxShadow: '0 8px 24px -8px rgba(59, 130, 246, 0.25)' }}>
-                  <Bot className="w-7 h-7 text-blue-600" strokeWidth={1.8} />
-                </div>
-                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-blue-700 mb-3">
-                  Service principal
+              {/* Header */}
+              <div className="mt-3 mb-5">
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-emerald-700 mb-2">
+                  1 — IA Vocale
                 </p>
-                <h3 className="text-[24px] lg:text-[28px] font-extrabold text-gray-900 tracking-[-0.025em] mb-4 leading-[1.05]">
-                  Vous gardez la main.<br/>L'IA prend le relais.
+                <h3 className="text-[28px] lg:text-[34px] font-semibold text-gray-900 tracking-[-0.03em] leading-[1.02]">
+                  L'IA décroche<br />à votre place.
                 </h3>
-                <p className="text-[14.5px] text-gray-500 leading-[1.6] mb-7">
-                  Vous décrochez quand vous pouvez. Quand vous ne décrochez pas, <strong className="text-gray-700 font-semibold">l'IA prend le relais</strong> — elle qualifie le prospect et prend le RDV à votre place.
-                </p>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {[
-                    'Vous décrochez d\'abord, l\'IA après',
-                    'Plus aucun appel perdu',
-                    'Active jour, nuit, week-ends',
-                  ].map((b, i) => (
-                    <li key={i} className="flex items-center gap-3 text-[13.5px] text-gray-700">
-                      <div className="w-[18px] h-[18px] rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 text-blue-700" strokeWidth={3.5} />
-                      </div>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-                <a href="#ia-reception" className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-blue-700 hover:text-blue-800 group/cta">
-                  Voir le service IA
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/cta:translate-x-0.5" strokeWidth={2.5} />
-                </a>
               </div>
+
+              <p className="text-[15.5px] text-gray-600 leading-[1.55] mb-5">
+                Quand vous ne décrochez pas, l'IA qualifie et prend le RDV.
+              </p>
+
+              {/* Pills horizontales sur fond white pour ressortir */}
+              <div className="flex flex-wrap gap-1.5 mb-7 flex-1">
+                {['24/7', 'Zéro appel perdu', 'Setup 5 min'].map((b, i) => (
+                  <span key={i} className="inline-flex items-center bg-white rounded-full text-[12px] font-semibold text-emerald-800 px-3 py-1 border border-emerald-200">
+                    {b}
+                  </span>
+                ))}
+              </div>
+
+              {/* CTA primaire vert plein avec ombre verte → ouvre le modal */}
+              <button
+                type="button"
+                onClick={() => openPopup('two-approaches-ia', 'gratuit')}
+                className="inline-flex items-center justify-center gap-1.5 text-[14.5px] font-semibold text-white bg-emerald-500 hover:bg-emerald-600 px-6 py-3 rounded-full transition-all hover:scale-[1.02]"
+                style={{ boxShadow: '0 10px 30px -10px rgba(16, 185, 129, 0.5)' }}
+              >
+                Essai gratuit 7 jours
+                <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+              </button>
             </div>
           </ScrollReveal>
 
-          {/* CARD 02 — Prospects */}
-          <ScrollReveal y={28} delay={0.18}>
-            <div className="relative rounded-[32px] bg-white p-8 lg:p-10 h-full flex flex-col overflow-hidden transition-all duration-500 hover:translate-y-[-3px]"
-                 style={{
-                   border: '1px solid rgba(99, 102, 241, 0.1)',
-                   boxShadow: '0 30px 60px -20px rgba(99, 102, 241, 0.18), 0 12px 24px -12px rgba(99, 102, 241, 0.1)',
-                 }}>
-              <div className="absolute -top-20 -right-20 w-[320px] h-[320px] rounded-full opacity-[0.08] blur-3xl pointer-events-none"
-                   style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
-              <div className="absolute top-6 right-7 text-[120px] font-black leading-none select-none pointer-events-none"
-                   style={{ color: 'rgba(99, 102, 241, 0.06)', letterSpacing: '-0.05em' }}>
-                2
+          {/* ═══ CARTE 02 — PROSPECTS (blanche neutre) ═══ */}
+          <ScrollReveal y={24} delay={0.18}>
+            <div
+              className="relative rounded-[28px] bg-white overflow-hidden h-full flex flex-col p-8 lg:p-10 transition-all duration-500 hover:-translate-y-1"
+              style={{
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 2px 20px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03)',
+              }}
+            >
+              <div className="mt-3 mb-5">
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-gray-400 mb-2">
+                  2 — Prospects qualifiés
+                </p>
+                <h3 className="text-[28px] lg:text-[34px] font-semibold text-gray-900 tracking-[-0.03em] leading-[1.02]">
+                  Des clients prêts à<br />acheter chez vous.
+                </h3>
               </div>
 
-              <div className="relative flex flex-col h-full">
-                <div className="inline-flex w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 items-center justify-center mb-6"
-                     style={{ boxShadow: '0 8px 24px -8px rgba(99, 102, 241, 0.3)' }}>
-                  <Target className="w-7 h-7 text-indigo-600" strokeWidth={1.8} />
-                </div>
-                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-indigo-700 mb-3">
-                  Service complémentaire
-                </p>
-                <h3 className="text-[24px] lg:text-[28px] font-extrabold text-gray-900 tracking-[-0.025em] mb-4 leading-[1.05]">
-                  Acquérir de nouveaux<br/>clients qualifiés.
-                </h3>
-                <p className="text-[14.5px] text-gray-500 leading-[1.6] mb-7">
-                  Vous voulez <strong className="text-gray-700 font-semibold">plus de volume</strong>. On livre des contacts qui demandent à être rappelés — exclusifs à votre zone.
-                </p>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {[
-                    'Contacts qualifiés et RGPD',
-                    'Exclusivité par zone (1 entreprise)',
-                    'Livrés en 24 h, pas plus',
-                  ].map((b, i) => (
-                    <li key={i} className="flex items-center gap-3 text-[13.5px] text-gray-700">
-                      <div className="w-[18px] h-[18px] rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 text-indigo-700" strokeWidth={3.5} />
-                      </div>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-                <a href="#leads-rgpd" className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-indigo-700 hover:text-indigo-800 group/cta">
-                  Voir l'offre Prospects
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/cta:translate-x-0.5" strokeWidth={2.5} />
-                </a>
+              <p className="text-[15.5px] text-gray-600 leading-[1.55] mb-5">
+                On vous livre des prospects qui cherchent activement <strong className="text-gray-900 font-semibold">votre service</strong>, dans votre zone. Ils attendent votre appel.
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-7 flex-1">
+                {['Exclusif/zone', 'CNIL conforme', 'Sans abonnement'].map((b, i) => (
+                  <span key={i} className="inline-flex items-center bg-gray-100 rounded-full text-[12px] font-medium text-gray-700 px-3 py-1">
+                    {b}
+                  </span>
+                ))}
               </div>
+
+              {/* CTA secondaire outline vert */}
+              <a
+                href="#leads-rgpd"
+                className="inline-flex items-center justify-center gap-1.5 text-[14.5px] font-semibold text-emerald-700 bg-white border-2 border-emerald-500 hover:bg-emerald-50 px-6 py-[10px] rounded-full transition-all"
+              >
+                Réserver ma zone
+                <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+              </a>
             </div>
           </ScrollReveal>
         </div>
 
-        {/* Visual connector — ligne descendante + label */}
-        <ScrollReveal y={20} delay={0.24}>
-          <div className="flex justify-center mb-6 lg:mb-8">
-            <div className="flex flex-col items-center gap-2.5">
-              <span className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-gray-400">
-                Ensemble ?
-              </span>
-              <div className="w-px h-10 bg-gradient-to-b from-transparent via-gray-300 to-indigo-300" />
-              <div className="w-2 h-2 rounded-full bg-indigo-400" style={{ boxShadow: '0 0 12px rgba(99, 102, 241, 0.4)' }} />
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* POWER COMBO — synthèse hero, traitement renforcé pour ce différenciateur clé */}
-        <ScrollReveal y={28} delay={0.28}>
-          <div className="relative max-w-4xl mx-auto rounded-[32px] overflow-hidden"
-               style={{
-                 background: 'linear-gradient(135deg, #E0E7FF 0%, #DBEAFE 40%, #CFFAFE 100%)',
-                 border: '1px solid rgba(99, 102, 241, 0.22)',
-                 boxShadow: '0 40px 80px -24px rgba(99, 102, 241, 0.3), 0 12px 24px -12px rgba(99, 102, 241, 0.12)',
-               }}>
-            {/* Pattern décoratif + glow inner */}
-            <div className="absolute inset-0 pointer-events-none opacity-40"
-                 style={{
-                   backgroundImage: 'radial-gradient(circle at 15% 15%, rgba(255,255,255,0.8), transparent 45%), radial-gradient(circle at 85% 85%, rgba(99,102,241,0.12), transparent 45%)',
-                 }} />
-            {/* Top accent bar */}
-            <div className="absolute top-0 left-0 right-0 h-1"
-                 style={{ background: 'linear-gradient(90deg, #6366F1 0%, #3B82F6 50%, #06B6D4 100%)' }} />
-
-            <div className="relative px-7 py-10 lg:px-14 lg:py-14 text-center">
-              {/* Badge POWER COMBO */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white mb-6"
-                   style={{
-                     border: '1px solid rgba(99, 102, 241, 0.18)',
-                     boxShadow: '0 8px 20px -6px rgba(99, 102, 241, 0.28)',
-                   }}>
-                <Zap className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600" strokeWidth={2.5} />
-                <span className="text-[11px] font-black tracking-[0.18em] uppercase bg-gradient-to-r from-indigo-700 via-blue-700 to-cyan-700 bg-clip-text text-transparent">
-                  Power Combo
-                </span>
+        {/* ═══ POWER COMBO — chiffre XXL +22 ultra visible ═══ */}
+        <ScrollReveal y={24} delay={0.24}>
+          <div
+            className="relative rounded-[28px] overflow-hidden p-8 lg:p-10"
+            style={{
+              background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 40%, #E0E7FF 100%)',
+              border: '1.5px solid rgba(16, 185, 129, 0.25)',
+              boxShadow: '0 20px 50px -15px rgba(16, 185, 129, 0.18), 0 4px 16px -8px rgba(99, 102, 241, 0.1)',
+            }}
+          >
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+              {/* Texte gauche */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-sm mb-4 border border-emerald-200/60">
+                  <Zap className="w-3 h-3 text-emerald-600 fill-emerald-600" strokeWidth={2.5} />
+                  <span className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-emerald-700">
+                    Power Combo
+                  </span>
+                </div>
+                <h3 className="text-[22px] lg:text-[28px] font-semibold text-gray-900 leading-[1.1] tracking-[-0.025em] mb-2">
+                  Activez les deux. L'IA appelle vos prospects dès livraison.
+                </h3>
+                <p className="text-[14.5px] text-gray-600 leading-relaxed">
+                  Vous arrivez juste pour conclure.
+                </p>
               </div>
 
-              <h3 className="text-[26px] lg:text-[36px] font-extrabold text-gray-900 tracking-[-0.03em] leading-[1.08] max-w-2xl mx-auto">
-                Pendant que vous travaillez,<br/>
-                <span className="bg-gradient-to-r from-indigo-600 to-blue-700 bg-clip-text text-transparent">
-                  l'IA prend les RDV.
-                </span>
-              </h3>
-              <p className="text-[15px] lg:text-[17px] text-gray-700 mt-5 leading-[1.55] max-w-xl mx-auto">
-                Vos prospects appelés dès leur livraison. Qualifiés. Avec le RDV bloqué dans votre agenda. Vous arrivez juste pour conclure.
-              </p>
-
-              {/* 3 metrics inline — l'argument concret */}
-              <div className="mt-8 grid grid-cols-3 gap-3 max-w-2xl mx-auto">
-                {[
-                  { value: '1 clic', label: 'Activation' },
-                  { value: '0 min', label: 'Au téléphone' },
-                  { value: 'Auto', label: 'RDV bloqués' },
-                ].map((m, i) => (
-                  <div key={i} className="rounded-2xl bg-white/70 backdrop-blur-sm border border-white/80 px-3 py-3 lg:py-4"
-                       style={{ boxShadow: '0 4px 12px -4px rgba(99, 102, 241, 0.1)' }}>
-                    <p className="text-[18px] lg:text-[22px] font-black tracking-[-0.02em] bg-gradient-to-br from-indigo-600 to-blue-700 bg-clip-text text-transparent leading-none">
-                      {m.value}
-                    </p>
-                    <p className="text-[10.5px] lg:text-[11.5px] font-bold tracking-[0.08em] uppercase text-gray-500 mt-2">
-                      {m.label}
-                    </p>
-                  </div>
-                ))}
+              {/* Chiffre XXL vert — killer argument visible depuis le haut */}
+              <div className="inline-flex flex-col items-center md:items-end shrink-0">
+                <div className="text-[64px] lg:text-[88px] font-bold text-emerald-600 tracking-[-0.04em] leading-none">
+                  +22
+                </div>
+                <div className="text-[12.5px] font-semibold text-gray-700 mt-1.5 tracking-tight">
+                  nouveaux clients / mois
+                </div>
               </div>
-
-              {/* Résultat tangible — ce que le combo rapporte vraiment */}
-              <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm"
-                   style={{ border: '1px solid rgba(99, 102, 241, 0.18)', boxShadow: '0 6px 16px -6px rgba(99, 102, 241, 0.18)' }}>
-                <TrendingUp className="w-4 h-4 text-indigo-600" strokeWidth={2.4} />
-                <span className="text-[13px] font-bold text-gray-900 tracking-tight">
-                  +22 nouveaux clients <span className="text-gray-500 font-semibold">/ mois en moyenne</span>
-                </span>
-              </div>
-
-              {/* Double CTA — poids visuel équivalent : IA (gradient indigo plein) vs Prospects (blanc plein gradient text) */}
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a href="#ia-reception" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[14px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
-                   style={{
-                     background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)',
-                     boxShadow: '0 12px 28px -8px rgba(99, 102, 241, 0.5)',
-                   }}>
-                  Découvrir l'IA
-                  <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
-                </a>
-                <a href="#leads-rgpd" className="group/cta2 w-full sm:w-auto inline-flex items-center justify-center gap-2 text-[14px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
-                   style={{
-                     background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%)',
-                     boxShadow: '0 12px 28px -8px rgba(124, 58, 237, 0.55)',
-                   }}>
-                  <Target className="w-4 h-4 text-white" strokeWidth={2.4} />
-                  Voir les Prospects
-                  <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/cta2:translate-x-0.5" strokeWidth={2.5} />
-                </a>
-              </div>
-
-              <p className="text-[12px] text-gray-500 mt-5">
-                Par défaut désactivé · Activable / désactivable d'un clic
-              </p>
             </div>
           </div>
         </ScrollReveal>
@@ -2656,7 +2628,7 @@ const LiveProspectsFeed = () => {
             En direct · <span className="text-gray-900 tabular-nums">{counter}</span> reçus aujourd'hui
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.1em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
+        <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.1em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
           <Shield className="w-3 h-3" strokeWidth={2.4} />
           Exclusif
         </span>
@@ -2727,7 +2699,7 @@ const LiveProspectsFeed = () => {
                 {/* Motif — badge en bas */}
                 <div className="pt-3 border-t border-gray-100/80">
                   <p className="text-[10.5px] font-bold tracking-[0.12em] uppercase text-gray-400 mb-1">Motif</p>
-                  <p className="text-[14px] font-bold text-indigo-700">{card.intent}</p>
+                  <p className="text-[14px] font-bold text-emerald-700">{card.intent}</p>
                 </div>
               </div>
             </motion.div>
@@ -2943,11 +2915,11 @@ const LeadsRGPDSection = () => {
   ];
 
   const validate = () => {
-    if (!form.entreprise.trim()) return 'Nom de l\'entreprise requis';
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Email invalide';
+    // 3 champs requis (étape 1) : nom + téléphone + secteur.
+    // Les autres infos (entreprise, email, volume) sont collectées après le 1er clic.
+    if (!form.entreprise.trim()) return 'Nom requis';
     if (!form.telephone.trim()) return 'Téléphone requis';
     if (!form.secteur.trim()) return 'Veuillez choisir un secteur';
-    if (!form.volume.trim()) return 'Veuillez indiquer un volume';
     return null;
   };
 
@@ -2973,19 +2945,17 @@ const LeadsRGPDSection = () => {
   };
 
   return (
-    <section id="leads-rgpd" className="relative py-28 md:py-44 overflow-hidden scroll-mt-24"
+    <section id="leads-rgpd" className="relative py-20 md:py-28 overflow-hidden scroll-mt-24"
              style={{
-               // Fond tinté indigo/bleu très léger — différencie visuellement de la section IA
-               // tout en restant lumineux. Style Apple "off-white tinted".
-               background: 'linear-gradient(180deg, #F5F6FB 0%, #FAFBFE 30%, #F8FAFD 70%, #F4F6FB 100%)',
+               // Fond tinté vert très léger — charte unifiée
+               background: 'linear-gradient(180deg, #F0FDF4 0%, #FAFEFB 30%, #F7FDF9 70%, #F0FDF4 100%)',
              }}>
-      {/* Ambient gradients — feel premium Apple, multi-couches très subtiles */}
+      {/* Ambient gradients verts subtils — cohérence charte */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute -top-20 left-1/4 w-[700px] h-[700px] rounded-full opacity-[0.08] blur-3xl"
-             style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
+             style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }} />
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full opacity-[0.07] blur-3xl"
-             style={{ background: 'radial-gradient(circle, #06B6D4, transparent 70%)' }} />
-        {/* Top fine line de transition douce */}
+             style={{ background: 'radial-gradient(circle, #059669, transparent 70%)' }} />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200/70 to-transparent" />
       </div>
 
@@ -2993,10 +2963,10 @@ const LeadsRGPDSection = () => {
         {/* Header centré (mobile + desktop) — typo premium */}
         <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
           <ScrollReveal y={16}>
-            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full mb-7 whitespace-nowrap">
+            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-4 py-1.5 rounded-full mb-7 whitespace-nowrap">
               <span className="relative flex w-1.5 h-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
+                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
               </span>
               {/* Mobile : version courte qui tient sur 1 ligne */}
               <span className="sm:hidden">Prospects qualifiés</span>
@@ -3008,7 +2978,7 @@ const LeadsRGPDSection = () => {
             <h2 className="text-[36px] sm:text-[52px] md:text-[64px] lg:text-[72px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]">
               Des clients qui veulent
               <br />
-              <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 déjà vous appeler.
               </span>
             </h2>
@@ -3027,7 +2997,7 @@ const LeadsRGPDSection = () => {
                 { icon: CheckCircle2, label: 'Sans engagement' },
               ].map(({ icon: Icon, label }, i) => (
                 <span key={i} className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-gray-700">
-                  <Icon className="w-3.5 h-3.5 text-indigo-600" strokeWidth={2.4} />
+                  <Icon className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.4} />
                   {label}
                 </span>
               ))}
@@ -3052,8 +3022,8 @@ const LeadsRGPDSection = () => {
                 }}
                 className="group inline-flex items-center justify-center gap-2 text-[14.5px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
                 style={{
-                  background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)',
-                  boxShadow: '0 16px 36px -10px rgba(99, 102, 241, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  boxShadow: '0 16px 36px -10px rgba(16, 185, 129, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
                 }}
               >
                 Réserver ma zone
@@ -3071,10 +3041,10 @@ const LeadsRGPDSection = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto mb-16 lg:mb-24 rounded-[28px] bg-white/85 backdrop-blur-md border border-gray-200/60 overflow-hidden"
                style={{ boxShadow: '0 24px 48px -20px rgba(15, 23, 42, 0.08), 0 8px 16px -8px rgba(15, 23, 42, 0.04)' }}>
             {[
-              { value: '1 sur 3', label: 'Prospects qui deviennent clients', accent: 'from-indigo-600 to-blue-500' },
-              { value: '24 h', label: 'Livraison après votre inscription', accent: 'from-blue-600 to-cyan-500' },
-              { value: '0 €', label: 'D\'abonnement · Payez à l\'unité', accent: 'from-cyan-600 to-teal-500' },
-              { value: '100%', label: 'Exclusivité dans votre zone', accent: 'from-violet-600 to-indigo-500' },
+              { value: '1 sur 3', label: 'Prospects qui deviennent clients', accent: 'from-emerald-600 to-teal-500' },
+              { value: '24 h', label: 'Livraison après votre inscription', accent: 'from-emerald-600 to-teal-500' },
+              { value: '0 €', label: 'D\'abonnement · Payez à l\'unité', accent: 'from-emerald-600 to-teal-500' },
+              { value: '100%', label: 'Exclusivité dans votre zone', accent: 'from-emerald-600 to-teal-500' },
             ].map((s, i) => (
               <motion.div
                 key={i}
@@ -3105,7 +3075,7 @@ const LeadsRGPDSection = () => {
             </p>
             <div className="relative">
               {/* Ligne de fond desktop qui relie les 4 étapes */}
-              <div className="hidden lg:block absolute top-[64px] left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent" aria-hidden="true" />
+              <div className="hidden lg:block absolute top-[64px] left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent" aria-hidden="true" />
 
               <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 lg:gap-x-6">
                 {[
@@ -3130,9 +3100,9 @@ const LeadsRGPDSection = () => {
                         {s.num}
                       </span>
                       {/* Icon circle — anchor point sur la ligne de connexion desktop */}
-                      <div className="relative w-14 h-14 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center mb-4 z-10"
+                      <div className="relative w-14 h-14 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center mb-4 z-10"
                            style={{ boxShadow: '0 12px 28px -10px rgba(99, 102, 241, 0.28), 0 4px 8px -4px rgba(99, 102, 241, 0.1)' }}>
-                        <Icon className="w-6 h-6 text-indigo-600" strokeWidth={1.9} />
+                        <Icon className="w-6 h-6 text-emerald-600" strokeWidth={1.9} />
                         {/* Halo subtle */}
                         <div className="absolute inset-0 rounded-2xl opacity-50 blur-md pointer-events-none -z-10"
                              style={{ background: 'radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%)' }} />
@@ -3165,7 +3135,7 @@ const LeadsRGPDSection = () => {
                 </span>
                 <div className="flex items-baseline justify-center gap-1.5 mb-1">
                   <span className="text-[14px] font-semibold text-gray-500">À partir de</span>
-                  <span className="text-[52px] lg:text-[64px] font-black tracking-[-0.04em] leading-none bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 bg-clip-text text-transparent">15&nbsp;€</span>
+                  <span className="text-[52px] lg:text-[64px] font-black tracking-[-0.04em] leading-none bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 bg-clip-text text-transparent">15&nbsp;€</span>
                 </div>
                 <p className="text-[14.5px] lg:text-[15.5px] font-bold text-gray-900 tracking-[-0.01em]">
                   le prospect qualifié
@@ -3223,8 +3193,8 @@ const LeadsRGPDSection = () => {
                     transition={{ type: 'spring', stiffness: 280, damping: 18 }}
                     className="w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4"
                     style={{
-                      background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
-                      boxShadow: '0 12px 28px -8px rgba(99, 102, 241, 0.5)',
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      boxShadow: '0 12px 28px -8px rgba(16, 185, 129, 0.45)',
                     }}
                   >
                     <Check className="w-7 h-7 text-white" strokeWidth={2.4} />
@@ -3233,74 +3203,59 @@ const LeadsRGPDSection = () => {
                   <p className="text-[14px] text-gray-500 mt-3 max-w-xs mx-auto leading-relaxed">
                     Notre équipe vous rappelle sous <span className="font-semibold text-gray-900">24h ouvrées</span> pour discuter de votre besoin.
                   </p>
-                  <div className="mt-5 mx-auto max-w-xs rounded-2xl bg-indigo-50/60 border border-indigo-100 px-4 py-3 flex items-start gap-3 text-left">
-                    <Mail className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" />
-                    <p className="text-[12.5px] text-indigo-900 leading-snug">
+                  <div className="mt-5 mx-auto max-w-xs rounded-2xl bg-emerald-50/60 border border-emerald-100 px-4 py-3 flex items-start gap-3 text-left">
+                    <Mail className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                    <p className="text-[12.5px] text-emerald-900 leading-snug">
                       <span className="font-semibold">Un email de confirmation vient de vous être envoyé.</span>
                       <br/>
-                      <span className="text-indigo-700/80">Pensez à vérifier vos spams si vous ne le voyez pas.</span>
+                      <span className="text-emerald-700/80">Pensez à vérifier vos spams si vous ne le voyez pas.</span>
                     </p>
                   </div>
                 </div>
               ) : (
                 <>
-                  <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.14em] uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.14em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full mb-4">
                     <Target className="w-3 h-3" strokeWidth={2.4} />
                     Réservez votre zone
                   </span>
                   <h3 className="text-[24px] sm:text-[28px] font-extrabold text-gray-900 tracking-[-0.025em] leading-[1.1] mb-2">
                     Recevez vos prospects
                     <br/>
-                    <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">en 24 heures.</span>
+                    <span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">en 24 heures.</span>
                   </h3>
                   <p className="text-[13.5px] text-gray-500 mb-6 leading-relaxed">
                     On vous rappelle sous 24 h pour valider votre zone et vous livrer vos premiers prospects qualifiés.
                   </p>
                   <form onSubmit={handleSubmit} className="space-y-3">
+                    {/* Étape 1 simplifiée : 3 champs seulement (nom + téléphone + secteur).
+                        Les autres infos (email, volume) seront collectées
+                        lors de l'appel de confirmation sous 24h. */}
                     <input
                       type="text"
-                      placeholder="Nom de votre entreprise"
+                      placeholder="Votre nom"
                       value={form.entreprise}
                       onChange={(e) => setForm(f => ({ ...f, entreprise: e.target.value }))}
+                      autoComplete="name"
                       style={{ fontSize: 16 }}
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Votre téléphone"
+                      value={form.telephone}
+                      onChange={(e) => setForm(f => ({ ...f, telephone: e.target.value }))}
+                      autoComplete="tel"
+                      style={{ fontSize: 16 }}
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all"
                     />
                     <select
                       value={form.secteur}
                       onChange={(e) => setForm(f => ({ ...f, secteur: e.target.value }))}
                       style={{ fontSize: 16 }}
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all"
                     >
                       {sectorOptions.map((s, i) => (
                         <option key={i} value={i === 0 ? '' : s} disabled={i === 0}>{s}</option>
-                      ))}
-                    </select>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <input
-                        type="email"
-                        placeholder="Email pro"
-                        value={form.email}
-                        onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                        style={{ fontSize: 16 }}
-                        className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                      />
-                      <input
-                        type="tel"
-                        placeholder="Téléphone"
-                        value={form.telephone}
-                        onChange={(e) => setForm(f => ({ ...f, telephone: e.target.value }))}
-                        style={{ fontSize: 16 }}
-                        className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                      />
-                    </div>
-                    <select
-                      value={form.volume}
-                      onChange={(e) => setForm(f => ({ ...f, volume: e.target.value }))}
-                      style={{ fontSize: 16 }}
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                    >
-                      {volumeOptions.map((v, i) => (
-                        <option key={i} value={i === 0 ? '' : v} disabled={i === 0}>{v}</option>
                       ))}
                     </select>
 
@@ -3315,8 +3270,8 @@ const LeadsRGPDSection = () => {
                       disabled={status === 'loading'}
                       className="group w-full mt-3 inline-flex items-center justify-center gap-2 text-[15.5px] font-bold text-white px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed tracking-tight"
                       style={{
-                        background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #4338CA 100%)',
-                        boxShadow: '0 16px 40px -12px rgba(99, 102, 241, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        boxShadow: '0 16px 40px -12px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
                       }}
                     >
                       {status === 'loading' ? 'Envoi…' : (
@@ -3384,10 +3339,10 @@ const LeadsRGPDSection = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-50px' }}
                   transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.06 }}
-                  className="relative rounded-2xl bg-white border border-gray-200/70 px-5 py-5 lg:px-6 lg:py-6 transition-all hover:border-indigo-200 hover:shadow-[0_12px_32px_-12px_rgba(99,102,241,0.18)]"
+                  className="relative rounded-2xl bg-white border border-gray-200/70 px-5 py-5 lg:px-6 lg:py-6 transition-all hover:border-emerald-200 hover:shadow-[0_12px_32px_-12px_rgba(16,185,129,0.18)]"
                 >
-                  <div className="inline-flex w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 items-center justify-center mb-3">
-                    <Icon className="w-[18px] h-[18px] text-indigo-600" strokeWidth={2.2} />
+                  <div className="inline-flex w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 items-center justify-center mb-3">
+                    <Icon className="w-[18px] h-[18px] text-emerald-600" strokeWidth={2.2} />
                   </div>
                   <p className="text-[14.5px] lg:text-[15.5px] font-bold text-gray-900 tracking-[-0.01em] leading-snug">{b.title}</p>
                   <p className="text-[12.5px] lg:text-[13.5px] text-gray-500 leading-relaxed mt-1.5">{b.desc}</p>
@@ -3544,10 +3499,28 @@ export default function IAVocaleLanding() {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupSource, setPopupSource] = useState('hero');
   const [popupPlanIntent, setPopupPlanIntent] = useState('gratuit'); // plan d'intérêt (analytics)
+  // ── Signup modal (remplace la redirection vers /inscription-trial) ──
+  // La route /inscription-trial reste accessible pour les ads payantes
+  // (Meta/Google Ads, retargeting, partage direct), mais tous les CTAs
+  // landing ouvrent désormais le modal pour zéro friction.
+  const [signupModalOpen, setSignupModalOpen] = useState(false);
+  const [signupModalSource, setSignupModalSource] = useState('hero');
+  const [signupModalPlanIntent, setSignupModalPlanIntent] = useState('gratuit');
   const openPopup = (source = 'unknown', planIntent = 'gratuit') => {
+    setSignupModalSource(source);
+    setSignupModalPlanIntent(planIntent);
+    setSignupModalOpen(true);
+    // Backwards-compat : on garde le state legacy au cas où d'autres composants l'écoutent
     setPopupSource(source);
     setPopupPlanIntent(planIntent);
-    setPopupOpen(true);
+    // Tracking analytics (placeholder — branchable plus tard sur GA/Meta/etc.)
+    try {
+      if (typeof window !== 'undefined' && typeof window.dataLayer !== 'undefined') {
+        window.dataLayer.push({ event: 'signup_modal_opened', source, planIntent });
+      }
+    } catch (_e) {
+      /* swallow */
+    }
   };
 
   // Import flow state
@@ -3582,11 +3555,11 @@ export default function IAVocaleLanding() {
   useEffect(() => {
     document.title = 'IA Vocale — Confirmations de RDV et relances automatiques | BoosterPay';
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', "L'IA appelle vos clients pour confirmer les RDV et relancer les dossiers à renouveler. Divisez vos lapins par 5. 100 appels offerts pour tester.");
+    if (meta) meta.setAttribute('content', "L'IA décroche vos appels 24/7 quand vous êtes occupé. Tous les modules inclus pour 99€ HT/mois. Essai 7 jours gratuits, annulation libre.");
     else {
       const m = document.createElement('meta');
       m.name = 'description';
-      m.content = "L'IA appelle vos clients pour confirmer les RDV et relancer les dossiers à renouveler. Divisez vos lapins par 5. 100 appels offerts pour tester.";
+      m.content = "L'IA décroche vos appels 24/7 quand vous êtes occupé. Tous les modules inclus pour 99€ HT/mois. Essai 7 jours gratuits, annulation libre.";
       document.head.appendChild(m);
     }
   }, []);
@@ -3733,6 +3706,7 @@ export default function IAVocaleLanding() {
       result: '+3 200€ de CA / mois',
       avatar: 'T',
       color: 'emerald',
+      sectorIcon: Wrench,
     },
     {
       name: 'Camille Durand',
@@ -3742,6 +3716,7 @@ export default function IAVocaleLanding() {
       result: 'No-show -42%',
       avatar: 'C',
       color: 'blue',
+      sectorIcon: Activity,
     },
     {
       name: 'Marc Lefranc',
@@ -3751,6 +3726,7 @@ export default function IAVocaleLanding() {
       result: '+8 700€ de CA / mois',
       avatar: 'M',
       color: 'violet',
+      sectorIcon: Shield,
     },
     {
       name: 'Sophie Bernard',
@@ -3760,6 +3736,7 @@ export default function IAVocaleLanding() {
       result: '+38 avis Google',
       avatar: 'S',
       color: 'yellow',
+      sectorIcon: Scissors,
     },
     {
       name: 'Pierre Martin',
@@ -3769,6 +3746,7 @@ export default function IAVocaleLanding() {
       result: 'Délais -39%',
       avatar: 'P',
       color: 'rose',
+      sectorIcon: FileText,
     },
     {
       name: 'Julie Lemaire',
@@ -3778,78 +3756,37 @@ export default function IAVocaleLanding() {
       result: 'Taux de présence 94%',
       avatar: 'J',
       color: 'amber',
+      sectorIcon: Heart,
     },
   ];
 
-  // Tarification — copy adaptée pour commerçants locaux (gérants TPE/PME)
+  // Tarification — 1 plan unique, simple et lisible (99€ HT/mois, anchor 149€)
   const pricing = [
     {
-      id: 'gratuit',
-      name: 'Essai gratuit',
-      tagline: 'Testez sans risque',
-      priceMensuel: 0,
-      priceAnnuel: 0,
-      unit: '',
-      calls: '100 appels offerts · 14 jours',
-      noCardBig: true,
-      features: [
-        'Aucune carte bancaire demandée',
-        'Tous les services activés',
-        'L\'IA décroche vos appels en 2s',
-        'Vous recevez chaque lead par SMS',
-        'Annulation en 1 clic',
-      ],
-      cta: 'Démarrer gratuitement',
-      popular: false,
-    },
-    {
-      id: 'pro',
-      name: 'Pro',
-      tagline: 'Le plus choisi par les commerçants',
-      priceMensuel: 97,
-      priceAnnuel: 77,
+      id: 'ia-vocale',
+      name: 'BoosterPay IA Vocale',
+      tagline: 'Tarif sécurisé — Verrouillez votre tarif aujourd\'hui',
+      priceMensuel: 99,
+      priceAnchor: 149,
       unit: 'HT / mois',
-      calls: '500 appels par mois',
-      pricePerCall: '0,19€/appel',
-      pricePerCallAnnuel: '0,15€/appel',
+      calls: 'Appels illimités inclus',
+      roiHint: '1 client récupéré = abonnement remboursé',
+      socialProof: '+250 pros · ⭐ 4,8/5',
       features: [
-        'Facture envoyée chaque mois (déductible en charges)',
-        'L\'IA décroche 24/7 — vous ne ratez plus un client',
-        'RDV pris automatiquement dans votre agenda',
-        'Récap par SMS dès qu\'un lead est qualifié',
-        'Tous les services inclus (renouvellements, RDV, avis, paiements)',
-        'Support téléphonique prioritaire',
+        'Réception d\'appels IA 24/7 — l\'IA décroche en 2s à votre place',
+        'Renouvellement de dossiers automatique (CT, assurances, entretiens)',
+        'Confirmation de RDV J-1 (anti-lapins)',
+        'Impact Avis Google (filtrage 4★+ vers Google, < 4★ en interne)',
+        'Accélération de paiements (délais -40%)',
+        'Robot IA sur mesure si besoin spécifique',
+        'Facture mensuelle déductible en charges',
+        'Annulation libre dans votre espace',
       ],
-      cta: 'Choisir Pro',
+      cta: 'Tester gratuitement 7 jours — rien débité avant',
       popular: true,
-      annualNote: '2 mois offerts',
-    },
-    {
-      id: 'business',
-      name: 'Business',
-      tagline: 'Pour multi-sites & gros volumes',
-      priceMensuel: 249,
-      priceAnnuel: 199,
-      unit: 'HT / mois',
-      calls: '2 000 appels par mois',
-      pricePerCall: '0,12€/appel',
-      pricePerCallAnnuel: '0,10€/appel',
-      features: [
-        'Tout le plan Pro',
-        'Facture mensuelle (déductible en charges)',
-        'Plusieurs établissements gérés en même temps',
-        'Conseiller dédié à votre commerce',
-        'Mise en place accompagnée par téléphone',
-        'Connexion à votre logiciel métier sur demande',
-      ],
-      cta: 'Choisir Business',
-      popular: false,
-      annualNote: '2 mois offerts',
+      trialText: 'Annulation en 1 clic · Aucun débit avant le 8e jour · Pas d\'engagement',
     },
   ];
-
-  // Toggle annuel/mensuel pour la grille tarifaire
-  const [pricingAnnual, setPricingAnnual] = useState(false);
 
   const faqs = [
     {
@@ -3862,15 +3799,15 @@ export default function IAVocaleLanding() {
     },
     {
       q: "Combien de temps ça prend vraiment à configurer ?",
-      a: "5 minutes pour démarrer l'essai gratuit — vous renseignez votre email, vous recevez le lien de votre espace, vous importez un CSV de contacts. Pour le module Réception 24/7, on planifie un appel de 15 min avec notre équipe pour configurer le transfert d'appel chez votre opérateur. C'est ce qui prend le plus de temps, mais on s'occupe de tout : vous donnez l'autorisation, on fait le reste."
+      a: "5 minutes pour démarrer — vous remplissez 5 champs, vous validez votre carte (essai 7 jours), votre numéro local est activé immédiatement. Pour le module Réception 24/7, on vous accompagne par email pour configurer le transfert d'appel chez votre opérateur. C'est ce qui prend le plus de temps, mais on s'occupe de tout : vous donnez l'autorisation, on fait le reste."
     },
     {
       q: "Je suis [plombier/coiffeur/garagiste], pas tech — est-ce que je vais y arriver seul ?",
-      a: "Oui. Tout passe par 2 actions simples : (1) un email pour démarrer, (2) un fichier de contacts à uploader (votre liste clients exportée depuis votre logiciel ou même une feuille Excel). Aucun code, aucune installation logicielle, aucune intégration technique à faire vous-même. Et si vous bloquez sur quelque chose, on est joignable au +33 4 51 41 05 75 — réponse en moins de 2h ouvrées."
+      a: "Oui. Tout passe par 2 actions simples : (1) remplir le formulaire d'inscription en 1 minute, (2) valider votre carte (essai 7 jours offerts). Votre numéro local est activé automatiquement. Aucun code, aucune installation logicielle, aucune intégration technique à faire vous-même. Et si vous bloquez sur quelque chose, on est joignable à contact@booster-pay.com — réponse en moins de 2h ouvrées."
     },
     {
-      q: "Que se passe-t-il après mes 100 appels offerts ?",
-      a: "Rien d'automatique. On vous envoie un email à 80% de votre essai pour vous prévenir, et un autre à 100%. Vous décidez ensuite : passer en Pro (97€ HT/mois pour 500 appels), Business (249€ HT/mois pour 2 000 appels), ou simplement ne rien faire. Aucun prélèvement automatique tant que vous n'avez pas explicitement choisi un plan payant."
+      q: "Que se passe-t-il après mes 7 jours d'essai ?",
+      a: "Si vous décidez de continuer, votre carte est débitée automatiquement de 99 € HT/mois à J+7 — pas d'autre action de votre part. Si vous préférez arrêter, vous annulez en 1 clic depuis votre espace avant le 7e jour : aucun débit n'est effectué. Vous serez prévenu par email 48h avant la fin de l'essai pour vous laisser le choix en toute transparence."
     },
 
     /* ── Questions Prospects (service indépendant) — placées dans le top 8 pour visibilité ── */
@@ -3926,11 +3863,11 @@ export default function IAVocaleLanding() {
                 <a
                   key={l.href}
                   href={l.href}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-3 py-1.5 rounded-full transition-all"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 px-3 py-1.5 rounded-full transition-all"
                 >
                   <span className="relative flex w-1.5 h-1.5">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                   </span>
                   {l.label}
                 </a>
@@ -3948,7 +3885,7 @@ export default function IAVocaleLanding() {
               href="#" onClick={(e) => { e.preventDefault(); openPopup('navbar', 'gratuit'); }}
               className="inline-flex items-center gap-2 text-[14px] font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 rounded-full hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-200"
             >
-              Essayer gratuitement — 100 appels offerts <ArrowRight className="w-4 h-4" />
+              Démarrer mon essai 7 jours <ArrowRight className="w-4 h-4" />
             </a>
           </div>
 
@@ -3956,7 +3893,7 @@ export default function IAVocaleLanding() {
           <div className="md:hidden flex items-center gap-2">
             <a
               href="#leads-rgpd"
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1.5 rounded-full active:scale-95 transition-all"
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1.5 rounded-full active:scale-95 transition-all"
               aria-label="Acheter des prospects"
             >
               <span className="relative flex w-1.5 h-1.5">
@@ -4004,7 +3941,7 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* HERO                                         */}
       {/* ============================================ */}
-      <section className="relative pt-40 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section className="relative pt-28 pb-16 md:pt-32 md:pb-24 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-white to-white" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-emerald-100/40 to-transparent rounded-full blur-3xl" />
@@ -4035,61 +3972,100 @@ export default function IAVocaleLanding() {
             {/* Left — Pure CSS animations, no framer-motion overhead */}
             <div>
               <div className="hero-fade hero-fade-1">
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-6">
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-7">
                   <Zap className="w-4 h-4" /> IA Vocale pour professionnels
                 </span>
               </div>
 
-              <h1 className="hero-fade hero-fade-2 text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
-                Occupé ?<br />
-                <GradientText>Votre IA décroche.</GradientText>
+              {/* Preuve sociale ENRICHIE au-dessus du titre — 5 avatars + 5 étoiles + 250 pros */}
+              <div className="hero-fade hero-fade-1 flex items-center gap-3 mb-8">
+                {/* Avatars empilés — tous en vert uniforme Apple */}
+                <div className="flex -space-x-2">
+                  {['T', 'S', 'M', 'J', 'C'].map((letter, i) => (
+                    <div key={i} className="w-7 h-7 rounded-full bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center ring-2 ring-white">
+                      {letter}
+                    </div>
+                  ))}
+                </div>
+                {/* Étoiles + texte */}
+                <div className="flex items-center gap-1.5">
+                  <div className="flex gap-0.5">
+                    {[1,2,3,4,5].map((s) => (
+                      <Star key={s} className="w-3.5 h-3.5 text-amber-400" fill="currentColor" strokeWidth={1} />
+                    ))}
+                  </div>
+                  <span className="text-[13px] font-semibold text-gray-700"><span className="font-bold">+250 pros</span> nous font confiance · 4,8/5</span>
+                </div>
+              </div>
+
+              {/* Titre ultra-premium dans la police projet (Plus Jakarta Sans) — cohérence totale */}
+              <h1 className="hero-fade hero-fade-2 mt-2">
+                {/* Ligne 1 — Question d'intro, extrabold (cohérent), gris Apple chic */}
+                <span
+                  className="block text-[42px] sm:text-[56px] lg:text-[64px] font-extrabold leading-[1.04] tracking-[-0.035em]"
+                  style={{ color: '#86868B' }}
+                >
+                  Occupé&nbsp;?
+                </span>
+                {/* Ligne 2 — Climax XXL, extrabold, tracking serré, gradient emerald + point signature */}
+                <span
+                  className="block mt-3 text-[60px] sm:text-[76px] lg:text-[92px] font-extrabold leading-[0.96] tracking-[-0.04em]"
+                  style={{ color: '#1D1D1F' }}
+                >
+                  Votre IA{' '}
+                  <span
+                    className="bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    }}
+                  >
+                    décroche
+                  </span>
+                  <span style={{ color: '#10B981' }}>.</span>
+                </span>
               </h1>
 
-              <p className="hero-fade hero-fade-3 mt-6 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
+              <p className="hero-fade hero-fade-3 mt-7 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
                 Pendant que vous travaillez, elle qualifie, prend RDV, et vous envoie le récap par SMS.
               </p>
 
+              {/* CTA — espace mesuré pour respiration Apple */}
               <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
                 <a
                   href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
-                  className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-8 py-4 rounded-full hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-105 transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-emerald-500 hover:bg-emerald-600 px-8 py-4 rounded-full hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200"
+                  style={{ boxShadow: '0 16px 40px -8px rgba(16, 185, 129, 0.45)' }}
                 >
-                  Essayer gratuitement — 100 appels offerts <ArrowRight className="w-5 h-5" />
+                  Démarrer mon essai 7 jours <ArrowRight className="w-5 h-5" />
                 </a>
               </div>
               <p className="hero-fade hero-fade-4 mt-3 text-sm text-gray-400">
-                Sans carte bancaire · Sans engagement · Opérationnel en 5 minutes
+                7 jours offerts · Annulation libre · Opérationnel en 5 minutes
               </p>
 
-              {/* Lien discret Prospects — pour visiteurs orientés acquisition de leads dès l'above-the-fold */}
+              {/* GAME CHANGER — Compteur live : FOMO immédiat */}
+              <LiveCounter />
+
+              {/* Lien discret Prospects */}
               <a
                 href="#leads-rgpd"
-                className="hero-fade hero-fade-4 group mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-indigo-700 hover:text-indigo-800 transition-colors"
+                className="hero-fade hero-fade-4 group mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
               >
                 Ou achetez directement des prospects qualifiés
                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
               </a>
 
-              {/* Stats */}
-              <div className="hero-fade hero-fade-5 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {/* Stats — toutes en vert uniforme + ligne fine séparation */}
+              <div className="hero-fade hero-fade-5 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-0 border-t border-gray-200 pt-8">
                 {stats.map((s, i) => (
-                  <div key={i} className="text-center sm:text-left">
-                    <p className="text-2xl md:text-3xl font-bold text-gray-900">
+                  <div key={i} className={`text-center sm:text-left px-4 ${i < stats.length - 1 ? 'sm:border-r sm:border-gray-200' : ''}`}>
+                    <p className="text-3xl md:text-4xl font-extrabold text-emerald-500 tracking-tight">
                       <AnimatedNumber value={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
                     </p>
-                    <p className="text-sm text-gray-400 mt-1">{s.label}</p>
+                    <p className="text-[12.5px] font-medium text-gray-500 mt-1.5 tracking-tight">{s.label}</p>
                   </div>
                 ))}
               </div>
-
-              {/* Mini ligne preuve sociale */}
-              <p className="hero-fade hero-fade-5 mt-6 text-[12.5px] text-gray-400 text-center sm:text-left">
-                <span className="font-semibold text-gray-600">+250 professionnels</span>
-                <span className="mx-2 text-gray-300">·</span>
-                <span className="font-semibold text-gray-600">4,8/5</span>
-                <span className="mx-2 text-gray-300">·</span>
-                <span>Made in France 🇫🇷</span>
-              </p>
             </div>
 
             {/* Right — Hero animation (desktop only) */}
@@ -4142,7 +4118,7 @@ export default function IAVocaleLanding() {
                 details: ['Transfert auto', 'Qualification lead', 'Prise de RDV', 'Récap SMS instantané'],
                 iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
                 chipBg: 'bg-amber-50', chipText: 'text-amber-700', accentBorder: 'border-amber-100',
-                cardBorder: 'border-amber-200/60',
+                cardBorder: 'border-gray-100/80',
                 ctaBg: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600',
                 badge: 'Appels entrants',
                 badgeColor: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -4184,7 +4160,7 @@ export default function IAVocaleLanding() {
                 details: ['Appel post-prestation', 'Filtrage 4★+ → Google', 'Avis < 4★ → interne', 'Lien direct par SMS'],
                 iconBg: 'bg-gradient-to-br from-yellow-400 to-amber-400',
                 chipBg: 'bg-yellow-50', chipText: 'text-yellow-700', accentBorder: 'border-yellow-100',
-                cardBorder: 'border-yellow-200/60',
+                cardBorder: 'border-gray-100/80',
                 ctaBg: 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600',
                 badge: 'Réputation',
                 badgeColor: 'bg-yellow-50 text-yellow-700 border-yellow-100',
@@ -4198,7 +4174,7 @@ export default function IAVocaleLanding() {
                 details: ['Relance automatique', 'Ton humain & pro', 'Suivi multi-tentatives', 'Délais -40%'],
                 iconBg: 'bg-gradient-to-br from-rose-500 to-pink-500',
                 chipBg: 'bg-rose-50', chipText: 'text-rose-700', accentBorder: 'border-rose-100',
-                cardBorder: 'border-rose-200/60',
+                cardBorder: 'border-gray-100/80',
                 ctaBg: 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600',
                 badge: 'Recouvrement',
                 badgeColor: 'bg-rose-50 text-rose-700 border-rose-100',
@@ -4212,7 +4188,7 @@ export default function IAVocaleLanding() {
                 details: ['Script personnalisé', 'Voix naturelle', 'Scénarios complexes', 'Intégration CRM'],
                 iconBg: 'bg-gradient-to-br from-violet-500 to-purple-500',
                 chipBg: 'bg-violet-50', chipText: 'text-violet-700', accentBorder: 'border-violet-100',
-                cardBorder: 'border-violet-200/60',
+                cardBorder: 'border-gray-100/80',
                 ctaBg: 'bg-violet-600 hover:bg-violet-700',
                 badge: 'Sur mesure',
                 badgeColor: 'bg-violet-50 text-violet-700 border-violet-100',
@@ -4227,61 +4203,70 @@ export default function IAVocaleLanding() {
                   className={`relative h-full bg-white rounded-[28px] border ${service.cardBorder} p-7 sm:p-10 flex flex-col group shadow-sm hover:shadow-2xl hover:shadow-gray-900/[0.06] transition-all duration-500 scroll-mt-24 snap-center min-w-[85%] sm:min-w-[60%] lg:min-w-0 mobile-service-card`}
                 >
                   <div className="flex items-start justify-between mb-6 sm:mb-8">
-                    <div className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ${service.iconBg} flex items-center justify-center shadow-lg`}>
-                      <service.icon className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={1.5} fill={service.id === 'impact-avis' ? 'white' : 'none'} />
+                    {/* Icône uniforme vert Apple : un seul langage visuel sur toute la page */}
+                    <div className="relative w-14 h-14 rounded-[16px] flex items-center justify-center"
+                         style={{ backgroundColor: '#ECFDF5', boxShadow: '0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0,0,0,0.04)' }}>
+                      <service.icon className="w-7 h-7 text-emerald-600" strokeWidth={2} fill={service.id === 'impact-avis' ? 'currentColor' : 'none'} />
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${service.badgeColor}`}>{service.badge}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">{service.badge}</span>
                   </div>
                   <h3 className="text-[20px] sm:text-[22px] font-extrabold text-gray-900 tracking-tight mb-3 leading-tight">{service.title}</h3>
                   <p className="text-[14.5px] sm:text-[15px] text-gray-500 leading-relaxed mb-8">{service.desc}</p>
                   <div className="flex flex-wrap gap-2 mb-8 sm:mb-10 mt-auto">
                     {service.details.map((d, j) => (
-                      <span key={j} className={`text-xs font-semibold ${service.chipText} ${service.chipBg} rounded-full px-3 py-1.5 sm:px-4 sm:py-2 border ${service.accentBorder}`}>{d}</span>
+                      <span key={j} className="text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 border border-emerald-200/60">{d}</span>
                     ))}
                   </div>
+                  {/* CTA uniforme vert — cohérence Apple : un seul style de bouton sur la page */}
                   <button
                     type="button"
                     onClick={service.action}
-                    className={`inline-flex items-center justify-center gap-2.5 ${service.ctaBg} text-white font-semibold px-6 py-3 sm:px-7 sm:py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.03] hover:shadow-lg`}
+                    className="inline-flex items-center justify-center gap-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-6 py-3 sm:px-7 sm:py-3.5 rounded-full text-sm tracking-wide transition-all duration-300 hover:scale-[1.02]"
+                    style={{ boxShadow: '0 8px 24px -8px rgba(16, 185, 129, 0.4)' }}
                   >
                     Commencer gratuitement <ArrowRight className="w-4 h-4" />
                   </button>
+                  {/* Lien discret vers la page dédiée du service */}
+                  <Link
+                    to={`/services/${service.id}`}
+                    className="mt-3 inline-flex items-center justify-center gap-1 text-[12.5px] font-medium text-gray-500 hover:text-emerald-700 transition-colors group/more"
+                  >
+                    En savoir plus
+                    <ArrowRight className="w-3 h-3 transition-transform group-hover/more:translate-x-0.5" strokeWidth={2.2} />
+                  </Link>
                 </motion.div>
               </ScrollReveal>
             ))}
           </div>
-          {/* Indicateur swipe mobile + dots */}
+          {/* Indicateur swipe mobile + dots — vert uniforme Apple */}
           <div className="lg:hidden flex flex-col items-center gap-3 mt-2">
             <div className="flex gap-1.5">
               {[0,1,2,3,4,5].map((i) => (
                 <span
                   key={i}
                   className={`h-1.5 rounded-full transition-all duration-400 ${
-                    i === activeMobileSvcIdx ? 'w-6 bg-gray-800' : 'w-1.5 bg-gray-300'
+                    i === activeMobileSvcIdx ? 'w-6 bg-emerald-500' : 'w-1.5 bg-emerald-100'
                   }`}
                 />
               ))}
             </div>
-            <p className="text-center text-[12px] text-gray-400 font-medium flex items-center gap-2">
-              <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
-              Détail du service ci-dessous
+            <p className="text-center text-[12px] text-gray-400 font-medium">
+              Glissez pour voir d'autres services
             </p>
           </div>
 
-          {/* Mobile : détail du service swipé (lien visuel mobile-only) */}
-          <MobileServiceDetail
-            activeIdx={activeMobileSvcIdx}
-            openPopup={openPopup}
-            showcases={showcasesData}
-          />
+          {/* Détail du service en dessous SUPPRIMÉ — chaque service a sa page dédiée /services/[id]
+              accessible via le lien "En savoir plus →" sous chaque card. */}
         </div>
       </section>
 
       {/* ============================================ */}
-      {/* SERVICE SHOWCASES — détail visuel par service */}
-      {/* (alterne mockup gauche/droite, desktop only)  */}
+      {/* SERVICE SHOWCASES — DÉSACTIVÉ                  */}
+      {/* Les fiches détaillées sont migrées sur les     */}
+      {/* pages /services/[id] (mini-landings dédiées).  */}
+      {/* La landing principale reste épurée Apple-clean.*/}
       {/* ============================================ */}
-      <ServiceShowcases openPopup={openPopup} showcases={showcasesData} />
+      {/* <ServiceShowcases openPopup={openPopup} showcases={showcasesData} /> */}
 
       {/* ============================================ */}
       {/* RAPPEL CONTEXTUEL PROSPECTS                  */}
@@ -4294,24 +4279,24 @@ export default function IAVocaleLanding() {
             <a href="#leads-rgpd" className="group block">
               <div className="relative rounded-[20px] overflow-hidden transition-all duration-300 group-hover:translate-y-[-2px]"
                    style={{
-                     background: 'linear-gradient(135deg, #FAFBFE 0%, #F4F6FB 100%)',
-                     border: '1px solid rgba(99, 102, 241, 0.12)',
-                     boxShadow: '0 8px 24px -12px rgba(99, 102, 241, 0.12)',
+                     background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                     border: '1px solid rgba(16, 185, 129, 0.18)',
+                     boxShadow: '0 8px 24px -12px rgba(16, 185, 129, 0.15)',
                    }}>
                 <div className="relative px-5 py-4 lg:px-7 lg:py-5 flex items-center gap-4">
-                  <div className="shrink-0 inline-flex w-10 h-10 rounded-xl bg-white border border-indigo-100 items-center justify-center"
-                       style={{ boxShadow: '0 4px 12px -4px rgba(99, 102, 241, 0.2)' }}>
-                    <Target className="w-5 h-5 text-indigo-600" strokeWidth={2} />
+                  <div className="shrink-0 inline-flex w-10 h-10 rounded-xl bg-white border border-emerald-100 items-center justify-center"
+                       style={{ boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.22)' }}>
+                    <Target className="w-5 h-5 text-emerald-600" strokeWidth={2} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 mb-0.5">
+                    <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 mb-0.5">
                       Et aussi · Service indépendant
                     </p>
                     <p className="text-[14px] lg:text-[15px] font-bold text-gray-900 tracking-[-0.01em]">
                       Vous voulez aussi de nouveaux contacts ?
                     </p>
                   </div>
-                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[13px] font-bold text-indigo-700 transition-all group-hover:gap-2">
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-700 transition-all group-hover:gap-2">
                     <span className="hidden sm:inline">Voir l'offre Prospects</span>
                     <span className="sm:hidden">Prospects</span>
                     <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
@@ -4326,7 +4311,7 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* MÉTIER SELECTOR — Votre métier. Votre IA.    */}
       {/* ============================================ */}
-      <section id="metier" className="relative pt-14 pb-20 md:py-40 bg-white scroll-mt-24 overflow-hidden">
+      <section id="metier" className="relative pt-12 pb-16 md:pt-20 md:pb-24 bg-white scroll-mt-24 overflow-hidden">
         {/* Ambient emerald subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
@@ -4366,7 +4351,7 @@ export default function IAVocaleLanding() {
       {/* TESTIMONIALS — preuve sociale juste avant la conversion    */}
       {/* Padding-bottom réduit pour resserrer la transition vers Pricing */}
       {/* ============================================ */}
-      <section className="relative pt-28 pb-16 md:pt-40 md:pb-20 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
+      <section className="relative pt-16 pb-12 md:pt-20 md:pb-16 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
         {/* Ambient gradients premium */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-32 left-[10%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
@@ -4402,7 +4387,7 @@ export default function IAVocaleLanding() {
       {/* PRICING IA — vient juste après la preuve sociale (témoignages)         */}
       {/* Padding-top réduit : transition fluide depuis les témoignages          */}
       {/* ============================================ */}
-      <section id="pricing" className="relative pt-16 pb-28 md:pt-20 md:pb-40 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+      <section id="pricing" className="relative pt-16 pb-20 md:pt-20 md:pb-24 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
         {/* Ambient gradient cyan/blue */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-32 right-[15%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
@@ -4412,107 +4397,124 @@ export default function IAVocaleLanding() {
         </div>
         <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
-            tag="Tarifs IA"
-            title="Une plateforme. Les 6 modules IA. Toujours inclus."
-            subtitle="Choisissez le plan adapté à votre volume d'appels — tous incluent les 6 modules IA sans restriction."
+            tag="Tarif"
+            title="Un seul plan. Tout inclus."
+            subtitle="L'IA Vocale BoosterPay au complet. Tous les modules, appels illimités, 7 jours pour tester."
           />
 
-          {/* Toggle annuel / mensuel */}
-          <div className="flex justify-center mb-10">
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-gray-100 border border-gray-200">
-              <button
-                type="button"
-                onClick={() => setPricingAnnual(false)}
-                className={`px-5 py-2 rounded-full text-[13.5px] font-semibold transition-all ${
-                  !pricingAnnual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Mensuel
-              </button>
-              <button
-                type="button"
-                onClick={() => setPricingAnnual(true)}
-                className={`px-5 py-2 rounded-full text-[13.5px] font-semibold transition-all flex items-center gap-1.5 ${
-                  pricingAnnual ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Annuel
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                  −2 mois
-                </span>
-              </button>
-            </div>
-          </div>
+          {/* Plan unique 99€ HT/mois — card ultra premium border verte + ombre verte forte */}
+          <div className="max-w-md mx-auto">
+            {pricing.map((plan, i) => (
+              <ScrollReveal key={plan.id} delay={i * 0.08}>
+                <div
+                  className="relative rounded-3xl bg-white p-8 lg:p-10 flex flex-col"
+                  style={{
+                    border: '2px solid #10B981',
+                    boxShadow: '0 20px 60px -10px rgba(16, 185, 129, 0.25), 0 8px 24px -8px rgba(16, 185, 129, 0.12)',
+                  }}
+                >
+                  {/* Badge "Le plus populaire" — top center, vert plein */}
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 text-[10.5px] font-bold tracking-wider uppercase text-white bg-emerald-500 px-3.5 py-1 rounded-full shadow-md">
+                    <Sparkles className="w-2.5 h-2.5" strokeWidth={2.5} />
+                    Le plus populaire
+                  </span>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {pricing.map((plan, i) => {
-              const price = pricingAnnual ? plan.priceAnnuel : plan.priceMensuel;
-              return (
-                <ScrollReveal key={plan.id} delay={i * 0.08}>
-                  <div className={`relative rounded-3xl border p-7 h-full flex flex-col transition-all duration-300 ${
-                    plan.popular
-                      ? 'border-emerald-300 bg-gradient-to-b from-emerald-50/60 to-white shadow-xl shadow-emerald-900/5 lg:-mt-3'
-                      : 'border-gray-100 bg-white hover:shadow-lg hover:shadow-gray-900/[0.04]'
-                  }`}>
-                    {plan.popular && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10.5px] font-bold tracking-wider uppercase text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-3.5 py-1 rounded-full shadow-md">
-                        Le plus populaire
-                      </span>
-                    )}
-                    <div className="mb-1">
-                      <h3 className="text-[15px] font-semibold text-gray-900">{plan.name}</h3>
-                      <p className="text-[12.5px] text-gray-500 mt-0.5">{plan.tagline}</p>
-                    </div>
-                    <div className="my-5">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-[40px] font-semibold tracking-tight text-gray-900">{price}€</span>
-                        {plan.unit && <span className="text-[12.5px] text-gray-400 font-medium">{plan.unit}</span>}
-                      </div>
-                      <p className="text-[13px] text-emerald-600 font-medium mt-1">{plan.calls}</p>
-                      {plan.pricePerCall && (
-                        <p className="text-[11.5px] text-gray-500 font-medium mt-0.5">
-                          soit <span className="font-semibold text-gray-700">{(pricingAnnual && plan.pricePerCallAnnuel) ? plan.pricePerCallAnnuel : plan.pricePerCall}</span>
-                        </p>
-                      )}
-                      {plan.annualNote && pricingAnnual && (
-                        <p className="text-[11.5px] text-emerald-700/80 font-medium mt-0.5">{plan.annualNote}</p>
-                      )}
-                    </div>
-                    {/* Bandeau "Sans CB" massif uniquement pour l'essai gratuit */}
-                    {plan.noCardBig && (
-                      <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-center">
-                        <div className="text-[13px] font-bold text-emerald-700 tracking-tight leading-tight">
-                          Sans CB · Zéro engagement · Annulation en 1 clic
-                        </div>
-                      </div>
-                    )}
-                    <ul className="space-y-2.5 mb-6 flex-1">
-                      {plan.features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-2 text-[13.5px] text-gray-600">
-                          <Check className="w-3.5 h-3.5 text-emerald-500 mt-1 flex-shrink-0" strokeWidth={2.4} />
-                          <span className="leading-relaxed">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      onClick={() => openPopup('pricing-' + plan.id, plan.id)}
-                      className={`w-full text-center py-3 rounded-full font-semibold text-[13.5px] transition-all duration-200 ${
-                        plan.popular
-                          ? 'text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-[1.02]'
-                          : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
-                      }`}
-                    >
-                      {plan.cta}
-                    </button>
+                  {/* Header */}
+                  <div className="mb-2 text-center mt-2">
+                    <h3 className="text-[18px] font-semibold text-gray-900 tracking-tight">{plan.name}</h3>
+                    <p className="text-[13px] text-gray-500 mt-1.5">{plan.tagline}</p>
                   </div>
-                </ScrollReveal>
-              );
-            })}
+
+                  {/* Prix XXL */}
+                  <div className="my-7 text-center">
+                    {plan.roiHint && (
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-[11.5px] font-semibold tracking-tight mb-4">
+                        <Check className="w-3 h-3" strokeWidth={2.6} />
+                        {plan.roiHint}
+                      </div>
+                    )}
+                    {plan.priceAnchor && (
+                      <div className="inline-flex items-center justify-center gap-2.5 mb-2">
+                        <span
+                          className="text-[20px] font-semibold text-gray-400"
+                          style={{
+                            textDecoration: 'line-through',
+                            textDecorationColor: '#EF4444',
+                            textDecorationThickness: '2px',
+                          }}
+                        >
+                          {plan.priceAnchor}€
+                        </span>
+                        <span className="inline-flex items-center text-[12px] font-bold tracking-tight px-2.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                          −{Math.round((1 - plan.priceMensuel / plan.priceAnchor) * 100)}%
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-[80px] font-extrabold tracking-[-0.045em] text-gray-900 leading-none">{plan.priceMensuel}€</span>
+                      <span className="text-[18px] text-gray-500 font-medium">{plan.unit}</span>
+                    </div>
+                    <p className="text-[14px] text-emerald-700 font-semibold mt-3">{plan.calls}</p>
+                    {plan.socialProof && (
+                      <p className="text-[12.5px] text-gray-500 mt-1.5 font-medium">{plan.socialProof}</p>
+                    )}
+                  </div>
+
+                  {/* Calcul ROI visible — argument décisif */}
+                  <div className="mb-6 rounded-2xl bg-emerald-50 border border-emerald-200/70 p-4 text-center">
+                    <div className="text-[12.5px] font-semibold text-emerald-800 leading-relaxed">
+                      Nos clients récupèrent en moyenne <span className="font-bold">10h/semaine</span><br/>
+                      + <span className="font-bold">4 nouveaux clients/mois</span>.<br/>
+                      <span className="text-emerald-700">ROI moyen : <span className="font-bold text-[14px]">×8</span>.</span>
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="space-y-2.5 mb-7 flex-1">
+                    {plan.features.map((f, j) => (
+                      <li key={j} className="flex items-start gap-2.5 text-[13.5px] text-gray-700">
+                        <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
+                        <span className="leading-relaxed">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* 3 blocs reassurance avec icônes — fond emerald-50, lever objections */}
+                  <div className="grid grid-cols-3 gap-2 mb-6">
+                    {[
+                      { icon: Check, label: '7 jours\noffrets' },
+                      { icon: Shield, label: 'Aucun débit\navant J+8' },
+                      { icon: Sparkles, label: 'Annulation\nen 1 clic' },
+                    ].map((r, idx) => {
+                      const RIcon = r.icon || Check;
+                      return (
+                        <div key={idx} className="rounded-2xl bg-emerald-50 border border-emerald-100/60 p-2.5 text-center">
+                          <RIcon className="w-3.5 h-3.5 text-emerald-600 mx-auto mb-1" strokeWidth={2.4} />
+                          <div className="text-[10.5px] font-semibold text-emerald-800 leading-tight whitespace-pre-line">
+                            {r.label}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* CTA — vert plein avec ombre verte signature → ouvre le modal */}
+                  <button
+                    type="button"
+                    onClick={() => openPopup('pricing-' + plan.id, plan.id)}
+                    className="w-full text-center inline-flex items-center justify-center gap-1.5 py-3.5 rounded-full font-semibold text-[14px] transition-all duration-200 text-white bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.02]"
+                    style={{ boxShadow: '0 12px 32px -8px rgba(16, 185, 129, 0.5)' }}
+                  >
+                    {plan.cta}
+                    <ArrowRight className="w-4 h-4" strokeWidth={2.4} />
+                  </button>
+                </div>
+              </ScrollReveal>
+            ))}
           </div>
 
           <p className="mt-10 text-center text-[12.5px] text-gray-400">
-            Tous les prix sont HT. Annulation en 1 clic. Pas de frais cachés.
+            Tarif HT. Annulation libre dans votre espace. Pas de frais cachés.
           </p>
 
           {/* Pont upsell vers Prospects — service indépendant mais complémentaire */}
@@ -4520,24 +4522,24 @@ export default function IAVocaleLanding() {
             <a href="#leads-rgpd" className="group block mt-10 lg:mt-12 max-w-3xl mx-auto">
               <div className="relative rounded-[20px] overflow-hidden transition-all duration-300 group-hover:translate-y-[-2px]"
                    style={{
-                     background: 'linear-gradient(135deg, #FAFBFE 0%, #F4F6FB 100%)',
-                     border: '1px solid rgba(99, 102, 241, 0.14)',
-                     boxShadow: '0 8px 24px -12px rgba(99, 102, 241, 0.14)',
+                     background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                     border: '1px solid rgba(16, 185, 129, 0.18)',
+                     boxShadow: '0 8px 24px -12px rgba(16, 185, 129, 0.15)',
                    }}>
                 <div className="relative px-5 py-4 lg:px-7 lg:py-5 flex items-center gap-4">
-                  <div className="shrink-0 inline-flex w-10 h-10 rounded-xl bg-white border border-indigo-100 items-center justify-center"
-                       style={{ boxShadow: '0 4px 12px -4px rgba(99, 102, 241, 0.22)' }}>
-                    <Target className="w-5 h-5 text-indigo-600" strokeWidth={2} />
+                  <div className="shrink-0 inline-flex w-10 h-10 rounded-xl bg-white border border-emerald-100 items-center justify-center"
+                       style={{ boxShadow: '0 4px 12px -4px rgba(16, 185, 129, 0.22)' }}>
+                    <Target className="w-5 h-5 text-emerald-600" strokeWidth={2} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-indigo-700 mb-0.5">
+                    <p className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 mb-0.5">
                       Boostez encore · Service indépendant
                     </p>
                     <p className="text-[14px] lg:text-[15px] font-bold text-gray-900 tracking-[-0.01em]">
-                      Achetez aussi des prospects qualifiés <span className="text-indigo-700">à partir de 15&nbsp;€</span>
+                      Achetez aussi des prospects qualifiés <span className="text-emerald-700">à partir de 15&nbsp;€</span>
                     </p>
                   </div>
-                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[13px] font-bold text-indigo-700 transition-all group-hover:gap-2">
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[13px] font-bold text-emerald-700 transition-all group-hover:gap-2">
                     <span className="hidden sm:inline">Voir l'offre Prospects</span>
                     <span className="sm:hidden">Voir</span>
                     <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
@@ -4557,7 +4559,7 @@ export default function IAVocaleLanding() {
 
       {/* FAQ                                          */}
       {/* ============================================ */}
-      <section id="faq" className="relative pt-24 pb-20 md:pt-32 md:pb-24 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+      <section id="faq" className="relative pt-16 pb-16 md:pt-20 md:pb-20 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
         {/* Ambient subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.03] blur-3xl"
@@ -4582,7 +4584,7 @@ export default function IAVocaleLanding() {
                       animate={{ rotate: openFaq === i ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      <ChevronDown className="w-5 h-5 text-emerald-500 flex-shrink-0" strokeWidth={2.5} />
                     </motion.div>
                   </button>
                   <AnimatePresence>
@@ -4622,59 +4624,79 @@ export default function IAVocaleLanding() {
       {/* FINAL CTA                                    */}
       {/* Padding top resserré : transition fluide FAQ → Close */}
       {/* ============================================ */}
-      <section className="relative pt-14 pb-20 md:pt-24 md:pb-40 bg-white overflow-hidden">
+      <section className="relative pt-12 pb-16 md:pt-16 md:pb-24 bg-white overflow-hidden">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <ScrollReveal>
             <div className="relative rounded-[40px] p-12 md:p-20 overflow-hidden"
                  style={{
-                   background: 'linear-gradient(135deg, #047857 0%, #059669 35%, #10B981 70%, #14B8A6 100%)',
-                   boxShadow: '0 40px 80px -20px rgba(5, 150, 105, 0.4), 0 20px 40px -10px rgba(15, 23, 42, 0.1)',
+                   background: 'linear-gradient(135deg, #D1FAE5 0%, #ECFDF5 60%, #F0FDF4 100%)',
+                   boxShadow: '0 30px 60px -15px rgba(16, 185, 129, 0.18), 0 0 0 1px rgba(16, 185, 129, 0.12)',
                  }}>
-              {/* Background decoration premium */}
-              <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-white/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-white/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
-
-              {/* Grain texture subtle */}
-              <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
-                   style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence baseFrequency=\'0.9\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")' }} />
+              {/* Background decoration premium clair */}
+              <div className="absolute -top-20 -right-20 w-[400px] h-[400px] bg-emerald-200/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-teal-100/40 rounded-full blur-3xl pointer-events-none" />
 
               <div className="relative">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11.5px] font-bold tracking-[0.12em] uppercase text-white bg-white/15 border border-white/20 backdrop-blur-sm mb-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  Sans carte bancaire
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-800 bg-white border border-emerald-200/70 mb-6 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  7 jours offerts
                 </span>
-                <h2 className="text-[40px] sm:text-[52px] md:text-[64px] font-extrabold text-white leading-[1.02] tracking-[-0.025em] mb-5">
-                  100 appels offerts.
-                  <br />
-                  <span className="text-emerald-100">Zéro engagement.</span>
+                <h2 className="text-[40px] sm:text-[52px] md:text-[64px] font-extrabold text-gray-900 leading-[1.02] tracking-[-0.03em] mb-5">
+                  Quand vous êtes occupé,<br/>
+                  <span className="text-emerald-600">l'IA décroche à votre place.</span>
                 </h2>
-                <p className="text-[17px] md:text-[19px] text-emerald-50/90 max-w-xl mx-auto mb-10 leading-[1.55] font-normal">
-                  Testez l'IA vocale BoosterPay sans risque. En 5 minutes, votre IA décroche vos appels 24/7 — vous constatez les résultats dès le premier lead.
+                <p className="text-[17px] md:text-[19px] text-gray-600 max-w-xl mx-auto mb-10 leading-[1.55] font-normal">
+                  Pour ne plus jamais laisser filer un seul lead. 7 jours offerts pour tester.
                 </p>
 
                 {/* CTA inline : email + bouton */}
                 <FinalCtaInline openPopup={openPopup} />
 
-                {/* Séparation visuelle + CTA Prospects (poids visuel équivalent au CTA IA) */}
+                {/* Micro-texte 3 objections levées — sous le formulaire, en ligne */}
+                <p className="mt-4 text-[13px] text-gray-500 leading-relaxed">
+                  Aucune carte de crédit requise · Opérationnel en 5 minutes · Annulation en 1 clic
+                </p>
+
+                {/* 3 preuves sociales temps réel — urgence + confiance */}
+                <div className="mt-10 max-w-2xl mx-auto">
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    {[
+                      { name: 'Thomas', role: 'Plombier · Lyon', time: 'il y a 4 min' },
+                      { name: 'Sophie', role: 'Salon · Nantes', time: 'il y a 12 min' },
+                      { name: 'Marc', role: 'Garagiste · Brest', time: 'il y a 18 min' },
+                    ].map((p, idx) => (
+                      <div key={idx} className="flex items-center gap-2.5 bg-white/70 backdrop-blur-sm rounded-2xl px-3 py-2.5 border border-emerald-100/40">
+                        {/* Avatar uniforme vert — cohérence Apple */}
+                        <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white text-[11.5px] font-bold flex items-center justify-center">
+                          {p.name[0]}
+                        </div>
+                        <div className="text-left min-w-0">
+                          <p className="text-[12px] font-semibold text-gray-900 truncate"><span className="font-bold">{p.name}</span> ({p.role})</p>
+                          <p className="text-[10.5px] text-gray-500">a démarré {p.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Séparation + CTA Prospects — fond blanc + ombre violette */}
                 <div className="mt-8 max-w-md mx-auto">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex-1 h-px bg-white/15" />
-                    <span className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-white/60">
+                    <div className="flex-1 h-px bg-emerald-200/60" />
+                    <span className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-gray-400">
                       Ou
                     </span>
-                    <div className="flex-1 h-px bg-white/15" />
+                    <div className="flex-1 h-px bg-emerald-200/60" />
                   </div>
                   <a href="#leads-rgpd"
-                     className="group inline-flex items-center justify-center gap-2 w-full px-5 py-4 rounded-2xl bg-white transition-all hover:scale-[1.02] active:scale-[0.99]"
-                     style={{ boxShadow: '0 16px 36px -10px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.3) inset' }}>
-                    <Target className="w-4 h-4 text-indigo-600" strokeWidth={2.4} />
-                    <span className="text-[14.5px] font-bold bg-gradient-to-r from-indigo-700 to-blue-700 bg-clip-text text-transparent">
+                     className="group inline-flex items-center justify-center gap-2 w-full px-5 py-3.5 rounded-full bg-white border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 transition-all hover:scale-[1.01]">
+                    <Target className="w-4 h-4 text-emerald-600" strokeWidth={2.4} />
+                    <span className="text-[14.5px] font-semibold">
                       Réserver votre zone Prospects
                     </span>
-                    <ArrowRight className="w-4 h-4 text-indigo-700 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
                   </a>
-                  <p className="text-[11.5px] text-white/70 mt-2.5 text-center">
+                  <p className="text-[11.5px] text-gray-500 mt-2.5 text-center">
                     À partir de 15 € le prospect · Sans abonnement
                   </p>
                 </div>
@@ -4687,46 +4709,51 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* FOOTER                                       */}
       {/* ============================================ */}
-      <footer className="bg-gray-900 text-white py-16">
+      <footer className="py-16 border-t border-gray-200" style={{ backgroundColor: '#F9FAFB' }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
             <div>
-              <h4 className="text-xl font-bold mb-4">
-                <GradientText>BoosterPay</GradientText>
+              <h4 className="text-xl font-bold mb-4 text-emerald-600 tracking-tight">
+                BoosterPay
               </h4>
-              <p className="text-sm text-gray-400 leading-relaxed">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 L'IA vocale qui décroche, relance, qualifie et convertit — automatiquement.
               </p>
+              {/* Badge Made in France */}
+              <div className="mt-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs font-semibold text-gray-700">
+                <span>Made in France</span>
+                <span>🇫🇷</span>
+              </div>
             </div>
             <div>
-              <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Produit</h5>
+              <h5 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Produit</h5>
               <ul className="space-y-2">
-                <li><a href="#features" className="text-sm text-gray-400 hover:text-white transition-colors">Fonctionnalités</a></li>
-                <li><a href="#usecases" className="text-sm text-gray-400 hover:text-white transition-colors">Cas d'usage</a></li>
-                <li><a href="#pricing" className="text-sm text-gray-400 hover:text-white transition-colors">Tarifs</a></li>
-                <li><a href="#faq" className="text-sm text-gray-400 hover:text-white transition-colors">FAQ</a></li>
+                <li><a href="#features" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">Fonctionnalités</a></li>
+                <li><a href="#usecases" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">Cas d'usage</a></li>
+                <li><a href="#pricing" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">Tarifs</a></li>
+                <li><a href="#faq" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">FAQ</a></li>
               </ul>
             </div>
             <div>
-              <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Légal</h5>
+              <h5 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Légal</h5>
               <ul className="space-y-2">
-                <li><Link to="/mentions-legales" className="text-sm text-gray-400 hover:text-white transition-colors">Mentions légales</Link></li>
-                <li><Link to="/cgv" className="text-sm text-gray-400 hover:text-white transition-colors">CGV</Link></li>
-                <li><Link to="/politique-confidentialite" className="text-sm text-gray-400 hover:text-white transition-colors">Politique de confidentialité</Link></li>
+                <li><Link to="/mentions-legales" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">Mentions légales</Link></li>
+                <li><Link to="/cgv" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">CGV</Link></li>
+                <li><Link to="/politique-confidentialite" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">Politique de confidentialité</Link></li>
               </ul>
             </div>
             <div>
-              <h5 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wider">Contact</h5>
+              <h5 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Contact</h5>
               <ul className="space-y-2">
-                <li><a href="mailto:contact@booster-pay.com" className="text-sm text-gray-400 hover:text-white transition-colors">contact@booster-pay.com</a></li>
-                <li><span className="text-sm text-gray-400">Bretagne, France</span></li>
+                <li><a href="mailto:contact@booster-pay.com" className="text-sm text-gray-600 hover:text-emerald-700 transition-colors">contact@booster-pay.com</a></li>
+                <li><span className="text-sm text-gray-600">Bretagne, France</span></li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} BoosterPay. Tous droits réservés.</p>
-            <p className="text-xs text-gray-500">Fait avec passion en Bretagne.</p>
+            <p className="text-xs text-gray-500">Fait avec passion en Bretagne 🇫🇷</p>
           </div>
         </div>
       </footer>
@@ -4741,6 +4768,13 @@ export default function IAVocaleLanding() {
         onClose={() => setPopupOpen(false)}
         source={popupSource + (popupPlanIntent !== 'gratuit' ? ':' + popupPlanIntent : '')}
         plan="gratuit"
+      />
+      {/* ─── Modal d'inscription Apple premium — déclenché par tous les CTAs ─── */}
+      <SignupModal
+        isOpen={signupModalOpen}
+        onClose={() => setSignupModalOpen(false)}
+        source={signupModalSource}
+        planIntent={signupModalPlanIntent}
       />
       <FloatingContact />
     </div>
