@@ -17,7 +17,7 @@
 //  puis envoie au CRM Apps Script via l'action "injectContacts".
 // ─────────────────────────────────────────────────────────────────
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -152,7 +152,33 @@ export default function MesModules() {
   }, []);
 
   const isDemoMode = /TEST|DEMO/i.test(commercantId);
-  const [nomCommerce] = useState(isDemoMode ? 'Garage Dupont' : '');
+  const [nomCommerce, setNomCommerce] = useState(isDemoMode ? 'Garage Dupont' : '');
+
+  // Hydrate nom_commerce depuis la sheet via getEspaceAbonne
+  // (pour que la sidebar affiche le vrai nom au lieu du fallback "Mon espace")
+  useEffect(() => {
+    if (!commercantId || isDemoMode) return;
+    const apiUrl = import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
+    if (!apiUrl) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getEspaceAbonne', commercant_id: commercantId }),
+        });
+        const json = await res.json();
+        if (cancelled) return;
+        if (json.ok && json.espace?.nom_commerce) {
+          setNomCommerce(json.espace.nom_commerce);
+        }
+      } catch (_e) {
+        // silent
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [commercantId, isDemoMode]);
 
   const [activeId, setActiveId] = useState(MODULES[1].id); // Renouvellement par défaut (1er module avec contacts)
   const [tab, setTab] = useState('manuelle'); // 'manuelle' | 'csv'

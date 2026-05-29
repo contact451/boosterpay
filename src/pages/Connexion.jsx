@@ -52,11 +52,17 @@ export default function Connexion() {
         setStatus('not_found');
       } else {
         setStatus('error');
-        setError(
-          json.error === 'email_send_failed'
-            ? "L'envoi a échoué. Réessayez dans quelques instants."
-            : 'Une erreur est survenue. Réessayez.'
-        );
+        // Affichage brut du JSON retourné pour faciliter le debug
+        const debugInfo = JSON.stringify(json, null, 2);
+        if (json.error === 'email_send_failed') {
+          setError("L'envoi de l'email a échoué côté serveur.\n\nDétail backend :\n" + debugInfo);
+        } else if (json.error === 'unknown_action') {
+          setError('Service de connexion indisponible (config Apps Script à mettre à jour).\n\nDétail backend :\n' + debugInfo);
+        } else if (json.error === 'email_required') {
+          setError('Veuillez saisir un email.');
+        } else {
+          setError('Erreur : ' + (json.error || 'inconnue') + '\n\nDétail backend :\n' + debugInfo);
+        }
       }
     } catch (err) {
       setStatus('error');
@@ -324,6 +330,9 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
               color: '#991B1B',
               fontSize: '13px',
               lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              fontFamily: 'inherit',
             }}
           >
             {error}
@@ -391,8 +400,14 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
         }}
       >
         <div
-          className="flex items-center justify-center"
-          style={{ gap: '14px', flexWrap: 'wrap' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            gap: '12px 14px',
+            rowGap: '10px',
+          }}
         >
           <TrustItem Icon={Shield} label="Lien unique" />
           <Dot />

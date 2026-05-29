@@ -78,7 +78,21 @@ function SubscriptionConfirmation({ commercantId }) {
   const [numeroVirtuel, setNumeroVirtuel] = useState('');
   const [mobileCommercant, setMobileCommercant] = useState(''); // pour l'étape 2
   const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied'
+  const [waitedTooLong, setWaitedTooLong] = useState(false); // après 30s sans numéro
   const numeroReceivedRef = useRef(false);
+
+  // ── Anti-blocage : si après 30s on n'a toujours pas de numéro, on affiche
+  // un message rassurant et un bouton pour explorer les modules en attendant.
+  // Le cron Apps Script retryFailedProvisioning_ va s'occuper du provisioning
+  // côté serveur et envoyer un email "Votre IA est active sur +33..." dès succès.
+  useEffect(() => {
+    if (step !== 'ready' || numeroVirtuel) {
+      setWaitedTooLong(false);
+      return;
+    }
+    const t = setTimeout(() => setWaitedTooLong(true), 30000);
+    return () => clearTimeout(t);
+  }, [step, numeroVirtuel]);
 
   // Clé localStorage pour persister le profil de ce commerçant
   const storageKey = commercantId ? `bp_profile_${commercantId}` : '';
@@ -105,6 +119,61 @@ function SubscriptionConfirmation({ commercantId }) {
       // localStorage indisponible — comportement normal (form étape 2)
     }
   }, [storageKey]);
+
+  // ── Hydrate depuis la sheet si profil déjà complet en BDD ──
+  // Cas typique : utilisateur qui revient via magic link sur un nouveau
+  // navigateur / nouvel appareil → pas de localStorage local, MAIS profil
+  // déjà rempli en sheet. On évite ainsi de re-demander nom_commerce et
+  // code_postal au client.
+  useEffect(() => {
+    if (!commercantId || typeof window === 'undefined') return;
+    // Si localStorage a déjà fait le skip → on ne fait rien
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data?.nom_commerce && data?.code_postal) return;
+      }
+    } catch (_e) {}
+
+    // Mode démo : pas de fetch (l'autre useEffect injecte les valeurs)
+    if (/TEST|DEMO/i.test(commercantId)) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(VONAGE_CRM_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getEspaceAbonne', commercant_id: commercantId }),
+        });
+        const json = await res.json();
+        if (cancelled) return;
+        if (json.ok && json.espace?.nom_commerce && json.espace?.code_postal) {
+          // Profil déjà complet en BDD → skip form
+          setProfile({
+            nom_commerce: json.espace.nom_commerce,
+            code_postal: json.espace.code_postal,
+          });
+          if (json.espace.numero_virtuel) {
+            setNumeroVirtuel(json.espace.numero_virtuel);
+            numeroReceivedRef.current = true;
+          }
+          persistProfile({
+            nom_commerce: json.espace.nom_commerce,
+            code_postal: json.espace.code_postal,
+            numero_virtuel: json.espace.numero_virtuel || '',
+            hydratedFromBackend: true,
+          });
+          setStep('ready');
+        }
+      } catch (_e) {
+        // Network fail : on laisse le form s'afficher (comportement par défaut)
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commercantId]);
 
   // Helper : persiste un patch dans localStorage
   function persistProfile(patch) {
@@ -700,6 +769,11 @@ function SubscriptionConfirmation({ commercantId }) {
                         C'est votre nouveau numéro professionnel.<br />
                         <strong className="text-gray-900">Communiquez-le à vos clients</strong> — l'IA décroche quand vous êtes occupé.
                       </>
+                    ) : waitedTooLong ? (
+                      <>
+                        L'attribution prend un peu plus de temps que prévu.<br />
+                        <strong className="text-gray-900">Pas d'inquiétude</strong> — vous recevrez votre numéro par email dans les prochaines minutes. Vous pouvez explorer vos modules en attendant.
+                      </>
                     ) : (
                       <>
                         Votre numéro local est en cours d'attribution.<br />
@@ -738,6 +812,24 @@ function SubscriptionConfirmation({ commercantId }) {
                       </>
                     )}
                   </motion.button>
+
+                  {/* Bouton de secours après 30s sans numéro — accès libre aux modules */}
+                  {waitedTooLong && !numeroVirtuel && (
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        if (commercantId) {
+                          navigate('/espace/modules?id=' + encodeURIComponent(commercantId));
+                        }
+                      }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                      className="w-full inline-flex items-center justify-center gap-2 px-7 py-3 mt-3 rounded-[12px] font-semibold text-[14px] text-emerald-700 bg-white border border-emerald-200 hover:bg-emerald-50 transition-all"
+                    >
+                      Explorer mes modules en attendant
+                    </motion.button>
+                  )}
                 </div>
               </motion.div>
 

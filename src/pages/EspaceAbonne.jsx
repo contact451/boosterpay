@@ -68,9 +68,9 @@ export default function EspaceAbonne() {
     document.title = 'BoosterPay — Mon espace';
   }, []);
 
-  // ─── Magic link : si l'URL contient ?token=XXX, on le vérifie auprès du backend
-  // qui retourne le commercant_id correspondant. Puis on clean l'URL (retire le
-  // token) pour éviter qu'il traîne dans l'historique du navigateur.
+  // ─── Compat ancien magic link : si l'URL contient encore ?token=XXX
+  // (lien envoyé avant le changement vers les liens permanents), on tente
+  // de le résoudre puis on clean l'URL. Sinon on continue normalement.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -88,20 +88,11 @@ export default function EspaceAbonne() {
         const data = await res.json();
         if (data.ok && data.commercant_id) {
           setCommercantId(data.commercant_id);
-          // Clean URL : retire le token, garde uniquement ?id=BP-XXX
           const cleanUrl = window.location.pathname + '?id=' + encodeURIComponent(data.commercant_id);
           window.history.replaceState({}, '', cleanUrl);
-        } else {
-          setError(
-            data.error === 'expired'
-              ? "Ce lien a expiré. Demandez-en un nouveau sur la page de connexion."
-              : "Ce lien n'est plus valide. Demandez-en un nouveau sur la page de connexion."
-          );
-          setLoading(false);
         }
       } catch (err) {
-        setError('Vérification impossible. Réessayez ou demandez un nouveau lien.');
-        setLoading(false);
+        // Silencieux — on tombe sur la logique commercant_id classique
       } finally {
         setVerifyingMagicLink(false);
       }
@@ -111,7 +102,7 @@ export default function EspaceAbonne() {
   useEffect(() => {
     if (verifyingMagicLink) return;
     if (!commercantId) {
-      // Si pas de commercant_id et pas en train de vérifier un token, rediriger vers connexion
+      // Pas d'identifiant et pas de token : on renvoie vers connexion
       const params = new URLSearchParams(window.location.search);
       if (!params.get('token')) {
         navigate('/connexion', { replace: true });
