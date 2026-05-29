@@ -3880,7 +3880,13 @@ export default function IAVocaleLanding() {
           </div>
 
           {/* CTA unique navbar — ultra-visible */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-4">
+            <Link
+              to="/connexion"
+              className="text-[14px] font-medium text-gray-600 hover:text-emerald-700 transition-colors duration-200"
+            >
+              Se connecter
+            </Link>
             <a
               href="#" onClick={(e) => { e.preventDefault(); openPopup('navbar', 'gratuit'); }}
               className="inline-flex items-center gap-2 text-[14px] font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 rounded-full hover:shadow-lg hover:shadow-emerald-500/30 hover:scale-105 transition-all duration-200"
@@ -3932,6 +3938,13 @@ export default function IAVocaleLanding() {
                 <button type="button" onClick={() => { setMobileMenuOpen(false); openPopup('mobile-menu', 'gratuit'); }} className="block w-full text-center text-white bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-3 rounded-full font-semibold mt-2">
                   Essai gratuit
                 </button>
+                <Link
+                  to="/connexion"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center text-[14px] font-medium text-gray-600 hover:text-emerald-700 pt-2"
+                >
+                  J'ai déjà un compte — Se connecter
+                </Link>
               </div>
             </motion.div>
           )}

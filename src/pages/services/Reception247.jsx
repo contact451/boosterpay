@@ -18,7 +18,7 @@ export default function Reception247() {
           { value: '×3', label: 'Leads qualifiés' },
         ],
         howItWorks: [
-          { title: 'Vous configurez le renvoi', desc: 'En 5 minutes : votre mobile renvoie vers votre numéro BoosterPay quand vous ne décrochez pas dans les 10 secondes.' },
+          { title: 'Vous configurez le renvoi', desc: 'En 5 minutes : votre mobile renvoie vers votre numéro BoosterPay quand vous ne pouvez pas répondre.' },
           { title: 'L\'IA décroche pour vous', desc: 'L\'IA répond au nom de votre entreprise, comprend le besoin du client et qualifie naturellement la demande.' },
           { title: 'Vous recevez le lead par SMS', desc: 'Récap immédiat : qui a appelé, pour quoi, et le RDV si l\'IA en a pris un dans votre agenda.' },
         ],

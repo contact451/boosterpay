@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { CheckCircle2, ArrowRight, Shield, Mail, Phone, Sparkles, Calendar, Check, MapPin, Store } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, ArrowRight, Shield, Mail, Phone, Sparkles, Calendar, Check, MapPin, Store, PhoneCall, Bot, Smartphone, Copy, PartyPopper, Zap, CreditCard } from 'lucide-react';
+import EspaceLayout from '../components/EspaceLayout';
 
 // URL Apps Script Vonage CRM (= celle qui gère les abonnés + espace)
 const VONAGE_CRM_API_URL = import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL
@@ -62,10 +63,59 @@ export default function MerciPage() {
 //  Étape 2 sur 2 : mini form qui complète le profil (nom_commerce + code_postal)
 // ─────────────────────────────────────────────────────────────────
 function SubscriptionConfirmation({ commercantId }) {
+  const navigate = useNavigate();
   const espaceUrl = commercantId ? `/configurer?id=${encodeURIComponent(commercantId)}` : '/configurer';
   const [profile, setProfile] = useState({ nom_commerce: '', code_postal: '' });
-  const [step, setStep] = useState('form'); // 'form' | 'saving' | 'done' | 'skipped'
+  // step machine :
+  //  'form'         → user remplit nom_commerce + code_postal
+  //  'saving'       → POST en cours vers Apps Script
+  //  'provisioning' → animation de provisioning + polling Apps Script pour le numéro
+  //  'ready'        → numéro révélé + tuto + test live
+  //  'expired'      → fallback si le numéro met > 20s à arriver
+  const [step, setStep] = useState('form');
   const [errors, setErrors] = useState({});
+  const [provisioningStep, setProvisioningStep] = useState(0); // 0..3
+  const [numeroVirtuel, setNumeroVirtuel] = useState('');
+  const [mobileCommercant, setMobileCommercant] = useState(''); // pour l'étape 2
+  const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied'
+  const numeroReceivedRef = useRef(false);
+
+  // Clé localStorage pour persister le profil de ce commerçant
+  const storageKey = commercantId ? `bp_profile_${commercantId}` : '';
+
+  // ── Hydrate depuis localStorage si l'user revient (déjà complété le form) ──
+  // Évite de refaire saisir nom_commerce + code_postal à chaque navigation entre
+  // les sections de l'espace. Skip directement à step='ready'.
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (data?.nom_commerce && data?.code_postal) {
+        setProfile({ nom_commerce: data.nom_commerce, code_postal: data.code_postal });
+        if (data.numero_virtuel) {
+          setNumeroVirtuel(data.numero_virtuel);
+          numeroReceivedRef.current = true;
+        }
+        if (data.mobile) setMobileCommercant(data.mobile);
+        setStep('ready'); // skip form + provisioning, on est chez nous
+      }
+    } catch (_e) {
+      // localStorage indisponible — comportement normal (form étape 2)
+    }
+  }, [storageKey]);
+
+  // Helper : persiste un patch dans localStorage
+  function persistProfile(patch) {
+    if (!storageKey || typeof window === 'undefined') return;
+    try {
+      const prev = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+      window.localStorage.setItem(storageKey, JSON.stringify({ ...prev, ...patch }));
+    } catch (_e) {
+      // silent
+    }
+  }
 
   function setField(name, value) {
     setProfile((p) => ({ ...p, [name]: value }));
@@ -84,7 +134,8 @@ function SubscriptionConfirmation({ commercantId }) {
     e.preventDefault();
     if (step === 'saving') return;
     if (!commercantId) {
-      setStep('skipped');
+      // Pas de commercant_id → on bascule direct sur provisioning fictif (demo)
+      setStep('provisioning');
       return;
     }
     if (!validate()) return;
@@ -100,96 +151,273 @@ function SubscriptionConfirmation({ commercantId }) {
           code_postal: profile.code_postal.trim(),
         }),
       });
-      setStep('done');
     } catch (err) {
       console.warn('[MerciPage] update profile failed:', err);
-      // On marque done quand même — l'info sera demandée plus tard via l'espace
-      setStep('done');
+      // Non bloquant — on continue vers le provisioning
+    }
+    // Persiste pour que l'user revienne directement en ready la prochaine fois
+    persistProfile({
+      nom_commerce: profile.nom_commerce.trim(),
+      code_postal: profile.code_postal.trim(),
+      completedAt: Date.now(),
+    });
+    setStep('provisioning');
+  }
+
+  // ── Animation progression visuelle (0 → 1 → 2 → 3) sur 3.6s ──
+  useEffect(() => {
+    if (step !== 'provisioning') return;
+    const timers = [
+      setTimeout(() => setProvisioningStep(1), 800),
+      setTimeout(() => setProvisioningStep(2), 1900),
+      setTimeout(() => setProvisioningStep(3), 3200),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [step]);
+
+  // ── Polling Apps Script pour récupérer le numero_virtuel ──
+  // Continue en provisioning ET en ready (tant que le numéro n'est pas reçu).
+  // Mode DÉMO : si commercant_id contient TEST/DEMO ou est vide, on injecte
+  // un numéro d'exemple → permet de valider le rendu sans toucher au sheet.
+  useEffect(() => {
+    // Actif uniquement quand on est en provisioning ou ready, ET pas encore reçu
+    if (step !== 'provisioning' && step !== 'ready') return;
+    if (numeroVirtuel) return;
+
+    const isDemoMode = !commercantId || /TEST|DEMO/i.test(commercantId);
+
+    if (isDemoMode) {
+      // Numéro d'exemple Lyon + mobile d'exemple — affichés à la fin de l'animation
+      const demoTimer = setTimeout(() => {
+        numeroReceivedRef.current = true;
+        setNumeroVirtuel('+33489316691');
+        setMobileCommercant('+33612345678');
+        persistProfile({ numero_virtuel: '+33489316691', mobile: '+33612345678' });
+      }, 2400);
+      return () => clearTimeout(demoTimer);
+    }
+
+    let cancelled = false;
+
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        const params = new URLSearchParams({
+          action: 'getEspaceAbonne',
+          commercant_id: commercantId,
+        });
+        const res = await fetch(`${VONAGE_CRM_API_URL}?${params.toString()}`, {
+          method: 'GET',
+        });
+        const data = await res.json();
+        const num = data?.abonne?.numero_virtuel || data?.numero_virtuel || '';
+        const mob = data?.abonne?.mobile || data?.mobile || '';
+        if (num && /^\+?\d{8,}$/.test(num.replace(/\s/g, ''))) {
+          numeroReceivedRef.current = true;
+          setNumeroVirtuel(num);
+          persistProfile({ numero_virtuel: num });
+        }
+        if (mob && /^\+?\d{8,}$/.test(mob.replace(/\s/g, ''))) {
+          setMobileCommercant(mob);
+          persistProfile({ mobile: mob });
+        }
+      } catch (_e) {
+        // silent — on retentera
+      }
+    };
+
+    // Tick immédiat + intervalle 2s
+    tick();
+    const intervalId = setInterval(tick, 2000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [step, commercantId, numeroVirtuel]);
+
+  // ── Quand l'animation visuelle est finie → passe à 'ready' ──
+  // On n'attend PAS le numéro : si Apps Script tarde, l'user voit la séquence
+  // narrative quand même, avec un spinner dans la card numéro qui se remplace
+  // automatiquement dès que le polling reçoit le numero_virtuel.
+  useEffect(() => {
+    if (step !== 'provisioning') return;
+    if (provisioningStep === 3) {
+      const t = setTimeout(() => setStep('ready'), 600);
+      return () => clearTimeout(t);
+    }
+  }, [step, provisioningStep]);
+
+  // Plus d'auto-redirect : /merci EST la page d'accueil de l'espace user.
+
+  function handleCopyNumero() {
+    if (!numeroVirtuel) return;
+    try {
+      navigator.clipboard.writeText(numeroVirtuel);
+      setCopyStatus('copied');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch (_e) {
+      // ignore
     }
   }
 
-  return (
-    <div className="min-h-screen relative overflow-hidden bg-white">
-      {/* Ambient orbs verts cohérence landing */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.07] blur-3xl"
-             style={{ background: 'radial-gradient(ellipse, #10B981 0%, transparent 60%)' }} />
-        <div className="absolute top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
-             style={{ background: 'radial-gradient(circle, #059669, transparent 70%)' }} />
-      </div>
+  const isFormPhase = step === 'form' || step === 'saving';
 
-      {/* Header sticky avec barre de progression — étape 2 active */}
-      <header className="relative z-30 border-b border-gray-100/80 bg-white/85 backdrop-blur-xl sticky top-0">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-          <Link to="/" className="text-gray-900 font-bold text-[14px] tracking-tight">
-            BoosterPay
-          </Link>
-          <div className="flex items-center gap-2 text-[13px] text-gray-500 font-medium">
-            <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold">
-                <Check className="w-3 h-3" strokeWidth={3} />
-              </span>
-              <span className="hidden sm:inline">Compte</span>
+  // Ambient orbs verts — communs aux 2 modes (form & espace)
+  const ambientOrbs = (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.07] blur-3xl"
+           style={{ background: 'radial-gradient(ellipse, #10B981 0%, transparent 60%)' }} />
+      <div className="absolute top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.06] blur-3xl"
+           style={{ background: 'radial-gradient(circle, #059669, transparent 70%)' }} />
+    </div>
+  );
+
+  // Header sticky avec progress bar (uniquement phase form)
+  const formHeader = (
+    <header className="relative z-30 border-b border-gray-100/80 bg-white/85 backdrop-blur-xl sticky top-0">
+      <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+        <Link to="/" className="text-gray-900 font-bold text-[15px] tracking-tight">
+          BoosterPay
+        </Link>
+        <div className="flex items-center gap-2 text-[13px] text-gray-500 font-medium">
+          <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold">
+              <Check className="w-3 h-3" strokeWidth={3} />
             </span>
-            <span className="text-gray-300">───</span>
-            <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold">2</span>
-              <span className="hidden sm:inline">Finalisation</span>
-            </span>
-          </div>
+            <span className="hidden sm:inline">Compte</span>
+          </span>
+          <span className="text-gray-300">───</span>
+          <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold">2</span>
+            <span className="hidden sm:inline">Finalisation</span>
+          </span>
         </div>
-      </header>
+      </div>
+    </header>
+  );
 
-      <main className="relative max-w-2xl mx-auto px-6 py-12 md:py-16">
+  // Bloc principal narratif — identique dans les 2 modes (les phases s'auto-affichent)
+  const mainContent = (
+    <main className="relative max-w-2xl mx-auto px-6 py-12 md:py-16">
 
-        {/* Icône check + Titre + Sous-titre */}
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="flex justify-center mb-8"
-        >
-          <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-xl"
-               style={{
-                 background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                 boxShadow: '0 16px 40px -8px rgba(16, 185, 129, 0.45)',
-               }}>
-            <CheckCircle2 className="w-10 h-10 text-white" strokeWidth={2.2} />
-          </div>
-        </motion.div>
+        {/* Icône check — pop d'entrée + halo qui pulse en continu (célébration Apple) */}
+        <div className="relative flex justify-center mb-9">
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: [0.175, 0.885, 0.32, 1.275] }}
+            className="relative"
+          >
+            {/* Halo pulsé infini — anneau vert qui ondule autour de l'icône */}
+            <motion.span
+              className="absolute inset-0 rounded-full pointer-events-none"
+              animate={{
+                boxShadow: [
+                  '0 0 0 0 rgba(16, 185, 129, 0.45)',
+                  '0 0 0 24px rgba(16, 185, 129, 0)',
+                ],
+              }}
+              transition={{
+                duration: 2,
+                ease: 'easeOut',
+                repeat: Infinity,
+              }}
+              aria-hidden="true"
+            />
+            {/* Icône principale */}
+            <div
+              className="relative w-20 h-20 rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                boxShadow:
+                  '0 0 0 12px rgba(16, 185, 129, 0.12), 0 0 0 24px rgba(16, 185, 129, 0.06), 0 16px 40px -8px rgba(16, 185, 129, 0.45)',
+              }}
+            >
+              <Check className="w-9 h-9 text-white" strokeWidth={3} />
+            </div>
+          </motion.div>
+        </div>
 
+        {/* Titre Bienvenue dynamique selon l'étape */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="text-[34px] md:text-[44px] font-extrabold tracking-[-0.03em] text-gray-900 text-center leading-[1.05] mb-4"
         >
-          Paiement validé.<br />
-          <span className="text-emerald-600">Votre IA est activée</span>
-          <span style={{ color: '#10B981' }}>.</span>
+          {step === 'ready' ? (
+            <>
+              Bienvenue{profile.nom_commerce ? <>, <span style={{ color: '#1D1D1F' }}>{profile.nom_commerce}</span></> : ''}.<br />
+              Votre IA est{' '}
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
+              >
+                opérationnelle
+              </span>
+              <span style={{ color: '#10B981' }}>.</span>
+            </>
+          ) : (
+            <>
+              Bienvenue dans BoosterPay.<br />
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
+              >
+                Votre IA est en route
+              </span>
+              <span style={{ color: '#10B981' }}>.</span>
+            </>
+          )}
         </motion.h1>
 
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-[17px] text-gray-500 text-center max-w-lg mx-auto leading-relaxed mb-10"
+          className="text-[17px] text-gray-500 text-center max-w-lg mx-auto leading-relaxed mb-7"
         >
-          {step === 'done'
-            ? 'Profil complété. Tout est prêt — votre numéro arrive par email.'
-            : 'Plus qu\'un dernier détail pour personnaliser votre espace.'}
+          {step === 'ready' && 'Tout est configuré.'}
+          {step === 'expired' && 'Configuration en cours — votre numéro vous parvient par email sous 2 minutes.'}
+          {step === 'provisioning' && 'Configuration de votre standard IA en cours…'}
+          {isFormPhase && "Plus qu'une étape pour personnaliser votre numéro local."}
         </motion.p>
 
+        {/* Bloc réassurance post-validation — 3 items en ligne (uniquement phase form) */}
+        {isFormPhase && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[13px] text-gray-500 mb-10"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.8} />
+              Opérationnel en 5 minutes
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.8} />
+              Annulation en 1 clic
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.8} />
+              Support 7j/7
+            </span>
+          </motion.div>
+        )}
+
         {/* ─── Mini form étape 2 (nom_commerce + code_postal) ─── */}
-        {step !== 'done' && (
+        {isFormPhase && (
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
+            transition={{ delay: 0.5 }}
             onSubmit={handleSubmit}
-            className="bg-white rounded-3xl p-7 md:p-8 mb-8"
+            className="bg-white rounded-[20px] p-8 md:p-10 mb-8 relative"
             style={{
-              boxShadow: '0 30px 80px -20px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(16, 185, 129, 0.1)',
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 20px 60px -10px rgba(0, 0, 0, 0.12), 0 8px 24px -4px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04)',
             }}
           >
             <div className="mb-6">
@@ -243,60 +471,456 @@ function SubscriptionConfirmation({ commercantId }) {
               )}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setStep('done')}
-              className="w-full mt-3 text-center text-[13px] text-gray-500 hover:text-gray-900 font-medium transition-colors"
-            >
-              Plus tard
-            </button>
           </motion.form>
         )}
 
-        {/* ─── Étape 2 terminée : 3 cards explicatives + CTA espace ─── */}
-        {step === 'done' && (
-          <>
+        {/* ─── PHASE PROVISIONING — animation de configuration ─── */}
+        <AnimatePresence>
+          {step === 'provisioning' && (
             <motion.div
+              key="provisioning"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-3 mb-10"
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="bg-white rounded-[20px] p-8 md:p-10 mb-8 relative"
+              style={{
+                border: '1px solid #E5E7EB',
+                boxShadow:
+                  '0 20px 60px -10px rgba(0, 0, 0, 0.12), 0 8px 24px -4px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04)',
+              }}
             >
-              <Step
-                icon={Phone}
-                title="Votre numéro BoosterPay arrive par email"
-                desc="Sous 2 minutes — vérifiez votre boîte (et vos spams au besoin)."
-              />
-              <Step
-                icon={Sparkles}
-                title="7 jours pour tester sans risque"
-                desc="L'IA décroche 24/7 à votre place. Annulation libre dans votre espace."
-              />
-              <Step
-                icon={Calendar}
-                title="Premier débit le 8e jour si vous restez"
-                desc="99 € HT/mois. Pas de surprise — vous serez prévenu 48h avant."
-              />
-            </motion.div>
+              <div className="mb-6 text-center">
+                <h2 className="text-[20px] font-extrabold text-gray-900 tracking-[-0.02em] mb-1.5">
+                  Configuration de votre standard
+                </h2>
+                <p className="text-[14px]" style={{ color: '#374151' }}>
+                  Votre IA se prépare à décrocher pour vous.
+                </p>
+              </div>
 
+              {/* Progress bar fine emerald */}
+              <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden mb-7">
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{ background: 'linear-gradient(90deg, #10B981, #059669)' }}
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${(provisioningStep / 3) * 100}%` }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                />
+              </div>
+
+              {/* 3 steps qui se cochent */}
+              <div className="space-y-3">
+                <ProvisioningRow
+                  done={provisioningStep >= 1}
+                  active={provisioningStep === 0}
+                  label="Recherche du numéro local idéal"
+                />
+                <ProvisioningRow
+                  done={provisioningStep >= 2}
+                  active={provisioningStep === 1}
+                  label="Configuration de votre assistant IA"
+                />
+                <ProvisioningRow
+                  done={provisioningStep >= 3}
+                  active={provisioningStep === 2}
+                  label="Activation du standard 24/7"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── PHASE READY — numéro révélé + tuto + test live ─── */}
+        <AnimatePresence>
+          {step === 'ready' && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
+              key="ready"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
             >
-              <Link
-                to={espaceUrl}
-                className="inline-flex items-center gap-2 text-white font-semibold px-7 py-3.5 rounded-full text-[14.5px] transition-all hover:scale-[1.02]"
+              {/* ════════════════════════════════════════════════════════════
+                  SÉQUENCE NARRATIVE APPLE PREMIUM — animations lentes & douces
+                  Timing depuis l'entrée en step='ready' :
+                    0.0s   → titre + sous-titre + intro section
+                    0.7s   → ÉTAPE 1 (Un client appelle)
+                    2.2s   → CARD NUMÉRO grandiose (spotlight)
+                    3.4s   → numéro lui-même (blur out)
+                    4.2s   → explication + bouton Copier
+                    5.2s   → ÉTAPE 2 (Votre mobile sonne)
+                    6.4s   → ÉTAPE 3 (L'IA prend le relais)
+                    7.8s   → bandeau test
+                    8.5s   → CTA final
+                  Easing : [0.22, 1, 0.36, 1] (smooth Apple iOS)
+                  ═══════════════════════════════════════════════════════════ */}
+
+              {/* ════ INTRO SECTION ════ */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="text-center mb-8"
+              >
+                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-[-0.025em]">
+                  Voici comment votre IA travaille.
+                </h3>
+                <p className="text-[14px] text-gray-500 mt-1.5">
+                  Rien à installer. Ça marche avec votre téléphone actuel.
+                </p>
+              </motion.div>
+
+              {/* ─── ÉTAPE 1 ─── (connecteur vertical descendant vers la card numéro) */}
+              <motion.div
+                initial={{ opacity: 0, y: 32, scale: 0.96, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 1.1, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className="relative"
+              >
+                <FlowStep
+                  n={1}
+                  icon={PhoneCall}
+                  title="Un client appelle votre numéro dédié"
+                  desc="Il arrive directement sur votre téléphone."
+                  connector="down"
+                />
+              </motion.div>
+
+              {/* ════ CARD NUMÉRO grandiose — entre étape 1 et étape 2 ════ */}
+              {/* Connecteur vertical au-dessus pour relier à l'étape 1 */}
+              <motion.div
+                aria-hidden="true"
+                initial={{ opacity: 0, scaleY: 0 }}
+                animate={{ opacity: 1, scaleY: 1 }}
+                transition={{ duration: 0.7, delay: 1.8, ease: [0.22, 1, 0.36, 1] }}
+                className="mx-auto"
                 style={{
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  boxShadow: '0 12px 32px -8px rgba(16, 185, 129, 0.45)',
+                  width: '2px',
+                  height: '24px',
+                  background: 'linear-gradient(to bottom, #D1FAE5, #10B981)',
+                  marginLeft: '35px',
+                  transformOrigin: 'top',
+                }}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: 44, scale: 0.84, filter: 'blur(16px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 1.4, delay: 2.2, ease: [0.16, 1, 0.3, 1] }}
+                className="rounded-[24px] p-8 md:p-10 relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, #ECFDF5 0%, #F0FDF4 100%)',
+                  border: '1.5px solid #10B981',
+                  boxShadow:
+                    '0 32px 80px -16px rgba(16, 185, 129, 0.35), 0 12px 28px -6px rgba(16, 185, 129, 0.18), 0 2px 8px rgba(0, 0, 0, 0.04)',
                 }}
               >
-                Accéder à mon espace
-                <ArrowRight className="w-4 h-4" strokeWidth={2.4} />
-              </Link>
+                {/* Halo coin ambient */}
+                <div
+                  className="absolute -top-24 -right-24 w-[320px] h-[320px] rounded-full opacity-30 blur-3xl pointer-events-none"
+                  style={{ background: 'radial-gradient(circle, #10B981, transparent 70%)' }}
+                  aria-hidden="true"
+                />
+
+                {/* Onde concentrique qui se propage UNE FOIS au reveal du numéro */}
+                <motion.div
+                  className="absolute inset-0 rounded-[24px] pointer-events-none"
+                  initial={{ boxShadow: '0 0 0 0 rgba(16, 185, 129, 0)' }}
+                  animate={{
+                    boxShadow: [
+                      '0 0 0 0 rgba(16, 185, 129, 0)',
+                      '0 0 0 0 rgba(16, 185, 129, 0.5)',
+                      '0 0 0 100px rgba(16, 185, 129, 0)',
+                    ],
+                  }}
+                  transition={{ duration: 2, delay: 3.2, ease: 'easeOut' }}
+                  aria-hidden="true"
+                />
+
+                <div className="relative text-center">
+                  <motion.p
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 3.0, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-700 mb-4"
+                  >
+                    Votre numéro dédié
+                  </motion.p>
+
+                  {/* Numéro en spotlight — soit spinner (en attente), soit le numéro */}
+                  <AnimatePresence mode="wait">
+                    {numeroVirtuel ? (
+                      <motion.div
+                        key="numero-revealed"
+                        initial={{ opacity: 0, scale: 0.78, filter: 'blur(14px)' }}
+                        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, scale: 0.9, filter: 'blur(8px)' }}
+                        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="text-[34px] sm:text-[42px] md:text-[48px] font-extrabold text-gray-900 leading-none mb-5"
+                        style={{
+                          fontVariantNumeric: 'tabular-nums',
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        {formatPhoneFR(numeroVirtuel)}
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="numero-loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="flex items-center justify-center gap-3 mb-5 py-3"
+                      >
+                        {/* Spinner emerald élégant */}
+                        <div
+                          className="w-7 h-7 rounded-full animate-spin"
+                          style={{
+                            border: '3px solid #ECFDF5',
+                            borderTopColor: '#10B981',
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span className="text-[15px] text-gray-500 font-medium">
+                          Attribution en cours…
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Explication — adaptée selon que le numéro est arrivé ou non */}
+                  <motion.p
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 4.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="text-[13.5px] text-gray-600 leading-relaxed max-w-md mx-auto mb-5"
+                  >
+                    {numeroVirtuel ? (
+                      <>
+                        C'est votre nouveau numéro professionnel.<br />
+                        <strong className="text-gray-900">Communiquez-le à vos clients</strong> — l'IA décroche quand vous êtes occupé.
+                      </>
+                    ) : (
+                      <>
+                        Votre numéro local est en cours d'attribution.<br />
+                        <strong className="text-gray-900">Il apparaîtra ici dans quelques secondes</strong> — vous le recevrez aussi par email.
+                      </>
+                    )}
+                  </motion.p>
+
+                  {/* Bouton Copier — désactivé tant que le numéro n'est pas reçu */}
+                  <motion.button
+                    type="button"
+                    onClick={handleCopyNumero}
+                    disabled={!numeroVirtuel}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.7, delay: 4.5, ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={numeroVirtuel ? { y: -2, scale: 1.01 } : {}}
+                    whileTap={numeroVirtuel ? { scale: 0.98 } : {}}
+                    className="w-full inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[12px] font-bold text-[15px] text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                      boxShadow: numeroVirtuel
+                        ? '0 12px 28px -6px rgba(16, 185, 129, 0.5)'
+                        : '0 6px 16px -4px rgba(16, 185, 129, 0.25)',
+                    }}
+                  >
+                    {copyStatus === 'copied' ? (
+                      <>
+                        <Check className="w-4 h-4" strokeWidth={3} />
+                        Numéro copié
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" strokeWidth={2.4} />
+                        Copier le numéro
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
+
+              {/* Connecteur vertical après la card numéro vers étape 2 */}
+              <motion.div
+                aria-hidden="true"
+                initial={{ opacity: 0, scaleY: 0 }}
+                animate={{ opacity: 1, scaleY: 1 }}
+                transition={{ duration: 0.7, delay: 5.0, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  width: '2px',
+                  height: '24px',
+                  background: 'linear-gradient(to bottom, #10B981, #D1FAE5)',
+                  marginLeft: '35px',
+                  transformOrigin: 'top',
+                }}
+              />
+
+              {/* ─── ÉTAPE 2 ─── */}
+              <motion.div
+                initial={{ opacity: 0, y: 32, scale: 0.96, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 1.1, delay: 5.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <FlowStep
+                  n={2}
+                  icon={Smartphone}
+                  title="Votre mobile sonne"
+                  desc={mobileCommercant
+                    ? <>Le <strong className="text-gray-900">{formatPhoneFR(mobileCommercant)}</strong> reçoit l'appel. Décrochez pour répondre.</>
+                    : "Décrochez pour répondre en direct."}
+                  connector="none"
+                />
+              </motion.div>
+
+              {/* Connecteur vertical étape 2 → étape 3 */}
+              <motion.div
+                aria-hidden="true"
+                initial={{ opacity: 0, scaleY: 0 }}
+                animate={{ opacity: 1, scaleY: 1 }}
+                transition={{ duration: 0.7, delay: 6.2, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  width: '2px',
+                  height: '24px',
+                  background: 'linear-gradient(to bottom, #D1FAE5, #ECFDF5)',
+                  marginLeft: '35px',
+                  transformOrigin: 'top',
+                }}
+              />
+
+              {/* ─── ÉTAPE 3 (dernière, pas de connecteur du bas) ─── */}
+              <motion.div
+                initial={{ opacity: 0, y: 32, scale: 0.96, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 1.1, delay: 6.4, ease: [0.22, 1, 0.36, 1] }}
+                className="mb-10"
+              >
+                <FlowStep
+                  n={3}
+                  icon={Bot}
+                  title="Si vous ne répondez pas, l'IA prend le relais"
+                  desc="Elle répond, qualifie le besoin, et vous envoie un récap SMS."
+                  connector="none"
+                />
+              </motion.div>
+
+              {/* ════ BANDEAU TEST — affiché uniquement quand le numéro est reçu ════ */}
+              <AnimatePresence>
+                {numeroVirtuel && (
+                  <motion.div
+                    key="test-banner"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.9, delay: 7.8, ease: [0.22, 1, 0.36, 1] }}
+                    className="rounded-[14px] px-6 py-5 mb-8 text-center"
+                    style={{
+                      background: '#F0FDF4',
+                      border: '1.5px solid #10B981',
+                      color: '#065F46',
+                    }}
+                  >
+                    <p className="text-[15px] font-bold mb-1 inline-flex items-center justify-center gap-2 flex-wrap">
+                      <Smartphone className="w-4 h-4" strokeWidth={2.4} />
+                      Testez maintenant — appelez le{' '}
+                      <a
+                        href={`tel:${numeroVirtuel}`}
+                        className="underline decoration-2 underline-offset-2 hover:no-underline"
+                        style={{ color: '#10B981' }}
+                      >
+                        {formatPhoneFR(numeroVirtuel)}
+                      </a>
+                    </p>
+                    <p className="text-[13px] leading-relaxed" style={{ color: '#047857' }}>
+                      depuis un 2e téléphone · laissez sonner pour voir l'IA prendre le relais
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ════ NAVIGATION DANS L'ESPACE — pas de redirect, l'user est chez lui ════ */}
+              <motion.div
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 8.5, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="text-center mb-6">
+                  <h3 className="text-[18px] font-extrabold text-gray-900 tracking-[-0.025em]">
+                    Vous êtes dans votre espace.
+                  </h3>
+                  <p className="text-[13.5px] text-gray-500 mt-1.5">
+                    Tout est à portée de clic, quand vous voulez.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <EspaceNavCard
+                    to={commercantId ? `/espace/modules?id=${encodeURIComponent(commercantId)}` : '/espace/modules'}
+                    icon={Bot}
+                    title="Mes modules"
+                    desc="Renouvellements, RDV, avis, paiements…"
+                  />
+                  <EspaceNavCard
+                    to={espaceUrl}
+                    icon={CreditCard}
+                    title="Mon abonnement"
+                    desc="Essai 7 jours · Gestion & résiliation."
+                  />
+                </div>
+
+                <p className="mt-7 text-center text-[12px] text-gray-400 leading-relaxed">
+                  Une question ?{' '}
+                  <a href="mailto:contact@booster-pay.com" className="underline hover:text-gray-700">
+                    contact@booster-pay.com
+                  </a>
+                </p>
+              </motion.div>
             </motion.div>
-          </>
-        )}
+          )}
+        </AnimatePresence>
+
+        {/* ─── PHASE EXPIRED — fallback si le numéro met trop de temps ─── */}
+        <AnimatePresence>
+          {step === 'expired' && (
+            <motion.div
+              key="expired"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div
+                className="rounded-[20px] p-8 mb-8 text-center"
+                style={{
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 8px 40px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04)',
+                  background: '#ffffff',
+                }}
+              >
+                <Mail className="w-10 h-10 text-emerald-600 mx-auto mb-4" strokeWidth={1.8} />
+                <h3 className="text-[18px] font-extrabold text-gray-900 mb-1.5 tracking-[-0.02em]">
+                  Votre numéro arrive par email
+                </h3>
+                <p className="text-[14px] text-gray-500 leading-relaxed">
+                  Configuration en cours côté opérateur — vous recevrez votre numéro<br />
+                  par email sous 2 minutes (pensez à vérifier vos spams).
+                </p>
+              </div>
+
+              <div className="text-center">
+                <Link
+                  to={espaceUrl}
+                  className="inline-flex items-center gap-2 text-white font-semibold px-7 py-3.5 rounded-full text-[14.5px] transition-all hover:scale-[1.02]"
+                  style={{
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    boxShadow: '0 12px 32px -8px rgba(16, 185, 129, 0.45)',
+                  }}
+                >
+                  Accéder à mon espace
+                  <ArrowRight className="w-4 h-4" strokeWidth={2.4} />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <motion.p
           initial={{ opacity: 0 }}
@@ -307,34 +931,77 @@ function SubscriptionConfirmation({ commercantId }) {
           Une question ? Écrivez à <a href="mailto:contact@booster-pay.com" className="underline hover:text-gray-700">contact@booster-pay.com</a>
         </motion.p>
       </main>
-    </div>
+  );
+
+  // ════════ RENDU CONDITIONNEL ════════
+  // Phase form/saving : ancien layout (header progress bar Compte → Finalisation)
+  // Phase provisioning/ready/expired : layout d'ESPACE (sidebar + nav permanente)
+  if (isFormPhase) {
+    return (
+      <div className="min-h-screen relative overflow-hidden bg-white">
+        {ambientOrbs}
+        {formHeader}
+        {mainContent}
+      </div>
+    );
+  }
+
+  return (
+    <EspaceLayout
+      nomCommerce={profile.nom_commerce}
+      commercantId={commercantId}
+      activeSection="bienvenue"
+    >
+      <div className="relative overflow-hidden min-h-screen bg-white">
+        {ambientOrbs}
+        {mainContent}
+      </div>
+    </EspaceLayout>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────
 function FieldInline({ label, icon: Icon, value, onChange, placeholder, error, inputMode, autoComplete, hint }) {
+  const [focused, setFocused] = useState(false);
+  const baseStyle = {
+    background: '#ffffff',
+    border: error ? '1.5px solid #FCA5A5' : focused ? '1.5px solid #10B981' : '1.5px solid #E5E7EB',
+    borderRadius: '10px',
+    padding: Icon ? '14px 16px 14px 44px' : '14px 16px',
+    fontSize: '16px',
+    width: '100%',
+    color: '#111827',
+    boxShadow: focused
+      ? (error ? '0 0 0 3px rgba(252, 165, 165, 0.2)' : '0 0 0 3px rgba(16, 185, 129, 0.10)')
+      : 'none',
+    outline: 'none',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+  };
   return (
     <label className="block">
-      <div className="text-[11.5px] font-bold text-gray-700 mb-1.5 tracking-tight uppercase">{label}</div>
+      <div className="text-[14px] font-medium mb-1.5" style={{ color: '#374151', letterSpacing: 0 }}>{label}</div>
       <div className="relative">
-        {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={2} />}
+        {Icon && (
+          <Icon
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+            strokeWidth={2}
+            style={{ color: focused ? '#10B981' : '#9CA3AF' }}
+          />
+        )}
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder={placeholder}
           inputMode={inputMode}
           autoComplete={autoComplete}
-          style={{ fontSize: 16 }}
-          className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 rounded-xl bg-gray-50 border text-[15px] text-gray-900 placeholder:text-gray-400 transition-all
-            ${error
-              ? 'border-red-300 bg-red-50/30 focus:border-red-500 focus:ring-2 focus:ring-red-200/50'
-              : 'border-gray-200/80 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15'}
-            focus:outline-none`}
+          style={baseStyle}
         />
       </div>
       {error && <div className="mt-1.5 text-[12px] text-red-600 font-medium">{error}</div>}
-      {!error && hint && <div className="mt-1.5 text-[11.5px] text-gray-400 leading-relaxed">{hint}</div>}
+      {!error && hint && <div className="mt-1.5 text-[12px] text-gray-400 leading-relaxed">{hint}</div>}
     </label>
   );
 }
@@ -343,7 +1010,7 @@ function Step({ icon: Icon, title, desc }) {
   return (
     <div className="flex items-start gap-4 bg-white rounded-2xl border border-gray-100 p-5">
       <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center">
-        <Icon className="w-4.5 h-4.5 text-emerald-700" strokeWidth={2.2} />
+        <Icon className="w-4 h-4 text-emerald-700" strokeWidth={2.2} />
       </div>
       <div className="flex-1">
         <p className="text-[14px] font-semibold text-gray-900 mb-0.5">{title}</p>
@@ -351,6 +1018,207 @@ function Step({ icon: Icon, title, desc }) {
       </div>
     </div>
   );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Ligne d'étape pendant la phase de provisioning (configure le numéro)
+//  - active : étape en cours → spinner emerald
+//  - done   : étape terminée → check vert
+//  - else   : étape à venir  → cercle gris
+// ─────────────────────────────────────────────────────────────────
+function ProvisioningRow({ done, active, label }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-shrink-0">
+        {done ? (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+            className="w-6 h-6 rounded-full flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              boxShadow: '0 4px 12px -2px rgba(16, 185, 129, 0.4)',
+            }}
+          >
+            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3.2} />
+          </motion.div>
+        ) : active ? (
+          <div className="w-6 h-6 rounded-full border-[2px] border-emerald-200 border-t-emerald-500 animate-spin" />
+        ) : (
+          <div className="w-6 h-6 rounded-full border-[1.5px] border-gray-200 bg-white" />
+        )}
+      </div>
+      <span
+        className="text-[14px] leading-relaxed transition-colors"
+        style={{ color: done ? '#111827' : active ? '#111827' : '#9CA3AF', fontWeight: active || done ? 600 : 500 }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Card de navigation dans l'espace user — discrète, hover subtil
+// ─────────────────────────────────────────────────────────────────
+function EspaceNavCard({ to, icon: Icon, title, desc }) {
+  return (
+    <Link
+      to={to}
+      className="group block bg-white rounded-2xl p-6 border border-gray-200 hover:border-emerald-500 transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.14)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
+      }}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
+          style={{ background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)' }}
+        >
+          <Icon className="w-5 h-5 text-emerald-700" strokeWidth={2.2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-bold text-gray-900 tracking-tight leading-snug mb-1 inline-flex items-center gap-1.5">
+            {title}
+            <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" strokeWidth={2.4} />
+          </p>
+          <p className="text-[13px] text-gray-500 leading-relaxed">{desc}</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Étape du flux narratif — version Apple flow avec connecteur vertical
+//  - n      : numéro de l'étape (1, 2, 3)
+//  - icon   : icône lucide-react
+//  - title  : titre de l'étape
+//  - desc   : description courte
+//  - connector : 'down' = ligne descendante visible | 'none' = pas de ligne
+// ─────────────────────────────────────────────────────────────────
+function FlowStep({ n, icon: Icon, title, desc, connector = 'none' }) {
+  return (
+    <div
+      className="relative flex items-start gap-4 bg-white rounded-2xl p-5"
+      style={{
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03)',
+      }}
+    >
+      {/* Connecteur vertical descendant — relie cette étape à la suivante */}
+      {connector === 'down' && (
+        <div
+          aria-hidden="true"
+          className="absolute"
+          style={{
+            left: '35px',
+            top: 'calc(100% - 4px)',
+            width: '2px',
+            height: '24px',
+            background: 'linear-gradient(to bottom, #D1FAE5, #ECFDF5)',
+          }}
+        />
+      )}
+      <div className="flex-shrink-0 relative">
+        <div
+          className="w-11 h-11 rounded-2xl flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)' }}
+        >
+          <Icon className="w-5 h-5 text-emerald-700" strokeWidth={2.2} />
+        </div>
+        <span className="absolute -top-1.5 -left-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold ring-2 ring-white">
+          {n}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[14.5px] font-bold text-gray-900 tracking-tight leading-snug mb-0.5">{title}</p>
+        <p className="text-[13.5px] text-gray-500 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Étape détaillée verticale — bloc "Comment ça marche" version 2 lignes (legacy)
+// ─────────────────────────────────────────────────────────────────
+function DetailedStep({ n, icon: Icon, title, desc }) {
+  return (
+    <div
+      className="flex items-start gap-4 bg-white rounded-2xl p-5"
+      style={{
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03)',
+      }}
+    >
+      <div className="flex-shrink-0 relative">
+        <div
+          className="w-11 h-11 rounded-2xl flex items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)' }}
+        >
+          <Icon className="w-5 h-5 text-emerald-700" strokeWidth={2.2} />
+        </div>
+        <span className="absolute -top-1.5 -left-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold ring-2 ring-white">
+          {n}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[14.5px] font-bold text-gray-900 tracking-tight leading-snug mb-0.5">{title}</p>
+        <p className="text-[13.5px] text-gray-500 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Carte "Comment ça marche" — version horizontale (legacy, conservée)
+// ─────────────────────────────────────────────────────────────────
+function HowItWorksStep({ n, icon: Icon, title, desc }) {
+  return (
+    <div
+      className="relative bg-white rounded-2xl p-5 flex flex-col items-center text-center"
+      style={{
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03)',
+      }}
+    >
+      <div
+        className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
+        style={{ background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)' }}
+      >
+        <Icon className="w-5 h-5 text-emerald-700" strokeWidth={2.2} />
+      </div>
+      <div className="inline-flex items-center gap-1.5 mb-1.5">
+        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold">{n}</span>
+        <p className="text-[13.5px] font-bold text-gray-900 tracking-tight">{title}</p>
+      </div>
+      <p className="text-[12.5px] text-gray-500 leading-relaxed">{desc}</p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Formate un numéro E.164 français en format lisible
+//  +33489316691 → "+33 4 89 31 66 91"
+//  +33189316691 → "+33 1 89 31 66 91"
+// ─────────────────────────────────────────────────────────────────
+function formatPhoneFR(raw) {
+  if (!raw) return '';
+  const cleaned = String(raw).replace(/\s+/g, '');
+  // Format E.164 français : +33 X XX XX XX XX
+  const m = cleaned.match(/^\+33(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/);
+  if (m) return `+33 ${m[1]} ${m[2]} ${m[3]} ${m[4]} ${m[5]}`;
+  // Format 0X XX XX XX XX
+  const m2 = cleaned.match(/^0(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/);
+  if (m2) return `0${m2[1]} ${m2[2]} ${m2[3]} ${m2[4]} ${m2[5]}`;
+  return cleaned;
 }
 
 // ─────────────────────────────────────────────────────────────────

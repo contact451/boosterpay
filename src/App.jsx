@@ -51,6 +51,8 @@ import MerciPage from './pages/MerciPage';
 import Configurer from './pages/Configurer';
 import InscriptionTrial from './pages/InscriptionTrial';
 import EspaceAbonne from './pages/EspaceAbonne';
+import MesModules from './pages/MesModules';
+import Connexion from './pages/Connexion';
 // Pages dédiées par service (mini landings Apple-style)
 import Reception247 from './pages/services/Reception247';
 import Renouvellement from './pages/services/Renouvellement';
@@ -89,8 +91,12 @@ function App() {
         <Route path="/services/robot" element={<RobotMesure />} />
         {/* Espace de configuration tokenisé envoyé par mail au lead après essai */}
         <Route path="/configurer/:token" element={<Configurer />} />
-        {/* /configurer?id=BP-XXX → nouvelle page espace abonné post-paiement */}
+        {/* /configurer?id=BP-XXX → page abonnement de l'espace user (statut, factures, résiliation) */}
         <Route path="/configurer" element={<EspaceAbonne />} />
+        {/* /connexion → magic link (saisir email → recevoir lien) */}
+        <Route path="/connexion" element={<Connexion />} />
+        {/* /espace/modules?id=BP-XXX → page modules IA dans l'espace user */}
+        <Route path="/espace/modules" element={<MesModules />} />
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />
