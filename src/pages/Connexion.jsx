@@ -11,9 +11,9 @@
 //            Vonage CRM (action publique, pas de token requis).
 // ─────────────────────────────────────────────────────────────────
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Loader2, UserPlus } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Loader2, UserPlus, Shield, Clock, Lock } from 'lucide-react';
 
 function getVonageCrmApiUrl() {
   return import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
@@ -64,31 +64,56 @@ export default function Connexion() {
     }
   };
 
+  // Force le body/html en blanc pur pendant qu'on est sur cette page
+  // (évite le fond gris hérité du reste du site)
+  useEffect(() => {
+    const prevBodyBg = document.body.style.background;
+    const prevHtmlBg = document.documentElement.style.background;
+    document.body.style.background = '#ffffff';
+    document.documentElement.style.background = '#ffffff';
+    return () => {
+      document.body.style.background = prevBodyBg;
+      document.documentElement.style.background = prevHtmlBg;
+    };
+  }, []);
+
   return (
     <div
       className="relative min-h-screen flex items-center justify-center px-5 py-16 overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, rgba(236,253,245,0.7) 0%, #FFFFFF 60%)',
+        background: '#ffffff',
         fontFamily: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
       <StyleBlock />
 
+      {/* Calque gradient emerald-50/60 → white, par-dessus le blanc pur */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background: 'linear-gradient(180deg, rgba(236,253,245,0.6) 0%, #FFFFFF 65%)',
+          zIndex: 0,
+        }}
+      />
+
       {/* Glows radiaux animés */}
       <div
         aria-hidden
-        className="pointer-events-none absolute top-[-180px] right-[-160px] w-[600px] h-[600px] rounded-full"
+        className="pointer-events-none fixed top-[-180px] right-[-160px] w-[600px] h-[600px] rounded-full"
         style={{
           background: 'radial-gradient(circle, rgba(209,250,229,0.4) 0%, transparent 70%)',
           animation: 'bpConnexionPulse 9s ease-in-out infinite',
+          zIndex: 0,
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute bottom-[-120px] left-[-100px] w-[400px] h-[400px] rounded-full"
+        className="pointer-events-none fixed bottom-[-120px] left-[-100px] w-[400px] h-[400px] rounded-full"
         style={{
           background: 'radial-gradient(circle, rgba(204,251,241,0.3) 0%, transparent 70%)',
           animation: 'bpConnexionPulse 7s ease-in-out 1.2s infinite',
+          zIndex: 0,
         }}
       />
 
@@ -170,10 +195,12 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
   return (
     <>
       {/* Badge pill */}
-      <div className="flex justify-center" style={{ marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
         <div
-          className="inline-flex items-center gap-2"
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
             background: 'rgba(16,185,129,0.08)',
             border: '1px solid rgba(16,185,129,0.2)',
             color: '#059669',
@@ -183,6 +210,7 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
             textTransform: 'uppercase',
             padding: '6px 13px',
             borderRadius: '999px',
+            margin: '0 auto',
           }}
         >
           <span
@@ -223,21 +251,20 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
           fontSize: '15px',
           lineHeight: 1.65,
           textAlign: 'center',
-          margin: '14px 0 36px 0',
+          margin: '14px auto 0 auto',
+          maxWidth: '320px',
         }}
       >
-        Recevez un lien magique dans votre boîte mail.
-        <br />
-        Connexion instantanée, sans mot de passe.
+        Recevez un lien magique dans votre boîte mail. Connexion instantanée, sans mot de passe.
       </p>
 
-      {/* Séparateur gradient */}
+      {/* Séparateur gradient — entre sous-titre et label */}
       <div
         style={{
           height: '1px',
           background:
             'linear-gradient(to right, transparent, rgba(16,185,129,0.15), transparent)',
-          marginBottom: '28px',
+          margin: '28px 0',
         }}
       />
 
@@ -316,31 +343,30 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
             borderRadius: '16px',
             border: 'none',
             background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-            color: '#FFFFFF',
+            color: '#ffffff',
             fontSize: '15.5px',
             fontWeight: 700,
             letterSpacing: '-0.1px',
             cursor: status === 'loading' || !email ? 'not-allowed' : 'pointer',
-            opacity: status === 'loading' || !email ? 0.6 : 1,
+            opacity: status === 'loading' || !email ? 0.7 : 1,
             boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
             overflow: 'hidden',
             transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
             fontFamily: 'inherit',
           }}
         >
-          {/* Highlight interne */}
           <span
-            aria-hidden
+            className="bp-connexion-cta-content"
             style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: 'inherit',
-              background:
-                'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 60%)',
-              pointerEvents: 'none',
+              position: 'relative',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              color: '#ffffff',
+              fontWeight: 700,
             }}
-          />
-          <span className="bp-connexion-cta-content" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          >
             {status === 'loading' ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -368,18 +394,18 @@ function FormState({ email, setEmail, status, error, onSubmit }) {
           className="flex items-center justify-center"
           style={{ gap: '14px', flexWrap: 'wrap' }}
         >
-          <TrustItem icon="🛡" label="Lien unique" />
+          <TrustItem Icon={Shield} label="Lien unique" />
           <Dot />
-          <TrustItem icon="⏱" label="Valable 24h" />
+          <TrustItem Icon={Clock} label="Valable 24h" />
           <Dot />
-          <TrustItem icon="🔒" label="Zéro mot de passe" />
+          <TrustItem Icon={Lock} label="Zéro mot de passe" />
         </div>
       </div>
     </>
   );
 }
 
-function TrustItem({ icon, label }) {
+function TrustItem({ Icon, label }) {
   return (
     <span
       style={{
@@ -391,7 +417,13 @@ function TrustItem({ icon, label }) {
         fontWeight: 500,
       }}
     >
-      <span style={{ fontSize: '13px', lineHeight: 1 }}>{icon}</span>
+      <Icon
+        width={12}
+        height={12}
+        stroke="#10B981"
+        strokeWidth={2.2}
+        style={{ display: 'block' }}
+      />
       {label}
     </span>
   );
