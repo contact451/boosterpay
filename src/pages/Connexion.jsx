@@ -1,5 +1,8 @@
 // ─────────────────────────────────────────────────────────────────
-//  Page /connexion — Magic link Apple-style
+//  Page /connexion — Magic link Apple ultra premium
+//
+//  Design : charte BoosterPay (emerald 500/600, Plus Jakarta Sans),
+//  glassmorphism, glows radiaux animés, micro-interactions douces.
 //
 //  Le client saisit son email → reçoit un lien sécurisé valide 24h.
 //  Pas de mot de passe, pas de friction.
@@ -10,7 +13,7 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowRight, CheckCircle2, Loader2, UserPlus } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Loader2, UserPlus } from 'lucide-react';
 
 function getVonageCrmApiUrl() {
   return import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
@@ -18,7 +21,7 @@ function getVonageCrmApiUrl() {
 
 export default function Connexion() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | loading | sent | error | not_found
+  const [status, setStatus] = useState('idle'); // idle | loading | sent | not_found | error
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
@@ -49,7 +52,11 @@ export default function Connexion() {
         setStatus('not_found');
       } else {
         setStatus('error');
-        setError(json.error === 'email_send_failed' ? "L'envoi a échoué. Réessayez dans quelques instants." : 'Une erreur est survenue. Réessayez.');
+        setError(
+          json.error === 'email_send_failed'
+            ? "L'envoi a échoué. Réessayez dans quelques instants."
+            : 'Une erreur est survenue. Réessayez.'
+        );
       }
     } catch (err) {
       setStatus('error');
@@ -58,146 +65,561 @@ export default function Connexion() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center px-5 py-12">
-      <div className="w-full max-w-[440px]">
-        {/* Logo / retour */}
-        <Link to="/" className="inline-flex items-center gap-2 text-[13px] font-semibold text-emerald-700 hover:text-emerald-800 mb-8">
-          <span className="text-[15px]">BoosterPay</span>
-        </Link>
+    <div
+      className="relative min-h-screen flex items-center justify-center px-5 py-16 overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, rgba(236,253,245,0.7) 0%, #FFFFFF 60%)',
+        fontFamily: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}
+    >
+      <StyleBlock />
 
-        {/* Carte */}
-        <div className="bg-white rounded-[18px] p-9 md:p-10 shadow-sm border border-slate-100">
+      {/* Glows radiaux animés */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-[-180px] right-[-160px] w-[600px] h-[600px] rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(209,250,229,0.4) 0%, transparent 70%)',
+          animation: 'bpConnexionPulse 9s ease-in-out infinite',
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-[-120px] left-[-100px] w-[400px] h-[400px] rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(204,251,241,0.3) 0%, transparent 70%)',
+          animation: 'bpConnexionPulse 7s ease-in-out 1.2s infinite',
+        }}
+      />
+
+      <div className="relative w-full max-w-[420px] z-10">
+        {/* Logo */}
+        <div
+          className="text-center"
+          style={{
+            marginBottom: '36px',
+            animation: 'bpFadeInDown 0.55s cubic-bezier(0.16,1,0.3,1) both',
+          }}
+        >
+          <Link
+            to="/"
+            className="inline-block font-extrabold tracking-tight"
+            style={{ color: '#059669', fontSize: '20px', letterSpacing: '-0.4px' }}
+          >
+            BoosterPay
+          </Link>
+        </div>
+
+        {/* Card */}
+        <div
+          className="relative"
+          style={{
+            background: 'rgba(255,255,255,0.72)',
+            backdropFilter: 'blur(32px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+            border: '1px solid rgba(16,185,129,0.12)',
+            borderRadius: '28px',
+            padding: '52px 48px',
+            boxShadow:
+              '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.07), 0 40px 80px rgba(16,185,129,0.06)',
+            animation: 'bpFadeInUp 0.65s cubic-bezier(0.16,1,0.3,1) 80ms both',
+          }}
+        >
           {status === 'not_found' ? (
-            // État : email pas trouvé → invitation à créer un compte
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-full bg-amber-50 mx-auto flex items-center justify-center mb-5">
-                <UserPlus className="w-7 h-7 text-amber-600" />
-              </div>
-              <h1 className="text-[24px] font-bold text-[#1D1D1F] tracking-tight">
-                Aucun compte trouvé
-              </h1>
-              <p className="text-[14.5px] text-[#424245] mt-3 leading-relaxed">
-                L'adresse <strong className="text-[#1D1D1F]">{email}</strong> ne correspond à aucun compte BoosterPay.
-              </p>
-              <p className="text-[13px] text-[#6E6E73] mt-3 leading-relaxed">
-                Vérifiez que vous avez bien saisi l'email utilisé lors de votre inscription, ou démarrez un essai gratuit dès maintenant.
-              </p>
-
-              <Link
-                to="/"
-                className="mt-7 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-emerald-600 text-white text-[15px] font-semibold hover:bg-emerald-700 transition-colors w-full"
-              >
-                Démarrer mon essai 7 jours
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-
-              <button
-                onClick={() => {
-                  setStatus('idle');
-                  setEmail('');
-                }}
-                className="mt-5 text-[13px] font-semibold text-emerald-700 hover:text-emerald-800"
-              >
-                Essayer une autre adresse
-              </button>
-            </div>
-          ) : status !== 'sent' ? (
-            <>
-              <h1 className="text-[26px] font-bold text-[#1D1D1F] tracking-tight leading-tight">
-                Accéder à mon espace
-              </h1>
-              <p className="text-[14.5px] text-[#424245] mt-2 leading-relaxed">
-                Entrez l'email utilisé lors de votre inscription. Vous recevrez un lien sécurisé pour vous connecter.
-              </p>
-
-              <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-                <div>
-                  <label htmlFor="email" className="text-[12.5px] font-semibold text-[#1D1D1F] block mb-2">
-                    Adresse email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="vous@exemple.com"
-                      autoFocus
-                      disabled={status === 'loading'}
-                      className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 text-[15px] text-[#1D1D1F] placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
-                    />
-                  </div>
-                </div>
-
-                {status === 'error' && error && (
-                  <div className="px-4 py-3 rounded-xl bg-rose-50 border border-rose-100 text-[13px] text-rose-800">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={status === 'loading' || !email}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-emerald-600 text-white text-[15px] font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-                >
-                  {status === 'loading' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Envoi…
-                    </>
-                  ) : (
-                    <>
-                      Recevoir le lien
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              <p className="text-[12px] text-[#6E6E73] mt-6 leading-relaxed">
-                Lien sécurisé valable 24 heures, utilisable une seule fois. Aucun mot de passe à retenir.
-              </p>
-            </>
+            <NotFoundState email={email} onRetry={() => { setStatus('idle'); setEmail(''); }} />
+          ) : status === 'sent' ? (
+            <SentState email={email} onRetry={() => { setStatus('idle'); setEmail(''); }} />
           ) : (
-            // État après envoi
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-full bg-emerald-50 mx-auto flex items-center justify-center mb-5">
-                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-              </div>
-              <h1 className="text-[24px] font-bold text-[#1D1D1F] tracking-tight">
-                Vérifiez votre boîte mail
-              </h1>
-              <p className="text-[14.5px] text-[#424245] mt-3 leading-relaxed">
-                Si l'adresse <strong className="text-[#1D1D1F]">{email}</strong> correspond à un compte BoosterPay, un lien de connexion vient d'y être envoyé.
-              </p>
-              <p className="text-[13px] text-[#6E6E73] mt-5 leading-relaxed">
-                Le lien est valable 24 heures.
-                <br />
-                Pensez à vérifier vos spams si vous ne le voyez pas.
-              </p>
-
-              <button
-                onClick={() => {
-                  setStatus('idle');
-                  setEmail('');
-                }}
-                className="mt-7 text-[13px] font-semibold text-emerald-700 hover:text-emerald-800"
-              >
-                Renvoyer un lien
-              </button>
-            </div>
+            <FormState
+              email={email}
+              setEmail={setEmail}
+              status={status}
+              error={error}
+              onSubmit={handleSubmit}
+            />
           )}
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-[12px] text-[#86868B] mt-6">
-          Besoin d'aide ?{' '}
-          <a href="mailto:contact@booster-pay.com" className="text-emerald-700 hover:text-emerald-800 font-semibold">
-            contact@booster-pay.com
-          </a>
-        </p>
+        {/* Aide sous la card */}
+        <div
+          className="text-center"
+          style={{
+            marginTop: '24px',
+            animation: 'bpFadeInUp 0.65s cubic-bezier(0.16,1,0.3,1) 250ms both',
+          }}
+        >
+          <p style={{ color: '#6B7280', fontSize: '13px' }}>
+            Besoin d'aide ?{' '}
+            <a
+              href="mailto:contact@booster-pay.com"
+              style={{ color: '#10B981', fontWeight: 600, textDecoration: 'none' }}
+            >
+              contact@booster-pay.com
+            </a>
+          </p>
+        </div>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  État : formulaire (idle / loading / error)
+// ─────────────────────────────────────────────────────────────────
+function FormState({ email, setEmail, status, error, onSubmit }) {
+  return (
+    <>
+      {/* Badge pill */}
+      <div className="flex justify-center" style={{ marginBottom: '24px' }}>
+        <div
+          className="inline-flex items-center gap-2"
+          style={{
+            background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            color: '#059669',
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.6px',
+            textTransform: 'uppercase',
+            padding: '6px 13px',
+            borderRadius: '999px',
+          }}
+        >
+          <span
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: '#10B981',
+              boxShadow: '0 0 0 0 rgba(16,185,129,0.5)',
+              animation: 'bpDot 2.2s ease-in-out infinite',
+            }}
+          />
+          Connexion sécurisée
+        </div>
+      </div>
+
+      {/* Titre */}
+      <h1
+        style={{
+          color: '#0F172A',
+          fontSize: '34px',
+          fontWeight: 800,
+          lineHeight: 1.1,
+          letterSpacing: '-1.2px',
+          margin: 0,
+          textAlign: 'center',
+        }}
+      >
+        Bon retour,
+        <br />
+        <span style={{ color: '#10B981' }}>ravi de vous revoir.</span>
+      </h1>
+
+      {/* Sous-titre */}
+      <p
+        style={{
+          color: '#6B7280',
+          fontSize: '15px',
+          lineHeight: 1.65,
+          textAlign: 'center',
+          margin: '14px 0 36px 0',
+        }}
+      >
+        Recevez un lien magique dans votre boîte mail.
+        <br />
+        Connexion instantanée, sans mot de passe.
+      </p>
+
+      {/* Séparateur gradient */}
+      <div
+        style={{
+          height: '1px',
+          background:
+            'linear-gradient(to right, transparent, rgba(16,185,129,0.15), transparent)',
+          marginBottom: '28px',
+        }}
+      />
+
+      {/* Form */}
+      <form onSubmit={onSubmit}>
+        {/* Label */}
+        <label
+          htmlFor="connexion-email"
+          style={{
+            display: 'block',
+            fontSize: '11.5px',
+            fontWeight: 700,
+            letterSpacing: '0.55px',
+            color: '#374151',
+            textTransform: 'uppercase',
+            marginBottom: '10px',
+          }}
+        >
+          Adresse email
+        </label>
+
+        {/* Input */}
+        <input
+          id="connexion-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="vous@exemple.com"
+          autoFocus
+          disabled={status === 'loading'}
+          className="bp-connexion-input"
+          style={{
+            width: '100%',
+            height: '54px',
+            padding: '0 18px',
+            borderRadius: '16px',
+            border: '1.5px solid rgba(209,213,219,0.8)',
+            background: 'rgba(255,255,255,0.9)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            fontSize: '15px',
+            color: '#0F172A',
+            outline: 'none',
+            transition: 'all 0.22s cubic-bezier(0.16,1,0.3,1)',
+            fontFamily: 'inherit',
+          }}
+        />
+
+        {/* Erreur */}
+        {status === 'error' && error && (
+          <div
+            style={{
+              marginTop: '14px',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: 'rgba(254,242,242,0.9)',
+              border: '1px solid rgba(254,202,202,0.7)',
+              color: '#991B1B',
+              fontSize: '13px',
+              lineHeight: 1.5,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Bouton CTA */}
+        <button
+          type="submit"
+          disabled={status === 'loading' || !email}
+          className="bp-connexion-cta"
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '54px',
+            marginTop: '20px',
+            borderRadius: '16px',
+            border: 'none',
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            color: '#FFFFFF',
+            fontSize: '15.5px',
+            fontWeight: 700,
+            letterSpacing: '-0.1px',
+            cursor: status === 'loading' || !email ? 'not-allowed' : 'pointer',
+            opacity: status === 'loading' || !email ? 0.6 : 1,
+            boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+            overflow: 'hidden',
+            transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
+            fontFamily: 'inherit',
+          }}
+        >
+          {/* Highlight interne */}
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 'inherit',
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 60%)',
+              pointerEvents: 'none',
+            }}
+          />
+          <span className="bp-connexion-cta-content" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            {status === 'loading' ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Envoi…
+              </>
+            ) : (
+              <>
+                Recevoir mon lien
+                <ArrowRight className="bp-connexion-cta-arrow w-4 h-4" />
+              </>
+            )}
+          </span>
+        </button>
+      </form>
+
+      {/* Trust bar */}
+      <div
+        style={{
+          marginTop: '28px',
+          paddingTop: '20px',
+          borderTop: '1px solid #F3F4F6',
+        }}
+      >
+        <div
+          className="flex items-center justify-center"
+          style={{ gap: '14px', flexWrap: 'wrap' }}
+        >
+          <TrustItem icon="🛡" label="Lien unique" />
+          <Dot />
+          <TrustItem icon="⏱" label="Valable 24h" />
+          <Dot />
+          <TrustItem icon="🔒" label="Zéro mot de passe" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TrustItem({ icon, label }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        color: '#9CA3AF',
+        fontSize: '12px',
+        fontWeight: 500,
+      }}
+    >
+      <span style={{ fontSize: '13px', lineHeight: 1 }}>{icon}</span>
+      {label}
+    </span>
+  );
+}
+
+function Dot() {
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: '3px',
+        height: '3px',
+        borderRadius: '50%',
+        background: '#E5E7EB',
+      }}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  État : email envoyé avec succès
+// ─────────────────────────────────────────────────────────────────
+function SentState({ email, onRetry }) {
+  return (
+    <div className="text-center">
+      <div
+        style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          background:
+            'radial-gradient(circle at 30% 30%, rgba(209,250,229,1) 0%, rgba(187,247,208,0.9) 100%)',
+          margin: '0 auto 22px auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.8), 0 8px 24px rgba(16,185,129,0.18)',
+        }}
+      >
+        <CheckCircle2 style={{ width: '30px', height: '30px', color: '#059669' }} />
+      </div>
+      <h1
+        style={{
+          color: '#0F172A',
+          fontSize: '26px',
+          fontWeight: 800,
+          letterSpacing: '-0.8px',
+          margin: 0,
+          lineHeight: 1.2,
+        }}
+      >
+        Vérifiez votre boîte mail
+      </h1>
+      <p style={{ color: '#6B7280', fontSize: '15px', lineHeight: 1.65, margin: '14px 0 0 0' }}>
+        Un lien sécurisé a été envoyé à
+        <br />
+        <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong>.
+      </p>
+      <p style={{ color: '#9CA3AF', fontSize: '13px', lineHeight: 1.6, margin: '18px 0 0 0' }}>
+        Lien valable 24 heures, utilisable une seule fois.
+        <br />
+        Pensez à vérifier vos spams si vous ne le voyez pas.
+      </p>
+      <button
+        onClick={onRetry}
+        style={{
+          marginTop: '28px',
+          background: 'transparent',
+          border: 'none',
+          color: '#059669',
+          fontSize: '13.5px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        Renvoyer un lien
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  État : aucun compte trouvé
+// ─────────────────────────────────────────────────────────────────
+function NotFoundState({ email, onRetry }) {
+  return (
+    <div className="text-center">
+      <div
+        style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          background:
+            'radial-gradient(circle at 30% 30%, rgba(254,243,199,1) 0%, rgba(253,230,138,0.9) 100%)',
+          margin: '0 auto 22px auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow:
+            'inset 0 1px 0 rgba(255,255,255,0.8), 0 8px 24px rgba(245,158,11,0.18)',
+        }}
+      >
+        <UserPlus style={{ width: '28px', height: '28px', color: '#B45309' }} />
+      </div>
+      <h1
+        style={{
+          color: '#0F172A',
+          fontSize: '26px',
+          fontWeight: 800,
+          letterSpacing: '-0.8px',
+          margin: 0,
+          lineHeight: 1.2,
+        }}
+      >
+        Aucun compte trouvé
+      </h1>
+      <p style={{ color: '#6B7280', fontSize: '15px', lineHeight: 1.65, margin: '14px 0 0 0' }}>
+        L'adresse <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong> ne correspond à aucun compte BoosterPay.
+      </p>
+      <p style={{ color: '#9CA3AF', fontSize: '13px', lineHeight: 1.6, margin: '14px 0 0 0' }}>
+        Vérifiez l'email d'inscription, ou démarrez un essai gratuit dès maintenant.
+      </p>
+
+      <Link
+        to="/"
+        className="bp-connexion-cta"
+        style={{
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          width: '100%',
+          height: '54px',
+          marginTop: '28px',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          color: '#FFFFFF',
+          fontSize: '15.5px',
+          fontWeight: 700,
+          letterSpacing: '-0.1px',
+          textDecoration: 'none',
+          boxShadow: '0 4px 15px rgba(16,185,129,0.3)',
+          overflow: 'hidden',
+          transition: 'all 0.25s cubic-bezier(0.16,1,0.3,1)',
+          fontFamily: 'inherit',
+        }}
+      >
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 'inherit',
+            background:
+              'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+          Démarrer mon essai 7 jours
+          <ArrowRight className="bp-connexion-cta-arrow w-4 h-4" />
+        </span>
+      </Link>
+
+      <button
+        onClick={onRetry}
+        style={{
+          marginTop: '18px',
+          background: 'transparent',
+          border: 'none',
+          color: '#059669',
+          fontSize: '13.5px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        Essayer une autre adresse
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Style block — keyframes + states focus/hover hors-Tailwind
+// ─────────────────────────────────────────────────────────────────
+function StyleBlock() {
+  return (
+    <style>{`
+      @keyframes bpFadeInUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes bpFadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes bpDot {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); opacity: 1; }
+        50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0); opacity: 0.85; }
+      }
+      @keyframes bpConnexionPulse {
+        0%, 100% { opacity: 0.55; transform: scale(1); }
+        50%      { opacity: 0.85; transform: scale(1.06); }
+      }
+      .bp-connexion-input:focus {
+        border-color: #10B981 !important;
+        box-shadow: 0 0 0 4px rgba(16,185,129,0.1), 0 1px 3px rgba(0,0,0,0.05) !important;
+      }
+      .bp-connexion-input::placeholder {
+        color: #CBD5E1;
+      }
+      .bp-connexion-cta:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(16,185,129,0.38) !important;
+      }
+      .bp-connexion-cta:hover:not(:disabled) .bp-connexion-cta-arrow {
+        transform: translateX(4px);
+      }
+      .bp-connexion-cta:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      .bp-connexion-cta-arrow {
+        transition: transform 0.22s cubic-bezier(0.16,1,0.3,1);
+      }
+    `}</style>
   );
 }
