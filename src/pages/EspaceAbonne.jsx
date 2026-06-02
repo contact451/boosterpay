@@ -13,8 +13,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Phone, Clock, CreditCard, Calendar, ExternalLink, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Phone, Clock, CreditCard, Calendar, ExternalLink, AlertCircle, Sparkles, ArrowRight, Mail } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
+import { getCachedAbonne, setCachedAbonne, mergeWithCache } from '../services/abonneCache';
 
 // URL du Web App Apps Script "BoosterPay Vonage CRM" (à mettre en env var si différent)
 const APPS_SCRIPT_URL = import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL
@@ -29,6 +30,21 @@ function formatPhoneFR(e164) {
   const m = String(e164).match(/^\+33(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/);
   if (m) return `+33 ${m[1]} ${m[2]} ${m[3]} ${m[4]} ${m[5]}`;
   return e164;
+}
+
+// Date de fin d'essai effective : trial_ends_at de Stripe si dispo,
+// sinon fallback calculé sur provisioned_at + 7 jours (cas test/legacy).
+function effectiveTrialEnd(espace) {
+  if (!espace) return null;
+  if (espace.trial_ends_at) return espace.trial_ends_at;
+  if (espace.provisioned_at) {
+    try {
+      const d = new Date(espace.provisioned_at);
+      d.setDate(d.getDate() + 7);
+      return d.toISOString();
+    } catch { return null; }
+  }
+  return null;
 }
 
 function formatDateFR(iso) {
@@ -53,16 +69,23 @@ function statusLabel(status) {
 
 export default function EspaceAbonne() {
   const navigate = useNavigate();
-  const [espace, setEspace] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [verifyingMagicLink, setVerifyingMagicLink] = useState(false);
 
   // commercant_id depuis l'URL — peut être remplacé par celui résolu via magic link
   const [commercantId, setCommercantId] = useState(() => {
     if (typeof window === 'undefined') return '';
     return new URLSearchParams(window.location.search).get('id') || '';
   });
+
+  // ── Init espace depuis le cache localStorage (affichage IMMEDIAT, pas de skeleton flash) ──
+  const [espace, setEspace] = useState(() => {
+    const initialId = (typeof window !== 'undefined')
+      ? new URLSearchParams(window.location.search).get('id') || ''
+      : '';
+    return getCachedAbonne(initialId);
+  });
+  const [loading, setLoading] = useState(!espace); // skip loader si on a déjà du cache
+  const [error, setError] = useState('');
+  const [verifyingMagicLink, setVerifyingMagicLink] = useState(false);
 
   useEffect(() => {
     document.title = 'BoosterPay — Mon espace';
@@ -150,17 +173,27 @@ export default function EspaceAbonne() {
         });
         const data = await res.json();
         if (!data.ok) {
-          setError(
-            data.error === 'not_found'
-              ? "Votre espace n'a pas encore été activé. Si vous venez de finaliser votre paiement, patientez quelques instants puis rechargez."
-              : 'Impossible de charger votre espace. Réessayez plus tard.'
-          );
+          // Si on a déjà des données en cache, on garde l'affichage et on
+          // n'affiche pas d'erreur bloquante (on continue avec ce qu'on a).
+          const cached = getCachedAbonne(commercantId);
+          if (!cached) {
+            setError(
+              data.error === 'not_found'
+                ? "Votre espace n'a pas encore été activé. Si vous venez de finaliser votre paiement, patientez quelques instants puis rechargez."
+                : 'Impossible de charger votre espace. Réessayez plus tard.'
+            );
+          }
         } else {
-          setEspace(data.espace);
+          // Merge fresh + cache pour préserver les champs en transition
+          const merged = mergeWithCache(commercantId, data.espace);
+          setCachedAbonne(commercantId, merged);
+          setEspace(merged);
         }
       } catch (err) {
         console.error('[EspaceAbonne] fetch error:', err);
-        setError('Connexion impossible. Vérifiez votre connexion.');
+        // Si on a du cache, l'affichage continue sans erreur visible
+        const cached = getCachedAbonne(commercantId);
+        if (!cached) setError('Connexion impossible. Vérifiez votre connexion.');
       } finally {
         setLoading(false);
       }
@@ -225,31 +258,34 @@ function EspaceContent({ espace, commercantId }) {
 
   return (
     <div className="space-y-6">
-      {/* Header carte avec badge IA active */}
+      <SkeletonStyles />
+      {/* Header — breadcrumb cohérent avec Modules + titre direct + badge IA */}
       <div className="rounded-3xl bg-white border border-gray-100 p-7 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="text-[12.5px] font-semibold tracking-[0.06em] uppercase text-gray-500 mb-2">Mon espace BoosterPay</div>
-            <h1 className="text-[28px] md:text-[32px] font-semibold tracking-[-0.025em] text-gray-900 leading-tight mb-3">
+            <p className="text-[11.5px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: '#047857' }}>
+              Mon espace · Abonnement
+            </p>
+            <h1 className="text-[28px] md:text-[34px] font-extrabold tracking-[-0.025em] text-gray-900 leading-tight mb-3">
               {espace.nom_commerce || espace.nom || 'Bienvenue'}
             </h1>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-semibold"
-                style={{ background: '#F0FDF4', color: '#10B981' }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[14px] font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  color: '#FFFFFF',
+                  boxShadow: '0 6px 16px rgba(16,185,129,0.30), 0 2px 4px rgba(0,0,0,0.05)',
+                }}
               >
-                <span className="relative inline-flex w-1.5 h-1.5">
-                  <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
-                  <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="relative inline-flex w-2 h-2">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-white opacity-60 animate-ping" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-white" />
                 </span>
-                IA active · Opérationnelle
+                IA active · {isTrial ? 'Essai en cours' : (isCancelling ? 'Résiliation programmée' : 'Opérationnelle')}
               </span>
             </div>
           </div>
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-${status.color}-50 text-${status.color}-700 border border-${status.color}-200/60 flex-shrink-0`}>
-            <StatusIcon className="w-3.5 h-3.5" strokeWidth={2.4} />
-            {status.label}
-          </span>
         </div>
       </div>
 
@@ -259,16 +295,28 @@ function EspaceContent({ espace, commercantId }) {
       {/* Abonnement */}
       <div className="rounded-3xl bg-white border border-gray-100 p-7 md:p-8">
         <div className="flex items-center gap-3 mb-5">
-          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center">
-            <CreditCard className="w-4.5 h-4.5 text-gray-700" strokeWidth={2.2} />
+          <div
+            className="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, #10B981, #059669)',
+              boxShadow: '0 6px 14px rgba(16,185,129,0.30)',
+            }}
+          >
+            <CreditCard className="w-[18px] h-[18px] text-white" strokeWidth={2.4} />
           </div>
           <h2 className="text-[17px] font-semibold text-gray-900 tracking-tight">Mon abonnement</h2>
         </div>
 
+        {/* Calcul date fin essai effective (fallback provisioned_at + 7 jours) */}
+        {(() => null)()}
         <dl className="grid sm:grid-cols-2 gap-4">
           <Stat label="Tarif mensuel" value={`${espace.mrr_eur} € HT/mois`} />
           {isTrial && (
-            <Stat label="Fin de l'essai" value={formatDateFR(espace.trial_ends_at)} icon={Clock} />
+            <Stat
+              label="Fin de l'essai"
+              value={formatDateFR(effectiveTrialEnd(espace)) || 'Bientôt confirmée'}
+              icon={Clock}
+            />
           )}
           {!isTrial && espace.next_billing_at && (
             <Stat label="Prochaine facture" value={formatDateFR(espace.next_billing_at)} icon={Calendar} />
@@ -279,7 +327,11 @@ function EspaceContent({ espace, commercantId }) {
           <ul className="mt-5 space-y-2.5">
             <li className="flex items-start gap-2.5 text-[13.5px] text-emerald-900">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
-              <span>Essai gratuit jusqu'au <strong>{formatDateFR(espace.trial_ends_at)}</strong></span>
+              <span>
+                {effectiveTrialEnd(espace)
+                  ? <>Essai gratuit jusqu'au <strong>{formatDateFR(effectiveTrialEnd(espace))}</strong></>
+                  : <>Essai gratuit · <strong>7 jours</strong></>}
+              </span>
             </li>
             <li className="flex items-start gap-2.5 text-[13.5px] text-emerald-900">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
@@ -306,47 +358,39 @@ function EspaceContent({ espace, commercantId }) {
 
         {!isCancelled && (
           <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+            {/* CTA principal — vert plein, premium */}
             <a
               href={STRIPE_CUSTOMER_PORTAL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[10px] font-semibold text-[15px] transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] transition-all duration-200"
               style={{
-                background: '#FFFFFF',
-                border: '1.5px solid #10B981',
-                color: '#10B981',
+                background: 'linear-gradient(135deg, #10B981, #059669)',
+                color: '#FFFFFF',
+                boxShadow: '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#F0FDF4';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.15)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(16,185,129,0.50), 0 2px 6px rgba(0,0,0,0.06)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)';
               }}
             >
               Gérer mon paiement
-              <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.4} />
+              <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.6} />
             </a>
+            {/* Action destructive — discrète Apple-style ; rouge au hover pour signal destructif */}
             {isTrial && (
               <a
                 href={STRIPE_CUSTOMER_PORTAL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg text-[13px] font-medium transition-all"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid #E5E7EB',
-                  color: '#9CA3AF',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#EF4444';
-                  e.currentTarget.style.color = '#EF4444';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#E5E7EB';
-                  e.currentTarget.style.color = '#9CA3AF';
-                }}
+                className="inline-flex items-center justify-center px-3 py-2.5 text-[12px] font-medium transition-colors no-underline"
+                style={{ color: '#B0B5BD', background: 'transparent', textDecoration: 'none' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#B0B5BD'; }}
               >
                 Annuler mon essai
               </a>
@@ -355,14 +399,103 @@ function EspaceContent({ espace, commercantId }) {
         )}
       </div>
 
-      {/* Support */}
-      <div className="rounded-3xl bg-gray-50 border border-gray-100 p-6 text-center">
+      {/* Support + ID client discret */}
+      <div
+        className="rounded-3xl p-6 text-center"
+        style={{
+          background: '#F8FAFC',
+          border: '1px solid #E5E7EB',
+        }}
+      >
+        <div className="flex items-center justify-center gap-2.5 mb-2">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, #10B981, #059669)',
+              boxShadow: '0 4px 12px rgba(16,185,129,0.30)',
+            }}
+          >
+            <Mail className="w-4 h-4 text-white" strokeWidth={2.4} />
+          </div>
+        </div>
         <p className="text-[13.5px] text-gray-600 leading-relaxed">
-          Une question ? Écrivez à <a href="mailto:contact@booster-pay.com" className="font-semibold text-gray-900 underline">contact@booster-pay.com</a> — réponse sous 2h ouvrées.
+          Une question ? Écrivez à{' '}
+          <a href="mailto:contact@booster-pay.com" className="font-semibold text-gray-900 underline">
+            contact@booster-pay.com
+          </a>
+          <br />
+          <span className="text-[12px] text-gray-500">Réponse sous 2 h ouvrées.</span>
         </p>
-        <p className="text-[11.5px] text-gray-400 mt-2">ID : {commercantId}</p>
+        <ClientIdLine commercantId={commercantId} />
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SkeletonStyles — keyframes shimmer global (utilisé par les skel)
+// ─────────────────────────────────────────────────────────────────
+function SkeletonStyles() {
+  return (
+    <style>{`
+      @keyframes bpShimmerStats {
+        0%   { background-position: -200px 0; }
+        100% { background-position: 200px 0; }
+      }
+      .bp-stat-skel {
+        background: linear-gradient(
+          90deg,
+          rgba(16,185,129,0.08) 0%,
+          rgba(16,185,129,0.20) 50%,
+          rgba(16,185,129,0.08) 100%
+        );
+        background-size: 400px 100%;
+        animation: bpShimmerStats 1.6s linear infinite;
+        border-radius: 8px;
+      }
+    `}</style>
+  );
+}
+
+function StatSkeleton({ width = 80, height = 32 }) {
+  return (
+    <span
+      className="bp-stat-skel inline-block"
+      style={{ width: `${width}px`, height: `${height}px`, borderRadius: '8px' }}
+      aria-hidden
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ID client — ligne discrète avec icône copier
+// ─────────────────────────────────────────────────────────────────
+function ClientIdLine({ commercantId }) {
+  const [copied, setCopied] = useState(false);
+  if (!commercantId) return null;
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(commercantId);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        } catch (_e) {}
+      }}
+      className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-md text-[10.5px] font-medium text-gray-400 hover:text-gray-600 hover:bg-white transition-colors"
+      style={{ fontFeatureSettings: '"tnum"', letterSpacing: '0.02em' }}
+    >
+      ID client · <span className="font-mono">{commercantId}</span>
+      {copied ? (
+        <CheckCircle2 className="w-3 h-3 text-emerald-500" strokeWidth={2.6} />
+      ) : (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      )}
+    </button>
   );
 }
 
@@ -371,8 +504,23 @@ function EspaceContent({ espace, commercantId }) {
 //  Remplace la répétition de la card numéro (déjà visible sur Bienvenue)
 // ─────────────────────────────────────────────────────────────────
 function RecapStats({ espace, isTrial }) {
-  // Jours restants jusqu'à trial_ends_at (ou next_billing_at si actif)
-  const targetDate = isTrial ? espace.trial_ends_at : espace.next_billing_at;
+  // Cible : date de fin d'essai si trial, sinon prochaine facture
+  // Fallback : si trial_ends_at vide (cas test/compte legacy) ET provisioned_at présent,
+  // on calcule provisioned_at + 7 jours (durée standard d'essai BoosterPay).
+  const targetDate = (() => {
+    if (isTrial) {
+      if (espace.trial_ends_at) return espace.trial_ends_at;
+      if (espace.provisioned_at) {
+        try {
+          const d = new Date(espace.provisioned_at);
+          d.setDate(d.getDate() + 7);
+          return d.toISOString();
+        } catch { return null; }
+      }
+      return null;
+    }
+    return espace.next_billing_at || null;
+  })();
   const daysLeft = (() => {
     if (!targetDate) return null;
     const ms = new Date(targetDate).getTime() - Date.now();
@@ -392,51 +540,104 @@ function RecapStats({ espace, isTrial }) {
 
   return (
     <div
-      className="rounded-3xl p-6 md:p-7"
+      className="rounded-3xl p-6 md:p-8 relative overflow-hidden"
       style={{
-        background: '#F0FDF4',
-        border: '1px solid rgba(16, 185, 129, 0.2)',
+        background: '#FFFFFF',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 1px 0 rgba(255,255,255,0.9) inset, 0 8px 24px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.03)',
       }}
     >
-      <div className="grid grid-cols-3 gap-4 text-center">
+      {/* Glow décoratif emerald subtle (juste pour signature) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-0 right-0 w-[260px] h-[260px] rounded-full"
+        style={{
+          background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%)',
+          transform: 'translate(40%, -40%)',
+        }}
+      />
+
+      <div className="relative grid grid-cols-3 gap-4 text-center">
+        {/* Jours restants */}
         <div>
-          <p className="text-[24px] md:text-[28px] font-extrabold tracking-[-0.02em]" style={{ color: '#10B981' }}>
-            {daysLeft !== null ? daysLeft : '—'}
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
+            Jours restants
           </p>
-          <p className="text-[12px] text-gray-600 mt-0.5 font-medium">Jours restants</p>
+          {daysLeft !== null ? (
+            <p
+              className="font-extrabold leading-none tracking-[-0.03em]"
+              style={{
+                color: '#059669',
+                fontSize: 'clamp(28px, 4.5vw, 38px)',
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              {daysLeft}
+            </p>
+          ) : (
+            <StatSkeleton width={64} height={38} />
+          )}
         </div>
+        {/* Tarif */}
         <div>
-          <p className="text-[24px] md:text-[28px] font-extrabold text-gray-900 tracking-[-0.02em]">
-            {espace.mrr_eur}€
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
+            HT / mois
           </p>
-          <p className="text-[12px] text-gray-600 mt-0.5 font-medium">HT / mois</p>
+          {espace.mrr_eur != null ? (
+            <p
+              className="font-extrabold leading-none tracking-[-0.03em] text-gray-900"
+              style={{
+                fontSize: 'clamp(28px, 4.5vw, 38px)',
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              {espace.mrr_eur}€
+            </p>
+          ) : (
+            <StatSkeleton width={88} height={38} />
+          )}
         </div>
+        {/* Débit */}
         <div>
-          <p className="text-[24px] md:text-[28px] font-extrabold text-gray-900 tracking-[-0.02em]">
-            {debitDate}
-          </p>
-          <p className="text-[12px] text-gray-600 mt-0.5 font-medium">
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
             {isTrial ? 'Premier débit' : 'Prochaine facture'}
           </p>
+          {targetDate ? (
+            <p
+              className="font-extrabold leading-none tracking-[-0.03em] text-gray-900"
+              style={{
+                fontSize: 'clamp(28px, 4.5vw, 38px)',
+                fontFeatureSettings: '"tnum"',
+              }}
+            >
+              {debitDate}
+            </p>
+          ) : (
+            <div className="flex flex-col items-center gap-1.5">
+              <StatSkeleton width={84} height={28} />
+              <span className="text-[10.5px] font-medium text-gray-500">En cours de configuration</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Barre de progression de l'essai */}
+      {/* Barre de progression de l'essai — contraste fort gris/emerald */}
       {isTrial && daysLeft !== null && (
         <div className="mt-5">
           <div
-            className="h-1 rounded-full overflow-hidden"
-            style={{ background: 'rgba(16, 185, 129, 0.15)' }}
+            className="h-1.5 rounded-full overflow-hidden"
+            style={{ background: '#E5E7EB' }}
           >
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${progressPct}%`,
                 background: 'linear-gradient(90deg, #10B981, #059669)',
+                boxShadow: '0 0 8px rgba(16,185,129,0.4)',
               }}
             />
           </div>
-          <p className="text-[11.5px] text-center mt-2 font-medium" style={{ color: '#6B7280' }}>
+          <p className="text-[12px] text-center mt-2.5 font-semibold" style={{ color: '#047857' }}>
             Jour {daysUsed + 1} sur {totalDays}
           </p>
         </div>
@@ -448,9 +649,9 @@ function RecapStats({ espace, isTrial }) {
 function Stat({ label, value, icon: Icon }) {
   return (
     <div>
-      <dt className="text-[12px] font-medium text-gray-500 mb-1">{label}</dt>
+      <dt className="text-[12px] font-semibold mb-1" style={{ color: '#6B7280' }}>{label}</dt>
       <dd className="text-[15.5px] font-semibold text-gray-900 inline-flex items-center gap-1.5">
-        {Icon && <Icon className="w-3.5 h-3.5 text-gray-400" strokeWidth={2.4} />}
+        {Icon && <Icon className="w-3.5 h-3.5" strokeWidth={2.4} style={{ color: '#10B981' }} />}
         {value}
       </dd>
     </div>

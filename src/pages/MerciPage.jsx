@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ArrowRight, Shield, Mail, Phone, Sparkles, Calendar, Check, MapPin, Store, PhoneCall, Bot, Smartphone, Copy, PartyPopper, Zap, CreditCard } from 'lucide-react';
+import { setCachedAbonne, mergeWithCache } from '../services/abonneCache';
 import EspaceLayout from '../components/EspaceLayout';
 
 // URL Apps Script Vonage CRM (= celle qui gère les abonnés + espace)
@@ -149,23 +150,32 @@ function SubscriptionConfirmation({ commercantId }) {
         });
         const json = await res.json();
         if (cancelled) return;
-        if (json.ok && json.espace?.nom_commerce && json.espace?.code_postal) {
-          // Profil déjà complet en BDD → skip form
-          setProfile({
-            nom_commerce: json.espace.nom_commerce,
-            code_postal: json.espace.code_postal,
-          });
-          if (json.espace.numero_virtuel) {
-            setNumeroVirtuel(json.espace.numero_virtuel);
-            numeroReceivedRef.current = true;
+        if (json.ok && json.espace) {
+          // Persist le cache global pour les pages Modules/Abonnement
+          // (évite le flash skeleton à chaque navigation entre pages)
+          try {
+            const merged = mergeWithCache(commercantId, json.espace);
+            setCachedAbonne(commercantId, merged);
+          } catch (_e) {}
+
+          if (json.espace.nom_commerce && json.espace.code_postal) {
+            // Profil déjà complet en BDD → skip form
+            setProfile({
+              nom_commerce: json.espace.nom_commerce,
+              code_postal: json.espace.code_postal,
+            });
+            if (json.espace.numero_virtuel) {
+              setNumeroVirtuel(json.espace.numero_virtuel);
+              numeroReceivedRef.current = true;
+            }
+            persistProfile({
+              nom_commerce: json.espace.nom_commerce,
+              code_postal: json.espace.code_postal,
+              numero_virtuel: json.espace.numero_virtuel || '',
+              hydratedFromBackend: true,
+            });
+            setStep('ready');
           }
-          persistProfile({
-            nom_commerce: json.espace.nom_commerce,
-            code_postal: json.espace.code_postal,
-            numero_virtuel: json.espace.numero_virtuel || '',
-            hydratedFromBackend: true,
-          });
-          setStep('ready');
         }
       } catch (_e) {
         // Network fail : on laisse le form s'afficher (comportement par défaut)
@@ -368,10 +378,10 @@ function SubscriptionConfirmation({ commercantId }) {
 
   // Bloc principal narratif — identique dans les 2 modes (les phases s'auto-affichent)
   const mainContent = (
-    <main className="relative max-w-2xl mx-auto px-6 py-12 md:py-16">
+    <main className="relative max-w-2xl mx-auto px-6 py-10 md:py-12">
 
         {/* Icône check — pop d'entrée + halo qui pulse en continu (célébration Apple) */}
-        <div className="relative flex justify-center mb-9">
+        <div className="relative flex justify-center mb-5">
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -631,10 +641,10 @@ function SubscriptionConfirmation({ commercantId }) {
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                 className="text-center mb-8"
               >
-                <h3 className="text-[22px] font-extrabold text-gray-900 tracking-[-0.025em]">
-                  Voici comment votre IA travaille.
+                <h3 className="text-[20px] font-semibold text-gray-900 tracking-[-0.02em]">
+                  Voici comment votre IA travaille
                 </h3>
-                <p className="text-[14px] text-gray-500 mt-1.5">
+                <p className="text-[14px] mt-1.5" style={{ color: '#6B7280', fontWeight: 400 }}>
                   Rien à installer. Ça marche avec votre téléphone actuel.
                 </p>
               </motion.div>
@@ -905,11 +915,12 @@ function SubscriptionConfirmation({ commercantId }) {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.9, delay: 7.8, ease: [0.22, 1, 0.36, 1] }}
-                    className="rounded-[14px] px-6 py-5 mb-8 text-center"
+                    className="rounded-[18px] px-6 py-6 mb-8 text-center"
                     style={{
-                      background: '#F0FDF4',
-                      border: '1.5px solid #10B981',
+                      background: 'rgba(16,185,129,0.04)',
+                      border: '1.5px solid rgba(16,185,129,0.30)',
                       color: '#065F46',
+                      boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset, 0 10px 24px rgba(16,185,129,0.10)',
                     }}
                   >
                     <p className="text-[15px] font-bold mb-1 inline-flex items-center justify-center gap-2 flex-wrap">
@@ -937,35 +948,69 @@ function SubscriptionConfirmation({ commercantId }) {
                 transition={{ duration: 0.9, delay: 8.5, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="text-center mb-6">
-                  <h3 className="text-[18px] font-extrabold text-gray-900 tracking-[-0.025em]">
-                    Vous êtes dans votre espace.
+                  <div
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11.5px] font-bold uppercase tracking-[0.10em] mb-4"
+                    style={{
+                      background: 'linear-gradient(135deg, #10B981, #059669)',
+                      color: '#FFFFFF',
+                      boxShadow: '0 6px 16px rgba(16,185,129,0.32), 0 2px 4px rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" strokeWidth={2.8} />
+                    Étape suivante
+                  </div>
+                  <h3 className="text-[22px] md:text-[24px] font-extrabold text-gray-900 tracking-[-0.025em] leading-tight">
+                    Faites connaître votre nouveau numéro.
                   </h3>
-                  <p className="text-[13.5px] text-gray-500 mt-1.5">
-                    Tout est à portée de clic, quand vous voulez.
+                  <p className="text-[13.5px] text-gray-500 mt-2 leading-relaxed max-w-md mx-auto">
+                    6 actions simples pour que vos clients utilisent <strong className="text-gray-900">automatiquement</strong> votre numéro BoosterPay. 5 minutes suffisent.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <EspaceNavCard
-                    to={commercantId ? `/espace/modules?id=${encodeURIComponent(commercantId)}` : '/espace/modules'}
-                    icon={Bot}
-                    title="Mes modules"
-                    desc="Renouvellements, RDV, avis, paiements…"
+                {/* CTA principal — emerald solide, ultra-visible */}
+                <Link
+                  to={commercantId ? `/espace/modules?id=${encodeURIComponent(commercantId)}#communiquer` : '/espace/modules'}
+                  className="group flex items-center gap-4 p-5 rounded-[20px] transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    boxShadow: '0 12px 28px -6px rgba(16, 185, 129, 0.45), 0 2px 6px rgba(0,0,0,0.06)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 16px 36px -8px rgba(16, 185, 129, 0.55), 0 2px 6px rgba(0,0,0,0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 12px 28px -6px rgba(16, 185, 129, 0.45), 0 2px 6px rgba(0,0,0,0.06)';
+                  }}
+                >
+                  <div
+                    className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{
+                      background: 'rgba(255,255,255,0.20)',
+                      boxShadow: '0 1px 0 rgba(255,255,255,0.3) inset',
+                    }}
+                  >
+                    <Sparkles className="w-5 h-5 text-white" strokeWidth={2.4} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-[15.5px] font-bold text-white leading-tight">
+                        Communiquer mon nouveau numéro
+                      </p>
+                    </div>
+                    <p className="text-[12.5px] text-white/85 leading-snug">
+                      Google Business, signature, site, voiture… La checklist guidée.
+                    </p>
+                  </div>
+                  <ArrowRight
+                    className="w-5 h-5 text-white flex-shrink-0 transition-transform group-hover:translate-x-1"
+                    strokeWidth={2.4}
                   />
-                  <EspaceNavCard
-                    to={espaceUrl}
-                    icon={CreditCard}
-                    title="Mon abonnement"
-                    desc="Essai 7 jours · Gestion & résiliation."
-                  />
-                </div>
+                </Link>
 
-                <p className="mt-7 text-center text-[12px] text-gray-400 leading-relaxed">
-                  Une question ?{' '}
-                  <a href="mailto:contact@booster-pay.com" className="underline hover:text-gray-700">
-                    contact@booster-pay.com
-                  </a>
-                </p>
+{/* Liens redondants (navigation sidebar + double contact) supprimés
+                    pour épuration du flux Bienvenue. Le footer global suffit. */}
               </motion.div>
             </motion.div>
           )}
@@ -1014,14 +1059,27 @@ function SubscriptionConfirmation({ commercantId }) {
           )}
         </AnimatePresence>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="mt-14 text-center text-[12px] text-gray-400"
+          className="mt-14 text-center text-[12.5px] text-gray-500 inline-flex items-center justify-center gap-2 w-full"
         >
-          Une question ? Écrivez à <a href="mailto:contact@booster-pay.com" className="underline hover:text-gray-700">contact@booster-pay.com</a>
-        </motion.p>
+          <span
+            className="inline-flex items-center justify-center w-6 h-6 rounded-full"
+            style={{
+              background: 'linear-gradient(135deg, #10B981, #059669)',
+              boxShadow: '0 4px 10px rgba(16,185,129,0.30)',
+            }}
+            aria-hidden
+          >
+            <Mail className="w-3 h-3 text-white" strokeWidth={2.6} />
+          </span>
+          Une question ? Écrivez à{' '}
+          <a href="mailto:contact@booster-pay.com" className="font-semibold text-gray-700 hover:text-gray-900 transition-colors">
+            contact@booster-pay.com
+          </a>
+        </motion.div>
       </main>
   );
 
