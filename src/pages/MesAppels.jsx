@@ -175,22 +175,30 @@ export default function MesAppels() {
   // ── Résolution du commercant_id : stratégie multi-couches 100% fiable
   //    sur 100% des smartphones (iPhone iOS 16.4+, Android Chrome, etc.)
   //
-  //    Priorité de lecture :
-  //      1. ?id=BP-XXX dans l'URL (cas normal, magic link, navigation depuis sidebar)
-  //      2. localStorage  (cas PWA installée, browser réutilisé)
-  //      3. Cookie 1 an   (cas contexte isolé Safari/PWA sur iOS anciens)
-  //      4. Si rien trouvé ET on est en PWA standalone → redirect /connexion
-  //      5. Sinon → mode démo (utile pour démos commerciales, prospects, etc.)
+  //    Couches de résolution :
+  //      0. Service Worker fetch interceptor (HTTP 302) → résout AVANT React
+  //      1. ?id=BP-XXX dans l'URL (cas normal, magic link)
+  //      2. localStorage / cookie (sync, instant)
+  //      3. IndexedDB (async, le seul persistent sur iOS PWA)
+  //      4. Redirect /connexion?from=pwa si standalone et rien trouvé
+  //      5. Mode démo (visite browser non connectée — page de présentation)
+  //
+  //    PENDANT la résolution async (étape 3), on affiche un splash screen
+  //    Apple-style au lieu de la page démo (pas pro de voir "Garage Dupont"
+  //    flasher pendant 0.5s avant la vraie data).
+  const isStandalone = (typeof window !== 'undefined') && isStandalonePWA();
+  // Si on est en PWA standalone sans ?id, on entre en mode "résolution" qui
+  // affiche un splash le temps que l'async IDB rende sa réponse.
+  const [resolving, setResolving] = useState(!commercantId && isStandalone);
+
   useEffect(() => {
     if (commercantId) {
       // ID dans l'URL → on le mémorise dans toutes les couches pour la PWA
       rememberLastCommercantId(commercantId);
+      setResolving(false);
       return;
     }
-    // Stratégie de résolution :
-    //  1) sync : localStorage puis cookie
-    //  2) async : IndexedDB (le seul vraiment persistent sur iOS PWA)
-    //  3) fallback : redirect /connexion si PWA standalone
+    // 1) sync : localStorage puis cookie (lecture instantanée)
     const syncLast = getLastCommercantId();
     if (syncLast) {
       navigate(`/espace/appels?id=${encodeURIComponent(syncLast)}`, { replace: true });
@@ -198,21 +206,29 @@ export default function MesAppels() {
     }
     let cancelled = false;
     (async () => {
+      // 2) async : IndexedDB (le seul vraiment persistent sur iOS PWA)
       const asyncLast = await getLastCommercantIdAsync();
       if (cancelled) return;
       if (asyncLast) {
         navigate(`/espace/appels?id=${encodeURIComponent(asyncLast)}`, { replace: true });
         return;
       }
-      // Vraiment aucune mémoire : si on est en PWA standalone, l'utilisateur
-      // s'attend à être connecté → magic link.
+      // 3) Vraiment aucune mémoire : si PWA standalone → magic link
       if (isStandalonePWA()) {
         navigate('/connexion?from=pwa', { replace: true });
+        return;
       }
-      // Sinon (visite normale browser sans connexion) → mode démo
+      // 4) Sinon (browser sans connexion) → mode démo
+      setResolving(false);
     })();
     return () => { cancelled = true; };
   }, [commercantId, navigate]);
+
+  // ── PWA standalone sans ?id : pendant la résolution, on affiche un splash
+  //    plein-écran Apple-style au lieu de la page démo. Évite le flash.
+  if (resolving) {
+    return <PwaSplash />;
+  }
 
   const isDemoMode = !commercantId;
 
@@ -825,6 +841,93 @@ function DetailRow({ label, value, mono }) {
       >
         {value}
       </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  PwaSplash — splash screen Apple-style affiché au démarrage de la
+//  PWA standalone, le temps que la résolution async du commercant_id
+//  termine (IndexedDB lookup). Évite le flash de la page démo.
+// ─────────────────────────────────────────────────────────────────
+function PwaSplash() {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      style={{
+        background: 'linear-gradient(180deg, #FFFFFF 0%, #F9FAFB 100%)',
+      }}
+    >
+      {/* Logo BoosterPay avec gradient emerald — pulsation douce */}
+      <div
+        className="relative w-20 h-20 rounded-[22px] flex items-center justify-center mb-7"
+        style={{
+          background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+          boxShadow: '0 12px 32px rgba(16, 185, 129, 0.28), 0 4px 12px rgba(16, 185, 129, 0.18)',
+          animation: 'bp-splash-pulse 2s ease-in-out infinite',
+        }}
+      >
+        <span
+          className="text-white font-extrabold leading-none"
+          style={{
+            fontSize: '40px',
+            letterSpacing: '-0.04em',
+            fontFeatureSettings: '"ss01"',
+          }}
+        >
+          B
+        </span>
+        {/* Petite bulle blanche emerald (signature BoosterPay) */}
+        <div
+          className="absolute top-2.5 right-2.5 w-3.5 h-3.5 rounded-full bg-white"
+          style={{ boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.35)' }}
+        />
+      </div>
+
+      {/* Nom de marque */}
+      <p
+        className="font-bold tracking-tight"
+        style={{
+          fontSize: '17px',
+          color: '#0F172A',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        Booster<span style={{ color: '#10B981' }}>Pay</span>
+      </p>
+
+      {/* Sous-titre */}
+      <p
+        className="text-[12.5px] mt-1.5"
+        style={{ color: '#9CA3AF' }}
+      >
+        Préparation de votre espace…
+      </p>
+
+      {/* Activity indicator iOS-style */}
+      <div className="mt-7 flex items-center gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full"
+            style={{
+              background: '#10B981',
+              animation: `bp-splash-dot 1.4s ease-in-out ${i * 0.2}s infinite`,
+            }}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes bp-splash-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+        }
+        @keyframes bp-splash-dot {
+          0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }
