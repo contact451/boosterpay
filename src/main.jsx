@@ -14,11 +14,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 // Silent fail — pas bloquant si HTTPS absent (localhost OK)
 if (typeof window !== 'undefined') {
   window.addEventListener('load', () => {
+    // Force la mise à jour du SW si une nouvelle version est dispo (sinon
+    // iOS PWA peut garder l'ancien SW indéfiniment).
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.update())))
+        .catch(() => {});
+    }
     registerServiceWorker().catch(() => {});
     // Demande au navigateur de protéger notre stockage contre la purge
     // automatique (iOS PWA ITP peut effacer localStorage entre sessions).
-    // Best-effort silencieux — Safari l'accorde habituellement aux PWA
-    // installées à l'écran d'accueil.
     try {
       if (navigator.storage && navigator.storage.persist) {
         navigator.storage.persist().catch(() => {});
@@ -59,7 +64,23 @@ if (typeof window !== 'undefined') {
   // Signal manuel (depuis MesAppels après résolution async)
   window.addEventListener('bp:splash-done', safeRemove);
 
-  // Fallback : on retire le splash après 2.5s maximum, même si rien
-  // n'a signalé. Évite qu'il reste bloqué en cas d'erreur JS.
-  setTimeout(safeRemove, 2500);
+  // Fallback DUR : on retire le splash après 2s maximum, même si rien
+  // n'a signalé. Évite qu'il reste bloqué en cas d'erreur JS ou de
+  // résolution async qui ne complete jamais.
+  setTimeout(safeRemove, 2000);
+
+  // Sécurité ultime : si après 5s on est toujours sur une URL sans contenu
+  // (mode standalone, pas d'?id, MesAppels figé), on force redirect vers
+  // la page de connexion.
+  setTimeout(() => {
+    try {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || (window.navigator && window.navigator.standalone === true);
+      const onAppelsRoot = window.location.pathname === '/espace/appels'
+        && !new URLSearchParams(window.location.search).get('id');
+      if (isStandalone && onAppelsRoot) {
+        window.location.replace('/connexion?from=pwa');
+      }
+    } catch (_e) {}
+  }, 5000);
 }

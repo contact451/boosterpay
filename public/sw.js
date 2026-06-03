@@ -11,16 +11,31 @@
 //  Le SW se met à jour automatiquement à chaque refresh (skipWaiting).
 // ─────────────────────────────────────────────────────────────────
 
-const SW_VERSION = 'v1.0.0';
+const SW_VERSION = 'v2.0.0-no-interceptor';
 
 self.addEventListener('install', (event) => {
-  // Activation immédiate à la nouvelle version
+  // Activation immédiate à la nouvelle version (force rotate iOS)
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Prend le contrôle des onglets ouverts
-  event.waitUntil(self.clients.claim());
+  // Prend le contrôle des onglets ouverts SANS attendre fin de navigation
+  event.waitUntil((async () => {
+    await self.clients.claim();
+    // Vide tous les caches anciens pour s'assurer qu'on sert toujours du
+    // contenu frais (la PWA est en ligne uniquement, pas besoin de cache assets)
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    } catch (_e) {}
+  })());
+});
+
+// Force la mise à jour si le main thread demande
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Note : pas de fetch interceptor. La résolution du commercant_id est

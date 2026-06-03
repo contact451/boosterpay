@@ -210,11 +210,30 @@ export default function MesAppels() {
       navigate(`/espace/appels?id=${encodeURIComponent(syncLast)}`, { replace: true });
       return;
     }
+
     let cancelled = false;
+    let resolved = false;
+
+    // ── Timeout de sécurité : si la résolution async dépasse 3s
+    //    (IDB qui bloque, navigateur lent, etc.), on prend une décision
+    //    par défaut pour ne JAMAIS rester sur écran blanc.
+    const safetyTimeout = setTimeout(() => {
+      if (cancelled || resolved) return;
+      resolved = true;
+      if (isStandalonePWA()) {
+        navigate('/connexion?from=pwa', { replace: true });
+      } else {
+        setResolving(false);
+        signalSplashDone();
+      }
+    }, 3000);
+
     (async () => {
       // 2) async : IndexedDB (le seul vraiment persistent sur iOS PWA)
       const asyncLast = await getLastCommercantIdAsync();
-      if (cancelled) return;
+      if (cancelled || resolved) return;
+      resolved = true;
+      clearTimeout(safetyTimeout);
       if (asyncLast) {
         navigate(`/espace/appels?id=${encodeURIComponent(asyncLast)}`, { replace: true });
         return;
@@ -228,7 +247,11 @@ export default function MesAppels() {
       setResolving(false);
       signalSplashDone();
     })();
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+      clearTimeout(safetyTimeout);
+    };
   }, [commercantId, navigate]);
 
   // ── Pendant la résolution, on retourne null (le splash HTML inline est
