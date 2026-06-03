@@ -4,7 +4,7 @@
   "description": "Votre IA vocale qui répond aux appels 24/7 et votre centre d'appels en temps réel.",
   "lang": "fr",
   "dir": "ltr",
-  "start_url": "/espace/appels",
+  "start_url": ".",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
