@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, Phone, Clock, CreditCard, Calendar, ExternalLink, AlertCircle, Sparkles, ArrowRight, Mail } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
-import { getCachedAbonne, setCachedAbonne, mergeWithCache } from '../services/abonneCache';
+import { getCachedAbonne, setCachedAbonne, mergeWithCache, rememberLastCommercantId, getLastCommercantId } from '../services/abonneCache';
 
 // URL du Web App Apps Script "BoosterPay Vonage CRM" (à mettre en env var si différent)
 const APPS_SCRIPT_URL = import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL
@@ -71,10 +71,27 @@ export default function EspaceAbonne() {
   const navigate = useNavigate();
 
   // commercant_id depuis l'URL — peut être remplacé par celui résolu via magic link
+  // ou par le dernier id mémorisé (PWA ouverte depuis l'écran d'accueil).
   const [commercantId, setCommercantId] = useState(() => {
     if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('id') || '';
+    const fromUrl = new URLSearchParams(window.location.search).get('id') || '';
+    if (fromUrl) return fromUrl;
+    // Fallback PWA : utilise le dernier id connu
+    return getLastCommercantId();
   });
+
+  // Si on a récupéré l'id depuis le cache PWA, on met à jour l'URL pour
+  // que les liens (Modules, Appels...) propagent l'id correctement.
+  useEffect(() => {
+    if (!commercantId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id') !== commercantId) {
+      params.set('id', commercantId);
+      navigate(`${window.location.pathname}?${params.toString()}${window.location.hash}`, { replace: true });
+    }
+    rememberLastCommercantId(commercantId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commercantId]);
 
   // ── Init espace depuis le cache localStorage (affichage IMMEDIAT, pas de skeleton flash) ──
   const [espace, setEspace] = useState(() => {
@@ -505,8 +522,11 @@ function ClientIdLine({ commercantId }) {
 // ─────────────────────────────────────────────────────────────────
 function RecapStats({ espace, isTrial }) {
   // Cible : date de fin d'essai si trial, sinon prochaine facture
-  // Fallback : si trial_ends_at vide (cas test/compte legacy) ET provisioned_at présent,
-  // on calcule provisioned_at + 7 jours (durée standard d'essai BoosterPay).
+  // Fallback : si la date n'est pas remplie côté sheet (le webhook Stripe a
+  // pu ne pas la propager), on calcule à partir des dates disponibles pour
+  // que la stat soit TOUJOURS visible (UX premium > données techniques).
+  //   - trial : trial_ends_at → provisioned_at + 7j
+  //   - active : next_billing_at → last_paid_at + 30j → provisioned_at + 30j
   const targetDate = (() => {
     if (isTrial) {
       if (espace.trial_ends_at) return espace.trial_ends_at;
@@ -519,7 +539,23 @@ function RecapStats({ espace, isTrial }) {
       }
       return null;
     }
-    return espace.next_billing_at || null;
+    // Compte ACTIF (post-paiement)
+    if (espace.next_billing_at) return espace.next_billing_at;
+    if (espace.last_paid_at) {
+      try {
+        const d = new Date(espace.last_paid_at);
+        d.setDate(d.getDate() + 30);
+        return d.toISOString();
+      } catch { return null; }
+    }
+    if (espace.provisioned_at) {
+      try {
+        const d = new Date(espace.provisioned_at);
+        d.setDate(d.getDate() + 30);
+        return d.toISOString();
+      } catch { return null; }
+    }
+    return null;
   })();
   const daysLeft = (() => {
     if (!targetDate) return null;
@@ -561,7 +597,7 @@ function RecapStats({ espace, isTrial }) {
         {/* Jours restants */}
         <div>
           <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
-            Jours restants
+            {isTrial ? 'Jours restants' : 'Jours avant facture'}
           </p>
           {daysLeft !== null ? (
             <p
@@ -615,7 +651,9 @@ function RecapStats({ espace, isTrial }) {
           ) : (
             <div className="flex flex-col items-center gap-1.5">
               <StatSkeleton width={84} height={28} />
-              <span className="text-[10.5px] font-medium text-gray-500">En cours de configuration</span>
+              {isTrial && (
+                <span className="text-[10.5px] font-medium text-gray-500">En cours de configuration</span>
+              )}
             </div>
           )}
         </div>

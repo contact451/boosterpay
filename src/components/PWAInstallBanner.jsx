@@ -19,15 +19,15 @@ import { useEffect, useState } from 'react';
 import { Smartphone, Share, Plus, X } from 'lucide-react';
 import { isStandalonePWA, detectPlatform } from '../services/pushSubscription';
 
-const STORAGE_KEY = 'bp_pwa_install_dismissed_at';
-const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
+// Dismiss = session courante uniquement.
+// Le banner réapparait à chaque nouvelle visite tant que l'app
+// n'est pas installée en mode standalone.
+const SESSION_KEY = 'bp_pwa_install_dismissed';
 
-function wasRecentlyDismissed() {
+function wasDismissedThisSession() {
   if (typeof window === 'undefined') return false;
   try {
-    const ts = parseInt(window.localStorage.getItem(STORAGE_KEY) || '0', 10);
-    if (!ts) return false;
-    return Date.now() - ts < COOLDOWN_MS;
+    return window.sessionStorage.getItem(SESSION_KEY) === '1';
   } catch (_e) {
     return false;
   }
@@ -42,7 +42,7 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isStandalonePWA()) return; // déjà installé
-    if (wasRecentlyDismissed()) return;
+    if (wasDismissedThisSession()) return;
     // Mobile only
     const isMobile = window.matchMedia('(max-width: 900px)').matches;
     if (!isMobile) return;
@@ -60,7 +60,7 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
   }, []);
 
   const handleDismiss = () => {
-    try { window.localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (_e) {}
+    try { window.sessionStorage.setItem(SESSION_KEY, '1'); } catch (_e) {}
     setVisible(false);
     setIosTutoOpen(false);
   };

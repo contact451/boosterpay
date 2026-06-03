@@ -92,3 +92,47 @@ export function clearCachedAbonne(commercantId) {
     window.localStorage.removeItem(keyFor(commercantId));
   } catch (_e) {}
 }
+
+// ─────────────────────────────────────────────────────────────────
+//  LAST COMMERCANT ID — utilisé par la PWA pour se "souvenir" de
+//  l'utilisateur connecté quand l'app est ouverte depuis l'écran
+//  d'accueil iPhone/Android (le start_url du manifest ne porte pas
+//  de ?id=BP-XXX). Sans cela, la PWA tomberait toujours en mode démo.
+//
+//  Stocké séparément du cache abonné pour rester disponible même si
+//  le cache complet expire (24h).
+// ─────────────────────────────────────────────────────────────────
+const LAST_ID_KEY = 'bp_last_commercant_id';
+
+/**
+ * Mémorise ce commercant_id comme le dernier utilisé (pour la PWA).
+ */
+export function rememberLastCommercantId(commercantId) {
+  if (!commercantId || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(LAST_ID_KEY, String(commercantId));
+  } catch (_e) {}
+}
+
+/**
+ * Récupère le dernier commercant_id mémorisé.
+ * Retourne '' si aucun (jamais connecté ou cache vidé).
+ */
+export function getLastCommercantId() {
+  if (typeof window === 'undefined') return '';
+  try {
+    return window.localStorage.getItem(LAST_ID_KEY) || '';
+  } catch (_e) {
+    return '';
+  }
+}
+
+/**
+ * Oublie l'identifiant — utilisé en cas de logout ou cancellation.
+ */
+export function forgetLastCommercantId() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(LAST_ID_KEY);
+  } catch (_e) {}
+}

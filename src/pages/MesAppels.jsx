@@ -21,7 +21,7 @@
 // ─────────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Phone,
   PhoneIncoming,
@@ -37,7 +37,7 @@ import {
   BellRing,
 } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
-import { getCachedAbonne, mergeWithCache, setCachedAbonne } from '../services/abonneCache';
+import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId } from '../services/abonneCache';
 import PWAInstallBanner from '../components/PWAInstallBanner';
 import { subscribeToPush, isPushReady, isPushSubscribed } from '../services/pushSubscription';
 
@@ -169,7 +169,28 @@ const DEMO_APPELS = [
 // ─────────────────────────────────────────────────────────────────
 export default function MesAppels() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const commercantId = searchParams.get('id') || '';
+
+  // ── PWA : si l'URL n'a pas de ?id mais qu'on a un commercant_id mémorisé
+  //    en localStorage, on redirige automatiquement vers la bonne URL.
+  //    Cas typique : l'app est ouverte depuis l'icône PWA (start_url=/espace/appels
+  //    sans ?id) → on récupère le dernier user connecté.
+  useEffect(() => {
+    if (commercantId) {
+      // On vient d'arriver avec un id valide → on le mémorise pour les
+      // prochaines ouvertures PWA.
+      rememberLastCommercantId(commercantId);
+      return;
+    }
+    const last = getLastCommercantId();
+    if (last) {
+      navigate(`/espace/appels?id=${encodeURIComponent(last)}`, { replace: true });
+    }
+    // Pas de last id : on reste en mode démo. L'utilisateur peut se
+    // connecter depuis le header / sidebar.
+  }, [commercantId, navigate]);
+
   const isDemoMode = !commercantId;
 
   const cachedAbonne = !isDemoMode ? getCachedAbonne(commercantId) : null;

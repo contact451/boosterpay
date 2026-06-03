@@ -19,7 +19,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCachedAbonne, setCachedAbonne, mergeWithCache } from '../services/abonneCache';
+import { getCachedAbonne, setCachedAbonne, mergeWithCache, rememberLastCommercantId, getLastCommercantId } from '../services/abonneCache';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PhoneCall, RefreshCw, CalendarCheck, Bot, Star, Zap,
@@ -149,8 +149,23 @@ export default function MesModules() {
   const navigate = useNavigate();
   const commercantId = useMemo(() => {
     if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('id') || '';
+    const fromUrl = new URLSearchParams(window.location.search).get('id') || '';
+    if (fromUrl) return fromUrl;
+    // PWA : fallback sur le dernier id mémorisé
+    return getLastCommercantId();
   }, []);
+
+  // Si on a récupéré l'id depuis le cache PWA, on met à jour l'URL
+  useEffect(() => {
+    if (!commercantId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id') !== commercantId) {
+      params.set('id', commercantId);
+      navigate(`${window.location.pathname}?${params.toString()}${window.location.hash}`, { replace: true });
+    }
+    rememberLastCommercantId(commercantId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commercantId]);
 
   const isDemoMode = /TEST|DEMO/i.test(commercantId);
 

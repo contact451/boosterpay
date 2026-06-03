@@ -14,9 +14,10 @@
 //  Utilisé par : MerciPage (phase provisioning/ready/expired), EspaceAbonne
 // ─────────────────────────────────────────────────────────────────
 
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming } from 'lucide-react';
-import { getCachedAbonne } from '../services/abonneCache';
+import { getCachedAbonne, rememberLastCommercantId } from '../services/abonneCache';
 
 const NAV_SECTIONS = [
   { id: 'bienvenue', label: 'Bienvenue', icon: Home, baseTo: '/merci' },
@@ -26,6 +27,13 @@ const NAV_SECTIONS = [
 ];
 
 export default function EspaceLayout({ children, nomCommerce, commercantId, activeSection = 'bienvenue' }) {
+  // Mémorise le dernier commercant_id vu — la PWA s'en sert pour se
+  // "souvenir" de l'utilisateur lorsque l'app est ouverte depuis l'icône
+  // de l'écran d'accueil (start_url sans ?id).
+  useEffect(() => {
+    if (commercantId) rememberLastCommercantId(commercantId);
+  }, [commercantId]);
+
   // Construit les liens en propagant commercant_id / subscription
   const buildLink = (baseTo) => {
     if (baseTo === '/merci') {
