@@ -99,18 +99,81 @@ export function clearCachedAbonne(commercantId) {
 //  d'accueil iPhone/Android (le start_url du manifest ne porte pas
 //  toujours ?id=BP-XXX). Sans cela, la PWA tomberait en mode démo.
 //
-//  Stratégie 100% fiable, multi-couches :
-//   1. localStorage  → standard moderne (iPhone iOS 16.4+, Android)
-//   2. Cookie 1 an   → backup pour les cas où localStorage est isolé
-//                       entre Safari et la PWA installée (rare mais
-//                       arrive sur certains anciens iOS / containers)
+//  ── Stratégie 100% fiable iOS + Android, multi-couches ──
+//   1. IndexedDB      → MEILLEURE persistence sur iOS PWA standalone
+//                        (Safari WebKit efface aggressively le
+//                         localStorage entre sessions PWA via ITP,
+//                         mais IndexedDB est protégé)
+//   2. localStorage   → standard rapide, lecture synchrone instantanée
+//                        utilisé pour le 1er render avant que l'async
+//                        IDB soit résolu
+//   3. Cookie 1 an    → backup HTTP cross-context
 //
-//  Lecture : on essaie localStorage en priorité, puis cookie en backup.
-//  Écriture : on écrit dans les DEUX simultanément.
+//  Écriture : on écrit dans les 3 supports simultanément
+//  Lecture sync : localStorage → cookie (renvoie instantanément)
+//  Lecture async : IDB (renvoie une promesse, hydrate localStorage si trouvé)
 // ─────────────────────────────────────────────────────────────────
 const LAST_ID_KEY = 'bp_last_commercant_id';
 const COOKIE_NAME = 'bp_last_commercant_id';
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 an
+
+// ── IndexedDB helpers ──
+const IDB_NAME = 'bp-pwa-store';
+const IDB_STORE = 'kv';
+const IDB_VERSION = 1;
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') return reject(new Error('no_idb'));
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSet(key, value) {
+  try {
+    const db = await openIDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (_e) { /* silent — fallback déjà en place */ }
+}
+
+async function idbGet(key) {
+  try {
+    const db = await openIDB();
+    const val = await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return val || '';
+  } catch (_e) { return ''; }
+}
+
+async function idbDelete(key) {
+  try {
+    const db = await openIDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  } catch (_e) {}
+}
 
 function setCookie(name, value, maxAgeSec) {
   if (typeof document === 'undefined') return;
@@ -146,17 +209,31 @@ function deleteCookie(name) {
 
 /**
  * Mémorise ce commercant_id comme le dernier utilisé (pour la PWA).
- * Écrit dans localStorage ET cookie pour couverture 100%.
+ * Écrit dans localStorage + cookie + IndexedDB pour couverture 100%.
+ *
+ * Demande aussi `navigator.storage.persist()` pour éviter que iOS purge
+ * notre stockage entre sessions (politique ITP très agressive sur PWA).
  */
 export function rememberLastCommercantId(commercantId) {
   if (!commercantId || typeof window === 'undefined') return;
+  // 1. localStorage (sync, instant)
   try { window.localStorage.setItem(LAST_ID_KEY, String(commercantId)); } catch (_e) {}
+  // 2. Cookie 1 an (cross-context HTTP)
   setCookie(COOKIE_NAME, String(commercantId), COOKIE_MAX_AGE);
+  // 3. IndexedDB (asynchrone, MAIS le seul vraiment persistent sur iOS PWA)
+  idbSet(LAST_ID_KEY, String(commercantId));
+  // 4. Demande au navigateur de garantir la persistence de notre stockage
+  //    (best effort — silencieux si pas supporté)
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
+  } catch (_e) {}
 }
 
 /**
- * Récupère le dernier commercant_id mémorisé.
- * Lit localStorage d'abord, puis cookie en backup.
+ * Récupère le dernier commercant_id mémorisé SYNCHRONE.
+ * Lit localStorage puis cookie. Pour IndexedDB voir getLastCommercantIdAsync.
  * Retourne '' si aucun (jamais connecté ou cache vidé).
  */
 export function getLastCommercantId() {
@@ -177,11 +254,32 @@ export function getLastCommercantId() {
 }
 
 /**
+ * Récupère le dernier commercant_id mémorisé ASYNCHRONE — vérifie aussi
+ * IndexedDB qui est le SEUL stockage vraiment persistent sur iOS PWA.
+ * À utiliser dans un useEffect quand le sync getLastCommercantId() retourne ''.
+ */
+export async function getLastCommercantIdAsync() {
+  // 1. On essaie d'abord le sync (rapide)
+  const sync = getLastCommercantId();
+  if (sync) return sync;
+  // 2. IndexedDB en backup ultime
+  const fromIdb = await idbGet(LAST_ID_KEY);
+  if (fromIdb) {
+    // Réhydrate les autres supports
+    try { window.localStorage.setItem(LAST_ID_KEY, String(fromIdb)); } catch (_e) {}
+    setCookie(COOKIE_NAME, String(fromIdb), COOKIE_MAX_AGE);
+    return String(fromIdb);
+  }
+  return '';
+}
+
+/**
  * Oublie l'identifiant — utilisé en cas de logout ou cancellation.
- * Vide les deux supports.
+ * Vide les 3 supports.
  */
 export function forgetLastCommercantId() {
   if (typeof window === 'undefined') return;
   try { window.localStorage.removeItem(LAST_ID_KEY); } catch (_e) {}
   deleteCookie(COOKIE_NAME);
+  idbDelete(LAST_ID_KEY);
 }

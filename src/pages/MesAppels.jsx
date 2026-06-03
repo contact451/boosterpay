@@ -37,7 +37,7 @@ import {
   BellRing,
 } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
-import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId } from '../services/abonneCache';
+import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId, getLastCommercantIdAsync } from '../services/abonneCache';
 import PWAInstallBanner from '../components/PWAInstallBanner';
 import { subscribeToPush, isPushReady, isPushSubscribed, isStandalonePWA } from '../services/pushSubscription';
 
@@ -187,19 +187,31 @@ export default function MesAppels() {
       rememberLastCommercantId(commercantId);
       return;
     }
-    const last = getLastCommercantId(); // lit localStorage puis cookie
-    if (last) {
-      navigate(`/espace/appels?id=${encodeURIComponent(last)}`, { replace: true });
+    // Stratégie de résolution :
+    //  1) sync : localStorage puis cookie
+    //  2) async : IndexedDB (le seul vraiment persistent sur iOS PWA)
+    //  3) fallback : redirect /connexion si PWA standalone
+    const syncLast = getLastCommercantId();
+    if (syncLast) {
+      navigate(`/espace/appels?id=${encodeURIComponent(syncLast)}`, { replace: true });
       return;
     }
-    // Vraiment aucune mémoire : si on est en PWA standalone (l'utilisateur a
-    // installé l'app et l'ouvre depuis le bureau), il s'attend à être connecté.
-    // On le redirige vers /connexion pour qu'il rentre son email → magic link.
-    if (isStandalonePWA()) {
-      navigate('/connexion?from=pwa', { replace: true });
-      return;
-    }
-    // Sinon (visite normale depuis Safari/Chrome sans connexion) → mode démo
+    let cancelled = false;
+    (async () => {
+      const asyncLast = await getLastCommercantIdAsync();
+      if (cancelled) return;
+      if (asyncLast) {
+        navigate(`/espace/appels?id=${encodeURIComponent(asyncLast)}`, { replace: true });
+        return;
+      }
+      // Vraiment aucune mémoire : si on est en PWA standalone, l'utilisateur
+      // s'attend à être connecté → magic link.
+      if (isStandalonePWA()) {
+        navigate('/connexion?from=pwa', { replace: true });
+      }
+      // Sinon (visite normale browser sans connexion) → mode démo
+    })();
+    return () => { cancelled = true; };
   }, [commercantId, navigate]);
 
   const isDemoMode = !commercantId;
