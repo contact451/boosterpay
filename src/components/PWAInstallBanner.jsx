@@ -19,19 +19,11 @@ import { useEffect, useState } from 'react';
 import { Smartphone, Share, Plus, X } from 'lucide-react';
 import { isStandalonePWA, detectPlatform } from '../services/pushSubscription';
 
-// Dismiss = session courante uniquement.
-// Le banner réapparait à chaque nouvelle visite tant que l'app
-// n'est pas installée en mode standalone.
-const SESSION_KEY = 'bp_pwa_install_dismissed';
-
-function wasDismissedThisSession() {
-  if (typeof window === 'undefined') return false;
-  try {
-    return window.sessionStorage.getItem(SESSION_KEY) === '1';
-  } catch (_e) {
-    return false;
-  }
-}
+// Le banner est TOUJOURS visible tant que la PWA n'est pas installée
+// en mode standalone (ouverte depuis l'écran d'accueil). Pas de dismiss
+// possible — l'utilisateur a clairement demandé un bouton persistant.
+// Une fois la PWA installée et lancée depuis l'écran d'accueil,
+// isStandalonePWA() === true → le banner disparait naturellement.
 
 export default function PWAInstallBanner({ commercantId: _commercantId }) {
   const [visible, setVisible] = useState(false);
@@ -41,8 +33,7 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (isStandalonePWA()) return; // déjà installé
-    if (wasDismissedThisSession()) return;
+    if (isStandalonePWA()) return; // déjà installé → on n'affiche pas
     // Mobile only
     const isMobile = window.matchMedia('(max-width: 900px)').matches;
     if (!isMobile) return;
@@ -59,11 +50,9 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
     return () => window.removeEventListener('beforeinstallprompt', onBIP);
   }, []);
 
-  const handleDismiss = () => {
-    try { window.sessionStorage.setItem(SESSION_KEY, '1'); } catch (_e) {}
-    setVisible(false);
-    setIosTutoOpen(false);
-  };
+  // Note : pas de "dismiss" — le banner reste visible tant que pas installé.
+  // Cette fonction sert juste à fermer la modal tuto iOS.
+  const closeIosTuto = () => setIosTutoOpen(false);
 
   const handleInstall = async () => {
     if (platform === 'ios') {
@@ -74,7 +63,9 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
       deferredPrompt.prompt();
       try { await deferredPrompt.userChoice; } catch (_e) {}
       setDeferredPrompt(null);
-      handleDismiss();
+      // Pas de dismiss : si l'install échoue ou est refusée, le banner
+      // reste visible. Si elle réussit, isStandalonePWA() deviendra true
+      // au prochain mount et le banner disparaitra automatiquement.
       return;
     }
     // Fallback : ouvrir tuto iOS-like
@@ -123,14 +114,6 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
         >
           Installer
         </button>
-
-        <button
-          onClick={handleDismiss}
-          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center hover:bg-emerald-100/50 transition-colors"
-          aria-label="Plus tard"
-        >
-          <X size={14} color="#047857" strokeWidth={2.2} />
-        </button>
       </div>
 
       {/* ════ Tuto iOS modal ════ */}
@@ -138,7 +121,7 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
         <div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
           style={{ background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-          onClick={() => setIosTutoOpen(false)}
+          onClick={closeIosTuto}
         >
           <div
             className="bg-white w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
@@ -150,7 +133,7 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
                 Installer sur l'écran d'accueil
               </h3>
               <button
-                onClick={() => setIosTutoOpen(false)}
+                onClick={closeIosTuto}
                 className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100"
                 aria-label="Fermer"
               >
@@ -194,7 +177,7 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
 
             <div className="p-4 border-t border-gray-100" style={{ background: '#FAFBFC' }}>
               <button
-                onClick={handleDismiss}
+                onClick={closeIosTuto}
                 className="w-full py-3 rounded-2xl text-[14.5px] font-bold transition-transform active:scale-95"
                 style={{
                   background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
