@@ -11,18 +11,24 @@
 //            Vonage CRM (action publique, pas de token requis).
 // ─────────────────────────────────────────────────────────────────
 
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Loader2, UserPlus, Shield, Clock, Lock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, CheckCircle2, Loader2, UserPlus, Shield, Clock, Lock, KeyRound, Mail } from 'lucide-react';
+import { rememberLastCommercantId } from '../services/abonneCache';
 
 function getVonageCrmApiUrl() {
   return import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
 }
 
 export default function Connexion() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | loading | sent | not_found | error
+  // idle | loading | sent | verifying | not_found | error
+  // (sent = email envoyé, on attend que l'utilisateur saisisse le code 6 chiffres)
+  const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
+  const [code, setCode] = useState(''); // code 6 chiffres
+  const [codeError, setCodeError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,6 +74,53 @@ export default function Connexion() {
       setStatus('error');
       setError(err.message || 'Connexion impossible.');
     }
+  };
+
+  // ── Vérification du code 6 chiffres ──
+  const handleVerifyCode = async (codeToTry) => {
+    const trimmedCode = String(codeToTry || code).replace(/\D/g, '').slice(0, 6);
+    if (trimmedCode.length !== 6) {
+      setCodeError('Le code doit contenir 6 chiffres.');
+      return;
+    }
+    setCodeError('');
+    setStatus('verifying');
+    try {
+      const apiUrl = getVonageCrmApiUrl();
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'verifyLoginCode',
+          email: email.trim().toLowerCase(),
+          code: trimmedCode,
+        }),
+      });
+      const json = await res.json();
+      if (json.ok && json.commercant_id) {
+        rememberLastCommercantId(json.commercant_id);
+        // Navigation : on emmène l'utilisateur direct sur Mes appels
+        navigate(`/espace/appels?id=${encodeURIComponent(json.commercant_id)}`, { replace: true });
+        return;
+      }
+      // Échec : on remet en mode 'sent' pour retry sans demander l'email
+      setStatus('sent');
+      if (json.error === 'invalid_code') setCodeError('Code incorrect.');
+      else if (json.error === 'expired') setCodeError('Code expiré. Cliquez sur "Renvoyer un code".');
+      else if (json.error === 'code_invalid_format') setCodeError('Le code doit contenir 6 chiffres.');
+      else if (json.error === 'no_code_pending') setCodeError('Aucun code en attente. Renvoyez-en un.');
+      else setCodeError('Code refusé. Réessayez ou renvoyez un code.');
+    } catch (err) {
+      setStatus('sent');
+      setCodeError(err.message || 'Vérification impossible.');
+    }
+  };
+
+  const resetToEmail = () => {
+    setStatus('idle');
+    setEmail('');
+    setCode('');
+    setCodeError('');
+    setError('');
   };
 
   // Force le body/html en blanc pur pendant qu'on est sur cette page
@@ -157,9 +210,18 @@ export default function Connexion() {
           }}
         >
           {status === 'not_found' ? (
-            <NotFoundState email={email} onRetry={() => { setStatus('idle'); setEmail(''); }} />
-          ) : status === 'sent' ? (
-            <SentState email={email} onRetry={() => { setStatus('idle'); setEmail(''); }} />
+            <NotFoundState email={email} onRetry={resetToEmail} />
+          ) : (status === 'sent' || status === 'verifying') ? (
+            <CodeState
+              email={email}
+              code={code}
+              setCode={setCode}
+              codeError={codeError}
+              verifying={status === 'verifying'}
+              onVerify={handleVerifyCode}
+              onChangeEmail={resetToEmail}
+              onResend={() => { setCode(''); setCodeError(''); handleSubmit({ preventDefault: () => {} }); }}
+            />
           ) : (
             <FormState
               email={email}
@@ -459,11 +521,43 @@ function Dot() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-//  État : email envoyé avec succès
+//  CodeState — email envoyé, saisie du code 6 chiffres (Apple-style)
+//
+//  Utilise un seul <input> caché qui contient tout le code + 6 cases
+//  visuelles. Permet : autoFill iOS (one-time-code), copier-coller,
+//  flux clavier natif sur mobile (1 seul focus, pas de jonglerie).
+//  Auto-soumission dès que les 6 chiffres sont saisis.
 // ─────────────────────────────────────────────────────────────────
-function SentState({ email, onRetry }) {
+function CodeState({ email, code, setCode, codeError, verifying, onVerify, onChangeEmail, onResend }) {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    // Focus auto pour ouvrir le clavier immédiatement
+    const t = setTimeout(() => {
+      if (inputRef.current) inputRef.current.focus();
+    }, 250);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Auto-submit dès qu'on a 6 chiffres
+  useEffect(() => {
+    const clean = String(code).replace(/\D/g, '');
+    if (clean.length === 6 && !verifying) {
+      onVerify(clean);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+
+  const handleChange = (e) => {
+    const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setCode(v);
+  };
+
+  const digits = String(code).padEnd(6, ' ').split('').slice(0, 6);
+
   return (
     <div className="text-center">
+      {/* Icône email */}
       <div
         style={{
           width: '64px',
@@ -475,12 +569,13 @@ function SentState({ email, onRetry }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow:
-            'inset 0 1px 0 rgba(255,255,255,0.8), 0 8px 24px rgba(16,185,129,0.18)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8), 0 8px 24px rgba(16,185,129,0.18)',
         }}
       >
-        <CheckCircle2 style={{ width: '30px', height: '30px', color: '#059669' }} />
+        <Mail style={{ width: '28px', height: '28px', color: '#059669' }} strokeWidth={2.2} />
       </div>
+
+      {/* Titre */}
       <h1
         style={{
           color: '#0F172A',
@@ -491,33 +586,144 @@ function SentState({ email, onRetry }) {
           lineHeight: 1.2,
         }}
       >
-        Vérifiez votre boîte mail
+        Saisissez votre code
       </h1>
-      <p style={{ color: '#6B7280', fontSize: '15px', lineHeight: 1.65, margin: '14px 0 0 0' }}>
-        Un lien sécurisé a été envoyé à
+      <p style={{ color: '#6B7280', fontSize: '14.5px', lineHeight: 1.55, margin: '12px 0 0 0' }}>
+        Code à 6 chiffres envoyé à
         <br />
-        <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong>.
+        <strong style={{ color: '#0F172A', fontWeight: 700 }}>{email}</strong>
       </p>
-      <p style={{ color: '#9CA3AF', fontSize: '13px', lineHeight: 1.6, margin: '18px 0 0 0' }}>
-        Lien valable 24 heures, utilisable une seule fois.
-        <br />
-        Pensez à vérifier vos spams si vous ne le voyez pas.
-      </p>
-      <button
-        onClick={onRetry}
-        style={{
-          marginTop: '28px',
-          background: 'transparent',
-          border: 'none',
-          color: '#059669',
-          fontSize: '13.5px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-        }}
-      >
-        Renvoyer un lien
-      </button>
+
+      {/* Cases visuelles + input caché */}
+      <div style={{ position: 'relative', margin: '28px 0 8px 0' }}>
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          pattern="[0-9]*"
+          maxLength={6}
+          value={code}
+          onChange={handleChange}
+          aria-label="Code de connexion à 6 chiffres"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
+            border: 'none',
+            outline: 'none',
+            padding: 0,
+            background: 'transparent',
+            color: 'transparent',
+            caretColor: 'transparent',
+            fontSize: '16px',
+            cursor: 'text',
+            zIndex: 2,
+          }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          {digits.map((d, i) => {
+            const filled = d.trim() !== '';
+            const isActive = i === String(code).length && !verifying;
+            return (
+              <div
+                key={i}
+                style={{
+                  width: '46px',
+                  height: '56px',
+                  borderRadius: '12px',
+                  background: '#F9FAFB',
+                  border: `1.5px solid ${isActive ? '#10B981' : (filled ? 'rgba(16,185,129,0.30)' : '#E5E7EB')}`,
+                  boxShadow: isActive
+                    ? '0 0 0 4px rgba(16,185,129,0.12), 0 1px 2px rgba(0,0,0,0.04) inset'
+                    : (filled ? '0 1px 2px rgba(16,185,129,0.08) inset' : '0 1px 2px rgba(0,0,0,0.03) inset'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px',
+                  fontWeight: 800,
+                  color: '#0F172A',
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                  letterSpacing: 0,
+                  transition: 'all 200ms ease',
+                }}
+              >
+                {filled ? d : ''}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {codeError ? (
+        <p style={{ color: '#DC2626', fontSize: '13px', margin: '14px 0 0 0', fontWeight: 600 }}>
+          {codeError}
+        </p>
+      ) : (
+        <p style={{ color: '#9CA3AF', fontSize: '12.5px', margin: '14px 0 0 0' }}>
+          Le code expire dans 10 minutes.
+        </p>
+      )}
+
+      {/* Spinner pendant la vérification */}
+      {verifying && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
+          <Loader2 style={{ width: '14px', height: '14px', color: '#10B981', animation: 'bp-spin 0.9s linear infinite' }} />
+          <span style={{ fontSize: '13px', color: '#10B981', fontWeight: 600 }}>Connexion en cours…</span>
+        </div>
+      )}
+
+      {/* Actions secondaires */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '26px' }}>
+        <button
+          onClick={onResend}
+          disabled={verifying}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#059669',
+            fontSize: '13.5px',
+            fontWeight: 600,
+            cursor: verifying ? 'default' : 'pointer',
+            opacity: verifying ? 0.4 : 1,
+            fontFamily: 'inherit',
+            padding: 0,
+          }}
+        >
+          Renvoyer un code
+        </button>
+        <span style={{ color: '#E5E7EB' }}>·</span>
+        <button
+          onClick={onChangeEmail}
+          disabled={verifying}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#6B7280',
+            fontSize: '13.5px',
+            fontWeight: 600,
+            cursor: verifying ? 'default' : 'pointer',
+            opacity: verifying ? 0.4 : 1,
+            fontFamily: 'inherit',
+            padding: 0,
+          }}
+        >
+          Changer d'email
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes bp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
