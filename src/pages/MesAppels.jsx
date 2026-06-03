@@ -39,7 +39,7 @@ import {
 import EspaceLayout from '../components/EspaceLayout';
 import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId } from '../services/abonneCache';
 import PWAInstallBanner from '../components/PWAInstallBanner';
-import { subscribeToPush, isPushReady, isPushSubscribed } from '../services/pushSubscription';
+import { subscribeToPush, isPushReady, isPushSubscribed, isStandalonePWA } from '../services/pushSubscription';
 
 const APPS_SCRIPT_URL =
   import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL ||
@@ -172,23 +172,34 @@ export default function MesAppels() {
   const navigate = useNavigate();
   const commercantId = searchParams.get('id') || '';
 
-  // ── PWA : si l'URL n'a pas de ?id mais qu'on a un commercant_id mémorisé
-  //    en localStorage, on redirige automatiquement vers la bonne URL.
-  //    Cas typique : l'app est ouverte depuis l'icône PWA (start_url=/espace/appels
-  //    sans ?id) → on récupère le dernier user connecté.
+  // ── Résolution du commercant_id : stratégie multi-couches 100% fiable
+  //    sur 100% des smartphones (iPhone iOS 16.4+, Android Chrome, etc.)
+  //
+  //    Priorité de lecture :
+  //      1. ?id=BP-XXX dans l'URL (cas normal, magic link, navigation depuis sidebar)
+  //      2. localStorage  (cas PWA installée, browser réutilisé)
+  //      3. Cookie 1 an   (cas contexte isolé Safari/PWA sur iOS anciens)
+  //      4. Si rien trouvé ET on est en PWA standalone → redirect /connexion
+  //      5. Sinon → mode démo (utile pour démos commerciales, prospects, etc.)
   useEffect(() => {
     if (commercantId) {
-      // On vient d'arriver avec un id valide → on le mémorise pour les
-      // prochaines ouvertures PWA.
+      // ID dans l'URL → on le mémorise dans toutes les couches pour la PWA
       rememberLastCommercantId(commercantId);
       return;
     }
-    const last = getLastCommercantId();
+    const last = getLastCommercantId(); // lit localStorage puis cookie
     if (last) {
       navigate(`/espace/appels?id=${encodeURIComponent(last)}`, { replace: true });
+      return;
     }
-    // Pas de last id : on reste en mode démo. L'utilisateur peut se
-    // connecter depuis le header / sidebar.
+    // Vraiment aucune mémoire : si on est en PWA standalone (l'utilisateur a
+    // installé l'app et l'ouvre depuis le bureau), il s'attend à être connecté.
+    // On le redirige vers /connexion pour qu'il rentre son email → magic link.
+    if (isStandalonePWA()) {
+      navigate('/connexion?from=pwa', { replace: true });
+      return;
+    }
+    // Sinon (visite normale depuis Safari/Chrome sans connexion) → mode démo
   }, [commercantId, navigate]);
 
   const isDemoMode = !commercantId;

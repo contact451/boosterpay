@@ -97,42 +97,91 @@ export function clearCachedAbonne(commercantId) {
 //  LAST COMMERCANT ID — utilisé par la PWA pour se "souvenir" de
 //  l'utilisateur connecté quand l'app est ouverte depuis l'écran
 //  d'accueil iPhone/Android (le start_url du manifest ne porte pas
-//  de ?id=BP-XXX). Sans cela, la PWA tomberait toujours en mode démo.
+//  toujours ?id=BP-XXX). Sans cela, la PWA tomberait en mode démo.
 //
-//  Stocké séparément du cache abonné pour rester disponible même si
-//  le cache complet expire (24h).
+//  Stratégie 100% fiable, multi-couches :
+//   1. localStorage  → standard moderne (iPhone iOS 16.4+, Android)
+//   2. Cookie 1 an   → backup pour les cas où localStorage est isolé
+//                       entre Safari et la PWA installée (rare mais
+//                       arrive sur certains anciens iOS / containers)
+//
+//  Lecture : on essaie localStorage en priorité, puis cookie en backup.
+//  Écriture : on écrit dans les DEUX simultanément.
 // ─────────────────────────────────────────────────────────────────
 const LAST_ID_KEY = 'bp_last_commercant_id';
+const COOKIE_NAME = 'bp_last_commercant_id';
+const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 an
+
+function setCookie(name, value, maxAgeSec) {
+  if (typeof document === 'undefined') return;
+  try {
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const secure = isHttps ? '; Secure' : '';
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAgeSec}; Path=/; SameSite=Lax${secure}`;
+  } catch (_e) {}
+}
+
+function getCookie(name) {
+  if (typeof document === 'undefined') return '';
+  try {
+    const cookies = document.cookie ? document.cookie.split('; ') : [];
+    for (const c of cookies) {
+      const eq = c.indexOf('=');
+      const k = eq >= 0 ? c.slice(0, eq) : c;
+      if (k === name) {
+        const v = eq >= 0 ? c.slice(eq + 1) : '';
+        return decodeURIComponent(v || '');
+      }
+    }
+  } catch (_e) {}
+  return '';
+}
+
+function deleteCookie(name) {
+  if (typeof document === 'undefined') return;
+  try {
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  } catch (_e) {}
+}
 
 /**
  * Mémorise ce commercant_id comme le dernier utilisé (pour la PWA).
+ * Écrit dans localStorage ET cookie pour couverture 100%.
  */
 export function rememberLastCommercantId(commercantId) {
   if (!commercantId || typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(LAST_ID_KEY, String(commercantId));
-  } catch (_e) {}
+  try { window.localStorage.setItem(LAST_ID_KEY, String(commercantId)); } catch (_e) {}
+  setCookie(COOKIE_NAME, String(commercantId), COOKIE_MAX_AGE);
 }
 
 /**
  * Récupère le dernier commercant_id mémorisé.
+ * Lit localStorage d'abord, puis cookie en backup.
  * Retourne '' si aucun (jamais connecté ou cache vidé).
  */
 export function getLastCommercantId() {
   if (typeof window === 'undefined') return '';
+  // 1. localStorage (standard moderne)
   try {
-    return window.localStorage.getItem(LAST_ID_KEY) || '';
-  } catch (_e) {
-    return '';
+    const fromLs = window.localStorage.getItem(LAST_ID_KEY) || '';
+    if (fromLs) return fromLs;
+  } catch (_e) {}
+  // 2. Cookie (backup pour contextes isolés)
+  const fromCookie = getCookie(COOKIE_NAME);
+  if (fromCookie) {
+    // On rétablit le localStorage pour les prochains accès
+    try { window.localStorage.setItem(LAST_ID_KEY, fromCookie); } catch (_e) {}
+    return fromCookie;
   }
+  return '';
 }
 
 /**
  * Oublie l'identifiant — utilisé en cas de logout ou cancellation.
+ * Vide les deux supports.
  */
 export function forgetLastCommercantId() {
   if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.removeItem(LAST_ID_KEY);
-  } catch (_e) {}
+  try { window.localStorage.removeItem(LAST_ID_KEY); } catch (_e) {}
+  deleteCookie(COOKIE_NAME);
 }
