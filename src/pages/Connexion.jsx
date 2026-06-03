@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Loader2, UserPlus, Shield, Clock, Lock, KeyRound, Mail } from 'lucide-react';
-import { rememberLastCommercantId } from '../services/abonneCache';
+import { rememberLastCommercantId, getLastCommercantId, getLastCommercantIdAsync } from '../services/abonneCache';
 
 function getVonageCrmApiUrl() {
   return import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
@@ -29,6 +29,28 @@ export default function Connexion() {
   const [error, setError] = useState('');
   const [code, setCode] = useState(''); // code 6 chiffres
   const [codeError, setCodeError] = useState('');
+
+  // ── Auto-login : si on a déjà un commercant_id mémorisé (cache local
+  //    écrit lors d'une session précédente), on redirige direct vers
+  //    l'espace user sans demander de re-login. La page Connexion n'est
+  //    visible que pour la PREMIÈRE ouverture de la PWA.
+  useEffect(() => {
+    // Lookup sync instantané
+    const syncId = getLastCommercantId();
+    if (syncId) {
+      navigate(`/espace/appels?id=${encodeURIComponent(syncId)}`, { replace: true });
+      return;
+    }
+    // Fallback async (IndexedDB)
+    let cancelled = false;
+    getLastCommercantIdAsync().then((id) => {
+      if (cancelled) return;
+      if (id) {
+        navigate(`/espace/appels?id=${encodeURIComponent(id)}`, { replace: true });
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

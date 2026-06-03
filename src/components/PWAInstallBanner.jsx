@@ -55,6 +55,10 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
   const closeIosTuto = () => setIosTutoOpen(false);
 
   const handleInstall = async () => {
+    // L'install PWA utilise le start_url du manifest qui est /connexion.
+    // Donc on n'a pas besoin de naviguer ailleurs avant l'install : l'icône
+    // bureau ouvrira directement la page de connexion (qui fait elle-même
+    // un auto-redirect si l'utilisateur a déjà un cache de session).
     if (platform === 'ios') {
       setIosTutoOpen(true);
       return;
@@ -63,12 +67,8 @@ export default function PWAInstallBanner({ commercantId: _commercantId }) {
       deferredPrompt.prompt();
       try { await deferredPrompt.userChoice; } catch (_e) {}
       setDeferredPrompt(null);
-      // Pas de dismiss : si l'install échoue ou est refusée, le banner
-      // reste visible. Si elle réussit, isStandalonePWA() deviendra true
-      // au prochain mount et le banner disparaitra automatiquement.
       return;
     }
-    // Fallback : ouvrir tuto iOS-like
     setIosTutoOpen(true);
   };
 

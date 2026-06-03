@@ -22,3 +22,5 @@ Thumbs.db
 npm-debug.log*
 .vercel
 vite.config.js.timestamp-*
+
+*.bak
