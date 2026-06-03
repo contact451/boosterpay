@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Loader2, UserPlus, Shield, Clock, Lock, KeyRound, Mail } from 'lucide-react';
 import { rememberLastCommercantId, getLastCommercantId, getLastCommercantIdAsync } from '../services/abonneCache';
+import { isStandalonePWA } from '../services/pushSubscription';
 
 function getVonageCrmApiUrl() {
   return import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
@@ -30,12 +31,14 @@ export default function Connexion() {
   const [code, setCode] = useState(''); // code 6 chiffres
   const [codeError, setCodeError] = useState('');
 
-  // ── Auto-login : si on a déjà un commercant_id mémorisé (cache local
-  //    écrit lors d'une session précédente), on redirige direct vers
-  //    l'espace user sans demander de re-login. La page Connexion n'est
-  //    visible que pour la PREMIÈRE ouverture de la PWA.
+  // ── Auto-login UNIQUEMENT en mode PWA installée (standalone) :
+  //    Si l'utilisateur ouvre la PWA depuis l'icône bureau et qu'il a
+  //    un cache de session, on le redirige direct vers son compte.
+  //    En navigation Safari/Chrome normale, on affiche TOUJOURS le
+  //    formulaire — pour permettre de se connecter à un autre compte.
   useEffect(() => {
-    // Lookup sync instantané
+    if (!isStandalonePWA()) return; // browser normal : pas de redirect
+
     const syncId = getLastCommercantId();
     if (syncId) {
       navigate(`/espace/appels?id=${encodeURIComponent(syncId)}`, { replace: true });
