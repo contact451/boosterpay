@@ -29,8 +29,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#0A0A0F" />
+    <!-- Theme Color : on garde un thème clair pour l'espace user PWA -->
+    <meta name="theme-color" content="#10B981" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#059669" media="(prefers-color-scheme: dark)" />
+
+    <!-- ══════════════ PWA — installable + Web Push ══════════════ -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-icon-512.png" />
+    <!-- iOS Safari : indispensable pour l'install écran d'accueil + Web Push iOS 16.4+ -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BoosterPay" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="BoosterPay" />
 
     <!-- Google Analytics 4 (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7D7V6H12FT"></script>

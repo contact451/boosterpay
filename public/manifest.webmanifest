@@ -1,0 +1,50 @@
+{
+  "name": "BoosterPay — Centre d'appels IA",
+  "short_name": "BoosterPay",
+  "description": "Votre IA vocale qui répond aux appels 24/7 et votre centre d'appels en temps réel.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/espace/appels",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FFFFFF",
+  "theme_color": "#10B981",
+  "categories": ["business", "productivity", "communication"],
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mes appels",
+      "short_name": "Appels",
+      "description": "Voir tous mes appels reçus",
+      "url": "/espace/appels",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mes modules",
+      "short_name": "Modules",
+      "description": "Configurer mes modules IA",
+      "url": "/espace/modules",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

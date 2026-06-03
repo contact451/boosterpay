@@ -15,11 +15,12 @@
 // ─────────────────────────────────────────────────────────────────
 
 import { Link } from 'react-router-dom';
-import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall } from 'lucide-react';
+import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming } from 'lucide-react';
 import { getCachedAbonne } from '../services/abonneCache';
 
 const NAV_SECTIONS = [
   { id: 'bienvenue', label: 'Bienvenue', icon: Home, baseTo: '/merci' },
+  { id: 'appels', label: 'Mes appels', icon: PhoneIncoming, baseTo: '/espace/appels' },
   { id: 'modules', label: 'Mes modules', icon: LayoutGrid, baseTo: '/espace/modules' },
   { id: 'abonnement', label: 'Mon abonnement', icon: CreditCard, baseTo: '/configurer' },
 ];
@@ -32,7 +33,7 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
       if (commercantId) params.set('commercant_id', commercantId);
       return `/merci?${params.toString()}`;
     }
-    if (baseTo === '/configurer' || baseTo === '/espace/modules') {
+    if (baseTo === '/configurer' || baseTo === '/espace/modules' || baseTo === '/espace/appels') {
       return commercantId ? `${baseTo}?id=${encodeURIComponent(commercantId)}` : baseTo;
     }
     return baseTo;
