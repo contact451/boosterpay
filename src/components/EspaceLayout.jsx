@@ -15,9 +15,9 @@
 // ─────────────────────────────────────────────────────────────────
 
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming } from 'lucide-react';
-import { getCachedAbonne, rememberLastCommercantId } from '../services/abonneCache';
+import { Link, useNavigate } from 'react-router-dom';
+import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming, LogOut } from 'lucide-react';
+import { getCachedAbonne, rememberLastCommercantId, forgetLastCommercantId, clearCachedAbonne } from '../services/abonneCache';
 
 const NAV_SECTIONS = [
   { id: 'bienvenue', label: 'Bienvenue', icon: Home, baseTo: '/merci' },
@@ -27,12 +27,29 @@ const NAV_SECTIONS = [
 ];
 
 export default function EspaceLayout({ children, nomCommerce, commercantId, activeSection = 'bienvenue' }) {
+  const navigate = useNavigate();
+
   // Mémorise le dernier commercant_id vu — la PWA s'en sert pour se
   // "souvenir" de l'utilisateur lorsque l'app est ouverte depuis l'icône
   // de l'écran d'accueil (start_url sans ?id).
   useEffect(() => {
     if (commercantId) rememberLastCommercantId(commercantId);
   }, [commercantId]);
+
+  // Déconnexion : vide tout le cache de session (localStorage, cookie,
+  // IndexedDB) et redirige vers la page de connexion. Au prochain
+  // démarrage de la PWA, l'utilisateur devra entrer son email + code.
+  const handleLogout = () => {
+    const ok = typeof window !== 'undefined'
+      ? window.confirm('Se déconnecter de BoosterPay ?\n\nVous devrez ressaisir votre email pour vous reconnecter.')
+      : true;
+    if (!ok) return;
+    try {
+      if (commercantId) clearCachedAbonne(commercantId);
+      forgetLastCommercantId();
+    } catch (_e) {}
+    navigate('/connexion', { replace: true });
+  };
 
   // Construit les liens en propagant commercant_id / subscription
   const buildLink = (baseTo) => {
@@ -186,8 +203,8 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
           </div>
         </div>
 
-        {/* Footer aide */}
-        <div className="px-3 pb-6 pt-3 mx-3" style={{ borderTop: '1px solid #F3F4F6' }}>
+        {/* Footer aide + déconnexion */}
+        <div className="px-3 pb-6 pt-3 mx-3 space-y-0.5" style={{ borderTop: '1px solid #F3F4F6' }}>
           <a
             href="mailto:contact@booster-pay.com"
             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
@@ -195,6 +212,15 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
             <HelpCircle className="w-4 h-4" strokeWidth={2.2} />
             Aide & contact
           </a>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13.5px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors text-left"
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#DC2626'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = ''; }}
+          >
+            <LogOut className="w-4 h-4" strokeWidth={2.2} />
+            Déconnexion
+          </button>
         </div>
 
         {/* Styles globaux pour skeleton sidebar */}
@@ -258,6 +284,18 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
       {/* ════════ MAIN CONTENT ════════ */}
       <main className="md:ml-64 min-h-screen">
         {children}
+        {/* Bouton Déconnexion mobile (en bas du contenu, après scroll)
+            Sur desktop il est dans la sidebar. */}
+        <div className="md:hidden flex justify-center pt-2 pb-8">
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors"
+            style={{ background: '#F9FAFB', color: '#6B7280', border: '1px solid #F3F4F6' }}
+          >
+            <LogOut className="w-3.5 h-3.5" strokeWidth={2.2} />
+            Se déconnecter
+          </button>
+        </div>
       </main>
     </div>
   );
