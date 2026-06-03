@@ -32,6 +32,9 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
   // de l'écran d'accueil (start_url sans ?id).
   useEffect(() => {
     if (commercantId) rememberLastCommercantId(commercantId);
+    // Signale à main.jsx qu'on peut retirer le splash inline avec fade-out
+    // (la layout de l'espace user est montée, l'utilisateur va voir du contenu)
+    try { window.dispatchEvent(new Event('bp:splash-done')); } catch (_e) {}
   }, [commercantId]);
 
   // Construit les liens en propagant commercant_id / subscription

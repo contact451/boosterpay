@@ -187,15 +187,21 @@ export default function MesAppels() {
   //    Apple-style au lieu de la page démo (pas pro de voir "Garage Dupont"
   //    flasher pendant 0.5s avant la vraie data).
   const isStandalone = (typeof window !== 'undefined') && isStandalonePWA();
-  // Si on est en PWA standalone sans ?id, on entre en mode "résolution" qui
-  // affiche un splash le temps que l'async IDB rende sa réponse.
+  // Si pas de ?id et PWA standalone, on garde le splash inline (de index.html)
+  // pendant la résolution async pour éviter tout flash de la page démo.
   const [resolving, setResolving] = useState(!commercantId && isStandalone);
+
+  // Signale main.jsx pour retirer le splash inline (HTML) avec fade-out
+  const signalSplashDone = () => {
+    try { window.dispatchEvent(new Event('bp:splash-done')); } catch (_e) {}
+  };
 
   useEffect(() => {
     if (commercantId) {
       // ID dans l'URL → on le mémorise dans toutes les couches pour la PWA
       rememberLastCommercantId(commercantId);
       setResolving(false);
+      signalSplashDone();
       return;
     }
     // 1) sync : localStorage puis cookie (lecture instantanée)
@@ -220,14 +226,15 @@ export default function MesAppels() {
       }
       // 4) Sinon (browser sans connexion) → mode démo
       setResolving(false);
+      signalSplashDone();
     })();
     return () => { cancelled = true; };
   }, [commercantId, navigate]);
 
-  // ── PWA standalone sans ?id : pendant la résolution, on affiche un splash
-  //    plein-écran Apple-style au lieu de la page démo. Évite le flash.
+  // ── Pendant la résolution, on retourne null (le splash HTML inline est
+  //    encore visible par-dessus, car on n'a pas dispatché bp:splash-done)
   if (resolving) {
-    return <PwaSplash />;
+    return null;
   }
 
   const isDemoMode = !commercantId;

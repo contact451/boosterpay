@@ -23,101 +23,10 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// ─────────────────────────────────────────────────────────────────
-//  FETCH INTERCEPTOR — résolution PWA infaillible iOS + Android
-//
-//  Quand la PWA s'ouvre depuis l'écran d'accueil, elle navigue vers
-//  le start_url du manifest = /espace/appels (SANS ?id=BP-XXX).
-//  Sur iOS PWA, le localStorage peut être purgé par ITP entre les
-//  sessions → MesAppels lit le cache et redirige avec le bon id,
-//  mais avant ce redirect React mount → flash de la page démo.
-//
-//  Le Service Worker survit aux fermetures de PWA et a accès à un
-//  IndexedDB persistent même quand le localStorage est purgé. On
-//  l'utilise comme proxy : on intercepte les navigations vers
-//  /espace/appels SANS ?id et on renvoie un 302 redirect HTTP avec
-//  l'id stocké dans IDB. Le navigateur suit le 302 → arrive direct
-//  sur la bonne URL → ZÉRO flash démo.
-//
-//  Pareil pour /espace/modules et /configurer (les 3 pages de
-//  l'espace user qui ont besoin du ?id pour charger les données).
-// ─────────────────────────────────────────────────────────────────
-
-const SW_IDB_NAME = 'bp-pwa-store';
-const SW_IDB_STORE = 'kv';
-const SW_IDB_VERSION = 1;
-const SW_IDB_KEY = 'bp_last_commercant_id';
-
-function swOpenIDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(SW_IDB_NAME, SW_IDB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(SW_IDB_STORE)) {
-        db.createObjectStore(SW_IDB_STORE);
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function swReadLastId() {
-  try {
-    const db = await swOpenIDB();
-    const id = await new Promise((resolve, reject) => {
-      const tx = db.transaction(SW_IDB_STORE, 'readonly');
-      const req = tx.objectStore(SW_IDB_STORE).get(SW_IDB_KEY);
-      req.onsuccess = () => resolve(req.result || '');
-      req.onerror = () => reject(req.error);
-    });
-    db.close();
-    return id;
-  } catch (_e) {
-    return '';
-  }
-}
-
-// Pages de l'espace user qui acceptent un ?id et qui DOIVENT en avoir un
-// pour ne pas tomber en mode démo.
-const PROTECTED_PATHS = new Set([
-  '/espace/appels',
-  '/espace/modules',
-  '/configurer',
-]);
-
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  // On ne touche qu'aux NAVIGATIONS (clicks d'utilisateur), pas aux assets.
-  if (req.mode !== 'navigate' || req.method !== 'GET') return;
-
-  let url;
-  try {
-    url = new URL(req.url);
-  } catch (_e) { return; }
-
-  // Même origin uniquement (sécurité)
-  if (url.origin !== self.location.origin) return;
-
-  // On n'intercepte que les pages protégées + uniquement si pas déjà d'?id
-  if (!PROTECTED_PATHS.has(url.pathname)) return;
-  if (url.searchParams.has('id')) return;
-
-  // Lookup async → si trouvé, on retourne un 302 vers la même URL +
-  // ?id=BP-XXX. Sinon, on laisse passer la requête normalement
-  // (la page React fera son propre fallback vers /connexion?from=pwa).
-  event.respondWith((async () => {
-    try {
-      const id = await swReadLastId();
-      if (id) {
-        url.searchParams.set('id', id);
-        return Response.redirect(url.toString(), 302);
-      }
-    } catch (_e) { /* silent */ }
-    // Pas d'id stocké → page normale (mode démo ou redirect vers /connexion)
-    return fetch(req);
-  })());
-});
+// Note : pas de fetch interceptor. La résolution du commercant_id est
+// faite côté client (MesAppels useEffect) avec splash HTML inline pour
+// éviter le flash avant React mount. Le SW se concentre uniquement sur
+// les Web Push notifications.
 
 // ─────────────────────────────────────────────────────────────────
 //  PUSH — réception d'une notif depuis le serveur Telnyx (Railway)
