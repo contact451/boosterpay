@@ -39,7 +39,12 @@ import {
 import EspaceLayout from '../components/EspaceLayout';
 import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId, getLastCommercantIdAsync } from '../services/abonneCache';
 import PWAInstallBanner from '../components/PWAInstallBanner';
+import PushActivationModal from '../components/PushActivationModal';
 import { subscribeToPush, isPushReady, isPushSubscribed, isStandalonePWA } from '../services/pushSubscription';
+
+const TELNYX_SERVER_URL =
+  import.meta.env.VITE_TELNYX_SERVER_URL ||
+  'https://web-production-10e1f.up.railway.app';
 
 const APPS_SCRIPT_URL =
   import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL ||
@@ -223,11 +228,35 @@ export default function MesAppels() {
   // État push notif
   const [pushSupported, setPushSupported] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushModalOpen, setPushModalOpen] = useState(false);
+  const [testPushStatus, setTestPushStatus] = useState('idle'); // idle | sending | sent | error
+  const [pushError, setPushError] = useState('');
 
   useEffect(() => {
     setPushSupported(isPushReady());
-    isPushSubscribed().then(setPushSubscribed).catch(() => setPushSubscribed(false));
-  }, []);
+    isPushSubscribed().then((sub) => {
+      setPushSubscribed(sub);
+      // Auto-show modal premium d'activation à la 1ère visite si :
+      //  - on est en PWA standalone (icône bureau)
+      //  - connecté (commercantId présent)
+      //  - pas déjà subscribed
+      //  - jamais montré dans cette session (sessionStorage)
+      //  - support iOS 16.4+ / Android Chrome
+      if (!sub && isPushReady() && isStandalonePWA() && commercantId) {
+        try {
+          const shown = window.sessionStorage.getItem('bp_push_modal_shown') === '1';
+          if (!shown) {
+            // Délai de 1.2s pour laisser la page se charger (poli)
+            setTimeout(() => {
+              setPushModalOpen(true);
+              try { window.sessionStorage.setItem('bp_push_modal_shown', '1'); } catch (_e) {}
+            }, 1200);
+          }
+        } catch (_e) {}
+      }
+    }).catch(() => setPushSubscribed(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commercantId]);
 
   // Fetch initial + polling
   const lastFetchTs = useRef(0);
@@ -319,13 +348,52 @@ export default function MesAppels() {
   };
 
   const handleEnablePush = async () => {
+    setPushError('');
     try {
       await subscribeToPush(commercantId);
       setPushSubscribed(true);
+      setPushModalOpen(false);
     } catch (e) {
-      alert(
-        "Impossible d'activer les notifications. Vérifiez que vous êtes sur HTTPS, et sur iPhone que l'app est bien ajoutée à l'écran d'accueil."
-      );
+      const msg = String(e && e.message) || 'unknown';
+      if (msg === 'permission_denied') {
+        setPushError("Vous avez refusé les notifications. Ouvrez Réglages iPhone → BoosterPay → Notifications pour les autoriser.");
+      } else if (msg === 'push_not_supported') {
+        setPushError("Votre navigateur ne supporte pas les notifications. Installez la PWA sur l'écran d'accueil et réessayez.");
+      } else if (msg === 'vapid_key_missing') {
+        setPushError("Configuration manquante côté serveur. Contactez le support.");
+      } else {
+        setPushError("Activation impossible (" + msg + "). Vérifiez que l'app est bien installée à l'écran d'accueil.");
+      }
+    }
+  };
+
+  // ── Test push : envoie une vraie notif au commerçant via le serveur Telnyx
+  const handleTestPush = async () => {
+    if (testPushStatus === 'sending') return;
+    setTestPushStatus('sending');
+    try {
+      const res = await fetch(`${TELNYX_SERVER_URL}/health/test-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commercant_id: commercantId }),
+      });
+      const json = await res.json();
+      if (json.ok && json.sent > 0) {
+        setTestPushStatus('sent');
+        setTimeout(() => setTestPushStatus('idle'), 4000);
+      } else if (json.ok && json.sent === 0 && json.reason === 'no_subscriptions') {
+        setTestPushStatus('error');
+        setPushError("Aucune notification enregistrée. Cliquez sur 'Activer' d'abord.");
+        setTimeout(() => setTestPushStatus('idle'), 5000);
+      } else {
+        setTestPushStatus('error');
+        setPushError('Échec : ' + (json.error || 'inconnu'));
+        setTimeout(() => setTestPushStatus('idle'), 5000);
+      }
+    } catch (e) {
+      setTestPushStatus('error');
+      setPushError(e.message || 'Réseau indisponible');
+      setTimeout(() => setTestPushStatus('idle'), 5000);
     }
   };
 
@@ -360,43 +428,111 @@ export default function MesAppels() {
         {/* ════ Bandeau install PWA (s'affiche si pas encore installé) ════ */}
         {!isDemoMode && <PWAInstallBanner commercantId={commercantId} />}
 
-        {/* ════ Notifications push : activation 1-tap ════ */}
+        {/* ════ Notifications push : bandeau push UX premium ════ */}
         {!isDemoMode && pushSupported && !pushSubscribed && (
           <div
-            className="mb-6 rounded-2xl p-4 flex items-start gap-3"
+            className="mb-6 rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden"
             style={{
               background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)',
-              border: '1px solid rgba(16, 185, 129, 0.30)',
+              border: '1.5px solid rgba(16, 185, 129, 0.35)',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.9) inset, 0 8px 24px rgba(16,185,129,0.14)',
             }}
           >
+            {/* Pulse de lumière en fond */}
             <div
-              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+              aria-hidden
+              className="absolute -top-10 -right-10 w-32 h-32 rounded-full pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, rgba(16,185,129,0.25) 0%, transparent 70%)',
+                animation: 'bp-pulse 2.4s ease-in-out infinite',
+              }}
+            />
+            <div
+              className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center relative z-10"
               style={{
                 background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.30)',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.40)',
+                animation: 'bp-bell-shake 3s ease-in-out infinite',
               }}
             >
               <BellRing size={18} color="white" strokeWidth={2.4} />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative z-10">
               <p className="text-[14px] font-bold text-gray-900 leading-tight">
-                Recevoir une alerte pour chaque nouvel appel
+                Ne ratez plus jamais un appel
               </p>
-              <p className="text-[12.5px] text-gray-600 mt-0.5 leading-snug">
-                Gratuit, instantané, fonctionne iPhone et Android.
+              <p className="text-[12.5px] text-gray-700 mt-0.5 leading-snug">
+                Alerte instantanée avec le numéro de l'appelant. Gratuit.
               </p>
             </div>
             <button
-              onClick={handleEnablePush}
-              className="flex-shrink-0 px-3.5 py-2 rounded-xl text-[13px] font-bold transition-transform active:scale-95"
+              onClick={() => setPushModalOpen(true)}
+              className="flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-transform active:scale-95 relative z-10"
               style={{
                 background: '#0F172A',
                 color: 'white',
-                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.25)',
+                boxShadow: '0 4px 14px rgba(15, 23, 42, 0.30)',
               }}
             >
               Activer
             </button>
+            <style>{`
+              @keyframes bp-pulse {
+                0%, 100% { opacity: 0.5; transform: scale(1); }
+                50% { opacity: 0.9; transform: scale(1.15); }
+              }
+              @keyframes bp-bell-shake {
+                0%, 90%, 100% { transform: rotate(0deg); }
+                92%, 96% { transform: rotate(-8deg); }
+                94%, 98% { transform: rotate(8deg); }
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* ════ Bandeau "OK activées" + bouton Tester ════ */}
+        {!isDemoMode && pushSupported && pushSubscribed && (
+          <div
+            className="mb-6 rounded-2xl p-3.5 flex items-center gap-3"
+            style={{
+              background: '#F9FAFB',
+              border: '1px solid #F3F4F6',
+            }}
+          >
+            <div
+              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: '#ECFDF5' }}
+            >
+              <BellRing size={14} color="#047857" strokeWidth={2.4} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-gray-900 leading-tight">Notifications actives</p>
+              <p className="text-[11.5px] text-gray-500 mt-0.5">Vous êtes alerté pour chaque nouvel appel.</p>
+            </div>
+            <button
+              onClick={handleTestPush}
+              disabled={testPushStatus === 'sending'}
+              className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors disabled:opacity-60"
+              style={{
+                background: testPushStatus === 'sent' ? '#ECFDF5' : 'white',
+                color: testPushStatus === 'sent' ? '#047857' : '#374151',
+                border: testPushStatus === 'sent' ? '1px solid rgba(16,185,129,0.35)' : '1px solid #E5E7EB',
+              }}
+            >
+              {testPushStatus === 'sending' && 'Envoi…'}
+              {testPushStatus === 'sent' && '✓ Envoyée'}
+              {testPushStatus === 'error' && 'Erreur'}
+              {testPushStatus === 'idle' && 'Tester'}
+            </button>
+          </div>
+        )}
+
+        {pushError && (
+          <div
+            className="mb-6 rounded-2xl p-3 text-[12.5px] leading-snug"
+            style={{ background: '#FEF2F2', color: '#B91C1C', border: '1px solid rgba(220,38,38,0.20)' }}
+          >
+            {pushError}
           </div>
         )}
 
@@ -485,6 +621,14 @@ export default function MesAppels() {
 
       {/* ════ Modal détail appel ════ */}
       {openDetail && <CallDetailModal appel={openDetail} onClose={() => setOpenDetail(null)} />}
+
+      {/* ════ Modal activation push (auto à la 1ère ouverture PWA) ════ */}
+      {pushModalOpen && (
+        <PushActivationModal
+          onActivate={handleEnablePush}
+          onClose={() => setPushModalOpen(false)}
+        />
+      )}
 
       {/* ════ CSS keyframes ════ */}
       <style>{`

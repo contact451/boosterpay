@@ -53,6 +53,7 @@ import InscriptionTrial from './pages/InscriptionTrial';
 import EspaceAbonne from './pages/EspaceAbonne';
 import MesModules from './pages/MesModules';
 import MesAppels from './pages/MesAppels';
+import MesProspects from './pages/MesProspects';
 import Connexion from './pages/Connexion';
 // Pages dédiées par service (mini landings Apple-style)
 import Reception247 from './pages/services/Reception247';
@@ -100,6 +101,8 @@ function App() {
         <Route path="/espace/modules" element={<MesModules />} />
         {/* /espace/appels?id=BP-XXX → centre d'appels live + push notifs */}
         <Route path="/espace/appels" element={<MesAppels />} />
+        {/* /espace/prospects?id=BP-XXX → configurateur d'achat prospects */}
+        <Route path="/espace/prospects" element={<MesProspects />} />
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />
