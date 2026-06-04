@@ -353,6 +353,23 @@ export default function MesAppels() {
       await subscribeToPush(commercantId);
       setPushSubscribed(true);
       setPushModalOpen(false);
+
+      // ── Notification de confirmation immédiate ─────────────────
+      // On déclenche une vraie push notif via le serveur Telnyx pour que
+      // l'utilisateur voie tout de suite que ses notifs sont opérationnelles.
+      // Délai 700ms pour laisser le temps à la subscription d'être stockée
+      // dans la sheet PushSubscriptions côté Apps Script.
+      setTimeout(() => {
+        fetch(`${TELNYX_SERVER_URL}/health/test-push`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            commercant_id: commercantId,
+            title: 'Notifications activées',
+            body: 'Vous serez alerté à chaque appel reçu sur votre numéro BoosterPay.',
+          }),
+        }).catch(() => { /* silencieux : l'activation a réussi, c'est l'essentiel */ });
+      }, 700);
     } catch (e) {
       const msg = String(e && e.message) || 'unknown';
       if (msg === 'permission_denied') {
@@ -425,11 +442,11 @@ export default function MesAppels() {
           </p>
         </div>
 
-        {/* ════ Bandeau install PWA (s'affiche si pas encore installé) ════ */}
-        {!isDemoMode && <PWAInstallBanner commercantId={commercantId} />}
+        {/* ════ Bandeau install PWA (mobile uniquement, si pas installé) ════ */}
+        {!isDemoMode && !isStandalonePWA() && <PWAInstallBanner commercantId={commercantId} />}
 
-        {/* ════ Notifications push : bandeau push UX premium ════ */}
-        {!isDemoMode && pushSupported && !pushSubscribed && (
+        {/* ════ Bandeau activation push (uniquement si en standalone et pas encore subscribed) ════ */}
+        {!isDemoMode && isStandalonePWA() && pushSupported && !pushSubscribed && (
           <div
             className="mb-6 rounded-2xl p-4 flex items-start gap-3 relative overflow-hidden"
             style={{
@@ -490,42 +507,7 @@ export default function MesAppels() {
           </div>
         )}
 
-        {/* ════ Bandeau "OK activées" + bouton Tester ════ */}
-        {!isDemoMode && pushSupported && pushSubscribed && (
-          <div
-            className="mb-6 rounded-2xl p-3.5 flex items-center gap-3"
-            style={{
-              background: '#F9FAFB',
-              border: '1px solid #F3F4F6',
-            }}
-          >
-            <div
-              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ background: '#ECFDF5' }}
-            >
-              <BellRing size={14} color="#047857" strokeWidth={2.4} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold text-gray-900 leading-tight">Notifications actives</p>
-              <p className="text-[11.5px] text-gray-500 mt-0.5">Vous êtes alerté pour chaque nouvel appel.</p>
-            </div>
-            <button
-              onClick={handleTestPush}
-              disabled={testPushStatus === 'sending'}
-              className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors disabled:opacity-60"
-              style={{
-                background: testPushStatus === 'sent' ? '#ECFDF5' : 'white',
-                color: testPushStatus === 'sent' ? '#047857' : '#374151',
-                border: testPushStatus === 'sent' ? '1px solid rgba(16,185,129,0.35)' : '1px solid #E5E7EB',
-              }}
-            >
-              {testPushStatus === 'sending' && 'Envoi…'}
-              {testPushStatus === 'sent' && '✓ Envoyée'}
-              {testPushStatus === 'error' && 'Erreur'}
-              {testPushStatus === 'idle' && 'Tester'}
-            </button>
-          </div>
-        )}
+        {/* Pas de bandeau quand notifs OK : on libère de la place pour les appels */}
 
         {pushError && (
           <div
@@ -536,43 +518,51 @@ export default function MesAppels() {
           </div>
         )}
 
-        {/* ════ Filtres ════ */}
-        <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
-          {FILTERS.map((f) => {
-            const isActive = f.id === filter;
-            const count = counts[f.id] || 0;
-            return (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap flex-shrink-0"
-                style={{
-                  background: isActive ? '#0F172A' : 'white',
-                  color: isActive ? 'white' : '#374151',
-                  border: isActive ? '1px solid #0F172A' : '1px solid #E5E7EB',
-                  boxShadow: isActive ? '0 2px 8px rgba(15,23,42,0.18)' : 'none',
-                }}
-              >
-                {f.label}
-                <span
-                  className="inline-flex items-center justify-center text-[11px] font-bold rounded-full px-1.5 min-w-[20px] h-[18px]"
+        {/* ════ Filtres + bouton Rafraîchir compact à droite ════ */}
+        <div className="flex items-center gap-2 mb-5">
+          <div
+            className="flex items-center gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            {FILTERS.map((f) => {
+              const isActive = f.id === filter;
+              const count = counts[f.id] || 0;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setFilter(f.id)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap flex-shrink-0"
                   style={{
-                    background: isActive ? 'rgba(255,255,255,0.18)' : '#F3F4F6',
-                    color: isActive ? 'white' : '#6B7280',
+                    background: isActive ? '#0F172A' : 'white',
+                    color: isActive ? 'white' : '#374151',
+                    border: isActive ? '1px solid #0F172A' : '1px solid #E5E7EB',
+                    boxShadow: isActive ? '0 2px 8px rgba(15,23,42,0.18)' : 'none',
                   }}
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
+                  {f.label}
+                  <span
+                    className="inline-flex items-center justify-center text-[11px] font-bold rounded-full px-1.5 min-w-[20px] h-[18px]"
+                    style={{
+                      background: isActive ? 'rgba(255,255,255,0.18)' : '#F3F4F6',
+                      color: isActive ? 'white' : '#6B7280',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-          <div className="flex-1" />
-
+          {/* Bouton Rafraîchir icône seule, fixé à droite, jamais coupé */}
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-[13px] font-semibold transition-all"
+            className="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full transition-all"
             style={{
               background: 'white',
               color: '#374151',
@@ -581,13 +571,10 @@ export default function MesAppels() {
             aria-label="Rafraîchir"
           >
             <RefreshCw
-              size={14}
+              size={15}
               strokeWidth={2.4}
-              style={{
-                animation: refreshing ? 'bp-spin 0.9s linear infinite' : 'none',
-              }}
+              style={{ animation: refreshing ? 'bp-spin 0.9s linear infinite' : 'none' }}
             />
-            <span className="hidden sm:inline">Rafraîchir</span>
           </button>
         </div>
 
@@ -654,7 +641,10 @@ function CallCard({ appel, onOpen }) {
   const meta = KIND_META[appel.kind] || KIND_META.missed;
   const Icon = meta.Icon;
   const hour = formatHourMinute(appel.timestamp);
+  const dateLabel = formatDateGroup(appel.timestamp);
+  const isToday = dateLabel === "Aujourd'hui";
   const aiSnippet = (appel.ai_summary || appel.ai_transcript || '').trim();
+  const hasNumber = Boolean(appel.from_pretty || appel.from);
 
   const telHref = `tel:${appel.from || ''}`;
   const smsHref = `sms:${appel.from || ''}`;
@@ -695,15 +685,26 @@ function CallCard({ appel, onOpen }) {
               className="text-[15.5px] font-bold text-gray-900 leading-tight"
               style={{ fontFeatureSettings: '"tnum"' }}
             >
-              {appel.from_pretty || appel.from || 'Numéro masqué'}
+              {hasNumber ? (appel.from_pretty || appel.from) : 'Numéro masqué'}
             </p>
             <span className="inline-flex items-center text-[11.5px] font-semibold" style={{ color: meta.color }}>
               {meta.label}
             </span>
           </div>
-          <p className="text-[12.5px] text-gray-500 mt-0.5 flex items-center gap-1.5">
+          {!hasNumber && (
+            <p className="text-[11.5px] text-gray-400 mt-0.5 italic">
+              Numéro masqué par l'appelant
+            </p>
+          )}
+          <p className="text-[12.5px] text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
             <Clock size={11} strokeWidth={2.4} />
-            {hour}
+            {!isToday && (
+              <>
+                <span className="font-semibold text-gray-600">{dateLabel}</span>
+                <span className="text-gray-300">·</span>
+              </>
+            )}
+            <span>{hour}</span>
             {appel.duration_pretty && appel.duration_sec > 0 && (
               <>
                 <span className="text-gray-300">·</span>
@@ -805,12 +806,12 @@ function EmptyState({ filter }) {
 // ─────────────────────────────────────────────────────────────────
 function CallsListSkeleton() {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" style={{ minHeight: '420px' }}>
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
           className="rounded-2xl bg-white p-4"
-          style={{ border: '1px solid #E5E7EB' }}
+          style={{ border: '1px solid #E5E7EB', minHeight: '102px' }}
         >
           <div className="flex items-start gap-3">
             <div className="bp-skel flex-shrink-0 w-11 h-11 rounded-full" />
@@ -868,7 +869,7 @@ function CallDetailModal({ appel, onClose }) {
             </div>
             <div>
               <p className="text-[14px] font-bold text-gray-900 leading-tight">
-                {appel.from_pretty || appel.from}
+                {appel.from_pretty || appel.from || 'Numéro masqué'}
               </p>
               <p className="text-[12px]" style={{ color: meta.color }}>{meta.label}</p>
             </div>
