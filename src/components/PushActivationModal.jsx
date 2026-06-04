@@ -134,7 +134,14 @@ export default function PushActivationModal({ onActivate, onClose }) {
           style={{ background: '#FAFBFC' }}
         >
           <button
-            onClick={onActivate}
+            type="button"
+            onClick={(e) => {
+              // CRITIQUE iOS : on appelle onActivate dans le handler de
+              // clic SYNCHRONE (pas dans un useEffect ou setTimeout).
+              // iOS valide ainsi le user gesture pour requestPermission.
+              e.preventDefault();
+              onActivate();
+            }}
             className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[15.5px] font-bold transition-transform active:scale-[0.98]"
             style={{
               background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',

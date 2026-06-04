@@ -103,20 +103,25 @@ export async function subscribeToPush(commercantId) {
   if (!isPushReady()) throw new Error('push_not_supported');
   if (!VAPID_PUBLIC_KEY) throw new Error('vapid_key_missing');
 
-  // 1. Service worker : on s'assure qu'il est ENREGISTRÉ ET ACTIF.
+  // ⚠️ CRITIQUE iOS : requestPermission() DOIT être appelé en TOUT
+  //    PREMIER, AVANT tout autre await. Si on attend (registerSW,
+  //    serviceWorker.ready, etc.), iOS Safari considère que le user
+  //    gesture est consommé et IGNORE silencieusement la demande
+  //    de permission (le popup natif ne s'affiche jamais).
+  //
+  //    Pattern Apple-validé : requestPermission EN PREMIER, dans la
+  //    même tick que le clic utilisateur.
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') throw new Error('permission_denied');
+
+  // Service worker : on s'assure qu'il est ENREGISTRÉ ET ACTIF.
   //    iOS exige que reg.active soit non-null avant subscribe.
   let reg = await navigator.serviceWorker.getRegistration();
   if (!reg) reg = await registerServiceWorker();
   if (!reg) throw new Error('sw_unavailable');
   // Attend que le SW soit ACTIVE (peut être en installing/waiting)
-  // navigator.serviceWorker.ready résout uniquement quand active.
   reg = await navigator.serviceWorker.ready;
   if (!reg || !reg.active) throw new Error('sw_not_active');
-
-  // 2. Permission — DOIT être demandée en réponse à un user gesture
-  //    (clic). Le caller doit s'assurer que c'est le cas.
-  const perm = await Notification.requestPermission();
-  if (perm !== 'granted') throw new Error('permission_denied');
 
   // 3. Subscribe (réutilise si déjà subscribed avec la bonne clé,
   //    sinon désinscrit + re-subscribe avec la nouvelle clé pour

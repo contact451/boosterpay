@@ -495,7 +495,8 @@ export default function MesAppels() {
               </p>
             </div>
             <button
-              onClick={() => setPushModalOpen(true)}
+              type="button"
+              onClick={(e) => { e.preventDefault(); handleEnablePush(); }}
               className="flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-bold transition-transform active:scale-95 relative z-10"
               style={{
                 background: '#0F172A',
