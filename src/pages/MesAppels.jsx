@@ -40,7 +40,7 @@ import EspaceLayout from '../components/EspaceLayout';
 import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId, getLastCommercantIdAsync } from '../services/abonneCache';
 import PWAInstallBanner from '../components/PWAInstallBanner';
 import PushActivationModal from '../components/PushActivationModal';
-import { subscribeToPush, isPushReady, isPushSubscribed, isStandalonePWA } from '../services/pushSubscription';
+import { subscribeToPush, isPushReady, isPushSubscribed, isStandalonePWA, getPushDiagnostic } from '../services/pushSubscription';
 
 const TELNYX_SERVER_URL =
   import.meta.env.VITE_TELNYX_SERVER_URL ||
@@ -231,6 +231,18 @@ export default function MesAppels() {
   const [pushModalOpen, setPushModalOpen] = useState(false);
   const [testPushStatus, setTestPushStatus] = useState('idle'); // idle | sending | sent | error
   const [pushError, setPushError] = useState('');
+  const [diagOpen, setDiagOpen] = useState(false);
+  const [diagData, setDiagData] = useState(null);
+
+  const openDiagnostic = async () => {
+    setDiagOpen(true);
+    try {
+      const data = await getPushDiagnostic();
+      setDiagData(data);
+    } catch (e) {
+      setDiagData({ ok: false, error: e.message });
+    }
+  };
 
   useEffect(() => {
     setPushSupported(isPushReady());
@@ -604,6 +616,17 @@ export default function MesAppels() {
         <p className="text-center text-[12px] text-gray-400 mt-10">
           Tous vos appels sont conservés. Mise à jour automatique toutes les 30 secondes.
         </p>
+        {!isDemoMode && (
+          <div className="text-center mt-3">
+            <button
+              onClick={openDiagnostic}
+              className="text-[11px] text-gray-400 hover:text-gray-600 underline transition-colors"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
+              Diagnostic notifications
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ════ Modal détail appel ════ */}
@@ -615,6 +638,11 @@ export default function MesAppels() {
           onActivate={handleEnablePush}
           onClose={() => setPushModalOpen(false)}
         />
+      )}
+
+      {/* ════ Modal diagnostic notifications ════ */}
+      {diagOpen && (
+        <DiagnosticModal data={diagData} onClose={() => setDiagOpen(false)} commercantId={commercantId} />
       )}
 
       {/* ════ CSS keyframes ════ */}
@@ -963,6 +991,123 @@ function DetailRow({ label, value, mono }) {
       >
         {value}
       </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  DiagnosticModal — affiche l'état complet des notifs pour debug
+//
+//  Pour chaque maillon de la chaîne, on indique ✅ / ❌ avec valeur :
+//   - HTTPS ?
+//   - Push API supporté ?
+//   - Service Worker enregistré + ACTIF ?
+//   - Permission Notification ?
+//   - VAPID public key configurée Vercel ?
+//   - Subscription créée + endpoint Apple ?
+//   - Mode standalone (PWA installée) ?
+// ─────────────────────────────────────────────────────────────────
+function DiagnosticModal({ data, onClose, commercantId }) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  const copyToClipboard = async () => {
+    const text = JSON.stringify({ commercant_id: commercantId, ...(data || {}) }, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (_e) {}
+  };
+
+  const lines = data ? [
+    { label: 'HTTPS', value: data.protocol, ok: data.protocol === 'https:' },
+    { label: 'PWA installée', value: data.standalone ? 'Oui' : 'Non (Safari)', ok: data.standalone },
+    { label: 'iOS détecté', value: data.ios_likely ? 'Oui' : 'Non', ok: true },
+    { label: 'Push API', value: data.push_ready ? 'Disponible' : 'Indisponible', ok: data.push_ready },
+    { label: 'Permission', value: data.notification_permission, ok: data.notification_permission === 'granted' },
+    { label: 'Service Worker', value: data.service_worker_registered ? (data.service_worker_active ? 'Actif' : 'Enregistré mais inactif') : 'Non enregistré', ok: data.service_worker_active },
+    { label: 'SW scope', value: data.service_worker_scope || '—', ok: true },
+    { label: 'VAPID public', value: data.vapid_public_key_set ? data.vapid_public_key_preview : '⚠️ ABSENTE', ok: data.vapid_public_key_set },
+    { label: 'Souscrit', value: data.subscribed ? 'Oui' : 'Non', ok: data.subscribed },
+    { label: 'Endpoint', value: data.subscription_endpoint_host || '—', ok: data.subscribed },
+  ] : [];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+      style={{ background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-[16px] font-bold text-gray-900">Diagnostic notifications</h3>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100"
+            aria-label="Fermer"
+          >
+            <X size={18} color="#6B7280" strokeWidth={2.2} />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 overflow-y-auto flex-1">
+          {!data ? (
+            <p className="text-[13px] text-gray-500">Chargement…</p>
+          ) : (
+            <div className="space-y-1.5">
+              {lines.map((l) => (
+                <div
+                  key={l.label}
+                  className="flex items-start justify-between gap-3 py-2 px-3 rounded-xl"
+                  style={{
+                    background: l.ok ? '#F0FDF4' : '#FEF2F2',
+                    border: l.ok ? '1px solid rgba(16,185,129,0.20)' : '1px solid rgba(220,38,38,0.20)',
+                  }}
+                >
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <span style={{ fontSize: '14px' }}>{l.ok ? '✅' : '❌'}</span>
+                    <div className="min-w-0">
+                      <p className="text-[12.5px] font-bold text-gray-900 leading-tight">{l.label}</p>
+                      <p className="text-[12px] text-gray-600 mt-0.5 break-all font-mono">
+                        {String(l.value)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {data.user_agent && (
+                <div className="mt-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-gray-500 mb-1">User agent</p>
+                  <p className="text-[10.5px] text-gray-600 break-all font-mono leading-snug">{data.user_agent}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 border-t border-gray-100" style={{ background: '#FAFBFC' }}>
+          <button
+            onClick={copyToClipboard}
+            className="w-full py-3 rounded-2xl text-[14px] font-bold transition-transform active:scale-95"
+            style={{
+              background: copied ? '#ECFDF5' : '#0F172A',
+              color: copied ? '#047857' : 'white',
+              border: copied ? '1px solid rgba(16,185,129,0.30)' : 'none',
+            }}
+          >
+            {copied ? '✓ Copié' : 'Copier le diagnostic'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -64,22 +64,34 @@ self.addEventListener('push', (event) => {
     data = { title: 'BoosterPay', body: event.data ? event.data.text() : '' };
   }
 
-  const title = data.title || 'BoosterPay';
+  // iOS exige TITRE + BODY non vides + une icône valide pour afficher
+  // la notification. Si l'un est vide, iOS peut silencieusement ignorer.
+  const title = (data.title && String(data.title).trim()) || 'BoosterPay';
+  const body = (data.body && String(data.body).trim()) || 'Nouvelle notification';
+
   const options = {
-    body: data.body || '',
+    body,
     icon: data.icon || '/pwa-icon-192.png',
     badge: data.badge || '/pwa-badge.png',
-    tag: data.tag || 'boosterpay-default',
+    tag: data.tag || ('boosterpay-' + Date.now()),
     renotify: true,
     requireInteraction: false,
-    vibrate: [120, 60, 120],
+    silent: false,
+    vibrate: [200, 100, 200],
     data: {
       url: data.url || '/espace/appels',
       timestamp: Date.now(),
     },
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  // event.waitUntil garantit que le SW reste actif jusqu'à ce que
+  // showNotification soit complètement traité. CRITIQUE pour iOS.
+  event.waitUntil(
+    self.registration.showNotification(title, options).catch((err) => {
+      // Fallback minimal si erreur — au moins on log côté SW
+      console.error('[sw] showNotification failed', err);
+    })
+  );
 });
 
 // ─────────────────────────────────────────────────────────────────

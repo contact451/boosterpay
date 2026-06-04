@@ -103,37 +103,138 @@ export async function subscribeToPush(commercantId) {
   if (!isPushReady()) throw new Error('push_not_supported');
   if (!VAPID_PUBLIC_KEY) throw new Error('vapid_key_missing');
 
-  // 1. Service worker
+  // 1. Service worker : on s'assure qu'il est ENREGISTRÉ ET ACTIF.
+  //    iOS exige que reg.active soit non-null avant subscribe.
   let reg = await navigator.serviceWorker.getRegistration();
   if (!reg) reg = await registerServiceWorker();
   if (!reg) throw new Error('sw_unavailable');
+  // Attend que le SW soit ACTIVE (peut être en installing/waiting)
+  // navigator.serviceWorker.ready résout uniquement quand active.
+  reg = await navigator.serviceWorker.ready;
+  if (!reg || !reg.active) throw new Error('sw_not_active');
 
-  // 2. Permission
+  // 2. Permission — DOIT être demandée en réponse à un user gesture
+  //    (clic). Le caller doit s'assurer que c'est le cas.
   const perm = await Notification.requestPermission();
   if (perm !== 'granted') throw new Error('permission_denied');
 
-  // 3. Subscribe (réutilise si déjà subscribed avec la bonne clé)
+  // 3. Subscribe (réutilise si déjà subscribed avec la bonne clé,
+  //    sinon désinscrit + re-subscribe avec la nouvelle clé pour
+  //    éviter les VAPID mismatch sur des installs anciennes).
   let sub = await reg.pushManager.getSubscription();
+  if (sub) {
+    // Vérifie que la clé applicationServerKey matche celle qu'on a
+    const expectedKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    const currentKey = sub.options && sub.options.applicationServerKey;
+    if (!currentKey || !sameKey(expectedKey, currentKey)) {
+      try { await sub.unsubscribe(); } catch (_e) {}
+      sub = null;
+    }
+  }
   if (!sub) {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     });
   }
+  if (!sub || !sub.endpoint) throw new Error('subscribe_failed');
 
-  // 4. Persist côté Apps Script
-  await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({
-      action: 'savePushSubscription',
-      commercant_id: commercantId,
-      subscription: sub.toJSON(),
-      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-    }),
+  // 4. Persist côté Apps Script (single retry pour réseau flaky)
+  const payload = JSON.stringify({
+    action: 'savePushSubscription',
+    commercant_id: commercantId,
+    subscription: sub.toJSON(),
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
   });
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: payload,
+    });
+  } catch (_e) {
+    // 1 retry après 800ms (Apps Script peut être lent au cold start)
+    await new Promise((r) => setTimeout(r, 800));
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: payload,
+    });
+  }
 
   return sub;
+}
+
+// Compare deux ArrayBuffer/Uint8Array bytes par bytes
+function sameKey(a, b) {
+  const va = new Uint8Array(a);
+  const vb = new Uint8Array(b);
+  if (va.length !== vb.length) return false;
+  for (let i = 0; i < va.length; i++) if (va[i] !== vb[i]) return false;
+  return true;
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  Diagnostic complet — affichage dans l'UI pour debug
+//
+//  Retourne un objet qui décrit chaque maillon de la chaîne push :
+//   - is_https / origin
+//   - push_ready (API disponibles)
+//   - service_worker (registered, active, scope)
+//   - notification_permission ('granted' | 'denied' | 'default')
+//   - subscribed (true/false + endpoint partiel)
+//   - vapid_key_set (et fingerprint des 8 premiers chars)
+//   - standalone (PWA installée)
+//   - user_agent
+// ─────────────────────────────────────────────────────────────────
+export async function getPushDiagnostic() {
+  const out = {
+    ok: true,
+    origin: typeof window !== 'undefined' ? window.location.origin : '',
+    protocol: typeof window !== 'undefined' ? window.location.protocol : '',
+    push_ready: isPushReady(),
+    notification_permission: 'unknown',
+    vapid_public_key_set: Boolean(VAPID_PUBLIC_KEY),
+    vapid_public_key_preview: VAPID_PUBLIC_KEY ? VAPID_PUBLIC_KEY.slice(0, 12) + '…' : '',
+    service_worker_registered: false,
+    service_worker_active: false,
+    service_worker_scope: '',
+    subscribed: false,
+    subscription_endpoint_host: '',
+    standalone: false,
+    ios_likely: false,
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+  };
+  try {
+    if (typeof Notification !== 'undefined') {
+      out.notification_permission = Notification.permission;
+    }
+    if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        out.service_worker_registered = true;
+        out.service_worker_active = Boolean(reg.active);
+        out.service_worker_scope = reg.scope || '';
+        try {
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            out.subscribed = true;
+            try {
+              const url = new URL(sub.endpoint);
+              out.subscription_endpoint_host = url.host;
+            } catch (_e) {}
+          }
+        } catch (_e) {}
+      }
+    }
+    out.standalone = isStandalonePWA();
+    const ua = (out.user_agent || '').toLowerCase();
+    out.ios_likely = /iphone|ipad|ipod/.test(ua);
+  } catch (e) {
+    out.ok = false;
+    out.error = e.message || String(e);
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────────
