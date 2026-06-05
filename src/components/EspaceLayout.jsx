@@ -3,28 +3,40 @@
 //
 //  Structure :
 //   - Desktop : sidebar fixe gauche (240px) + main scrollable
-//   - Mobile  : top nav avec onglets horizontaux scrollables
+//   - Mobile  : header minimal en haut (logo + commerce) + bottom tab bar
+//               fixe 4 onglets (Accueil / Appels / Prospects / Compte)
 //
 //  Props :
 //   - children       : contenu de la page
 //   - nomCommerce    : nom du commerce (affiché en sidebar)
 //   - commercantId   : id utilisé pour construire les liens
-//   - activeSection  : 'bienvenue' | 'parametres' | 'abonnement'
+//   - activeSection  : 'bienvenue' | 'appels' | 'prospects' | 'modules' | 'abonnement'
 //
-//  Utilisé par : MerciPage (phase provisioning/ready/expired), EspaceAbonne
+//  Utilisé par : MerciPage (phase provisioning/ready/expired), EspaceAbonne,
+//                MesAppels, MesProspects, MesModules
 // ─────────────────────────────────────────────────────────────────
 
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming, LogOut, Target } from 'lucide-react';
+import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming, LogOut, Target, User } from 'lucide-react';
 import { getCachedAbonne, rememberLastCommercantId, forgetLastCommercantId, clearCachedAbonne } from '../services/abonneCache';
 
+// Sidebar desktop — 5 sections complètes
 const NAV_SECTIONS = [
   { id: 'bienvenue', label: 'Bienvenue', icon: Home, baseTo: '/merci' },
   { id: 'appels', label: 'Mes appels', icon: PhoneIncoming, baseTo: '/espace/appels' },
   { id: 'prospects', label: 'Acheter prospects', icon: Target, baseTo: '/espace/prospects' },
   { id: 'modules', label: 'Mes modules', icon: LayoutGrid, baseTo: '/espace/modules' },
   { id: 'abonnement', label: 'Mon abonnement', icon: CreditCard, baseTo: '/configurer' },
+];
+
+// Bottom tab bar mobile — 4 onglets seulement (pattern iOS)
+// "Mes modules" reste accessible depuis l'accueil + sidebar desktop.
+const MOBILE_TABS = [
+  { id: 'bienvenue', label: 'Accueil',   icon: Home,          baseTo: '/merci' },
+  { id: 'appels',    label: 'Appels',    icon: PhoneIncoming, baseTo: '/espace/appels' },
+  { id: 'prospects', label: 'Prospects', icon: Target,        baseTo: '/espace/prospects' },
+  { id: 'abonnement', label: 'Compte',   icon: User,          baseTo: '/configurer' },
 ];
 
 export default function EspaceLayout({ children, nomCommerce, commercantId, activeSection = 'bienvenue' }) {
@@ -243,51 +255,33 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
         `}</style>
       </aside>
 
-      {/* ════════ MOBILE TOP NAV (< md) ════════ */}
-      <header className="md:hidden sticky top-0 z-20 bg-white/95 backdrop-blur-md" style={{ borderBottom: '1px solid #E5E7EB' }}>
+      {/* ════════ MOBILE HEADER MINIMAL (< md) ════════ */}
+      {/*   Plus de nav d'onglets ici — la nav est en bas (bottom tab bar).
+           Ce header sert juste de barre d'identité (logo + commerce). */}
+      <header
+        className="md:hidden sticky top-0 z-20 bg-white/95 backdrop-blur-md"
+        style={{ borderBottom: '1px solid #E5E7EB' }}
+      >
         <div className="px-5 py-3.5 flex items-center justify-between">
           <Link to="/" className="text-gray-900 font-bold text-[15px] tracking-tight">
-            BoosterPay
+            Booster<span style={{ color: '#10B981' }}>Pay</span>
           </Link>
           {nomCommerce && (
-            <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-500 max-w-[160px]">
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-500 max-w-[180px]">
               <Store className="w-3 h-3 flex-shrink-0" strokeWidth={2.2} />
-              <span className="truncate">{nomCommerce}</span>
+              <span className="truncate font-semibold text-gray-700">{nomCommerce}</span>
             </span>
           )}
         </div>
-        {/* Onglets horizontaux */}
-        <nav
-          className="flex overflow-x-auto"
-          style={{ borderTop: '1px solid #F3F4F6', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
-        >
-          {NAV_SECTIONS.map((s) => {
-            const isActive = s.id === activeSection;
-            const Icon = s.icon;
-            return (
-              <Link
-                key={s.id}
-                to={buildLink(s.baseTo)}
-                className="flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-3 text-[13px] font-semibold transition-colors whitespace-nowrap"
-                style={{
-                  borderBottom: isActive ? '2px solid #10B981' : '2px solid transparent',
-                  color: isActive ? '#047857' : '#6B7280',
-                }}
-              >
-                <Icon className="w-3.5 h-3.5" strokeWidth={2.4} />
-                {s.label}
-              </Link>
-            );
-          })}
-        </nav>
       </header>
 
       {/* ════════ MAIN CONTENT ════════ */}
-      <main className="md:ml-64 min-h-screen">
+      {/*   pb-24 sur mobile pour ne pas être masqué par la bottom tab bar fixe */}
+      <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
         {children}
-        {/* Bouton Déconnexion mobile (en bas du contenu, après scroll)
+        {/* Bouton Déconnexion mobile (en bas du contenu, AVANT la bottom tab bar)
             Sur desktop il est dans la sidebar. */}
-        <div className="md:hidden flex justify-center pt-2 pb-8">
+        <div className="md:hidden flex justify-center pt-2 pb-6">
           <button
             onClick={handleLogout}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors"
@@ -298,6 +292,62 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
           </button>
         </div>
       </main>
+
+      {/* ════════ MOBILE BOTTOM TAB BAR (< md) ════════ */}
+      {/*   Pattern iOS natif : 4 onglets fixes en bas, accès au pouce,
+           libère le haut de l'écran pour le contenu principal.
+           Safe-area inset pris en compte pour iPhone notch. */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md"
+        style={{
+          borderTop: '1px solid #E5E7EB',
+          boxShadow: '0 -4px 16px rgba(15,23,42,0.04)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+        aria-label="Navigation principale"
+      >
+        <div className="grid grid-cols-4">
+          {MOBILE_TABS.map((s) => {
+            const isActive = s.id === activeSection;
+            const Icon = s.icon;
+            return (
+              <Link
+                key={s.id}
+                to={buildLink(s.baseTo)}
+                className="flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
+                style={{
+                  color: isActive ? '#10B981' : '#6B7280',
+                }}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {/* Pastille emerald au-dessus de l'onglet actif (signature iOS) */}
+                <span
+                  aria-hidden
+                  className="block rounded-full transition-all"
+                  style={{
+                    width: isActive ? '18px' : '0px',
+                    height: '3px',
+                    background: '#10B981',
+                    marginTop: '-6px',
+                    marginBottom: '3px',
+                    boxShadow: isActive ? '0 0 6px rgba(16,185,129,0.5)' : 'none',
+                  }}
+                />
+                <Icon
+                  className="w-[22px] h-[22px]"
+                  strokeWidth={isActive ? 2.6 : 2.2}
+                />
+                <span
+                  className="text-[10.5px] tracking-tight leading-none"
+                  style={{ fontWeight: isActive ? 700 : 500 }}
+                >
+                  {s.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

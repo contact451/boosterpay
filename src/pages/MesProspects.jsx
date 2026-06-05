@@ -21,6 +21,7 @@ import {
   Sparkles,
   Check,
   ArrowRight,
+  ArrowUpRight,
   Wrench,
   Stethoscope,
   Briefcase,
@@ -29,6 +30,7 @@ import {
   Download,
   Info,
   ChevronDown,
+  Lock,
 } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
 import { getCachedAbonne } from '../services/abonneCache';
@@ -141,6 +143,14 @@ export default function MesProspects() {
   const [volume, setVolume] = useState(100);
   const [submitting, setSubmitting] = useState(false);
 
+  // Progression du configurateur : 1 = catégorie OK · 2 = zone OK · 3 = volume OK
+  //   Comme les 3 ont une valeur par défaut, on calcule un "current step" basé
+  //   sur la dernière section que l'utilisateur a probablement touchée (heuristique
+  //   simple : Cat > Zone > Vol par ordre logique de lecture). En pratique on
+  //   affiche 100% dès qu'une commande complète est valide, ce qui est toujours
+  //   le cas ici. La barre sert surtout de signal visuel "process en 3 étapes".
+  const progressPct = 100; // toujours 100 puisque defaults — barre sert d'indicateur visuel
+
   const category = CATEGORIES.find((c) => c.id === categoryId) || CATEGORIES[0];
   const zone = TOP_ZONES.find((z) => z.code === zoneCode) || TOP_ZONES[0];
   const volumeMeta = VOLUMES.find((v) => v.count === volume) || VOLUMES[0];
@@ -198,6 +208,17 @@ export default function MesProspects() {
           </p>
         </div>
 
+        {/* ═══ Progress bar 1 → 2 → 3 ═══ */}
+        {/*   Pattern Apple : 3 dots reliés par une ligne fine emerald,
+              donne un sentiment de progression et rythme la lecture. */}
+        <div className="mb-7 flex items-center gap-3">
+          <ProgressDot n={1} label="Catégorie" active />
+          <ProgressLine />
+          <ProgressDot n={2} label="Zone" active />
+          <ProgressLine />
+          <ProgressDot n={3} label="Volume" active />
+        </div>
+
         {/* ═══ Step 1 — Catégorie ═══ */}
         <Section number={1} title="Catégorie" sub="Quels prospects ciblez-vous ?">
           <div className="grid sm:grid-cols-2 gap-2.5">
@@ -237,9 +258,12 @@ export default function MesProspects() {
                         </span>
                       </div>
                       <p className="text-[12.5px] text-gray-500 mt-0.5 leading-snug">{c.sublabel}</p>
-                      <div className="flex items-center gap-1.5 mt-2 text-[11.5px] font-semibold" style={{ color: c.color }}>
-                        <TrendingUp size={12} strokeWidth={2.4} />
-                        Conversion attendue : {c.expectedConv}
+                      <div className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11.5px] font-bold" style={{
+                        background: c.bg,
+                        color: c.color,
+                      }}>
+                        <ArrowUpRight size={11} strokeWidth={2.8} />
+                        Conversion {c.expectedConv}
                       </div>
                     </div>
                   </div>
@@ -280,9 +304,18 @@ export default function MesProspects() {
               strokeWidth={2.4}
             />
           </div>
-          {zone.multiplier > 1 && (
+          {/* Hint TOUJOURS visible (résout le blanc 150px entre Zone et Volume
+              quand la zone n'est pas premium — Finistère par défaut, multiplier=1). */}
+          {zone.multiplier > 1 ? (
             <Hint
               text={`Zone premium : +${Math.round((zone.multiplier - 1) * 100)}% (densité plus forte, conversion supérieure).`}
+              color="#10B981"
+            />
+          ) : (
+            <Hint
+              text={zone.code === 'national'
+                ? 'Couverture France entière — volume maximal, prix de base.'
+                : `Tarif de base sur ${zone.label} (zone régulière).`}
               color="#10B981"
             />
           )}
@@ -290,7 +323,8 @@ export default function MesProspects() {
 
         {/* ═══ Step 3 — Volume ═══ */}
         <Section number={3} title="Volume" sub="Combien de prospects ?">
-          <div className="grid grid-cols-5 gap-2">
+          {/* gap-1.5 et min-w-[56px] : sur très petit mobile les 5 pills ne se touchent plus */}
+          <div className="grid grid-cols-5 gap-1.5">
             {VOLUMES.map((v) => {
               const isActive = v.count === volume;
               return (
@@ -299,6 +333,7 @@ export default function MesProspects() {
                   onClick={() => setVolume(v.count)}
                   className="rounded-2xl py-3.5 flex flex-col items-center transition-all active:scale-95"
                   style={{
+                    minWidth: '56px',
                     background: isActive ? '#0F172A' : '#FFFFFF',
                     color: isActive ? 'white' : '#374151',
                     border: isActive ? '1px solid #0F172A' : '1px solid #E5E7EB',
@@ -365,18 +400,28 @@ export default function MesProspects() {
             <RecapLine label="Total TTC" value={formatPrice(pricing.totalTTC)} highlight />
           </div>
 
+          {/* CTA achat — distingué visuellement des CTA "Rappeler" (vert)
+              en passant en dark (slate-900) avec icône lock pour évoquer la sécurité.
+              Pattern Apple : payer = noir confiance, agir = vert action. */}
           <button
             onClick={handleCheckout}
             disabled={submitting}
             className="w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-60"
             style={{
-              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              background: '#0F172A',
               color: 'white',
-              boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)',
+              boxShadow: '0 6px 20px rgba(15, 23, 42, 0.32), 0 2px 6px rgba(0,0,0,0.06)',
             }}
           >
-            {submitting ? 'Préparation du paiement…' : 'Acheter maintenant'}
-            {!submitting && <ArrowRight size={16} strokeWidth={2.6} />}
+            {submitting ? (
+              'Préparation du paiement…'
+            ) : (
+              <>
+                <Lock size={14} strokeWidth={2.6} />
+                Acheter maintenant
+                <ArrowRight size={16} strokeWidth={2.6} />
+              </>
+            )}
           </button>
 
           <p className="text-center text-[11.5px] text-gray-500 mt-3">
@@ -418,8 +463,8 @@ export default function MesProspects() {
 // ─────────────────────────────────────────────────────────────────
 function Section({ number, title, sub, children }) {
   return (
-    <section className="mb-6">
-      <div className="flex items-baseline gap-2 mb-3">
+    <section className="mb-5">
+      <div className="flex items-baseline gap-2 mb-3 flex-wrap">
         <span
           className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[12px] font-bold flex-shrink-0"
           style={{ background: '#ECFDF5', color: '#047857' }}
@@ -472,6 +517,49 @@ function RecapLine({ label, value, highlight }) {
         {value}
       </p>
     </div>
+  );
+}
+
+// Progress bar 1→2→3 : dot + label sous le dot
+function ProgressDot({ n, label, active }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div
+        className="flex items-center justify-center rounded-full transition-all"
+        style={{
+          width: '28px',
+          height: '28px',
+          background: active ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : '#F3F4F6',
+          color: active ? 'white' : '#9CA3AF',
+          fontSize: '12.5px',
+          fontWeight: 700,
+          boxShadow: active ? '0 4px 12px rgba(16,185,129,0.32)' : 'none',
+        }}
+      >
+        {n}
+      </div>
+      <span
+        className="text-[10px] font-bold uppercase tracking-[0.10em]"
+        style={{ color: active ? '#047857' : '#9CA3AF' }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function ProgressLine() {
+  // Ligne horizontale fine emerald qui relie les dots — alignée sur la moitié haute
+  // du dot (centre du cercle) via marginTop -10px.
+  return (
+    <div
+      className="flex-1 h-[2px] rounded-full"
+      style={{
+        background: 'linear-gradient(90deg, #10B981, #059669)',
+        marginTop: '-10px',
+        opacity: 0.5,
+      }}
+    />
   );
 }
 

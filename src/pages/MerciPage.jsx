@@ -427,7 +427,7 @@ function SubscriptionConfirmation({ commercantId }) {
         >
           {step === 'ready' ? (
             <>
-              Bienvenue{profile.nom_commerce ? <>, <span style={{ color: '#1D1D1F' }}>{profile.nom_commerce}</span></> : ''}.<br />
+              Bienvenue{profile.nom_commerce ? <>, <span style={{ color: '#1D1D1F' }}>{profile.nom_commerce}</span></> : ''}<br />
               Votre IA est{' '}
               <span
                 className="bg-clip-text text-transparent"
@@ -720,7 +720,8 @@ function SubscriptionConfirmation({ commercantId }) {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.7, delay: 3.0, ease: [0.22, 1, 0.36, 1] }}
-                    className="text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-700 mb-4"
+                    className="text-[10px] font-bold tracking-[0.12em] uppercase mb-4"
+                    style={{ color: '#10B981', opacity: 0.85 }}
                   >
                     Votre numéro dédié
                   </motion.p>
@@ -737,7 +738,8 @@ function SubscriptionConfirmation({ commercantId }) {
                         className="text-[34px] sm:text-[42px] md:text-[48px] font-extrabold text-gray-900 leading-none mb-5"
                         style={{
                           fontVariantNumeric: 'tabular-nums',
-                          letterSpacing: '0.04em',
+                          // letter-spacing négatif fin = look Apple Watch / tabular-nums premium
+                          letterSpacing: '-0.02em',
                         }}
                       >
                         {formatPhoneFR(numeroVirtuel)}
@@ -957,13 +959,13 @@ function SubscriptionConfirmation({ commercantId }) {
                     }}
                   >
                     <Sparkles className="w-3.5 h-3.5" strokeWidth={2.8} />
-                    Étape suivante
+                    À vous de jouer
                   </div>
                   <h3 className="text-[22px] md:text-[24px] font-extrabold text-gray-900 tracking-[-0.025em] leading-tight">
-                    Faites connaître votre nouveau numéro.
+                    Votre IA est prête. À vous de jouer.
                   </h3>
                   <p className="text-[13.5px] text-gray-500 mt-2 leading-relaxed max-w-md mx-auto">
-                    6 actions simples pour que vos clients utilisent <strong className="text-gray-900">automatiquement</strong> votre numéro BoosterPay. 5 minutes suffisent.
+                    5 minutes pour ne plus jamais rater un client. 6 actions simples pour que vos clients utilisent <strong className="text-gray-900">automatiquement</strong> votre numéro BoosterPay.
                   </p>
                 </div>
 

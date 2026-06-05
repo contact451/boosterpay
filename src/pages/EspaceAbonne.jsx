@@ -374,30 +374,36 @@ function EspaceContent({ espace, commercantId }) {
         )}
 
         {!isCancelled && (
-          <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
             {/* CTA principal — vert plein, premium */}
-            <a
-              href={STRIPE_CUSTOMER_PORTAL_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] transition-all duration-200"
-              style={{
-                background: 'linear-gradient(135deg, #10B981, #059669)',
-                color: '#FFFFFF',
-                boxShadow: '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 10px 24px rgba(16,185,129,0.50), 0 2px 6px rgba(0,0,0,0.06)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)';
-              }}
-            >
-              Gérer mon paiement
-              <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.6} />
-            </a>
+            <div className="flex flex-col items-start">
+              <a
+                href={STRIPE_CUSTOMER_PORTAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] transition-all duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, #10B981, #059669)',
+                  color: '#FFFFFF',
+                  boxShadow: '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 10px 24px rgba(16,185,129,0.50), 0 2px 6px rgba(0,0,0,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)';
+                }}
+              >
+                Gérer mon paiement
+                <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.6} />
+              </a>
+              {/* Label discret : explique la redirection Stripe (réassurance achat) */}
+              <p className="text-[11px] text-gray-400 mt-1.5">
+                Vous serez redirigé vers Stripe (paiement sécurisé)
+              </p>
+            </div>
             {/* Action destructive — discrète Apple-style ; rouge au hover pour signal destructif */}
             {isTrial && (
               <a
@@ -497,15 +503,19 @@ function ClientIdLine({ commercantId }) {
         try {
           await navigator.clipboard.writeText(commercantId);
           setCopied(true);
-          setTimeout(() => setCopied(false), 1600);
+          setTimeout(() => setCopied(false), 1500);
         } catch (_e) {}
       }}
-      className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-md text-[10.5px] font-medium text-gray-400 hover:text-gray-600 hover:bg-white transition-colors"
+      className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-md text-[11px] font-medium text-gray-400 hover:text-gray-600 hover:bg-white transition-colors"
       style={{ fontFeatureSettings: '"tnum"', letterSpacing: '0.02em' }}
+      aria-label={copied ? 'Référence client copiée' : 'Copier la référence client'}
     >
-      ID client · <span className="font-mono">{commercantId}</span>
+      Référence client · <span className="font-mono">{commercantId}</span>
       {copied ? (
-        <CheckCircle2 className="w-3 h-3 text-emerald-500" strokeWidth={2.6} />
+        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+          <CheckCircle2 className="w-3 h-3" strokeWidth={2.8} />
+          Copié
+        </span>
       ) : (
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>

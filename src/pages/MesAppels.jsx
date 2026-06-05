@@ -35,6 +35,7 @@ import {
   X,
   Clock,
   BellRing,
+  Sparkles,
 } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
 import { getCachedAbonne, mergeWithCache, setCachedAbonne, rememberLastCommercantId, getLastCommercantId, getLastCommercantIdAsync } from '../services/abonneCache';
@@ -454,8 +455,10 @@ export default function MesAppels() {
           </p>
         </div>
 
-        {/* ════ Bandeau install PWA (mobile uniquement, si pas installé) ════ */}
-        {!isDemoMode && !isStandalonePWA() && <PWAInstallBanner commercantId={commercantId} />}
+        {/* ════ Bandeau install PWA — variant TOAST en bas (mobile uniquement)
+              Rendu en fixed bottom dans le composant pour ne plus bloquer
+              le contenu principal. Dismissable 7 jours. ════ */}
+        {!isDemoMode && !isStandalonePWA() && <PWAInstallBanner commercantId={commercantId} variant="toast" />}
 
         {/* ════ Bandeau activation push (uniquement si en standalone et pas encore subscribed) ════ */}
         {!isDemoMode && isStandalonePWA() && pushSupported && !pushSubscribed && (
@@ -534,11 +537,14 @@ export default function MesAppels() {
         {/* ════ Filtres + bouton Rafraîchir compact à droite ════ */}
         <div className="flex items-center gap-2 mb-5">
           <div
-            className="flex items-center gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1"
+            className="bp-no-scrollbar flex items-center gap-2 overflow-x-auto flex-1 min-w-0 pb-1 pl-1"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
+              // pr-3 à droite pour s'assurer que la dernière pill "Répondus"
+              // n'est pas collée au bord et reste lisible / scrollable.
+              paddingRight: '12px',
             }}
           >
             {FILTERS.map((f) => {
@@ -658,6 +664,9 @@ export default function MesAppels() {
           animation: bp-shimmer 1.4s ease-in-out infinite;
         }
         @keyframes bp-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        /* Cache la scrollbar (filtres horizontaux) sur tous les navigateurs */
+        .bp-no-scrollbar::-webkit-scrollbar { display: none; height: 0; width: 0; }
+        .bp-no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
     </EspaceLayout>
   );
@@ -699,20 +708,41 @@ function CallCard({ appel, onOpen }) {
       }}
     >
       <div className="flex items-start gap-3">
-        {/* Icône statut */}
-        <div
-          className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center"
-          style={{ background: meta.bg }}
-        >
-          <Icon size={18} color={meta.color} strokeWidth={2.4} />
+        {/* Icône statut + pastille colorée signature (scan rapide) */}
+        <div className="relative flex-shrink-0">
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center"
+            style={{ background: meta.bg }}
+          >
+            <Icon size={18} color={meta.color} strokeWidth={2.4} />
+          </div>
+          {/* Pastille de statut en bas à droite de l'avatar — couleur signature */}
+          <span
+            aria-hidden
+            className="absolute bottom-0 right-0 block rounded-full"
+            style={{
+              width: '10px',
+              height: '10px',
+              background: meta.dotColor,
+              border: '2px solid #FFFFFF',
+              boxShadow: `0 0 0 1px ${meta.dotColor}33`,
+            }}
+          />
         </div>
 
         {/* Contenu */}
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
             <p
-              className="text-[15.5px] font-bold text-gray-900 leading-tight"
-              style={{ fontFeatureSettings: '"tnum"' }}
+              className="text-[15.5px] leading-tight"
+              style={{
+                fontFeatureSettings: '"tnum"',
+                // Numéros connus : bold sombre · Numéros masqués : medium gris italique
+                // (différencie au scan rapide, demande audit)
+                fontWeight: hasNumber ? 700 : 500,
+                color: hasNumber ? '#0F172A' : '#6B7280',
+                fontStyle: hasNumber ? 'normal' : 'italic',
+              }}
             >
               {hasNumber ? (appel.from_pretty || appel.from) : 'Numéro masqué'}
             </p>
@@ -756,17 +786,17 @@ function CallCard({ appel, onOpen }) {
             </p>
           )}
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 mt-3">
+          {/* Actions — pills compactes Apple style (h-32, px-4, text-13) */}
+          <div className="flex items-center gap-1.5 mt-3">
             <a
               href={telHref}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold transition-transform active:scale-95"
+              className="inline-flex items-center gap-1 h-[32px] px-3.5 rounded-full text-[13px] font-bold transition-transform active:scale-95"
               style={{
                 background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                 color: 'white',
                 textDecoration: 'none',
-                boxShadow: '0 2px 8px rgba(16,185,129,0.30)',
+                boxShadow: '0 2px 8px rgba(16,185,129,0.28)',
               }}
             >
               <Phone size={12} strokeWidth={2.6} />
@@ -775,7 +805,7 @@ function CallCard({ appel, onOpen }) {
             <a
               href={smsHref}
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12.5px] font-bold transition-transform active:scale-95"
+              className="inline-flex items-center gap-1 h-[32px] px-3.5 rounded-full text-[13px] font-bold transition-transform active:scale-95"
               style={{
                 background: 'white',
                 color: '#047857',
@@ -805,27 +835,79 @@ function CallCard({ appel, onOpen }) {
 // ─────────────────────────────────────────────────────────────────
 function EmptyState({ filter }) {
   const map = {
-    all: { Icon: Inbox, title: 'Aucun appel pour le moment', sub: 'Dès qu\'un client appelle votre numéro BoosterPay, il apparaîtra ici en temps réel.' },
-    missed: { Icon: PhoneMissed, title: 'Aucun appel manqué', sub: 'Bravo — vous (ou l\'IA) avez répondu à tous les appels récents.' },
-    ai: { Icon: Bot, title: 'L\'IA n\'a pas encore pris d\'appel', sub: 'Elle prend automatiquement le relais si vous ne répondez pas dans 18 secondes.' },
-    answered: { Icon: PhoneIncoming, title: 'Aucun appel décroché', sub: 'Pas encore d\'appel où vous avez répondu en personne.' },
+    all: {
+      Icon: Sparkles,
+      title: 'Votre IA est prête.',
+      sub: "Dès que le téléphone sonne, vous le verrez ici en temps réel. Aucun appel ne vous échappera.",
+      ludique: true,
+    },
+    missed: {
+      Icon: PhoneMissed,
+      title: 'Aucun appel manqué',
+      sub: "Bravo — vous (ou l'IA) avez répondu à tous les appels récents.",
+    },
+    ai: {
+      Icon: Bot,
+      title: "L'IA n'a pas encore pris d'appel",
+      sub: 'Elle prend automatiquement le relais si vous ne répondez pas dans 18 secondes.',
+    },
+    answered: {
+      Icon: PhoneIncoming,
+      title: 'Aucun appel décroché',
+      sub: "Pas encore d'appel où vous avez répondu en personne.",
+    },
   };
   const meta = map[filter] || map.all;
   const Icon = meta.Icon;
+  const isLudique = meta.ludique;
 
   return (
     <div
-      className="rounded-3xl p-10 text-center"
-      style={{ background: '#F9FAFB', border: '1px solid #F3F4F6' }}
+      className="rounded-3xl p-10 text-center relative overflow-hidden"
+      style={{
+        background: isLudique
+          ? 'linear-gradient(135deg, #ECFDF5 0%, #F9FAFB 100%)'
+          : '#F9FAFB',
+        border: isLudique ? '1px solid rgba(16,185,129,0.20)' : '1px solid #F3F4F6',
+      }}
     >
-      <div
-        className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4"
-        style={{ background: 'white', border: '1px solid #E5E7EB' }}
-      >
-        <Icon size={22} color="#9CA3AF" strokeWidth={2} />
+      {/* Halo emerald décoratif (état vide ludique uniquement) */}
+      {isLudique && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 w-[260px] h-[260px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)' }}
+        />
+      )}
+      <div className="relative">
+        <div
+          className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4"
+          style={{
+            background: isLudique
+              ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+              : 'white',
+            border: isLudique ? '0' : '1px solid #E5E7EB',
+            boxShadow: isLudique ? '0 8px 24px rgba(16,185,129,0.30)' : 'none',
+          }}
+        >
+          <Icon
+            size={22}
+            color={isLudique ? '#FFFFFF' : '#9CA3AF'}
+            strokeWidth={isLudique ? 2.6 : 2}
+          />
+        </div>
+        <h3 className="text-[17px] font-bold text-gray-900 tracking-tight">{meta.title}</h3>
+        <p className="text-[13.5px] text-gray-500 mt-1.5 max-w-sm mx-auto leading-relaxed">{meta.sub}</p>
+        {isLudique && (
+          <div className="inline-flex items-center gap-1.5 mt-4 text-[11.5px] font-bold uppercase tracking-[0.10em]" style={{ color: '#047857' }}>
+            <span className="relative inline-flex w-1.5 h-1.5">
+              <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </span>
+            En attente du premier appel
+          </div>
+        )}
       </div>
-      <h3 className="text-[16px] font-bold text-gray-900">{meta.title}</h3>
-      <p className="text-[13.5px] text-gray-500 mt-1.5 max-w-sm mx-auto leading-relaxed">{meta.sub}</p>
     </div>
   );
 }
