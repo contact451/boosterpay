@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   PhoneCall, RefreshCw, CalendarCheck, Bot, Star, Zap,
   ArrowRight, Plus, Trash2, Upload, FileSpreadsheet, MessageCircle, Check,
-  ExternalLink, Sparkles, Copy,
+  ExternalLink, Sparkles, Copy, ChevronRight,
 } from 'lucide-react';
 import EspaceLayout from '../components/EspaceLayout';
 
@@ -40,24 +40,24 @@ const EMERALD = '#10B981';
 const MODULES = [
   {
     id: 'reception-24-7',
-    label: "Réception d'appels IA 24/7",
-    sub: "La base : l'IA répond, qualifie, vous envoie le lead",
+    label: "Réception 24/7",
+    sub: "L'IA répond et vous envoie le récap",
     icon: PhoneCall,
     color: EMERALD,
     type: 'always-on',
     status: 'actif',
-    example: "Ex : Un client appelle pendant que vous êtes en rendez-vous. L'IA décroche, qualifie sa demande et vous envoie un récap SMS.",
-    description: "Activé par défaut. L'IA décroche quand vous ne pouvez pas répondre, qualifie le besoin, et vous envoie le récap par SMS et email.",
+    example: "Vous êtes en RDV. L'IA décroche, qualifie, vous envoie un SMS.",
+    description: "Activé par défaut.",
   },
   {
     id: 'renouvellement',
-    label: 'Renouvellement de dossiers',
-    sub: "L'IA rappelle vos clients pour renouveler contrats, abonnements, prestations",
+    label: 'Renouvellement',
+    sub: "L'IA rappelle pour renouveler contrats",
     icon: RefreshCw,
     color: EMERALD,
     type: 'contacts',
     status: 'pret',
-    example: "Ex : Votre client Dupont a un contrat qui expire dans 30 jours. L'IA l'appelle automatiquement pour proposer le renouvellement.",
+    example: "Contrat Dupont expire dans 30 j. L'IA appelle pour relancer.",
     fields: [
       { key: 'nom', label: 'Nom du client', placeholder: 'Marie Dupont', required: true },
       { key: 'telephone', label: 'Téléphone', placeholder: '06 12 34 56 78', required: true, type: 'tel' },
@@ -68,13 +68,13 @@ const MODULES = [
   },
   {
     id: 'confirmation-rdv',
-    label: 'Confirmation de RDV',
-    sub: "L'IA confirme chaque RDV 24h avant. Plus de no-show.",
+    label: 'Confirmation RDV',
+    sub: "L'IA confirme 24 h avant. Plus de no-show.",
     icon: CalendarCheck,
     color: EMERALD,
     type: 'contacts',
     status: 'pret',
-    example: "Ex : Vous avez un RDV demain à 14h avec M. Martin. L'IA l'appelle aujourd'hui pour confirmer ou reporter si besoin.",
+    example: "RDV demain 14 h. L'IA appelle aujourd'hui pour confirmer.",
     fields: [
       { key: 'nom', label: 'Nom du client', placeholder: 'Marie Dupont', required: true },
       { key: 'telephone', label: 'Téléphone', placeholder: '06 12 34 56 78', required: true, type: 'tel' },
@@ -85,13 +85,13 @@ const MODULES = [
   },
   {
     id: 'robot-mesure',
-    label: 'Robot IA sur mesure',
-    sub: "On entraîne un robot dédié à votre métier en moins d'une semaine",
+    label: 'Robot sur mesure',
+    sub: "Une IA dédiée à votre métier sous 7 jours",
     icon: Bot,
     color: EMERALD,
     type: 'contacts',
     status: 'pret',
-    example: "Ex : Vous voulez une IA qui pose vos 12 questions de pré-diagnostic et envoie le formulaire par SMS — on l'entraîne sur mesure.",
+    example: "Vos 12 questions de pré-diagnostic envoyées par SMS — entraînées sur mesure.",
     fields: [
       { key: 'nom', label: 'Nom du client', placeholder: 'Marie Dupont', required: true },
       { key: 'telephone', label: 'Téléphone', placeholder: '06 12 34 56 78', required: true, type: 'tel' },
@@ -101,13 +101,13 @@ const MODULES = [
   },
   {
     id: 'impact-avis',
-    label: 'Impact Avis',
-    sub: "L'IA appelle vos clients satisfaits pour un avis Google",
+    label: 'Avis Google',
+    sub: "L'IA collecte un avis 24 h après chaque client",
     icon: Star,
     color: EMERALD,
     type: 'contacts',
     status: 'pret',
-    example: "Ex : Mme Leroy vient de récupérer sa voiture, satisfaite. L'IA l'appelle 24h après pour solliciter un avis Google avec lien direct.",
+    example: "Mme Leroy satisfaite. L'IA appelle 24 h après — lien Google direct.",
     fields: [
       { key: 'nom', label: 'Nom du client', placeholder: 'Marie Dupont', required: true },
       { key: 'telephone', label: 'Téléphone', placeholder: '06 12 34 56 78', required: true, type: 'tel' },
@@ -117,13 +117,13 @@ const MODULES = [
   },
   {
     id: 'paiements',
-    label: 'Accélération de paiements',
-    sub: "L'IA rappelle vos impayés et accélère vos délais de paiement",
+    label: 'Accélérer paiements',
+    sub: "L'IA relance vos impayés pour vous",
     icon: Zap,
     color: EMERALD,
     type: 'contacts',
     status: 'pret',
-    example: "Ex : La facture FAC-2026-001 (1 200 €) est en retard de 15 jours. L'IA appelle votre client pour rappeler l'impayé et le motiver à régler rapidement.",
+    example: "FAC-2026-001 (1 200 €) en retard 15 j. L'IA relance pour vous.",
     fields: [
       { key: 'nom', label: 'Nom du client', placeholder: 'Marie Dupont', required: true },
       { key: 'telephone', label: 'Téléphone', placeholder: '06 12 34 56 78', required: true, type: 'tel' },
@@ -303,12 +303,12 @@ export default function MesModules() {
           {/* Titre de la section */}
           <div className="mb-8 flex items-end justify-between gap-6 flex-wrap">
             <div>
-              <p className="text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-700 mb-2">Mon espace · Modules</p>
+              <p className="text-[11.5px] font-bold tracking-[0.12em] uppercase text-emerald-700 mb-2">Modules</p>
               <h1 className="text-[26px] md:text-[30px] font-extrabold text-gray-900 tracking-[-0.025em] leading-tight">
                 Vos modules IA
               </h1>
-              <p className="text-[14px] text-gray-600 mt-1.5 leading-relaxed" style={{ maxWidth: '640px' }}>
-                Votre IA répond en permanence. Activez plus de modules pour automatiser relances, RDV, avis et paiements.
+              <p className="text-[14px] text-gray-600 mt-1.5" style={{ maxWidth: '640px' }}>
+                Activez plus de capacités à la demande.
               </p>
             </div>
             {/* Statut global : modules actifs */}
@@ -395,7 +395,7 @@ export default function MesModules() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                            <p className="text-[13px] font-semibold text-gray-900 leading-tight">
+                            <p className="text-[13.5px] font-semibold text-gray-900 leading-tight">
                               {m.label}
                             </p>
                             {isModuleActif && (
@@ -409,13 +409,15 @@ export default function MesModules() {
                             )}
                           </div>
                           <p className="text-[11.5px] text-gray-500 leading-snug">{m.sub}</p>
-                          {/* CTA inactif : "Activer en ajoutant des contacts" */}
-                          {!isModuleActif && (
-                            <p className="text-[10.5px] font-semibold mt-1.5" style={{ color: '#10B981' }}>
-                              Activer ce module →
-                            </p>
-                          )}
                         </div>
+                        {/* Chevron Apple iOS : signale qu'on peut sélectionner */}
+                        {!isSelected && (
+                          <ChevronRight
+                            className="w-4 h-4 flex-shrink-0 self-center"
+                            color="#D1D5DB"
+                            strokeWidth={2.2}
+                          />
+                        )}
                       </button>
                     </li>
                   );
@@ -439,10 +441,10 @@ export default function MesModules() {
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.03)',
                 }}
               >
-                {/* Header du module */}
-                <div className="flex items-start gap-4 mb-5">
+                {/* Header du module — ultra épuré : icône fine + label + exemple inline */}
+                <div className="flex items-start gap-4 mb-6">
                   <div
-                    className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center"
+                    className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
                     style={{
                       background: active.status === 'actif'
                         ? 'linear-gradient(135deg, #10B981, #059669)'
@@ -451,49 +453,24 @@ export default function MesModules() {
                     }}
                   >
                     <active.icon
-                      className="w-6 h-6"
+                      className="w-5 h-5"
                       strokeWidth={2.4}
                       style={{ color: active.status === 'actif' ? '#FFFFFF' : active.color }}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    {/* CTA orange uniquement pour modules non actifs (info utile) */}
-                    {active.status !== 'actif' && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold mb-2"
-                        style={{ background: '#FEF3C7', color: '#92400E' }}
-                      >
-                        Ajoutez vos contacts pour démarrer
-                      </span>
-                    )}
                     <h2
                       className="font-bold text-gray-900 tracking-[-0.025em] leading-tight"
-                      style={{
-                        fontSize: 'clamp(18px, 2vw, 22px)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
+                      style={{ fontSize: 'clamp(18px, 2vw, 22px)' }}
                     >
                       {active.label}
                     </h2>
-                    <p className="text-[14px] text-gray-500 mt-1.5 leading-relaxed">
-                      {active.sub}
+                    {/* Sub-titre = exemple concret en une ligne (au lieu de la card emerald séparée) */}
+                    <p className="text-[13.5px] text-gray-500 mt-1 leading-snug">
+                      {active.example || active.sub}
                     </p>
                   </div>
                 </div>
-
-                {/* Exemple concret — ce que ça fait dans la vraie vie */}
-                {active.example && (
-                  <div
-                    className="rounded-xl p-4 mb-7"
-                    style={{ background: '#F0FDF4', border: '1px solid rgba(16, 185, 129, 0.2)' }}
-                  >
-                    <p className="text-[13px] text-emerald-900 leading-relaxed">
-                      {active.example}
-                    </p>
-                  </div>
-                )}
 
                 {/* Toast succès */}
                 <AnimatePresence>

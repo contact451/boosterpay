@@ -450,8 +450,8 @@ export default function MesAppels() {
           >
             Mes appels
           </h1>
-          <p className="mt-2 text-[15px] text-gray-500 max-w-xl leading-relaxed">
-            Tous les appels reçus sur votre numéro BoosterPay. Rappelez en 1 tap, retrouvez le transcript de l'IA, ne ratez plus une opportunité.
+          <p className="mt-2 text-[15px] text-gray-500 max-w-xl">
+            Tous vos appels. Rappel en 1 tap.
           </p>
         </div>
 
@@ -621,7 +621,7 @@ export default function MesAppels() {
 
         {/* ════ Footer mini-aide ════ */}
         <p className="text-center text-[12px] text-gray-400 mt-10">
-          Tous vos appels sont conservés. Mise à jour automatique toutes les 30 secondes.
+          Mise à jour toutes les 30 s.
         </p>
         {!isDemoMode && (
           <div className="text-center mt-3">

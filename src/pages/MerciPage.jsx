@@ -128,12 +128,16 @@ function SubscriptionConfirmation({ commercantId }) {
   // code_postal au client.
   useEffect(() => {
     if (!commercantId || typeof window === 'undefined') return;
-    // Si localStorage a déjà fait le skip → on ne fait rien
+    // Skip uniquement si localStorage contient le profil COMPLET ET un mobile
+    // EN CLAIR (pas masqué avec '*'). Les anciennes sessions persistaient soit
+    // rien soit un mobile masqué — dans ces 2 cas on doit re-fetch backend
+    // pour récupérer le numéro complet.
     try {
       const raw = window.localStorage.getItem(storageKey);
       if (raw) {
         const data = JSON.parse(raw);
-        if (data?.nom_commerce && data?.code_postal) return;
+        const hasCleanMobile = data?.mobile && !String(data.mobile).includes('*');
+        if (data?.nom_commerce && data?.code_postal && hasCleanMobile) return;
       }
     } catch (_e) {}
 
@@ -158,6 +162,14 @@ function SubscriptionConfirmation({ commercantId }) {
             setCachedAbonne(commercantId, merged);
           } catch (_e) {}
 
+          // Mobile perso du commerçant — affiché à l'étape 2 du tuto.
+          // Priorité au numéro complet (espace privé) > fallback masqué (legacy).
+          const mob = json.espace.mobile_perso || json.espace.mobile_perso_masked || '';
+          if (mob) {
+            setMobileCommercant(mob);
+            persistProfile({ mobile: mob });
+          }
+
           if (json.espace.nom_commerce && json.espace.code_postal) {
             // Profil déjà complet en BDD → skip form
             setProfile({
@@ -172,6 +184,7 @@ function SubscriptionConfirmation({ commercantId }) {
               nom_commerce: json.espace.nom_commerce,
               code_postal: json.espace.code_postal,
               numero_virtuel: json.espace.numero_virtuel || '',
+              mobile: mob,
               hydratedFromBackend: true,
             });
             setStep('ready');
@@ -281,27 +294,39 @@ function SubscriptionConfirmation({ commercantId }) {
     const tick = async () => {
       if (cancelled) return;
       try {
-        const params = new URLSearchParams({
-          action: 'getEspaceAbonne',
-          commercant_id: commercantId,
-        });
-        const res = await fetch(`${VONAGE_CRM_API_URL}?${params.toString()}`, {
-          method: 'GET',
+        // POST text/plain : pattern standard Apps Script qui évite le CORS
+        // preflight (le navigateur ne fait pas OPTIONS pour text/plain).
+        // Le doGet() ne sert qu'au healthcheck — la vraie logique action est
+        // dans doPost().
+        const res = await fetch(VONAGE_CRM_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'getEspaceAbonne',
+            commercant_id: commercantId,
+          }),
         });
         const data = await res.json();
-        const num = data?.abonne?.numero_virtuel || data?.numero_virtuel || '';
-        const mob = data?.abonne?.mobile || data?.mobile || '';
-        if (num && /^\+?\d{8,}$/.test(num.replace(/\s/g, ''))) {
+        const espaceData = data?.espace || data?.abonne || data || {};
+        const num = espaceData.numero_virtuel || '';
+        // Priorité : mobile_perso complet > mobile_perso_masked legacy
+        const mob = espaceData.mobile_perso
+          || espaceData.mobile
+          || espaceData.mobile_perso_masked
+          || '';
+        if (num && /^\+?\d{8,}$/.test(String(num).replace(/\s/g, ''))) {
           numeroReceivedRef.current = true;
           setNumeroVirtuel(num);
           persistProfile({ numero_virtuel: num });
         }
-        if (mob && /^\+?\d{8,}$/.test(mob.replace(/\s/g, ''))) {
+        // On accepte un mobile s'il a au moins 4 chiffres (le masque
+        // "+33 6 ** ** ** 78" en a 4 significatifs mais reste un signal valide).
+        if (mob && /\d{4,}/.test(String(mob))) {
           setMobileCommercant(mob);
           persistProfile({ mobile: mob });
         }
       } catch (_e) {
-        // silent — on retentera
+        // silent — on retentera au prochain tick
       }
     };
 
@@ -455,12 +480,11 @@ function SubscriptionConfirmation({ commercantId }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-[17px] text-gray-500 text-center max-w-lg mx-auto leading-relaxed mb-7"
+          className="text-[16px] text-gray-500 text-center max-w-lg mx-auto leading-relaxed mb-7"
         >
-          {step === 'ready' && 'Tout est configuré.'}
-          {step === 'expired' && 'Configuration en cours — votre numéro vous parvient par email sous 2 minutes.'}
-          {step === 'provisioning' && 'Configuration de votre standard IA en cours…'}
-          {isFormPhase && "Plus qu'une étape pour personnaliser votre numéro local."}
+          {step === 'expired' && 'Votre numéro arrive par email sous 2 minutes.'}
+          {step === 'provisioning' && 'Configuration en cours…'}
+          {isFormPhase && "Une dernière étape."}
         </motion.p>
 
         {/* Bloc réassurance post-validation — 3 items en ligne (uniquement phase form) */}
@@ -634,18 +658,15 @@ function SubscriptionConfirmation({ commercantId }) {
                   Easing : [0.22, 1, 0.36, 1] (smooth Apple iOS)
                   ═══════════════════════════════════════════════════════════ */}
 
-              {/* ════ INTRO SECTION ════ */}
+              {/* ════ INTRO SECTION épurée — un seul label discret ════ */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="text-center mb-8"
+                className="text-center mb-7"
               >
-                <h3 className="text-[20px] font-semibold text-gray-900 tracking-[-0.02em]">
-                  Voici comment votre IA travaille
-                </h3>
-                <p className="text-[14px] mt-1.5" style={{ color: '#6B7280', fontWeight: 400 }}>
-                  Rien à installer. Ça marche avec votre téléphone actuel.
+                <p className="text-[11px] font-bold tracking-[0.12em] uppercase" style={{ color: '#9CA3AF' }}>
+                  En 3 étapes
                 </p>
               </motion.div>
 
@@ -659,8 +680,8 @@ function SubscriptionConfirmation({ commercantId }) {
                 <FlowStep
                   n={1}
                   icon={PhoneCall}
-                  title="Un client appelle votre numéro dédié"
-                  desc="Il arrive directement sur votre téléphone."
+                  title="Un client appelle"
+                  desc="Sur votre numéro dédié."
                   connector="down"
                 />
               </motion.div>
@@ -769,28 +790,19 @@ function SubscriptionConfirmation({ commercantId }) {
                     )}
                   </AnimatePresence>
 
-                  {/* Explication — adaptée selon que le numéro est arrivé ou non */}
+                  {/* Explication — une seule ligne percutante */}
                   <motion.p
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 4.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="text-[13.5px] text-gray-600 leading-relaxed max-w-md mx-auto mb-5"
+                    className="text-[14px] text-gray-600 leading-relaxed max-w-md mx-auto mb-5"
                   >
                     {numeroVirtuel ? (
-                      <>
-                        C'est votre nouveau numéro professionnel.<br />
-                        <strong className="text-gray-900">Communiquez-le à vos clients</strong> — l'IA décroche quand vous êtes occupé.
-                      </>
+                      <><strong className="text-gray-900">Communiquez-le à vos clients.</strong> L'IA décroche pour vous.</>
                     ) : waitedTooLong ? (
-                      <>
-                        L'attribution prend un peu plus de temps que prévu.<br />
-                        <strong className="text-gray-900">Pas d'inquiétude</strong> — vous recevrez votre numéro par email dans les prochaines minutes. Vous pouvez explorer vos modules en attendant.
-                      </>
+                      <>Votre numéro arrive par email <strong className="text-gray-900">sous quelques minutes</strong>.</>
                     ) : (
-                      <>
-                        Votre numéro local est en cours d'attribution.<br />
-                        <strong className="text-gray-900">Il apparaîtra ici dans quelques secondes</strong> — vous le recevrez aussi par email.
-                      </>
+                      <>Attribution en cours. <strong className="text-gray-900">Quelques secondes.</strong></>
                     )}
                   </motion.p>
 
@@ -860,7 +872,12 @@ function SubscriptionConfirmation({ commercantId }) {
                 }}
               />
 
-              {/* ─── ÉTAPE 2 ─── */}
+              {/* ─── ÉTAPE 2 — affiche le mobile perso du commerçant (masqué) ─── */}
+              {/*   Le numéro est crucial pour la compréhension : "C'est MON mobile
+                   qui sonne, pas un nouveau". On utilise le format masqué
+                   "+33 6 ** ** ** 78" reçu du backend (sécurité URL) — si déjà
+                   masqué (contient des *), on l'affiche tel quel ; sinon on passe
+                   par formatPhoneFR pour un format propre. */}
               <motion.div
                 initial={{ opacity: 0, y: 32, scale: 0.96, filter: 'blur(6px)' }}
                 animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
@@ -870,9 +887,22 @@ function SubscriptionConfirmation({ commercantId }) {
                   n={2}
                   icon={Smartphone}
                   title="Votre mobile sonne"
-                  desc={mobileCommercant
-                    ? <>Le <strong className="text-gray-900">{formatPhoneFR(mobileCommercant)}</strong> reçoit l'appel. Décrochez pour répondre.</>
-                    : "Décrochez pour répondre en direct."}
+                  desc={mobileCommercant ? (
+                    <>
+                      <strong
+                        className="text-gray-900"
+                        style={{
+                          fontFeatureSettings: '"tnum"',
+                          letterSpacing: '0.01em',
+                        }}
+                      >
+                        {String(mobileCommercant).includes('*') ? mobileCommercant : formatPhoneFR(mobileCommercant)}
+                      </strong>
+                      {' '}— 18 s pour décrocher.
+                    </>
+                  ) : (
+                    <>Votre mobile reçoit l'appel. 18 s pour décrocher.</>
+                  )}
                   connector="none"
                 />
               </motion.div>
@@ -902,8 +932,8 @@ function SubscriptionConfirmation({ commercantId }) {
                 <FlowStep
                   n={3}
                   icon={Bot}
-                  title="Si vous ne répondez pas, l'IA prend le relais"
-                  desc="Elle répond, qualifie le besoin, et vous envoie un récap SMS."
+                  title="L'IA prend le relais"
+                  desc="Elle répond et vous envoie un SMS."
                   connector="none"
                 />
               </motion.div>
@@ -927,17 +957,17 @@ function SubscriptionConfirmation({ commercantId }) {
                   >
                     <p className="text-[15px] font-bold mb-1 inline-flex items-center justify-center gap-2 flex-wrap">
                       <Smartphone className="w-4 h-4" strokeWidth={2.4} />
-                      Testez maintenant — appelez le{' '}
-                      <a
-                        href={`tel:${numeroVirtuel}`}
-                        className="underline decoration-2 underline-offset-2 hover:no-underline"
-                        style={{ color: '#10B981' }}
-                      >
-                        {formatPhoneFR(numeroVirtuel)}
-                      </a>
+                      Testez maintenant
                     </p>
-                    <p className="text-[13px] leading-relaxed" style={{ color: '#047857' }}>
-                      depuis un 2e téléphone · laissez sonner pour voir l'IA prendre le relais
+                    <a
+                      href={`tel:${numeroVirtuel}`}
+                      className="block text-[18px] font-extrabold tracking-tight underline decoration-2 underline-offset-4 hover:no-underline"
+                      style={{ color: '#10B981', fontFeatureSettings: '"tnum"' }}
+                    >
+                      {formatPhoneFR(numeroVirtuel)}
+                    </a>
+                    <p className="text-[12px] mt-1.5" style={{ color: '#6B7280' }}>
+                      Depuis un autre téléphone.
                     </p>
                   </motion.div>
                 )}
@@ -950,22 +980,11 @@ function SubscriptionConfirmation({ commercantId }) {
                 transition={{ duration: 0.9, delay: 8.5, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="text-center mb-6">
-                  <div
-                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11.5px] font-bold uppercase tracking-[0.10em] mb-4"
-                    style={{
-                      background: 'linear-gradient(135deg, #10B981, #059669)',
-                      color: '#FFFFFF',
-                      boxShadow: '0 6px 16px rgba(16,185,129,0.32), 0 2px 4px rgba(0,0,0,0.05)',
-                    }}
-                  >
-                    <Sparkles className="w-3.5 h-3.5" strokeWidth={2.8} />
-                    À vous de jouer
-                  </div>
-                  <h3 className="text-[22px] md:text-[24px] font-extrabold text-gray-900 tracking-[-0.025em] leading-tight">
-                    Votre IA est prête. À vous de jouer.
+                  <h3 className="text-[24px] md:text-[26px] font-extrabold text-gray-900 tracking-[-0.025em] leading-tight">
+                    À vous de jouer.
                   </h3>
-                  <p className="text-[13.5px] text-gray-500 mt-2 leading-relaxed max-w-md mx-auto">
-                    5 minutes pour ne plus jamais rater un client. 6 actions simples pour que vos clients utilisent <strong className="text-gray-900">automatiquement</strong> votre numéro BoosterPay.
+                  <p className="text-[14px] text-gray-500 mt-2 max-w-md mx-auto">
+                    6 actions pour que vos clients utilisent votre numéro.
                   </p>
                 </div>
 

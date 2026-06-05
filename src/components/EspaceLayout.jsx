@@ -30,13 +30,20 @@ const NAV_SECTIONS = [
   { id: 'abonnement', label: 'Mon abonnement', icon: CreditCard, baseTo: '/configurer' },
 ];
 
-// Bottom tab bar mobile — 4 onglets seulement (pattern iOS)
-// "Mes modules" reste accessible depuis l'accueil + sidebar desktop.
+// Bottom tab bar mobile — 5 onglets équidistants (pattern iOS Maps / Photos)
+//   Labels courts pour rester lisibles sur petits mobiles (≥ 360px viewport).
+//   Ordre : flux logique de l'usage quotidien
+//     1. Accueil   → vue d'ensemble + numéro + tuto
+//     2. Appels    → centre d'appels live (page la plus consultée)
+//     3. Modules   → toutes les capacités IA activables
+//     4. Prospects → acquisition / achat one-shot
+//     5. Compte    → abonnement + facturation
 const MOBILE_TABS = [
-  { id: 'bienvenue', label: 'Accueil',   icon: Home,          baseTo: '/merci' },
-  { id: 'appels',    label: 'Appels',    icon: PhoneIncoming, baseTo: '/espace/appels' },
-  { id: 'prospects', label: 'Prospects', icon: Target,        baseTo: '/espace/prospects' },
-  { id: 'abonnement', label: 'Compte',   icon: User,          baseTo: '/configurer' },
+  { id: 'bienvenue',  label: 'Accueil',   icon: Home,          baseTo: '/merci' },
+  { id: 'appels',     label: 'Appels',    icon: PhoneIncoming, baseTo: '/espace/appels' },
+  { id: 'modules',    label: 'Modules',   icon: LayoutGrid,    baseTo: '/espace/modules' },
+  { id: 'prospects',  label: 'Prospects', icon: Target,        baseTo: '/espace/prospects' },
+  { id: 'abonnement', label: 'Compte',    icon: User,          baseTo: '/configurer' },
 ];
 
 export default function EspaceLayout({ children, nomCommerce, commercantId, activeSection = 'bienvenue' }) {
@@ -294,8 +301,8 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
       </main>
 
       {/* ════════ MOBILE BOTTOM TAB BAR (< md) ════════ */}
-      {/*   Pattern iOS natif : 4 onglets fixes en bas, accès au pouce,
-           libère le haut de l'écran pour le contenu principal.
+      {/*   Pattern iOS natif : 5 onglets équidistants, accès au pouce.
+           Compatible viewports ≥ 360px (iPhone SE inclus).
            Safe-area inset pris en compte pour iPhone notch. */}
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md"
@@ -303,10 +310,13 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
           borderTop: '1px solid #E5E7EB',
           boxShadow: '0 -4px 16px rgba(15,23,42,0.04)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          // Fallback Android Chrome < 76 (pas de backdrop-filter) :
+          // backgroundColor solide avec opacité élevée pour rester lisible.
+          backgroundColor: 'rgba(255,255,255,0.96)',
         }}
         aria-label="Navigation principale"
       >
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {MOBILE_TABS.map((s) => {
             const isActive = s.id === activeSection;
             const Icon = s.icon;
@@ -314,32 +324,62 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
               <Link
                 key={s.id}
                 to={buildLink(s.baseTo)}
-                className="flex flex-col items-center justify-center gap-1 py-2.5 transition-colors"
+                className="flex flex-col items-center justify-center gap-1 py-2 px-1 transition-all duration-200 select-none"
                 style={{
                   color: isActive ? '#10B981' : '#6B7280',
+                  WebkitTapHighlightColor: 'transparent',
                 }}
                 aria-current={isActive ? 'page' : undefined}
               >
-                {/* Pastille emerald au-dessus de l'onglet actif (signature iOS) */}
+                {/* Pastille emerald fine au-dessus de l'onglet actif (signature iOS)
+                    — slide-in animé pour rendre le changement ultra fluide */}
                 <span
                   aria-hidden
-                  className="block rounded-full transition-all"
+                  className="block rounded-full"
                   style={{
-                    width: isActive ? '18px' : '0px',
+                    width: isActive ? '16px' : '0px',
                     height: '3px',
                     background: '#10B981',
-                    marginTop: '-6px',
-                    marginBottom: '3px',
+                    marginTop: '-4px',
+                    marginBottom: '2px',
                     boxShadow: isActive ? '0 0 6px rgba(16,185,129,0.5)' : 'none',
+                    transition: 'width 240ms cubic-bezier(0.2,0.8,0.2,1), box-shadow 200ms',
                   }}
                 />
-                <Icon
-                  className="w-[22px] h-[22px]"
-                  strokeWidth={isActive ? 2.6 : 2.2}
-                />
+                {/* Icône avec halo emerald subtil au focus (signature premium) */}
                 <span
-                  className="text-[10.5px] tracking-tight leading-none"
-                  style={{ fontWeight: isActive ? 700 : 500 }}
+                  className="relative inline-flex items-center justify-center"
+                  style={{ width: '24px', height: '24px' }}
+                >
+                  {isActive && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: 'radial-gradient(circle, rgba(16,185,129,0.16) 0%, transparent 70%)',
+                        transform: 'scale(1.6)',
+                      }}
+                    />
+                  )}
+                  <Icon
+                    className="relative"
+                    style={{
+                      width: '21px',
+                      height: '21px',
+                      transform: isActive ? 'scale(1.04)' : 'scale(1)',
+                      transition: 'transform 240ms cubic-bezier(0.2,0.8,0.2,1)',
+                    }}
+                    strokeWidth={isActive ? 2.6 : 2.1}
+                  />
+                </span>
+                <span
+                  className="leading-none tracking-tight"
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: isActive ? 700 : 500,
+                    letterSpacing: '-0.01em',
+                    transition: 'font-weight 200ms',
+                  }}
                 >
                   {s.label}
                 </span>

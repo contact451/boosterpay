@@ -22,7 +22,12 @@ const APPS_SCRIPT_URL = import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL
   || 'https://script.google.com/macros/s/AKfycbzVONAGECRMxxx/exec';
 
 const STRIPE_CUSTOMER_PORTAL_URL = import.meta.env.VITE_STRIPE_CUSTOMER_PORTAL_URL
-  || 'https://billing.stripe.com/p/login/REPLACE_ME';
+  || 'https://billing.stripe.com/p/login/3cIcN74S2fB53eEf86f3a00';
+
+// Détecte une URL Stripe portail valide (config OK en prod, placeholder en local)
+const isStripePortalConfigured = STRIPE_CUSTOMER_PORTAL_URL
+  && !STRIPE_CUSTOMER_PORTAL_URL.includes('REPLACE_ME')
+  && STRIPE_CUSTOMER_PORTAL_URL.startsWith('https://billing.stripe.com/');
 
 function formatPhoneFR(e164) {
   if (!e164) return '';
@@ -280,8 +285,8 @@ function EspaceContent({ espace, commercantId }) {
       <div className="rounded-3xl bg-white border border-gray-100 p-7 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11.5px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: '#047857' }}>
-              Mon espace · Abonnement
+            <p className="text-[11px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: '#047857' }}>
+              Abonnement
             </p>
             <h1 className="text-[28px] md:text-[34px] font-extrabold tracking-[-0.025em] text-gray-900 leading-tight mb-3">
               {espace.nom_commerce || espace.nom || 'Bienvenue'}
@@ -324,39 +329,27 @@ function EspaceContent({ espace, commercantId }) {
           <h2 className="text-[17px] font-semibold text-gray-900 tracking-tight">Mon abonnement</h2>
         </div>
 
-        {/* Calcul date fin essai effective (fallback provisioned_at + 7 jours) */}
+        {/* Calcul date fin essai effective (fallback provisioned_at + 7 jours)
+            Note : les chiffres clés (jours/tarif/date) sont déjà dans RecapStats.
+            On affiche ici uniquement la date de fin d'essai (info contractuelle). */}
         {(() => null)()}
-        <dl className="grid sm:grid-cols-2 gap-4">
-          <Stat label="Tarif mensuel" value={`${espace.mrr_eur} € HT/mois`} />
-          {isTrial && (
-            <Stat
-              label="Fin de l'essai"
-              value={formatDateFR(effectiveTrialEnd(espace)) || 'Bientôt confirmée'}
-              icon={Clock}
-            />
-          )}
-          {!isTrial && espace.next_billing_at && (
-            <Stat label="Prochaine facture" value={formatDateFR(espace.next_billing_at)} icon={Calendar} />
-          )}
-        </dl>
+        {isTrial && (
+          <Stat
+            label="Fin de l'essai"
+            value={formatDateFR(effectiveTrialEnd(espace)) || 'Bientôt confirmée'}
+            icon={Clock}
+          />
+        )}
 
         {isTrial && (
-          <ul className="mt-5 space-y-2.5">
-            <li className="flex items-start gap-2.5 text-[13.5px] text-emerald-900">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
-              <span>
-                {effectiveTrialEnd(espace)
-                  ? <>Essai gratuit jusqu'au <strong>{formatDateFR(effectiveTrialEnd(espace))}</strong></>
-                  : <>Essai gratuit · <strong>7 jours</strong></>}
-              </span>
+          <ul className="mt-5 space-y-2">
+            <li className="flex items-center gap-2.5 text-[13.5px] text-emerald-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" strokeWidth={2.4} />
+              <span><strong>0 €</strong> avant le {formatDateFR(effectiveTrialEnd(espace)) || '+7 jours'}</span>
             </li>
-            <li className="flex items-start gap-2.5 text-[13.5px] text-emerald-900">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
-              <span><strong>0 €</strong> prélevé avant cette date</span>
-            </li>
-            <li className="flex items-start gap-2.5 text-[13.5px] text-emerald-900">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
-              <span>Annulation possible à tout moment, en 1 clic</span>
+            <li className="flex items-center gap-2.5 text-[13.5px] text-emerald-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" strokeWidth={2.4} />
+              <span>Annulation en 1 clic</span>
             </li>
           </ul>
         )}
@@ -375,37 +368,52 @@ function EspaceContent({ espace, commercantId }) {
 
         {!isCancelled && (
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
-            {/* CTA principal — vert plein, premium */}
+            {/* CTA principal — désactivé si l'URL Stripe Portal n'est pas configurée
+                (typique du local dev sans VITE_STRIPE_CUSTOMER_PORTAL_URL). */}
             <div className="flex flex-col items-start">
-              <a
-                href={STRIPE_CUSTOMER_PORTAL_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] transition-all duration-200"
-                style={{
-                  background: 'linear-gradient(135deg, #10B981, #059669)',
-                  color: '#FFFFFF',
-                  boxShadow: '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 10px 24px rgba(16,185,129,0.50), 0 2px 6px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)';
-                }}
-              >
-                Gérer mon paiement
-                <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.6} />
-              </a>
-              {/* Label discret : explique la redirection Stripe (réassurance achat) */}
+              {isStripePortalConfigured ? (
+                <a
+                  href={STRIPE_CUSTOMER_PORTAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, #10B981, #059669)',
+                    color: '#FFFFFF',
+                    boxShadow: '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 10px 24px rgba(16,185,129,0.50), 0 2px 6px rgba(0,0,0,0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)';
+                  }}
+                >
+                  Gérer mon paiement
+                  <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.6} />
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] cursor-not-allowed"
+                  style={{ background: '#F3F4F6', color: '#9CA3AF', border: '1px solid #E5E7EB' }}
+                  title="Stripe Customer Portal URL non configurée en local"
+                >
+                  Gérer mon paiement
+                  <ExternalLink className="w-3.5 h-3.5" strokeWidth={2.6} />
+                </button>
+              )}
               <p className="text-[11px] text-gray-400 mt-1.5">
-                Vous serez redirigé vers Stripe (paiement sécurisé)
+                {isStripePortalConfigured
+                  ? 'Vous serez redirigé vers Stripe (paiement sécurisé).'
+                  : 'Disponible en production.'}
               </p>
             </div>
             {/* Action destructive — discrète Apple-style ; rouge au hover pour signal destructif */}
-            {isTrial && (
+            {isTrial && isStripePortalConfigured && (
               <a
                 href={STRIPE_CUSTOMER_PORTAL_URL}
                 target="_blank"
@@ -441,13 +449,12 @@ function EspaceContent({ espace, commercantId }) {
             <Mail className="w-4 h-4 text-white" strokeWidth={2.4} />
           </div>
         </div>
-        <p className="text-[13.5px] text-gray-600 leading-relaxed">
-          Une question ? Écrivez à{' '}
+        <p className="text-[13.5px] text-gray-600">
           <a href="mailto:contact@booster-pay.com" className="font-semibold text-gray-900 underline">
             contact@booster-pay.com
           </a>
           <br />
-          <span className="text-[12px] text-gray-500">Réponse sous 2 h ouvrées.</span>
+          <span className="text-[12px] text-gray-500">Réponse sous 2 h.</span>
         </p>
         <ClientIdLine commercantId={commercantId} />
       </div>
@@ -603,56 +610,71 @@ function RecapStats({ espace, isTrial }) {
         }}
       />
 
-      <div className="relative grid grid-cols-3 gap-4 text-center">
+      {/*
+        Grille 3 colonnes alignée en bas via `items-end` :
+        chaque cellule = label en haut (hauteur libre 1 ou 2 lignes) +
+        valeur tout en bas. Les VALEURS sont alignées entre elles peu
+        importe la longueur du label, ce qui donne un rendu pro typographique.
+      */}
+      <div className="relative grid grid-cols-3 gap-4 text-center items-end">
         {/* Jours restants */}
-        <div>
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
-            {isTrial ? 'Jours restants' : 'Jours avant facture'}
+        <div className="flex flex-col items-center justify-end">
+          <p
+            className="text-[10px] font-bold uppercase tracking-[0.10em] mb-2"
+            style={{ color: '#9CA3AF', minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          >
+            Avant facture
           </p>
           {daysLeft !== null ? (
             <p
               className="font-extrabold leading-none tracking-[-0.03em]"
               style={{
                 color: '#059669',
-                fontSize: 'clamp(28px, 4.5vw, 38px)',
+                fontSize: 'clamp(28px, 4.5vw, 36px)',
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              {daysLeft}
+              {daysLeft}<span className="text-[14px] font-bold text-gray-400 ml-0.5">j</span>
             </p>
           ) : (
-            <StatSkeleton width={64} height={38} />
+            <StatSkeleton width={64} height={36} />
           )}
         </div>
         {/* Tarif */}
-        <div>
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
+        <div className="flex flex-col items-center justify-end">
+          <p
+            className="text-[10px] font-bold uppercase tracking-[0.10em] mb-2"
+            style={{ color: '#9CA3AF', minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          >
             HT / mois
           </p>
           {espace.mrr_eur != null ? (
             <p
               className="font-extrabold leading-none tracking-[-0.03em] text-gray-900"
               style={{
-                fontSize: 'clamp(28px, 4.5vw, 38px)',
+                fontSize: 'clamp(28px, 4.5vw, 36px)',
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              {espace.mrr_eur}€
+              {espace.mrr_eur}<span className="text-[20px] font-bold text-gray-400">€</span>
             </p>
           ) : (
-            <StatSkeleton width={88} height={38} />
+            <StatSkeleton width={88} height={36} />
           )}
         </div>
         {/* Débit */}
-        <div>
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] mb-2" style={{ color: '#374151' }}>
-            {isTrial ? 'Premier débit' : 'Prochaine facture'}
+        <div className="flex flex-col items-center justify-end">
+          <p
+            className="text-[10px] font-bold uppercase tracking-[0.10em] mb-2"
+            style={{ color: '#9CA3AF', minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          >
+            Prochaine facture
           </p>
           {targetDate ? (
             <p
               className="font-extrabold leading-none tracking-[-0.03em] text-gray-900"
               style={{
-                fontSize: 'clamp(28px, 4.5vw, 38px)',
+                fontSize: 'clamp(28px, 4.5vw, 36px)',
                 fontFeatureSettings: '"tnum"',
               }}
             >
@@ -662,7 +684,7 @@ function RecapStats({ espace, isTrial }) {
             <div className="flex flex-col items-center gap-1.5">
               <StatSkeleton width={84} height={28} />
               {isTrial && (
-                <span className="text-[10.5px] font-medium text-gray-500">En cours de configuration</span>
+                <span className="text-[10.5px] font-medium text-gray-500">Configuration…</span>
               )}
             </div>
           )}

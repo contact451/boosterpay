@@ -46,8 +46,11 @@ const CATEGORIES = [
     color: '#DC2626',
     bg: '#FEF2F2',
     pricePerLead: 1.90,
-    expectedConv: '4–7%',
-    note: 'Conversion la plus élevée : besoin immédiat.',
+    // Estimation business : nombre de clients réels pour 100 prospects contactés.
+    // Plus parlant qu'un % et compris par tous (cible : commerçants locaux).
+    expectedClients: '8 à 12 clients',
+    badge: 'Top retour',
+    note: 'Besoin immédiat — meilleur retour.',
   },
   {
     id: 'artisans',
@@ -57,8 +60,9 @@ const CATEGORIES = [
     color: '#0F766E',
     bg: '#F0FDF4',
     pricePerLead: 1.40,
-    expectedConv: '2–4%',
-    note: 'Devis sur RDV — bon volume.',
+    expectedClients: '5 à 8 devis',
+    badge: 'Devis sur RDV',
+    note: 'Volume solide, paniers élevés.',
   },
   {
     id: 'sante',
@@ -68,8 +72,9 @@ const CATEGORIES = [
     color: '#7C3AED',
     bg: '#FAF5FF',
     pricePerLead: 1.20,
-    expectedConv: '1.5–3%',
-    note: 'Forte récurrence client.',
+    expectedClients: '4 à 6 clients',
+    badge: 'Récurrence forte',
+    note: 'Clients qui reviennent durablement.',
   },
   {
     id: 'services',
@@ -79,8 +84,9 @@ const CATEGORIES = [
     color: '#0EA5E9',
     bg: '#F0F9FF',
     pricePerLead: 1.10,
-    expectedConv: '1.5–3%',
-    note: 'Bon équilibre volume / coût.',
+    expectedClients: '3 à 6 clients',
+    badge: 'Bon équilibre',
+    note: 'Volume + ticket moyen équilibrés.',
   },
   {
     id: 'commerce',
@@ -90,8 +96,9 @@ const CATEGORIES = [
     color: '#D97706',
     bg: '#FFFBEB',
     pricePerLead: 0.95,
-    expectedConv: '1–2%',
-    note: 'Volume fort, ROI sur long terme.',
+    expectedClients: '3 à 5 clients',
+    badge: 'Volume long terme',
+    note: 'Trafic récurrent, fidélisation.',
   },
 ];
 
@@ -174,10 +181,10 @@ export default function MesProspects() {
     // TODO : POST → Apps Script createProspectsCheckout
     //   { action: 'createProspectsCheckout', commercant_id, category_id,
     //     zone_code, volume } → renvoie une URL Stripe Checkout
-    // En attendant on simule
+    // En attendant on simule (prix réel calculé côté backend à l'étape suivante)
     setTimeout(() => {
       alert(
-        `Préparation du paiement…\n\nCatégorie : ${category.label}\nZone : ${zone.label}\nVolume : ${volume} prospects\nTotal HT : ${formatPrice(pricing.totalHT)}\nTotal TTC : ${formatPrice(pricing.totalTTC)}\n\n(Stripe Checkout sera connecté dans la prochaine étape.)`
+        `Préparation de votre commande…\n\nCatégorie : ${category.label}\nZone : ${zone.label}\nVolume : ${volume} prospects\n\n(Tarif et paiement Stripe à l'étape suivante.)`
       );
       setSubmitting(false);
     }, 600);
@@ -203,8 +210,8 @@ export default function MesProspects() {
           >
             Acheter des prospects
           </h1>
-          <p className="mt-2 text-[15px] text-gray-500 max-w-xl leading-relaxed">
-            Choisissez votre cible et recevez immédiatement un fichier de mobiles français vérifiés, prêts à être contactés.
+          <p className="mt-2 text-[15px] text-gray-500 max-w-xl">
+            Choisissez votre cible. Recevez le CSV immédiatement.
           </p>
         </div>
 
@@ -248,22 +255,20 @@ export default function MesProspects() {
                       <Icon size={18} color={c.color} strokeWidth={2.4} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-[14.5px] font-bold text-gray-900 leading-tight">{c.label}</p>
                         <span
-                          className="text-[11px] font-bold rounded-full px-2 py-0.5"
-                          style={{ background: c.color, color: 'white' }}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold uppercase tracking-[0.05em]"
+                          style={{ background: c.bg, color: c.color }}
                         >
-                          {formatPrice(c.pricePerLead)}/lead
+                          {c.badge}
                         </span>
                       </div>
                       <p className="text-[12.5px] text-gray-500 mt-0.5 leading-snug">{c.sublabel}</p>
-                      <div className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-[11.5px] font-bold" style={{
-                        background: c.bg,
-                        color: c.color,
-                      }}>
-                        <ArrowUpRight size={11} strokeWidth={2.8} />
-                        Conversion {c.expectedConv}
+                      <div className="inline-flex items-center gap-1 mt-2 text-[12px] font-bold" style={{ color: c.color }}>
+                        <ArrowUpRight size={12} strokeWidth={2.8} />
+                        Estimation : <span className="text-gray-900">{c.expectedClients}</span>
+                        <span className="text-gray-500 font-medium">pour 100 contacts</span>
                       </div>
                     </div>
                   </div>
@@ -343,24 +348,10 @@ export default function MesProspects() {
                   }}
                 >
                   <span className="text-[15px] font-bold">{v.label}</span>
-                  {v.discount > 0 && (
-                    <span
-                      className="text-[10px] font-bold mt-0.5"
-                      style={{ color: isActive ? '#10B981' : '#10B981' }}
-                    >
-                      -{Math.round(v.discount * 100)}%
-                    </span>
-                  )}
                 </button>
               );
             })}
           </div>
-          {volumeMeta.discount > 0 && (
-            <Hint
-              text={`Remise volume appliquée : ${formatPrice(pricing.saved)} économisés.`}
-              color="#10B981"
-            />
-          )}
         </Section>
 
         {/* ═══ Récap + CTA ═══ */}
@@ -386,27 +377,21 @@ export default function MesProspects() {
               <p className="text-[11.5px] font-bold uppercase tracking-[0.14em]" style={{ color: '#047857' }}>
                 Votre commande
               </p>
-              <p className="text-[15.5px] font-bold text-gray-900 mt-0.5">
+              <p className="text-[16px] font-bold text-gray-900 mt-0.5">
                 {volume} prospects · {category.label}
               </p>
               <p className="text-[13px] text-gray-600 mt-0.5">
-                {zone.label} · {formatPrice(pricing.unitPrice)} par lead
+                {zone.label}
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 my-4">
-            <RecapLine label="Total HT" value={formatPrice(pricing.totalHT)} />
-            <RecapLine label="Total TTC" value={formatPrice(pricing.totalTTC)} highlight />
-          </div>
-
-          {/* CTA achat — distingué visuellement des CTA "Rappeler" (vert)
-              en passant en dark (slate-900) avec icône lock pour évoquer la sécurité.
-              Pattern Apple : payer = noir confiance, agir = vert action. */}
+          {/* CTA — pas de prix affichés (tarification finale au check-out).
+              Style noir slate-900 pour signaler "action confiance" (pattern Apple). */}
           <button
             onClick={handleCheckout}
             disabled={submitting}
-            className="w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="w-full inline-flex items-center justify-center gap-2 py-4 mt-4 rounded-2xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-60"
             style={{
               background: '#0F172A',
               color: 'white',
@@ -414,18 +399,17 @@ export default function MesProspects() {
             }}
           >
             {submitting ? (
-              'Préparation du paiement…'
+              'Préparation…'
             ) : (
               <>
-                <Lock size={14} strokeWidth={2.6} />
-                Acheter maintenant
+                Continuer
                 <ArrowRight size={16} strokeWidth={2.6} />
               </>
             )}
           </button>
 
           <p className="text-center text-[11.5px] text-gray-500 mt-3">
-            Paiement sécurisé Stripe · Livraison immédiate du CSV après paiement
+            Tarif confirmé à l'étape suivante.
           </p>
         </div>
 
@@ -436,20 +420,20 @@ export default function MesProspects() {
           <Engagement icon={Users} label="100% RGPD" sub="Bases opt-in commerciales" />
         </div>
 
-        {/* ═══ FAQ courte ═══ */}
+        {/* ═══ FAQ ultra-courte ═══ */}
         <div className="mt-10">
           <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-3">
             Bon à savoir
           </h2>
-          <div className="space-y-3 text-[13.5px] text-gray-600 leading-relaxed">
+          <div className="space-y-2.5 text-[13.5px] text-gray-600 leading-snug">
             <p>
-              <strong className="text-gray-800">Format CSV</strong> : colonnes <code className="text-[12px] bg-gray-100 px-1 rounded">nom_commerce</code>, <code className="text-[12px] bg-gray-100 px-1 rounded">profession</code>, <code className="text-[12px] bg-gray-100 px-1 rounded">ville</code>, <code className="text-[12px] bg-gray-100 px-1 rounded">code_postal</code>, <code className="text-[12px] bg-gray-100 px-1 rounded">mobile</code>, <code className="text-[12px] bg-gray-100 px-1 rounded">score</code>.
+              <strong className="text-gray-800">CSV</strong> · nom, profession, ville, mobile, score.
             </p>
             <p>
-              <strong className="text-gray-800">Doublons</strong> : nous excluons automatiquement les numéros déjà commandés par vous précédemment.
+              <strong className="text-gray-800">Sans doublons</strong> · nous excluons vos achats précédents.
             </p>
             <p>
-              <strong className="text-gray-800">RGPD</strong> : tous les prospects sont issus de bases professionnelles opt-in. Mention "Prospection commerciale — STOP au 36173 pour vous désinscrire" obligatoire dans vos SMS.
+              <strong className="text-gray-800">RGPD</strong> · bases opt-in. Mention STOP 36173 obligatoire dans vos SMS.
             </p>
           </div>
         </div>
