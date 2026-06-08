@@ -105,9 +105,17 @@ export default function PWAInstallBanner({ commercantId: _commercantId, variant 
   if (variant === 'toast') {
     return (
       <>
+        {/*
+          right: 84px = laisse place au bouton chat flottant en bas-droite (56px
+          de width + 12px de marge + 16px de respiration). Évite le chevauchement
+          du bouton X de fermeture du toast avec le FAB chat bleu.
+          left: 12px = identique à avant.
+        */}
         <div
-          className="fixed left-3 right-3 z-40 md:hidden"
+          className="fixed z-40 md:hidden"
           style={{
+            left: '12px',
+            right: '84px',
             bottom: 'calc(76px + env(safe-area-inset-bottom, 0px))',
             animation: 'bp-toast-in 480ms cubic-bezier(0.2,0.8,0.2,1) both',
           }}

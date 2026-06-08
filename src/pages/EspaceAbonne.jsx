@@ -372,23 +372,26 @@ function EspaceContent({ espace, commercantId }) {
                 (typique du local dev sans VITE_STRIPE_CUSTOMER_PORTAL_URL). */}
             <div className="flex flex-col items-start">
               {isStripePortalConfigured ? (
+                // CTA SECONDAIRE — outlined emerald : gestion ≠ action d'achat.
+                // Pattern Apple : primary = plein, secondary = bordure.
                 <a
                   href={STRIPE_CUSTOMER_PORTAL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] transition-all duration-200"
                   style={{
-                    background: 'linear-gradient(135deg, #10B981, #059669)',
-                    color: '#FFFFFF',
-                    boxShadow: '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)',
+                    background: '#FFFFFF',
+                    color: '#059669',
+                    border: '1.5px solid #10B981',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                   }}
                   onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#ECFDF5';
                     e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 10px 24px rgba(16,185,129,0.50), 0 2px 6px rgba(0,0,0,0.06)';
                   }}
                   onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#FFFFFF';
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.40), 0 2px 6px rgba(0,0,0,0.06)';
                   }}
                 >
                   Gérer mon paiement
@@ -399,7 +402,7 @@ function EspaceContent({ espace, commercantId }) {
                   type="button"
                   disabled
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[12px] font-bold text-[15px] cursor-not-allowed"
-                  style={{ background: '#F3F4F6', color: '#9CA3AF', border: '1px solid #E5E7EB' }}
+                  style={{ background: '#F9FAFB', color: '#9CA3AF', border: '1.5px solid #E5E7EB' }}
                   title="Stripe Customer Portal URL non configurée en local"
                 >
                   Gérer mon paiement
@@ -616,12 +619,20 @@ function RecapStats({ espace, isTrial }) {
         valeur tout en bas. Les VALEURS sont alignées entre elles peu
         importe la longueur du label, ce qui donne un rendu pro typographique.
       */}
+      {/*
+        Grille stats uniformes — toutes les 3 valeurs ont :
+        - même fontSize : clamp(26px, 4vw, 30px) fixe (plus de "j" mini ni "€" gris)
+        - même fontWeight : 800
+        - même couleur de base : gray-900
+        - labels alignés en bas (min-height: 26px = exactement 1 ligne, ÉCHÉANCE
+          tient maintenant sur 1 ligne sans wrap)
+      */}
       <div className="relative grid grid-cols-3 gap-4 text-center items-end">
         {/* Jours restants */}
         <div className="flex flex-col items-center justify-end">
           <p
             className="text-[10px] font-bold uppercase tracking-[0.10em] mb-2"
-            style={{ color: '#9CA3AF', minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            style={{ color: '#9CA3AF', minHeight: '26px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           >
             Avant facture
           </p>
@@ -630,21 +641,22 @@ function RecapStats({ espace, isTrial }) {
               className="font-extrabold leading-none tracking-[-0.03em]"
               style={{
                 color: '#059669',
-                fontSize: 'clamp(28px, 4.5vw, 36px)',
+                fontSize: 'clamp(26px, 4vw, 30px)',
+                fontWeight: 800,
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              {daysLeft}<span className="text-[14px] font-bold text-gray-400 ml-0.5">j</span>
+              {daysLeft} j
             </p>
           ) : (
-            <StatSkeleton width={64} height={36} />
+            <StatSkeleton width={64} height={30} />
           )}
         </div>
         {/* Tarif */}
         <div className="flex flex-col items-center justify-end">
           <p
             className="text-[10px] font-bold uppercase tracking-[0.10em] mb-2"
-            style={{ color: '#9CA3AF', minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            style={{ color: '#9CA3AF', minHeight: '26px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           >
             HT / mois
           </p>
@@ -652,29 +664,31 @@ function RecapStats({ espace, isTrial }) {
             <p
               className="font-extrabold leading-none tracking-[-0.03em] text-gray-900"
               style={{
-                fontSize: 'clamp(28px, 4.5vw, 36px)',
+                fontSize: 'clamp(26px, 4vw, 30px)',
+                fontWeight: 800,
                 fontFeatureSettings: '"tnum"',
               }}
             >
-              {espace.mrr_eur}<span className="text-[20px] font-bold text-gray-400">€</span>
+              {espace.mrr_eur} €
             </p>
           ) : (
-            <StatSkeleton width={88} height={36} />
+            <StatSkeleton width={88} height={30} />
           )}
         </div>
-        {/* Débit */}
+        {/* Échéance (label court pour tenir sur 1 ligne) */}
         <div className="flex flex-col items-center justify-end">
           <p
             className="text-[10px] font-bold uppercase tracking-[0.10em] mb-2"
-            style={{ color: '#9CA3AF', minHeight: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+            style={{ color: '#9CA3AF', minHeight: '26px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           >
-            Prochaine facture
+            Échéance
           </p>
           {targetDate ? (
             <p
               className="font-extrabold leading-none tracking-[-0.03em] text-gray-900"
               style={{
-                fontSize: 'clamp(28px, 4.5vw, 36px)',
+                fontSize: 'clamp(26px, 4vw, 30px)',
+                fontWeight: 800,
                 fontFeatureSettings: '"tnum"',
               }}
             >
@@ -682,7 +696,7 @@ function RecapStats({ espace, isTrial }) {
             </p>
           ) : (
             <div className="flex flex-col items-center gap-1.5">
-              <StatSkeleton width={84} height={28} />
+              <StatSkeleton width={84} height={30} />
               {isTrial && (
                 <span className="text-[10.5px] font-medium text-gray-500">Configuration…</span>
               )}

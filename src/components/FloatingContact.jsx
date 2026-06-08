@@ -11,8 +11,13 @@ const SMS_TEL = '+33743391167';
 /**
  * FloatingContact — bouton flottant unique en bas-droite.
  * Au clic : panel light Apple-style avec 3 choix → Appeler / SMS / Écrire.
+ *
+ * Props :
+ *   - aboveMobileNav (bool) : si true, décale le bouton + panel au-dessus
+ *     de la bottom tab bar (~56px) pour ne pas chevaucher la nav de l'espace user.
+ *     Sur desktop (≥ md) la sidebar prend la place → pas d'offset ajouté.
  */
-export default function FloatingContact() {
+export default function FloatingContact({ aboveMobileNav = false }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState('home'); // 'home' | 'phone' | 'sms' | 'chat' | 'sent'
   const [message, setMessage] = useState('');
@@ -131,14 +136,18 @@ export default function FloatingContact() {
 
   return (
     <>
-      {/* BOUTON FLOTTANT */}
+      {/* BOUTON FLOTTANT
+          mobileBottom = 5.25rem (84px) si bottom tab bar présente, sinon 1.25rem (20px)
+          desktopBottom = toujours 1.25rem (la sidebar à gauche n'interfère pas) */}
       <motion.button
         ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
         className="fixed z-[80] w-14 h-14 rounded-full flex items-center justify-center text-white"
         style={{
           right: 'calc(env(safe-area-inset-right, 0px) + 1.25rem)',
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
+          bottom: aboveMobileNav
+            ? 'calc(env(safe-area-inset-bottom, 0px) + var(--bp-fab-bottom, 5.25rem))'
+            : 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
           background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
           boxShadow: '0 12px 36px -8px rgba(59,130,246,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset',
           WebkitTapHighlightColor: 'transparent',
@@ -190,9 +199,11 @@ export default function FloatingContact() {
             className="fixed z-[80] sm:w-[380px] rounded-[28px] overflow-hidden flex flex-col bg-white"
             style={{
               right: 'calc(env(safe-area-inset-right, 0px) + 1.25rem)',
-              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)',
+              bottom: aboveMobileNav
+                ? 'calc(env(safe-area-inset-bottom, 0px) + 9.5rem)'
+                : 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)',
               width: 'min(380px, calc(100vw - 2.5rem))',
-              maxHeight: 'min(620px, calc(100dvh - 7rem - env(safe-area-inset-bottom, 0px)))',
+              maxHeight: 'min(620px, calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px)))',
               border: '1px solid rgba(15,23,42,0.06)',
               boxShadow: '0 24px 60px -12px rgba(15,23,42,0.18), 0 8px 20px -8px rgba(15,23,42,0.08)',
               willChange: 'transform, opacity',

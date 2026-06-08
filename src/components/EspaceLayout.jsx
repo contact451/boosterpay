@@ -20,6 +20,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Home, LayoutGrid, CreditCard, HelpCircle, Store, PhoneCall, PhoneIncoming, LogOut, Target, User } from 'lucide-react';
 import { getCachedAbonne, rememberLastCommercantId, forgetLastCommercantId, clearCachedAbonne } from '../services/abonneCache';
+import FloatingContact from './FloatingContact';
 
 // Sidebar desktop — 5 sections complètes
 const NAV_SECTIONS = [
@@ -388,6 +389,10 @@ export default function EspaceLayout({ children, nomCommerce, commercantId, acti
           })}
         </div>
       </nav>
+
+      {/* ════════ BOUTON CONTACT FLOTTANT (toutes pages espace user) ════════ */}
+      {/*   Décalé au-dessus de la bottom tab bar sur mobile via prop aboveMobileNav */}
+      <FloatingContact aboveMobileNav />
     </div>
   );
 }

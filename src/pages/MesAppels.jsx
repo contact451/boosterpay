@@ -220,8 +220,35 @@ export default function MesAppels() {
     isDemoMode ? 'Démo · Garage Dupont' : cachedAbonne?.nom_commerce || ''
   );
 
-  const [appels, setAppels] = useState(isDemoMode ? DEMO_APPELS : []);
-  const [loading, setLoading] = useState(!isDemoMode);
+  // ─── Cache local des appels — affichage instantané au mount ───
+  //
+  // Pourquoi : sans cache, l'user ouvre /espace/appels et voit un skeleton
+  // pendant 1-3s le temps du fetch backend. Mauvais pour le sentiment "live".
+  //
+  // Stratégie :
+  //   1. Au mount, lit localStorage `bp_appels_${commercantId}` → set instantané
+  //      (loading=false direct, les appels précédents s'affichent)
+  //   2. Fetch backend en background, override avec les fresh data
+  //   3. Chaque fetch réussi persiste la nouvelle liste en localStorage
+  //   4. TTL implicite : pas de purge — on garde toujours la dernière vue
+  //
+  // Stocke aussi un `_cachedAt` timestamp pour pouvoir afficher "il y a 2 min"
+  // si un futur use case le demande.
+  const initialAppels = useMemo(() => {
+    if (isDemoMode) return DEMO_APPELS;
+    if (!commercantId || typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem(`bp_appels_${commercantId}`);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.appels)) return parsed.appels;
+    } catch (_e) {}
+    return [];
+  }, [commercantId, isDemoMode]);
+
+  const [appels, setAppels] = useState(initialAppels);
+  // loading=false si on a un cache → skeleton non affiché, contenu instantané
+  const [loading, setLoading] = useState(!isDemoMode && initialAppels.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all');
   const [openDetail, setOpenDetail] = useState(null);
@@ -288,6 +315,15 @@ export default function MesAppels() {
       const json = await res.json();
       if (json && json.ok && Array.isArray(json.appels)) {
         setAppels(json.appels);
+        // Persiste pour le prochain mount (affichage instantané)
+        try {
+          if (commercantId && typeof window !== 'undefined') {
+            window.localStorage.setItem(
+              `bp_appels_${commercantId}`,
+              JSON.stringify({ appels: json.appels, _cachedAt: Date.now() })
+            );
+          }
+        } catch (_e) { /* quota plein → on ignore */ }
       }
     } catch (_e) {
       // silent — on garde l'ancien state
@@ -534,17 +570,24 @@ export default function MesAppels() {
           </div>
         )}
 
-        {/* ════ Filtres + bouton Rafraîchir compact à droite ════ */}
+        {/* ════ Filtres + bouton Rafraîchir compact à droite ════
+              Fix définitif "Répondus coupé" : le wrapper a un width fixé via
+              `width: 0; flex: 1` qui force overflow-x à fonctionner même quand
+              les enfants dépassent. paddingRight: 16px garantit que la dernière
+              pill ne touche pas le bouton refresh. */}
         <div className="flex items-center gap-2 mb-5">
           <div
-            className="bp-no-scrollbar flex items-center gap-2 overflow-x-auto flex-1 min-w-0 pb-1 pl-1"
+            className="bp-no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 pl-1"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
-              // pr-3 à droite pour s'assurer que la dernière pill "Répondus"
-              // n'est pas collée au bord et reste lisible / scrollable.
-              paddingRight: '12px',
+              paddingRight: '16px',
+              // width: 0 + flex: 1 = hack pour forcer le wrapper à respecter
+              // sa largeur parent même quand son contenu déborde
+              width: 0,
+              flex: '1 1 0%',
+              minWidth: 0,
             }}
           >
             {FILTERS.map((f) => {
