@@ -354,7 +354,8 @@ export default function MesProspects() {
       });
       const json = await res.json();
       if (json && json.success) {
-        setSubmitResult({ status: 'sent', demandeId: json.id || '', error: '' });
+        // Le backend renvoie soit { id: 'LREQ-...' } soit { ref: 'L014' } selon version
+        setSubmitResult({ status: 'sent', demandeId: json.id || json.ref || '', error: '' });
       } else {
         setSubmitResult({ status: 'error', demandeId: '', error: (json && json.error) || 'Erreur inconnue.' });
       }
