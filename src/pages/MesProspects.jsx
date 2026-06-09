@@ -401,7 +401,7 @@ export default function MesProspects() {
             Acheter des prospects
           </h1>
           <p className="mt-2 text-[15px] text-gray-500 max-w-xl">
-            On lance des campagnes ciblées. Vous recevez les prospects qui ont mordu.
+            On contacte les particuliers qui cherchent vos services. Vous recevez leurs coordonnées dès qu'ils sont prêts à être rappelés.
           </p>
         </div>
 
@@ -414,8 +414,8 @@ export default function MesProspects() {
           <ProgressDot n={3} label="Volume" active={step3Done} />
         </div>
 
-        {/* ═══ Step 1 — Métier précis (dropdown Apple search 43 métiers) ═══ */}
-        <Section number={1} title="Métier ciblé" sub="Quels professionnels visez-vous ?">
+        {/* ═══ Step 1 — Votre métier (dropdown Apple search 43 métiers) ═══ */}
+        <Section number={1} title="Votre métier" sub="Quel service proposez-vous ?">
           <TradePicker value={tradeId} onChange={setTradeId} />
           {step1Done && (
             <div className="mt-3 rounded-2xl p-3.5" style={{ background: trade.bg, border: `1px solid ${trade.color}33` }}>
@@ -424,7 +424,7 @@ export default function MesProspects() {
                   <ArrowUpRight size={13} strokeWidth={2.8} />
                   <span>
                     <span className="text-gray-900 font-bold">+{formatCA(estimateCA(trade))}</span>
-                    <span className="text-gray-500 font-medium"> de CA / 100 prospects</span>
+                    <span className="text-gray-500 font-medium"> de CA / 100 leads {trade.label.toLowerCase()}</span>
                   </span>
                 </div>
                 <span className="text-[11px] font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full" style={{ background: '#FFFFFF', color: trade.color }}>
@@ -489,7 +489,7 @@ export default function MesProspects() {
           <textarea
             value={precisions}
             onChange={(e) => setPrecisions(e.target.value.slice(0, 500))}
-            placeholder="Ex : seulement plombiers spécialisés chauffage, ciblage centre-ville uniquement, exclure les chaînes…"
+            placeholder="Ex : projets >&nbsp;1&nbsp;000&nbsp;€, centre-ville uniquement, urgences exclues, type de prestation…"
             rows={3}
             className="w-full rounded-2xl bg-white px-4 py-3 text-[14px] text-gray-900 placeholder:text-gray-400 resize-none transition-all focus:outline-none focus:ring-2 focus:ring-emerald-400"
             style={{
@@ -537,7 +537,7 @@ export default function MesProspects() {
               {allStepsDone ? (
                 <>
                   <p className="text-[16px] font-bold text-gray-900 mt-0.5">
-                    {volume} {trade.label.toLowerCase()}{volume > 1 ? 's' : ''} ciblés
+                    {volume} leads pour {trade.label.toLowerCase()}
                   </p>
                   <p className="text-[13px] text-gray-600 mt-0.5">
                     {zone.label}
@@ -585,7 +585,7 @@ export default function MesProspects() {
               <p className="text-[11.5px] text-gray-500 mt-2 leading-snug flex items-start gap-1.5">
                 <Info size={11} strokeWidth={2.4} className="flex-shrink-0 mt-0.5" color="#9CA3AF" />
                 <span>
-                  Estimation moyenne · {Math.round(CONVERSION_RATE * 100)} % de conversion observée sur la flotte BoosterPay × panier moyen {trade.label.toLowerCase()} {formatCA(trade.avgTicket)}.
+                  Estimation · {Math.round(CONVERSION_RATE * 100)} % des leads deviennent clients × panier moyen d'un client {trade.label.toLowerCase()} ({formatCA(trade.avgTicket)}).
                 </span>
               </p>
             </div>
@@ -614,7 +614,7 @@ export default function MesProspects() {
                 Demande reçue. On s'en occupe.
               </p>
               <p className="text-[13.5px] text-gray-500 mt-1.5 leading-snug">
-                Vous recevez votre <strong className="text-gray-700">devis personnalisé sous 1 h ouvrée</strong>. La campagne démarre dès validation.
+                Vous recevez votre <strong className="text-gray-700">devis personnalisé sous 1 h ouvrée</strong>. Les premiers leads arrivent dans les jours qui suivent.
               </p>
               {submitResult.demandeId && (
                 <p className="text-[11.5px] text-gray-400 mt-3 font-mono">
@@ -660,7 +660,7 @@ export default function MesProspects() {
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Check size={11} strokeWidth={2.8} color="#10B981" />
-                  Vous ne payez que les prospects intéressés
+                  Vous ne payez que les leads qui veulent être rappelés
                 </span>
               </div>
 
@@ -676,15 +676,15 @@ export default function MesProspects() {
           )}
         </div>
 
-        {/* ═══ Pourquoi nos prospects convertissent mieux — section vente ═══ */}
+        {/* ═══ Pourquoi nos leads convertissent — section vente ═══ */}
         <div className="mt-8 mb-4">
           <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-3">
-            Pourquoi nos prospects convertissent mieux
+            Pourquoi nos leads convertissent
           </h2>
           <div className="grid sm:grid-cols-3 gap-2.5">
-            <Engagement icon={Target} label="Hyper-ciblage" sub="Secteur + zone à la maille département" />
-            <Engagement icon={TrendingUp} label="11 % de conversion" sub="Moyenne observée flotte BoosterPay" />
-            <Engagement icon={Users} label="100 % RGPD" sub="Bases pro opt-in, sans doublons" />
+            <Engagement icon={Target} label="Besoin exprimé" sub="Particuliers qui cherchent votre service maintenant" />
+            <Engagement icon={TrendingUp} label="11 % deviennent clients" sub="Moyenne observée sur la flotte BoosterPay" />
+            <Engagement icon={Users} label="100 % RGPD" sub="Consentement opérateur, sans doublons" />
           </div>
         </div>
 
@@ -695,13 +695,13 @@ export default function MesProspects() {
           </h2>
           <div className="space-y-2.5 text-[13.5px] text-gray-600 leading-snug">
             <p>
-              <strong className="text-gray-800">Campagne ciblée</strong> · on contacte 100 prospects qualifiés sur votre zone et votre secteur. Seuls les intéressés vous sont remontés.
+              <strong className="text-gray-800">On contacte les particuliers</strong> · ceux qui ont un besoin précis pour votre service sur votre zone (ex : « j'ai besoin d'un plombier sur Rennes »).
             </p>
             <p>
-              <strong className="text-gray-800">Livraison progressive</strong> · vous recevez les prospects au fil de la campagne, prêts à être rappelés.
+              <strong className="text-gray-800">Vous recevez leurs coordonnées</strong> · au fil de la campagne, dès qu'ils acceptent d'être rappelés par vous.
             </p>
             <p>
-              <strong className="text-gray-800">Sans doublons, 100 % RGPD</strong> · bases opt-in pro, exclusion automatique de vos achats précédents.
+              <strong className="text-gray-800">Sans doublons, 100 % RGPD</strong> · consentement opérateur explicite, exclusion automatique de vos achats précédents.
             </p>
           </div>
         </div>
@@ -885,7 +885,7 @@ function TradePicker({ value, onChange }) {
             <div className="px-4 pt-4 pb-3 border-b border-gray-100">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-[17px] font-bold text-gray-900 tracking-tight">
-                  Choisir un métier
+                  Sélectionnez votre métier
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
@@ -895,9 +895,9 @@ function TradePicker({ value, onChange }) {
                   <X size={18} color="#6B7280" strokeWidth={2.4} />
                 </button>
               </div>
-              {/* Sub-header explicatif — clarifie à quoi correspondent les +X € */}
+              {/* Sub-header explicatif — clarifie le concept "leads particuliers" */}
               <p className="text-[11.5px] text-gray-500 mb-3 leading-snug">
-                À droite : <strong className="text-gray-700">CA additionnel estimé</strong> pour 100 prospects ciblés.
+                On vous envoie des <strong className="text-gray-700">particuliers qui cherchent ce service</strong>. Les chiffres à droite : CA estimé pour 100 leads.
               </p>
               <div className="relative">
                 <Search
@@ -956,7 +956,7 @@ function TradePicker({ value, onChange }) {
                             onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = '#F9FAFB'; }}
                             onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = 'transparent'; }}
                           >
-                            {/* GAUCHE — Métier + chiffre clé en sub explicite */}
+                            {/* GAUCHE — Métier + panier client moyen */}
                             <div className="flex-1 min-w-0">
                               <p
                                 className="text-[14.5px] font-bold leading-tight truncate"
@@ -965,10 +965,10 @@ function TradePicker({ value, onChange }) {
                                 {t.label}
                               </p>
                               <p className="text-[11.5px] text-gray-500 mt-0.5 leading-snug">
-                                Panier moyen <strong className="text-gray-700">{formatCA(t.avgTicket)}</strong>
+                                Panier client moyen <strong className="text-gray-700">{formatCA(t.avgTicket)}</strong>
                               </p>
                             </div>
-                            {/* DROITE — CA estimé ultra business + label clair */}
+                            {/* DROITE — CA estimé pour 100 leads de particuliers intéressés */}
                             <div className="flex-shrink-0 flex flex-col items-end">
                               <span
                                 className="text-[15px] font-extrabold tabular-nums leading-none tracking-tight"
@@ -977,7 +977,7 @@ function TradePicker({ value, onChange }) {
                                 +{formatCA(estimateCA(t))}
                               </span>
                               <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mt-1" style={{ color: '#9CA3AF' }}>
-                                CA · 100 prospects
+                                CA · 100 leads
                               </span>
                             </div>
                             {selected && <Check size={15} color={meta.color} strokeWidth={3} className="flex-shrink-0 ml-1" />}
