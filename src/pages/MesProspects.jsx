@@ -39,81 +39,90 @@ import { getCachedAbonne } from '../services/abonneCache';
 
 // ────── Catalogue ──────
 // Tarif de base par prospect, dégressif au volume.
-// ─── Catalogue catégories — chiffres conversion observés flotte BoosterPay ───
+// ─── Catalogue Métiers précis (43) — chiffres conversion BoosterPay ───
 //
 // Modèle business :
-//   Conversion moyenne 11% (= 11 clients pour 100 contacts qualifiés)
-//   Tickets moyens hauts (panier moyen observé sur les clients PME convertis)
+//   Conversion moyenne 11 % (= 11 clients pour 100 prospects qualifiés)
+//   Ticket moyen propre à chaque métier (panier moyen observé secteur)
 //   → CA estimé = 100 × 0.11 × avgTicketEur
 //
-// La valeur 11% est la moyenne haute observée sur les cohortes PME locales
-// 2024-2025 (CallPilot + emails+SMS post-contact). C'est une estimation —
-// les résultats varient selon qualité de l'offre, saison, timing d'appel.
-const CONVERSION_RATE = 0.11; // 11% — taux moyen observé toutes catégories
-const PROSPECT_PER_BATCH = 100; // unité de calcul CA pour affichage
+// Les tickets sont des moyennes hautes secteur PME locales 2024-2025
+// (sources : INSEE, CCI, retours flotte BoosterPay). Estimations indicatives.
+const CONVERSION_RATE = 0.11;
+const PROSPECT_PER_BATCH = 100;
 
-const CATEGORIES = [
-  {
-    id: 'urgences',
-    label: 'Urgences',
-    sublabel: 'Plomberie, serrurerie, chauffagiste, dépannage',
-    icon: Siren,
-    color: '#DC2626',
-    bg: '#FEF2F2',
-    pricePerLead: 1.90,
-    avgTicketEur: 280,         // intervention urgence moyenne (déplacement + main d'œuvre)
-    badge: 'Top retour',
-    note: 'Besoin immédiat, conversion maximale.',
-  },
-  {
-    id: 'artisans',
-    label: 'Artisans',
-    sublabel: 'Peintre, maçon, électricien, menuisier, jardinier',
-    icon: Wrench,
-    color: '#0F766E',
-    bg: '#F0FDF4',
-    pricePerLead: 1.40,
-    avgTicketEur: 1800,        // devis travaux moyen artisan
-    badge: 'Gros paniers',
-    note: 'Devis travaux, tickets élevés.',
-  },
-  {
-    id: 'sante',
-    label: 'Santé & Bien-être',
-    sublabel: 'Kiné, esthéticienne, podologue, ostéopathe, coach',
-    icon: Stethoscope,
-    color: '#7C3AED',
-    bg: '#FAF5FF',
-    pricePerLead: 1.20,
-    avgTicketEur: 520,         // forfait + récurrence annuelle (4-6 séances)
-    badge: 'Récurrence forte',
-    note: 'Clients fidèles, CA récurrent.',
-  },
-  {
-    id: 'services',
-    label: 'Services',
-    sublabel: 'Traiteur, déménageur, pressing, taxi, photographe',
-    icon: Briefcase,
-    color: '#0EA5E9',
-    bg: '#F0F9FF',
-    pricePerLead: 1.10,
-    avgTicketEur: 420,         // prestation moyenne service local
-    badge: 'Bon équilibre',
-    note: 'Volume + ticket équilibrés.',
-  },
-  {
-    id: 'commerce',
-    label: 'Commerce',
-    sublabel: 'Boulangerie, fleuriste, opticien, boucher, primeur',
-    icon: ShoppingBag,
-    color: '#D97706',
-    bg: '#FFFBEB',
-    pricePerLead: 0.95,
-    avgTicketEur: 480,         // panier annuel client fidélisé
-    badge: 'Long terme',
-    note: 'Trafic récurrent, fidélisation.',
-  },
+// Catégories visuelles (icône + couleur partagées par leurs métiers)
+const CATEGORY_META = {
+  Urgences:  { icon: Siren,       color: '#DC2626', bg: '#FEF2F2', badge: 'Top retour' },
+  Artisans:  { icon: Wrench,      color: '#0F766E', bg: '#F0FDF4', badge: 'Gros paniers' },
+  Santé:     { icon: Stethoscope, color: '#7C3AED', bg: '#FAF5FF', badge: 'Récurrence' },
+  Services:  { icon: Briefcase,   color: '#0EA5E9', bg: '#F0F9FF', badge: 'Équilibre' },
+  Commerce:  { icon: ShoppingBag, color: '#D97706', bg: '#FFFBEB', badge: 'Long terme' },
+};
+
+// 43 métiers exacts — l'user cible précisément son besoin
+const TRADES = [
+  // ── Urgences ── (intervention immédiate, ticket élevé)
+  { id: 'plombier',      label: 'Plombier',               category: 'Urgences', avgTicket: 280 },
+  { id: 'serrurier',     label: 'Serrurier',              category: 'Urgences', avgTicket: 220 },
+  { id: 'chauffagiste',  label: 'Chauffagiste',           category: 'Urgences', avgTicket: 380 },
+  { id: 'electricien_u', label: 'Électricien dépannage',  category: 'Urgences', avgTicket: 320 },
+  { id: 'vitrier',       label: 'Vitrier',                category: 'Urgences', avgTicket: 280 },
+  { id: 'depanneur',     label: 'Dépanneur multi-services', category: 'Urgences', avgTicket: 240 },
+
+  // ── Artisans ── (devis travaux, gros paniers)
+  { id: 'peintre',       label: 'Peintre',                category: 'Artisans', avgTicket: 1800 },
+  { id: 'macon',         label: 'Maçon',                  category: 'Artisans', avgTicket: 4500 },
+  { id: 'menuisier',     label: 'Menuisier',              category: 'Artisans', avgTicket: 2200 },
+  { id: 'jardinier',     label: 'Paysagiste / Jardinier', category: 'Artisans', avgTicket: 1200 },
+  { id: 'carreleur',     label: 'Carreleur',              category: 'Artisans', avgTicket: 2400 },
+  { id: 'couvreur',      label: 'Couvreur',               category: 'Artisans', avgTicket: 3800 },
+  { id: 'plaquiste',     label: 'Plaquiste',              category: 'Artisans', avgTicket: 2600 },
+  { id: 'cuisiniste',    label: 'Cuisiniste',             category: 'Artisans', avgTicket: 6500 },
+  { id: 'electricien',   label: 'Électricien (rénovation)', category: 'Artisans', avgTicket: 2200 },
+  { id: 'plombier_reno', label: 'Plombier (rénovation)',  category: 'Artisans', avgTicket: 2400 },
+
+  // ── Santé & Bien-être ── (récurrence forte)
+  { id: 'kine',          label: 'Kinésithérapeute',       category: 'Santé', avgTicket: 320 },
+  { id: 'osteo',         label: 'Ostéopathe',             category: 'Santé', avgTicket: 250 },
+  { id: 'podo',          label: 'Podologue',              category: 'Santé', avgTicket: 280 },
+  { id: 'esthe',         label: 'Esthéticienne',          category: 'Santé', avgTicket: 420 },
+  { id: 'coach',         label: 'Coach sportif',          category: 'Santé', avgTicket: 580 },
+  { id: 'nutri',         label: 'Nutritionniste',         category: 'Santé', avgTicket: 380 },
+  { id: 'salon_coiff',   label: 'Salon de coiffure',      category: 'Santé', avgTicket: 360 },
+  { id: 'barber',        label: 'Barbier',                category: 'Santé', avgTicket: 240 },
+  { id: 'masseur',       label: 'Masseur / Bien-être',    category: 'Santé', avgTicket: 320 },
+
+  // ── Services ── (volume, ticket équilibré)
+  { id: 'traiteur',      label: 'Traiteur / Événementiel', category: 'Services', avgTicket: 850 },
+  { id: 'demenageur',    label: 'Déménageur',             category: 'Services', avgTicket: 1200 },
+  { id: 'pressing',      label: 'Pressing / Laverie',     category: 'Services', avgTicket: 180 },
+  { id: 'taxi_vtc',      label: 'Taxi / VTC',             category: 'Services', avgTicket: 220 },
+  { id: 'photo',         label: 'Photographe',            category: 'Services', avgTicket: 680 },
+  { id: 'auto_ecole',    label: 'Auto-école',             category: 'Services', avgTicket: 1450 },
+  { id: 'garage_auto',   label: 'Garage automobile',      category: 'Services', avgTicket: 720 },
+  { id: 'detailing',     label: 'Detailing automobile',   category: 'Services', avgTicket: 280 },
+  { id: 'serrurier_serv', label: 'Serrurier (installation)', category: 'Services', avgTicket: 480 },
+
+  // ── Commerce ── (long terme, fidélisation)
+  { id: 'boulanger',     label: 'Boulanger / Pâtissier',  category: 'Commerce', avgTicket: 380 },
+  { id: 'fleuriste',     label: 'Fleuriste',              category: 'Commerce', avgTicket: 280 },
+  { id: 'opticien',      label: 'Opticien',               category: 'Commerce', avgTicket: 480 },
+  { id: 'boucher',       label: 'Boucher / Charcutier',   category: 'Commerce', avgTicket: 320 },
+  { id: 'primeur',       label: 'Primeur',                category: 'Commerce', avgTicket: 220 },
+  { id: 'caviste',       label: 'Caviste',                category: 'Commerce', avgTicket: 380 },
+  { id: 'epicerie',      label: 'Épicerie fine',          category: 'Commerce', avgTicket: 260 },
+  { id: 'restaurant',    label: 'Restaurant',             category: 'Commerce', avgTicket: 480 },
+  { id: 'bar_cafe',      label: 'Bar / Café',             category: 'Commerce', avgTicket: 220 },
 ];
+
+// Index pour lookup rapide (catégorie depuis un id de métier)
+function getTradeMeta(tradeId) {
+  const trade = TRADES.find((t) => t.id === tradeId);
+  if (!trade) return null;
+  const cat = CATEGORY_META[trade.category];
+  return { ...trade, ...cat };
+}
 
 // Formate "1 200 €" propre style fr
 function formatCA(eur) {
@@ -125,12 +134,12 @@ function formatCA(eur) {
   }).format(eur);
 }
 
-// CA additionnel estimé : conversion 11% × ticket moyen × nb prospects
-//   Utilisé pour les cards catégories (preview sur 100 contacts) ET pour
-//   le récap commande (sur le volume sélectionné).
-function estimateCA(category, nbProspects = PROSPECT_PER_BATCH) {
+// CA additionnel estimé : conversion 11 % × ticket métier × nb prospects
+//   Accepte un objet TRADE { avgTicket } ou un legacy { avgTicketEur }
+function estimateCA(trade, nbProspects = PROSPECT_PER_BATCH) {
+  const ticket = trade?.avgTicket || trade?.avgTicketEur || 0;
   const clients = nbProspects * CONVERSION_RATE;
-  return Math.round(clients * category.avgTicketEur);
+  return Math.round(clients * ticket);
 }
 
 // Volumes proposés (mobile FR ciblés)
@@ -284,38 +293,39 @@ export default function MesProspects() {
 
   // Aucune valeur par défaut → l'user doit valider chaque étape consciemment
   // (pattern Apple iPhone Setup où chaque écran exige une action).
-  const [categoryId, setCategoryId] = useState('');
-  const [zoneCode, setZoneCode] = useState('');
-  const [volume, setVolume] = useState(null);
+  const [tradeId, setTradeId] = useState('');         // métier précis (1 sur 43)
+  const [zoneCode, setZoneCode] = useState('');       // zone géographique
+  const [volume, setVolume] = useState(null);         // 50 / 100 / 250 / 500 / 1000
+  const [precisions, setPrecisions] = useState('');   // texte libre facultatif
   const [submitting, setSubmitting] = useState(false);
   // 'idle' | 'sent' | 'error' — affiche un état de succès après envoi backend
   const [submitResult, setSubmitResult] = useState({ status: 'idle', demandeId: '', error: '' });
 
   // Progression : un dot devient emerald uniquement quand l'étape correspondante
   // a été validée par un click utilisateur. Progressive disclosure Apple-style.
-  const step1Done = Boolean(categoryId);
+  const step1Done = Boolean(tradeId);
   const step2Done = Boolean(zoneCode);
   const step3Done = volume !== null;
 
   // Fallback pour les calculs internes uniquement (pas affichés tant que step pas Done)
-  const category = CATEGORIES.find((c) => c.id === categoryId) || CATEGORIES[0];
+  const trade = getTradeMeta(tradeId) || { ...TRADES[0], ...CATEGORY_META[TRADES[0].category] };
   const zone = ALL_ZONES.find((z) => z.code === zoneCode) || ALL_ZONES[0];
   const volumeMeta = VOLUMES.find((v) => v.count === volume) || VOLUMES[0];
   const allStepsDone = step1Done && step2Done && step3Done;
 
-  // Calcul du prix dynamique HT
+  // Calcul du prix dynamique HT (legacy — non affiché, gardé pour rétro-compat)
   const pricing = useMemo(() => {
-    const base = category.pricePerLead * (volume || 0);
+    const base = (trade.avgTicket || 0) * 0.01 * (volume || 0); // proxy approximatif
     const zoneAdjusted = base * zone.multiplier;
     const afterDiscount = zoneAdjusted * (1 - volumeMeta.discount);
-    const unitPrice = afterDiscount / volume;
+    const unitPrice = (volume || 0) > 0 ? afterDiscount / volume : 0;
     return {
       totalHT: afterDiscount,
       totalTTC: afterDiscount * 1.20,
       unitPrice: unitPrice,
       saved: zoneAdjusted - afterDiscount,
     };
-  }, [category.pricePerLead, volume, zone.multiplier, volumeMeta.discount]);
+  }, [trade.avgTicket, volume, zone.multiplier, volumeMeta.discount]);
 
   const handleCheckout = async () => {
     if (!allStepsDone || submitting) return;
@@ -335,8 +345,10 @@ export default function MesProspects() {
 
     // Source compact + traçable côté CRM : "espace_user_prospects · BP-XXX"
     const sourceTag = `espace_user_prospects · ${commercantId || 'anonyme'}`;
-    // Volume formaté avec zone (la colonne "volume" du CRM accepte un texte libre)
+    // Volume = nombre + zone (la colonne "volume" du CRM accepte un texte libre)
     const volumeTxt = `${volume} prospects · ${zone.label}`;
+    // Secteur = métier précis + catégorie pour permettre lookup CRM facile
+    const secteurTxt = `${trade.label} (${trade.category})`;
 
     try {
       const res = await fetch(apiUrl, {
@@ -345,10 +357,12 @@ export default function MesProspects() {
         body: JSON.stringify({
           action: 'submitLeadsRequest',
           entreprise: commercantInfo.nom_commerce || nomCommerce || `Commerçant ${commercantId}`,
-          secteur: category.label,
+          secteur: secteurTxt,
           email: commercantInfo.email || '',
           telephone: commercantInfo.mobile_perso || '',
           volume: volumeTxt,
+          // Précisions texte libre → colonne "notes" dédiée de la sheet
+          notes: precisions || '',
           source: sourceTag,
         }),
       });
@@ -387,75 +401,38 @@ export default function MesProspects() {
             Acheter des prospects
           </h1>
           <p className="mt-2 text-[15px] text-gray-500 max-w-xl">
-            Choisissez votre cible. Recevez le CSV immédiatement.
+            On lance des campagnes ciblées. Vous recevez les prospects qui ont mordu.
           </p>
         </div>
 
         {/* ═══ Progress bar 1 → 2 → 3 — progressive Apple iPhone Setup ═══ */}
         <div className="mb-7 flex items-center gap-3">
-          <ProgressDot n={1} label="Catégorie" active={step1Done} />
+          <ProgressDot n={1} label="Métier" active={step1Done} />
           <ProgressLine active={step1Done} />
           <ProgressDot n={2} label="Zone" active={step2Done} />
           <ProgressLine active={step2Done && step3Done} />
           <ProgressDot n={3} label="Volume" active={step3Done} />
         </div>
 
-        {/* ═══ Step 1 — Catégorie ═══ */}
-        <Section number={1} title="Catégorie" sub="Quels prospects ciblez-vous ?">
-          <div className="grid sm:grid-cols-2 gap-2.5">
-            {CATEGORIES.map((c) => {
-              const isActive = c.id === categoryId;
-              const Icon = c.icon;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setCategoryId(c.id)}
-                  className="text-left rounded-2xl p-4 transition-all active:scale-[0.99]"
-                  style={{
-                    background: isActive ? c.bg : '#FFFFFF',
-                    border: isActive
-                      ? `1.5px solid ${c.color}`
-                      : '1px solid #E5E7EB',
-                    boxShadow: isActive
-                      ? `0 0 0 4px ${c.bg}, 0 6px 18px ${c.bg}`
-                      : '0 1px 2px rgba(0,0,0,0.03)',
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: isActive ? '#FFFFFF' : c.bg }}
-                    >
-                      <Icon size={18} color={c.color} strokeWidth={2.4} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[14.5px] font-bold text-gray-900 leading-tight">{c.label}</p>
-                        <span
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold uppercase tracking-[0.05em]"
-                          style={{ background: c.bg, color: c.color }}
-                        >
-                          {c.badge}
-                        </span>
-                      </div>
-                      <p className="text-[12.5px] text-gray-500 mt-0.5 leading-snug">{c.sublabel}</p>
-                      {/* CA additionnel estimé — basé sur 11% de conversion observée */}
-                      <div className="inline-flex items-center gap-1.5 mt-2 text-[13px] font-bold flex-wrap" style={{ color: c.color }}>
-                        <ArrowUpRight size={13} strokeWidth={2.8} />
-                        <span className="text-gray-900">
-                          jusqu'à {formatCA(estimateCA(c))}
-                        </span>
-                        <span className="text-gray-500 font-medium">
-                          de CA / 100 contacts
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <Hint text={category.note} color={category.color} />
+        {/* ═══ Step 1 — Métier précis (dropdown Apple search 43 métiers) ═══ */}
+        <Section number={1} title="Métier ciblé" sub="Quels professionnels visez-vous ?">
+          <TradePicker value={tradeId} onChange={setTradeId} />
+          {step1Done && (
+            <div className="mt-3 rounded-2xl p-3.5" style={{ background: trade.bg, border: `1px solid ${trade.color}33` }}>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2 text-[12.5px] font-semibold" style={{ color: trade.color }}>
+                  <ArrowUpRight size={13} strokeWidth={2.8} />
+                  <span>
+                    <span className="text-gray-900 font-bold">+{formatCA(estimateCA(trade))}</span>
+                    <span className="text-gray-500 font-medium"> de CA / 100 prospects</span>
+                  </span>
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-[0.05em] px-2 py-0.5 rounded-full" style={{ background: '#FFFFFF', color: trade.color }}>
+                  {trade.badge}
+                </span>
+              </div>
+            </div>
+          )}
         </Section>
 
         {/* ═══ Step 2 — Zone (dropdown Apple search exhaustif) ═══ */}
@@ -501,6 +478,39 @@ export default function MesProspects() {
           </div>
         </Section>
 
+        {/* ═══ Step 4 — Précisions facultatives (texte libre) ═══ */}
+        <section className="mb-5">
+          <div className="flex items-baseline gap-2 mb-2.5 flex-wrap">
+            <span className="text-[12px] font-bold uppercase tracking-[0.10em]" style={{ color: '#9CA3AF' }}>
+              Précisions
+            </span>
+            <span className="text-[11.5px] text-gray-400">facultatif</span>
+          </div>
+          <textarea
+            value={precisions}
+            onChange={(e) => setPrecisions(e.target.value.slice(0, 500))}
+            placeholder="Ex : seulement plombiers spécialisés chauffage, ciblage centre-ville uniquement, exclure les chaînes…"
+            rows={3}
+            className="w-full rounded-2xl bg-white px-4 py-3 text-[14px] text-gray-900 placeholder:text-gray-400 resize-none transition-all focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            style={{
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+              fontSize: 16, /* anti-zoom iOS */
+              color: '#0F172A',
+              caretColor: '#10B981',
+            }}
+            maxLength={500}
+          />
+          <div className="flex items-center justify-between mt-1.5">
+            <p className="text-[11px] text-gray-400">
+              Aidez-nous à affiner votre ciblage.
+            </p>
+            <p className="text-[11px] tabular-nums text-gray-400">
+              {precisions.length}/500
+            </p>
+          </div>
+        </section>
+
         {/* ═══ Récap + CTA — design ultra conversion Apple ═══ */}
         <div
           className="mt-7 rounded-3xl p-6 md:p-7"
@@ -527,11 +537,16 @@ export default function MesProspects() {
               {allStepsDone ? (
                 <>
                   <p className="text-[16px] font-bold text-gray-900 mt-0.5">
-                    {volume} prospects · {category.label}
+                    {volume} {trade.label.toLowerCase()}{volume > 1 ? 's' : ''} ciblés
                   </p>
                   <p className="text-[13px] text-gray-600 mt-0.5">
                     {zone.label}
                   </p>
+                  {precisions && (
+                    <p className="text-[12px] text-gray-500 mt-1.5 italic leading-snug">
+                      « {precisions} »
+                    </p>
+                  )}
                 </>
               ) : (
                 <p className="text-[13.5px] text-gray-500 mt-1">
@@ -541,35 +556,36 @@ export default function MesProspects() {
             </div>
           </div>
 
-          {/* CA additionnel estimé — bloc proéminent quand commande complète */}
+          {/* CA additionnel estimé — bloc PROÉMINENT, format chiffre brut percutant */}
           {allStepsDone && (
             <div
-              className="mb-4 rounded-2xl p-4 relative overflow-hidden"
+              className="mb-4 rounded-2xl p-5 relative overflow-hidden"
               style={{
-                background: '#FFFFFF',
-                border: '1.5px solid rgba(16,185,129,0.25)',
-                boxShadow: '0 4px 14px rgba(16,185,129,0.10)',
+                background: 'linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%)',
+                border: '1.5px solid rgba(16,185,129,0.35)',
+                boxShadow: '0 8px 24px rgba(16,185,129,0.16)',
               }}
             >
               <p className="text-[10.5px] font-bold uppercase tracking-[0.12em]" style={{ color: '#047857' }}>
-                Potentiel de CA additionnel
+                CA additionnel estimé
               </p>
               <div className="flex items-baseline gap-2 mt-1">
                 <span
                   className="font-extrabold leading-none tracking-[-0.03em]"
                   style={{
-                    color: '#0F172A',
-                    fontSize: 'clamp(28px, 5vw, 36px)',
+                    color: '#059669',
+                    fontSize: 'clamp(32px, 6vw, 42px)',
                     fontFeatureSettings: '"tnum"',
                   }}
                 >
-                  jusqu'à {formatCA(estimateCA(category, volume))}
+                  +{formatCA(estimateCA(trade, volume))}
                 </span>
+                <span className="text-[13px] font-semibold text-gray-500">/ campagne</span>
               </div>
               <p className="text-[11.5px] text-gray-500 mt-2 leading-snug flex items-start gap-1.5">
                 <Info size={11} strokeWidth={2.4} className="flex-shrink-0 mt-0.5" color="#9CA3AF" />
                 <span>
-                  Estimation indicative basée sur <strong className="text-gray-700">{Math.round(CONVERSION_RATE * 100)}% de conversion moyenne</strong> et un ticket moyen secteur de {formatCA(category.avgTicketEur)}.
+                  Estimation moyenne · {Math.round(CONVERSION_RATE * 100)} % de conversion observée sur la flotte BoosterPay × panier moyen {trade.label.toLowerCase()} {formatCA(trade.avgTicket)}.
                 </span>
               </p>
             </div>
@@ -595,10 +611,10 @@ export default function MesProspects() {
                 <Check size={22} color="white" strokeWidth={3} />
               </div>
               <p className="text-[17px] font-bold text-gray-900 tracking-tight">
-                Demande envoyée.
+                Demande reçue. On s'en occupe.
               </p>
               <p className="text-[13.5px] text-gray-500 mt-1.5 leading-snug">
-                Votre devis personnalisé arrive par email <strong className="text-gray-700">sous 1 h ouvrée</strong>.
+                Vous recevez votre <strong className="text-gray-700">devis personnalisé sous 1 h ouvrée</strong>. La campagne démarre dès validation.
               </p>
               {submitResult.demandeId && (
                 <p className="text-[11.5px] text-gray-400 mt-3 font-mono">
@@ -632,19 +648,19 @@ export default function MesProspects() {
                 )}
               </button>
 
-              {/* Trust signals row */}
+              {/* Trust signals row — promesses fortes vs limites légales */}
               <div className="mt-4 flex items-center justify-center gap-4 flex-wrap text-[11px] text-gray-500">
+                <span className="inline-flex items-center gap-1">
+                  <Check size={11} strokeWidth={2.8} color="#10B981" />
+                  Devis sous 1 h
+                </span>
                 <span className="inline-flex items-center gap-1">
                   <Check size={11} strokeWidth={2.8} color="#10B981" />
                   Sans engagement
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Check size={11} strokeWidth={2.8} color="#10B981" />
-                  Réponse sous 1 h
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Check size={11} strokeWidth={2.8} color="#10B981" />
-                  100% RGPD
+                  Vous ne payez que les prospects intéressés
                 </span>
               </div>
 
@@ -660,27 +676,32 @@ export default function MesProspects() {
           )}
         </div>
 
-        {/* ═══ Engagements ═══ */}
-        <div className="mt-7 grid sm:grid-cols-3 gap-2.5">
-          <Engagement icon={Check} label="Mobiles FR vérifiés" sub="Format E.164, opt-in opérateur" />
-          <Engagement icon={Download} label="Livraison CSV instant" sub="Téléchargement immédiat" />
-          <Engagement icon={Users} label="100% RGPD" sub="Bases opt-in commerciales" />
+        {/* ═══ Pourquoi nos prospects convertissent mieux — section vente ═══ */}
+        <div className="mt-8 mb-4">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-3">
+            Pourquoi nos prospects convertissent mieux
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-2.5">
+            <Engagement icon={Target} label="Hyper-ciblage" sub="Secteur + zone à la maille département" />
+            <Engagement icon={TrendingUp} label="11 % de conversion" sub="Moyenne observée flotte BoosterPay" />
+            <Engagement icon={Users} label="100 % RGPD" sub="Bases pro opt-in, sans doublons" />
+          </div>
         </div>
 
         {/* ═══ FAQ ultra-courte ═══ */}
         <div className="mt-10">
           <h2 className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400 mb-3">
-            Bon à savoir
+            Comment ça marche
           </h2>
           <div className="space-y-2.5 text-[13.5px] text-gray-600 leading-snug">
             <p>
-              <strong className="text-gray-800">CSV</strong> · nom, profession, ville, mobile, score.
+              <strong className="text-gray-800">Campagne ciblée</strong> · on contacte 100 prospects qualifiés sur votre zone et votre secteur. Seuls les intéressés vous sont remontés.
             </p>
             <p>
-              <strong className="text-gray-800">Sans doublons</strong> · nous excluons vos achats précédents.
+              <strong className="text-gray-800">Livraison progressive</strong> · vous recevez les prospects au fil de la campagne, prêts à être rappelés.
             </p>
             <p>
-              <strong className="text-gray-800">RGPD</strong> · bases opt-in. Mention STOP 36173 obligatoire dans vos SMS.
+              <strong className="text-gray-800">Sans doublons, 100 % RGPD</strong> · bases opt-in pro, exclusion automatique de vos achats précédents.
             </p>
           </div>
         </div>
@@ -750,6 +771,228 @@ function RecapLine({ label, value, highlight }) {
         {value}
       </p>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  TradePicker — sélecteur métier précis (modal Apple search)
+//
+//  UX identique à ZonePicker : bouton trigger → modal plein écran mobile
+//  avec barre de recherche + liste groupée par catégorie (Urgences, Artisans,
+//  Santé, Services, Commerce). Pictogramme couleur par catégorie.
+// ─────────────────────────────────────────────────────────────────
+function TradePicker({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const inputRef = useRef(null);
+
+  const selectedTrade = getTradeMeta(value);
+
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 220);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { clearTimeout(t); document.body.style.overflow = prev; };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const normalize = (s) => String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const q = normalize(query.trim());
+
+  const filtered = useMemo(() => {
+    if (!q) return TRADES;
+    return TRADES.filter((t) => normalize(t.label).includes(q) || normalize(t.category).includes(q));
+  }, [q]);
+
+  // Groupé par catégorie pour respecter l'ordre canonique
+  const grouped = useMemo(() => {
+    const map = {};
+    filtered.forEach((t) => {
+      if (!map[t.category]) map[t.category] = [];
+      map[t.category].push(t);
+    });
+    return map;
+  }, [filtered]);
+
+  const handleSelect = (id) => {
+    onChange(id);
+    setOpen(false);
+    setQuery('');
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full rounded-2xl py-3.5 pl-12 pr-10 text-[15px] font-semibold text-left bg-white relative transition-colors"
+        style={{
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+          height: '58px',
+          color: selectedTrade ? '#0F172A' : '#9CA3AF',
+        }}
+      >
+        {selectedTrade ? (
+          <span
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: selectedTrade.bg }}
+          >
+            <selectedTrade.icon size={15} color={selectedTrade.color} strokeWidth={2.4} />
+          </span>
+        ) : (
+          <Target
+            className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
+            size={18}
+            color="#10B981"
+            strokeWidth={2.4}
+          />
+        )}
+        {selectedTrade ? selectedTrade.label : 'Choisir un métier…'}
+        <ChevronDown
+          className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
+          size={16}
+          color="#9CA3AF"
+          strokeWidth={2.4}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+          style={{
+            background: 'rgba(15,23,42,0.45)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            animation: 'bp-fade-bg 220ms ease-out both',
+          }}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col"
+            style={{ maxHeight: '85vh', animation: 'bp-slide-up 280ms cubic-bezier(0.2,0.8,0.2,1) both' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 pt-4 pb-3 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-[17px] font-bold text-gray-900 tracking-tight">
+                  Choisir un métier
+                </h3>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+                  aria-label="Fermer"
+                >
+                  <X size={18} color="#6B7280" strokeWidth={2.4} />
+                </button>
+              </div>
+              {/* Sub-header explicatif — clarifie à quoi correspondent les +X € */}
+              <p className="text-[11.5px] text-gray-500 mb-3 leading-snug">
+                À droite : <strong className="text-gray-700">CA additionnel estimé</strong> pour 100 prospects ciblés.
+              </p>
+              <div className="relative">
+                <Search
+                  size={16}
+                  color="#9CA3AF"
+                  strokeWidth={2.4}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Rechercher : plombier, coiffeur, kiné…"
+                  className="w-full rounded-xl bg-gray-100 py-2.5 pl-10 pr-9 text-[15px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white transition-all"
+                  style={{ fontSize: 16, color: '#0F172A', caretColor: '#10B981' }}
+                />
+                {query && (
+                  <button
+                    onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center hover:bg-gray-200"
+                    aria-label="Effacer"
+                  >
+                    <X size={14} color="#6B7280" strokeWidth={2.4} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-2 py-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+              {filtered.length === 0 && (
+                <p className="text-center text-[13.5px] text-gray-400 py-10">
+                  Aucun métier pour « {query} ».
+                </p>
+              )}
+              {Object.entries(grouped).map(([cat, list]) => {
+                const meta = CATEGORY_META[cat];
+                return (
+                  <div key={cat} className="mb-3">
+                    <div className="flex items-center gap-1.5 px-3 mt-2 mb-1.5">
+                      <meta.icon size={11} color={meta.color} strokeWidth={2.8} />
+                      <p className="text-[10.5px] font-bold uppercase tracking-[0.10em]" style={{ color: meta.color }}>
+                        {cat} ({list.length})
+                      </p>
+                    </div>
+                    <div className="space-y-0.5">
+                      {list.map((t) => {
+                        const selected = t.id === value;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => handleSelect(t.id)}
+                            className="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl transition-colors text-left"
+                            style={{ background: selected ? meta.bg : 'transparent' }}
+                            onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = '#F9FAFB'; }}
+                            onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = 'transparent'; }}
+                          >
+                            {/* GAUCHE — Métier + chiffre clé en sub explicite */}
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className="text-[14.5px] font-bold leading-tight truncate"
+                                style={{ color: selected ? meta.color : '#0F172A' }}
+                              >
+                                {t.label}
+                              </p>
+                              <p className="text-[11.5px] text-gray-500 mt-0.5 leading-snug">
+                                Panier moyen <strong className="text-gray-700">{formatCA(t.avgTicket)}</strong>
+                              </p>
+                            </div>
+                            {/* DROITE — CA estimé ultra business + label clair */}
+                            <div className="flex-shrink-0 flex flex-col items-end">
+                              <span
+                                className="text-[15px] font-extrabold tabular-nums leading-none tracking-tight"
+                                style={{ color: selected ? meta.color : '#059669' }}
+                              >
+                                +{formatCA(estimateCA(t))}
+                              </span>
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] mt-1" style={{ color: '#9CA3AF' }}>
+                                CA · 100 prospects
+                              </span>
+                            </div>
+                            {selected && <Check size={15} color={meta.color} strokeWidth={3} className="flex-shrink-0 ml-1" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
