@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.85" cy="0.15" r="0.55">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="halo2" cx="0.15" cy="0.85" r="0.5">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background gradient emerald -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#halo)"/>
+  <rect width="1200" height="630" fill="url(#halo2)"/>
+
+  <!-- Badge top : statut "En ligne 24/7" -->
+  <g transform="translate(80, 80)">
+    <rect x="0" y="0" width="195" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="1.5"/>
+    <circle cx="22" cy="22" r="5" fill="#FFFFFF"/>
+    <circle cx="22" cy="22" r="9" fill="#FFFFFF" fill-opacity="0.35"/>
+    <text x="40" y="29" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" letter-spacing="1.4">EN LIGNE · 24/7</text>
+  </g>
+
+  <!-- Logo BoosterPay -->
+  <text x="80" y="240" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="56" font-weight="800" fill="#FFFFFF" letter-spacing="-1.5">BoosterPay</text>
+
+  <!-- Headline principal -->
+  <text x="80" y="345" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="78" font-weight="800" fill="#FFFFFF" letter-spacing="-2.5">L'IA qui décroche</text>
+  <text x="80" y="430" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="78" font-weight="800" fill="#FFFFFF" letter-spacing="-2.5">à votre place.</text>
+
+  <!-- Sub-text bénéfices -->
+  <text x="80" y="500" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="26" font-weight="500" fill="#FFFFFF" fill-opacity="0.92" letter-spacing="-0.3">+250 pros nous font confiance · 99 € / mois · Essai 7 jours</text>
+
+  <!-- Étoiles rating bottom right -->
+  <g transform="translate(900, 80)">
+    <rect x="0" y="0" width="220" height="60" rx="14" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="1.5"/>
+    <g transform="translate(18, 22)" fill="#FCD34D">
+      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2"/>
+      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(22, 0)"/>
+      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(44, 0)"/>
+      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(66, 0)"/>
+      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(88, 0)"/>
+    </g>
+    <text x="130" y="38" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">4.8 / 5</text>
+  </g>
+
+  <!-- Footer URL -->
+  <text x="80" y="570" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" fill-opacity="0.7" letter-spacing="0.5">www.booster-pay.com</text>
+
+  <!-- Made in France discret -->
+  <g transform="translate(960, 555)">
+    <rect x="0" y="0" width="160" height="30" rx="6" fill="#FFFFFF" fill-opacity="0.12"/>
+    <text x="14" y="20" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="13" font-weight="700" fill="#FFFFFF" letter-spacing="0.8">🇫🇷 MADE IN FRANCE</text>
+  </g>
+</svg>

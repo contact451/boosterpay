@@ -3612,7 +3612,7 @@ export default function IAVocaleLanding() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    document.title = 'IA Vocale — Confirmations de RDV et relances automatiques | BoosterPay';
+    document.title = "BoosterPay — IA Vocale pour pros | Essai 7 jours gratuit";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute('content', "L'IA décroche vos appels 24/7 quand vous êtes occupé. Tous les modules inclus pour 99€ HT/mois. Essai 7 jours gratuits, annulation libre.");
     else {
