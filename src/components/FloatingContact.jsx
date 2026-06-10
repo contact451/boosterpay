@@ -137,8 +137,10 @@ export default function FloatingContact({ aboveMobileNav = false }) {
   return (
     <>
       {/* BOUTON FLOTTANT
-          mobileBottom = 5.25rem (84px) si bottom tab bar présente, sinon 1.25rem (20px)
-          desktopBottom = toujours 1.25rem (la sidebar à gauche n'interfère pas) */}
+          bottom dynamique via CSS var `--bp-fab-bottom` :
+            - landing : 1.25rem par défaut, 5.5rem quand sticky CTA visible
+            - espace user (aboveMobileNav) : 5.25rem au-dessus de la bottom tab bar
+          La CSS var est settée par MobileStickyCTA (landing) → décale auto au scroll. */}
       <motion.button
         ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
@@ -147,11 +149,12 @@ export default function FloatingContact({ aboveMobileNav = false }) {
           right: 'calc(env(safe-area-inset-right, 0px) + 1.25rem)',
           bottom: aboveMobileNav
             ? 'calc(env(safe-area-inset-bottom, 0px) + var(--bp-fab-bottom, 5.25rem))'
-            : 'calc(env(safe-area-inset-bottom, 0px) + 1.25rem)',
+            : 'calc(env(safe-area-inset-bottom, 0px) + var(--bp-fab-bottom, 1.25rem))',
           background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
           boxShadow: '0 12px 36px -8px rgba(59,130,246,0.55), 0 0 0 1px rgba(255,255,255,0.08) inset',
           WebkitTapHighlightColor: 'transparent',
           willChange: 'transform',
+          transition: 'bottom 240ms cubic-bezier(0.2,0.8,0.2,1)',
         }}
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}

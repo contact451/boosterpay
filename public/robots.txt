@@ -1,0 +1,18 @@
+# robots.txt — BoosterPay
+# https://www.booster-pay.com
+
+User-agent: *
+Allow: /
+
+# Routes privées espace client — pas d'indexation (URL = auth implicite)
+Disallow: /espace/
+Disallow: /configurer
+Disallow: /merci
+Disallow: /connexion
+Disallow: /onboarding
+Disallow: /paiement-confirme
+Disallow: /facture
+Disallow: /contestation
+
+# Sitemap
+Sitemap: https://www.booster-pay.com/sitemap.xml

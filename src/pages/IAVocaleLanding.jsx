@@ -244,6 +244,18 @@ const MobileStickyCTA = ({ openPopup }) => {
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Toggle CSS var globale → FloatingContact lit `--bp-fab-bottom` pour se décaler
+  // au-dessus du sticky CTA quand il est visible (évite collision en bas-droite).
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (show) {
+      document.body.style.setProperty('--bp-fab-bottom', '5.5rem');
+    } else {
+      document.body.style.removeProperty('--bp-fab-bottom');
+    }
+    return () => { document.body.style.removeProperty('--bp-fab-bottom'); };
+  }, [show]);
   return (
     <div
       className={`md:hidden fixed inset-x-0 bottom-0 z-[55] transition-all duration-300 ${
@@ -281,7 +293,8 @@ const MobileStickyCTA = ({ openPopup }) => {
  */
 const HowItWorksTimeline = ({ steps }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-80px' });
+  // Marge inView moins agressive (-20px) pour garantir le trigger même sur petits viewports
+  const inView = useInView(ref, { once: true, margin: '-20px' });
   const isMobile = useIsMobileDevice();
   const reduceMotion = usePrefersReducedMotion();
 
@@ -290,6 +303,16 @@ const HowItWorksTimeline = ({ steps }) => {
 
   // Sur mobile : pas de spring rotate ni glow lourd → animations légères GPU-friendly
   const useLight = isMobile || reduceMotion;
+
+  // Filet de sécurité : si après 800 ms inView est toujours false (rare bug
+  // mobile / lazy hydration), on force l'affichage pour éviter une grosse
+  // zone blanche entre les sections.
+  const [forceShow, setForceShow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setForceShow(true), 800);
+    return () => clearTimeout(t);
+  }, []);
+  const shouldShow = inView || forceShow;
 
   return (
     <div ref={ref} className="relative max-w-5xl mx-auto mt-4">
@@ -313,7 +336,7 @@ const HowItWorksTimeline = ({ steps }) => {
           strokeWidth="2"
           strokeLinecap="round"
           initial={{ pathLength: 0 }}
-          animate={inView ? { pathLength: 1 } : {}}
+          animate={shouldShow ? { pathLength: 1 } : {}}
           transition={{ duration: 1.4, ease: appleEase, delay: 0.2 }}
         />
       </svg>
@@ -327,7 +350,7 @@ const HowItWorksTimeline = ({ steps }) => {
               {/* Numéro géant en filigrane — fade simple sur mobile */}
               <motion.span
                 initial={{ opacity: 0 }}
-                animate={inView ? { opacity: 1 } : {}}
+                animate={shouldShow ? { opacity: 1 } : {}}
                 transition={{ duration: useLight ? 0.4 : 0.9, ease: appleEase, delay: baseDelay - 0.05 }}
                 className="absolute -top-8 left-1/2 -translate-x-1/2 text-[120px] font-black leading-none tracking-tighter text-gray-100 pointer-events-none select-none"
                 style={{ willChange: 'opacity' }}
@@ -342,7 +365,7 @@ const HowItWorksTimeline = ({ steps }) => {
                   className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full pointer-events-none"
                   style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.25), transparent 70%)', willChange: 'transform, opacity' }}
                   initial={{ opacity: 0, scale: 0.4 }}
-                  animate={inView ? { opacity: [0, 0.7, 0], scale: [0.4, 1.4, 1.6] } : {}}
+                  animate={shouldShow ? { opacity: [0, 0.7, 0], scale: [0.4, 1.4, 1.6] } : {}}
                   transition={{ duration: 1.2, ease: appleEase, delay: baseDelay - 0.1, times: [0, 0.5, 1] }}
                 />
               )}
@@ -350,7 +373,7 @@ const HowItWorksTimeline = ({ steps }) => {
               {/* Icône — fade + translate simple sur mobile, spring rotate sur desktop */}
               <motion.div
                 initial={useLight ? { opacity: 0, y: 14 } : { opacity: 0, scale: 0.5, rotate: -90 }}
-                animate={inView ? (useLight ? { opacity: 1, y: 0 } : { opacity: 1, scale: 1, rotate: 0 }) : {}}
+                animate={shouldShow ? (useLight ? { opacity: 1, y: 0 } : { opacity: 1, scale: 1, rotate: 0 }) : {}}
                 transition={useLight
                   ? { duration: 0.45, ease: appleEase, delay: baseDelay }
                   : { type: 'spring', stiffness: 280, damping: 22, delay: baseDelay }}
@@ -376,7 +399,7 @@ const HowItWorksTimeline = ({ steps }) => {
               {/* Titre */}
               <motion.h3
                 initial={{ opacity: 0, y: 10 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
+                animate={shouldShow ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: useLight ? 0.4 : 0.65, ease: appleEase, delay: baseDelay + (useLight ? 0.06 : 0.22) }}
                 className="text-[22px] sm:text-[24px] lg:text-[26px] font-extrabold text-gray-900 tracking-[-0.02em] mb-3 leading-[1.15]"
                 style={{ willChange: 'transform, opacity' }}
@@ -387,7 +410,7 @@ const HowItWorksTimeline = ({ steps }) => {
               {/* Description */}
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
+                animate={shouldShow ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: useLight ? 0.4 : 0.65, ease: appleEase, delay: baseDelay + (useLight ? 0.12 : 0.32) }}
                 className="text-[15px] lg:text-[15.5px] text-gray-500 leading-[1.55] max-w-[280px] mx-auto"
                 style={{ willChange: 'transform, opacity' }}
@@ -1891,6 +1914,14 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
 
   return (
     <>
+      {/* Nudge swipe AU-DESSUS du carousel témoignages — l'user voit l'instruction
+          AVANT d'arriver sur la card coupée à droite. Plus visible que le sub-text gris. */}
+      <div className="sm:hidden flex items-center justify-center gap-2 mb-4 text-[12.5px] font-semibold text-emerald-700">
+        <ArrowRight className="w-3.5 h-3.5 rotate-180" strokeWidth={2.6} />
+        <span>Glissez pour voir tous les avis</span>
+        <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.6} />
+      </div>
+
       {/* Mobile : carousel snap-center — chaque carte fait 100vw - 5rem (80px) → ~40px peek de la 2e carte */}
       <div
         ref={carouselRef}
@@ -1970,9 +2001,7 @@ const TestimonialsCarousel = ({ testimonials, svcColors }) => {
           />
         ))}
       </div>
-      <p className="sm:hidden text-center text-[12.5px] text-gray-500 font-semibold mt-3">
-        ← Glissez pour voir d'autres témoignages →
-      </p>
+      {/* Indication "Glissez" supprimée ici — désormais affichée AU-DESSUS du carousel */}
 
       {/* Desktop : grid 3 cols */}
       <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2417,17 +2446,27 @@ const TwoApproachesSection = () => {
             </div>
           </ScrollReveal>
 
-          {/* ═══ CARTE 02 — PROSPECTS (blanche neutre) ═══ */}
+          {/* ═══ CARTE 02 — PROSPECTS (style miroir IA : fond bleu pâle + CTA plein) ═══ */}
           <ScrollReveal y={24} delay={0.18}>
             <div
-              className="relative rounded-[28px] bg-white overflow-hidden h-full flex flex-col p-8 lg:p-10 transition-all duration-500 hover:-translate-y-1"
+              className="relative rounded-[28px] overflow-hidden h-full flex flex-col p-8 lg:p-10 transition-all duration-500 hover:-translate-y-1"
               style={{
-                border: '1px solid rgba(0, 0, 0, 0.08)',
-                boxShadow: '0 2px 20px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03)',
+                backgroundColor: '#EFF6FF',
+                border: '1.5px solid #3B82F6',
+                boxShadow: '0 20px 50px -15px rgba(59, 130, 246, 0.25), 0 4px 16px -8px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.06)',
               }}
             >
+              {/* Barre bleue vif top — signature produit complémentaire */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
+
+              {/* Badge "Acquisition" — top right (miroir du "Produit phare") */}
+              <div className="absolute top-6 right-6 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500 text-white text-[10.5px] font-bold tracking-wider uppercase">
+                <Target className="w-2.5 h-2.5" strokeWidth={2.6} />
+                Acquisition
+              </div>
+
               <div className="mt-3 mb-5">
-                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-gray-400 mb-2">
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-blue-700 mb-2">
                   2 — Prospects qualifiés
                 </p>
                 <h3 className="text-[28px] lg:text-[34px] font-semibold text-gray-900 tracking-[-0.03em] leading-[1.02]">
@@ -2439,18 +2478,20 @@ const TwoApproachesSection = () => {
                 On vous livre des prospects qui cherchent activement <strong className="text-gray-900 font-semibold">votre service</strong>, dans votre zone. Ils attendent votre appel.
               </p>
 
+              {/* Pills horizontales miroir IA */}
               <div className="flex flex-wrap gap-1.5 mb-7 flex-1">
                 {['Exclusif/zone', 'CNIL conforme', 'Sans abonnement'].map((b, i) => (
-                  <span key={i} className="inline-flex items-center bg-gray-100 rounded-full text-[12px] font-medium text-gray-700 px-3 py-1">
+                  <span key={i} className="inline-flex items-center bg-white rounded-full text-[12px] font-semibold text-blue-800 px-3 py-1 border border-blue-200">
                     {b}
                   </span>
                 ))}
               </div>
 
-              {/* CTA secondaire outline vert */}
+              {/* CTA primaire bleu plein — hiérarchie égale à la card IA */}
               <a
                 href="#leads-rgpd"
-                className="inline-flex items-center justify-center gap-1.5 text-[14.5px] font-semibold text-emerald-700 bg-white border-2 border-emerald-500 hover:bg-emerald-50 px-6 py-[10px] rounded-full transition-all"
+                className="inline-flex items-center justify-center gap-1.5 text-[14.5px] font-semibold text-white bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-full transition-all hover:scale-[1.02]"
+                style={{ boxShadow: '0 10px 30px -10px rgba(59, 130, 246, 0.5)' }}
               >
                 Réserver ma zone
                 <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
@@ -3248,16 +3289,34 @@ const LeadsRGPDSection = () => {
                       style={{ fontSize: 16 }}
                       className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all"
                     />
-                    <select
-                      value={form.secteur}
-                      onChange={(e) => setForm(f => ({ ...f, secteur: e.target.value }))}
-                      style={{ fontSize: 16 }}
-                      className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 transition-all"
-                    >
-                      {sectorOptions.map((s, i) => (
-                        <option key={i} value={i === 0 ? '' : s} disabled={i === 0}>{s}</option>
-                      ))}
-                    </select>
+                    {/* Chips secteurs — flex-wrap : les chips passent à la ligne sur 2-3 rows,
+                        AUCUN scroll horizontal donc impossible de déborder du viewport. */}
+                    <div className="w-full">
+                      <p className="text-[11.5px] font-semibold text-gray-600 mb-2 px-1">
+                        Votre secteur
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {sectorOptions.slice(1).map((s, i) => {
+                          const isActive = form.secteur === s;
+                          return (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setForm(f => ({ ...f, secteur: s }))}
+                              className="px-3.5 py-2 rounded-full text-[12.5px] font-semibold transition-all active:scale-95"
+                              style={{
+                                background: isActive ? '#10B981' : '#F9FAFB',
+                                color: isActive ? '#FFFFFF' : '#374151',
+                                border: isActive ? '1px solid #10B981' : '1px solid #E5E7EB',
+                                boxShadow: isActive ? '0 4px 12px rgba(16,185,129,0.28)' : 'none',
+                              }}
+                            >
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     {error && (
                       <p className="text-[12.5px] text-rose-700 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2 font-medium">
@@ -3782,9 +3841,9 @@ export default function IAVocaleLanding() {
         'Facture mensuelle déductible en charges',
         'Annulation libre dans votre espace',
       ],
-      cta: 'Tester gratuitement 7 jours — rien débité avant',
+      cta: 'Démarrer gratuitement',
       popular: true,
-      trialText: 'Annulation en 1 clic · Aucun débit avant le 8e jour · Pas d\'engagement',
+      trialText: 'Rien débité avant J+8 · Annulation en 1 clic · Sans engagement',
     },
   ];
 
@@ -3895,18 +3954,17 @@ export default function IAVocaleLanding() {
             </a>
           </div>
 
-          {/* Mobile : pill "Prospects" visible permanent + hamburger */}
+          {/* Mobile : pill CTA "Acheter prospects →" + hamburger
+              Outlined emerald clair = signal "action commerciale", pas un lien de nav */}
           <div className="md:hidden flex items-center gap-2">
             <a
               href="#leads-rgpd"
-              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1.5 rounded-full active:scale-95 transition-all"
+              className="inline-flex items-center gap-1 text-[12px] font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full active:scale-95 transition-all"
+              style={{ boxShadow: '0 4px 12px rgba(16,185,129,0.30)' }}
               aria-label="Acheter des prospects"
             >
-              <span className="relative flex w-1.5 h-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75 animate-ping" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
-              </span>
-              Prospects
+              Acheter prospects
+              <ArrowRight className="w-3 h-3" strokeWidth={2.8} />
             </a>
             <button className="p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -4068,16 +4126,24 @@ export default function IAVocaleLanding() {
                 <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
               </a>
 
-              {/* Stats — toutes en vert uniforme + ligne fine séparation */}
-              <div className="hero-fade hero-fade-5 mt-12 grid grid-cols-2 sm:grid-cols-4 gap-0 border-t border-gray-200 pt-8">
-                {stats.map((s, i) => (
-                  <div key={i} className={`text-center sm:text-left px-4 ${i < stats.length - 1 ? 'sm:border-r sm:border-gray-200' : ''}`}>
-                    <p className="text-3xl md:text-4xl font-extrabold text-emerald-500 tracking-tight">
-                      <AnimatedNumber value={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
-                    </p>
-                    <p className="text-[12.5px] font-medium text-gray-500 mt-1.5 tracking-tight">{s.label}</p>
-                  </div>
-                ))}
+              {/* Stats — sous un titre contextuel pour ancrer émotionnellement les chiffres */}
+              <div className="hero-fade hero-fade-5 mt-12 pt-8 border-t border-gray-200">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700 mb-1 text-center sm:text-left">
+                  Ce que ça change concrètement
+                </p>
+                <p className="text-[13px] text-gray-500 mb-5 text-center sm:text-left">
+                  Moyenne observée sur les commerçants BoosterPay après 30 jours.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-0">
+                  {stats.map((s, i) => (
+                    <div key={i} className={`text-center sm:text-left px-4 ${i < stats.length - 1 ? 'sm:border-r sm:border-gray-200' : ''}`}>
+                      <p className="text-3xl md:text-4xl font-extrabold text-emerald-500 tracking-tight">
+                        <AnimatedNumber value={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
+                      </p>
+                      <p className="text-[12.5px] font-medium text-gray-500 mt-1.5 tracking-tight">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -4120,8 +4186,16 @@ export default function IAVocaleLanding() {
             subtitle="Une seule plateforme. La Réception d'appels 24/7 est toujours active. Vous activez les modules dont vous avez besoin — tous sont inclus."
           />
 
+          {/* Nudge swipe AU-DESSUS du carousel (mobile only) — l'user comprend
+              qu'il peut glisser AVANT de voir les cards qui débordent à droite */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mt-6 mb-3 text-[12px] font-semibold text-emerald-700">
+            <ArrowRight className="w-3.5 h-3.5 rotate-180" strokeWidth={2.6} />
+            <span>Glissez pour voir les 6 services</span>
+            <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.6} />
+          </div>
+
           {/* Carousel mobile (swipe horizontal) + Grid 3 cols desktop — 6 services unifiés */}
-          <div ref={servicesCarouselRef} className="mt-6 -mx-6 px-6 lg:mx-0 lg:px-0 flex overflow-x-auto snap-x snap-mandatory gap-5 lg:grid lg:grid-cols-3 lg:gap-6 scrollbar-hide pb-6 lg:pb-0">
+          <div ref={servicesCarouselRef} className="mt-2 lg:mt-6 -mx-6 px-6 lg:mx-0 lg:px-0 flex overflow-x-auto snap-x snap-mandatory gap-5 lg:grid lg:grid-cols-3 lg:gap-6 scrollbar-hide pb-6 lg:pb-0">
             {[
               {
                 id: 'reception',
@@ -4251,8 +4325,8 @@ export default function IAVocaleLanding() {
               </ScrollReveal>
             ))}
           </div>
-          {/* Indicateur swipe mobile + dots — vert uniforme Apple */}
-          <div className="lg:hidden flex flex-col items-center gap-3 mt-2">
+          {/* Dots de pagination — feedback de position dans le carousel */}
+          <div className="lg:hidden flex justify-center mt-2">
             <div className="flex gap-1.5">
               {[0,1,2,3,4,5].map((i) => (
                 <span
@@ -4263,9 +4337,6 @@ export default function IAVocaleLanding() {
                 />
               ))}
             </div>
-            <p className="text-center text-[12px] text-gray-400 font-medium">
-              Glissez pour voir d'autres services
-            </p>
           </div>
 
           {/* Détail du service en dessous SUPPRIMÉ — chaque service a sa page dédiée /services/[id]
