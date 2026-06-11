@@ -2446,52 +2446,51 @@ const TwoApproachesSection = () => {
             </div>
           </ScrollReveal>
 
-          {/* ═══ CARTE 02 — PROSPECTS (style miroir IA : fond bleu pâle + CTA plein) ═══ */}
+          {/* ═══ CARTE 02 — PROSPECTS (palette 100% emerald, fond blanc + accents verts) ═══ */}
           <ScrollReveal y={24} delay={0.18}>
             <div
               className="relative rounded-[28px] overflow-hidden h-full flex flex-col p-8 lg:p-10 transition-all duration-500 hover:-translate-y-1"
               style={{
-                backgroundColor: '#EFF6FF',
-                border: '1.5px solid #3B82F6',
-                boxShadow: '0 20px 50px -15px rgba(59, 130, 246, 0.25), 0 4px 16px -8px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.06)',
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid rgba(16, 185, 129, 0.30)',
+                boxShadow: '0 20px 50px -15px rgba(16, 185, 129, 0.15), 0 4px 16px -8px rgba(16, 185, 129, 0.08)',
               }}
             >
-              {/* Barre bleue vif top — signature produit complémentaire */}
-              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500" />
+              {/* Barre top emerald (même couleur que la card IA mais opacité réduite pour hiérarchie subtile) */}
+              <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(90deg, #10B981, #6EE7B7)' }} />
 
-              {/* Badge "Acquisition" — top right (miroir du "Produit phare") */}
-              <div className="absolute top-6 right-6 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500 text-white text-[10.5px] font-bold tracking-wider uppercase">
+              {/* Badge "Acquisition" — outlined emerald sur fond emerald-50 (cohérence palette) */}
+              <div className="absolute top-6 right-6 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold tracking-wider uppercase" style={{ background: '#ECFDF5', border: '1px solid #10B981', color: '#047857' }}>
                 <Target className="w-2.5 h-2.5" strokeWidth={2.6} />
                 Acquisition
               </div>
 
               <div className="mt-3 mb-5">
-                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-blue-700 mb-2">
+                <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-emerald-700 mb-2">
                   2 — Prospects qualifiés
                 </p>
                 <h3 className="text-[28px] lg:text-[34px] font-semibold text-gray-900 tracking-[-0.03em] leading-[1.02]">
-                  Des clients prêts à<br />acheter chez vous.
+                  Des particuliers qui<br />cherchent vos services.
                 </h3>
               </div>
 
               <p className="text-[15.5px] text-gray-600 leading-[1.55] mb-5">
-                On vous livre des prospects qui cherchent activement <strong className="text-gray-900 font-semibold">votre service</strong>, dans votre zone. Ils attendent votre appel.
+                On vous livre les coordonnées des <strong className="text-gray-900 font-semibold">particuliers qui ont un besoin précis</strong> pour votre métier, sur votre zone. Ils attendent votre appel.
               </p>
 
-              {/* Pills horizontales miroir IA */}
+              {/* Pills horizontales emerald — cohérence avec card IA */}
               <div className="flex flex-wrap gap-1.5 mb-7 flex-1">
                 {['Exclusif/zone', 'CNIL conforme', 'Sans abonnement'].map((b, i) => (
-                  <span key={i} className="inline-flex items-center bg-white rounded-full text-[12px] font-semibold text-blue-800 px-3 py-1 border border-blue-200">
+                  <span key={i} className="inline-flex items-center rounded-full text-[12px] font-semibold px-3 py-1" style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #6EE7B7' }}>
                     {b}
                   </span>
                 ))}
               </div>
 
-              {/* CTA primaire bleu plein — hiérarchie égale à la card IA */}
+              {/* CTA secondaire — outlined emerald (hiérarchie subtile vs CTA IA plein) */}
               <a
                 href="#leads-rgpd"
-                className="inline-flex items-center justify-center gap-1.5 text-[14.5px] font-semibold text-white bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-full transition-all hover:scale-[1.02]"
-                style={{ boxShadow: '0 10px 30px -10px rgba(59, 130, 246, 0.5)' }}
+                className="inline-flex items-center justify-center gap-1.5 text-[14.5px] font-semibold text-emerald-700 bg-white border-[1.5px] border-emerald-500 hover:bg-emerald-50 px-6 py-[10px] rounded-full transition-all hover:scale-[1.02]"
               >
                 Réserver ma zone
                 <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
@@ -3954,13 +3953,12 @@ export default function IAVocaleLanding() {
             </a>
           </div>
 
-          {/* Mobile : pill CTA "Acheter prospects →" + hamburger
-              Outlined emerald clair = signal "action commerciale", pas un lien de nav */}
+          {/* Mobile : pill "Acheter prospects" OUTLINED (bordure verte, fond transparent)
+              → ne concurrence pas le CTA principal du hero ; lit comme un lien secondaire */}
           <div className="md:hidden flex items-center gap-2">
             <a
               href="#leads-rgpd"
-              className="inline-flex items-center gap-1 text-[12px] font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-full active:scale-95 transition-all"
-              style={{ boxShadow: '0 4px 12px rgba(16,185,129,0.30)' }}
+              className="inline-flex items-center gap-1 text-[12px] font-bold text-emerald-700 bg-transparent hover:bg-emerald-50 border-[1.5px] border-emerald-500 px-3 py-[5px] rounded-full active:scale-95 transition-all"
               aria-label="Acheter des prospects"
             >
               Acheter prospects
@@ -4042,43 +4040,19 @@ export default function IAVocaleLanding() {
           <div className="flex flex-col lg:grid lg:grid-cols-2 gap-16 items-center">
             {/* Left — Pure CSS animations, no framer-motion overhead */}
             <div>
-              <div className="hero-fade hero-fade-1">
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-100 px-4 py-1.5 rounded-full mb-7">
-                  <Zap className="w-4 h-4" /> IA Vocale pour professionnels
-                </span>
-              </div>
+              {/* ════ HERO ULTRA ÉPURÉ — 4 éléments seulement (Apple keynote style) ════
+                  Retiré : tag pill, avatars stack, live counter, lien prospects redondant.
+                  La nav contient déjà "Acheter prospects" → pas de double redirection ici.
+                  Le titre porte tout le message — moins = plus. */}
 
-              {/* Preuve sociale ENRICHIE au-dessus du titre — 5 avatars + 5 étoiles + 250 pros */}
-              <div className="hero-fade hero-fade-1 flex items-center gap-3 mb-8">
-                {/* Avatars empilés — tous en vert uniforme Apple */}
-                <div className="flex -space-x-2">
-                  {['T', 'S', 'M', 'J', 'C'].map((letter, i) => (
-                    <div key={i} className="w-7 h-7 rounded-full bg-emerald-500 text-white text-[11px] font-bold flex items-center justify-center ring-2 ring-white">
-                      {letter}
-                    </div>
-                  ))}
-                </div>
-                {/* Étoiles + texte */}
-                <div className="flex items-center gap-1.5">
-                  <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map((s) => (
-                      <Star key={s} className="w-3.5 h-3.5 text-amber-400" fill="currentColor" strokeWidth={1} />
-                    ))}
-                  </div>
-                  <span className="text-[13px] font-semibold text-gray-700"><span className="font-bold">+250 pros</span> nous font confiance · 4,8/5</span>
-                </div>
-              </div>
-
-              {/* Titre ultra-premium dans la police projet (Plus Jakarta Sans) — cohérence totale */}
-              <h1 className="hero-fade hero-fade-2 mt-2">
-                {/* Ligne 1 — Question d'intro, extrabold (cohérent), gris Apple chic */}
+              {/* Titre ultra-premium */}
+              <h1 className="hero-fade hero-fade-2">
                 <span
                   className="block text-[42px] sm:text-[56px] lg:text-[64px] font-extrabold leading-[1.04] tracking-[-0.035em]"
                   style={{ color: '#86868B' }}
                 >
                   Occupé&nbsp;?
                 </span>
-                {/* Ligne 2 — Climax XXL, extrabold, tracking serré, gradient emerald + point signature */}
                 <span
                   className="block mt-3 text-[60px] sm:text-[76px] lg:text-[92px] font-extrabold leading-[0.96] tracking-[-0.04em]"
                   style={{ color: '#1D1D1F' }}
@@ -4086,9 +4060,7 @@ export default function IAVocaleLanding() {
                   Votre IA{' '}
                   <span
                     className="bg-clip-text text-transparent"
-                    style={{
-                      backgroundImage: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    }}
+                    style={{ backgroundImage: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}
                   >
                     décroche
                   </span>
@@ -4096,12 +4068,13 @@ export default function IAVocaleLanding() {
                 </span>
               </h1>
 
+              {/* Sub-texte court 1 ligne — ce que l'IA fait concrètement */}
               <p className="hero-fade hero-fade-3 mt-7 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
-                Pendant que vous travaillez, elle qualifie, prend RDV, et vous envoie le récap par SMS.
+                Elle qualifie, prend le RDV, vous envoie le récap par SMS.
               </p>
 
-              {/* CTA — espace mesuré pour respiration Apple */}
-              <div className="hero-fade hero-fade-4 mt-8 flex flex-col sm:flex-row gap-4">
+              {/* CTA principal */}
+              <div className="hero-fade hero-fade-4 mt-9 flex flex-col sm:flex-row gap-4">
                 <a
                   href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
                   className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-emerald-500 hover:bg-emerald-600 px-8 py-4 rounded-full hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200"
@@ -4114,17 +4087,17 @@ export default function IAVocaleLanding() {
                 7 jours offerts · Annulation libre · Opérationnel en 5 minutes
               </p>
 
-              {/* GAME CHANGER — Compteur live : FOMO immédiat */}
-              <LiveCounter />
-
-              {/* Lien discret Prospects */}
-              <a
-                href="#leads-rgpd"
-                className="hero-fade hero-fade-4 group mt-4 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-emerald-700 hover:text-emerald-800 transition-colors"
-              >
-                Ou achetez directement des prospects qualifiés
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
-              </a>
+              {/* Proof sociale ULTRA discrète sous le CTA — 1 ligne, pas d'avatars */}
+              <div className="hero-fade hero-fade-4 mt-6 inline-flex items-center gap-2 text-[13px] text-gray-500">
+                <div className="flex gap-0.5">
+                  {[1,2,3,4,5].map((s) => (
+                    <Star key={s} className="w-3.5 h-3.5 text-amber-400" fill="currentColor" strokeWidth={1} />
+                  ))}
+                </div>
+                <span className="font-semibold text-gray-700">4,8/5</span>
+                <span className="text-gray-400">·</span>
+                <span><strong className="text-gray-700">+250 pros</strong> nous font confiance</span>
+              </div>
 
               {/* Stats — sous un titre contextuel pour ancrer émotionnellement les chiffres */}
               <div className="hero-fade hero-fade-5 mt-12 pt-8 border-t border-gray-200">
