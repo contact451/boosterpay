@@ -1035,6 +1035,191 @@ function AlwaysOnPanel({ module: m, numeroVirtuel, mobilePerso, commercantId }) 
         )}
       </div>
 
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/*  Personnaliser mon IA — précisions custom envoyées à n8n     */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <PersonnaliserMonIA commercantId={commercantId} />
+
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  PersonnaliserMonIA — section dans MesModules > Réception 24/7
+//
+//  Le pro saisit des précisions custom (services, prix indicatifs,
+//  contraintes...) qui sont injectées dans son prompt IA. Sync
+//  immédiate via le webhook n8n.
+// ─────────────────────────────────────────────────────────────────
+function PersonnaliserMonIA({ commercantId }) {
+  const [precisions, setPrecisions] = useState('');
+  const [info, setInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const apiUrl = import.meta.env.VITE_VONAGE_CRM_APPS_SCRIPT_URL || '';
+
+  // Fetch initial : récupère les précisions + info catégorie
+  useEffect(() => {
+    if (!commercantId || !apiUrl) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'getIAPromptInfo', commercant_id: commercantId }),
+        });
+        const json = await res.json();
+        if (cancelled) return;
+        if (json && json.ok) {
+          setInfo(json);
+          setPrecisions(json.precisions || '');
+        }
+      } catch (_e) {
+        /* silent */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [commercantId, apiUrl]);
+
+  async function handleSave() {
+    if (saving) return;
+    setSaving(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'updateIAPrecisions',
+          commercant_id: commercantId,
+          precisions: precisions,
+        }),
+      });
+      const json = await res.json();
+      if (json && json.ok) {
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 2400);
+      } else {
+        setErrorMsg((json && json.error) || 'Erreur inconnue');
+      }
+    } catch (e) {
+      setErrorMsg(e.message || 'Réseau indisponible');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="rounded-3xl bg-white p-6 md:p-7" style={{ border: '1px solid #F3F4F6' }}>
+        <div className="bp-stat-skel h-5 w-40 rounded mb-3" />
+        <div className="bp-stat-skel h-24 w-full rounded" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-3xl bg-white p-6 md:p-8"
+      style={{
+        border: '1px solid #F3F4F6',
+        boxShadow: '0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 14px rgba(0,0,0,0.03)',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-5">
+        <div
+          className="flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center"
+          style={{
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            boxShadow: '0 6px 14px rgba(16,185,129,0.30)',
+          }}
+        >
+          <Sparkles className="w-5 h-5 text-white" strokeWidth={2.4} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-[17px] font-bold text-gray-900 tracking-tight">
+            Personnaliser mon IA
+          </h3>
+          <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">
+            Ajoutez vos spécificités. L'IA s'y adapte instantanément.
+          </p>
+        </div>
+      </div>
+
+      {/* Sub-info catégorie */}
+      {info && info.category_label && (
+        <p className="text-[11.5px] font-bold tracking-[0.10em] uppercase text-emerald-700 mb-3">
+          Modèle de base · {info.category_label}
+        </p>
+      )}
+
+      {/* Textarea */}
+      <textarea
+        value={precisions}
+        onChange={(e) => setPrecisions(e.target.value.slice(0, 1500))}
+        placeholder="Exemples : Tarif intervention 80€, déplacement Quimper et 20 km autour, urgences acceptées 7j/7 jusqu'à 22h, pas de chauffage électrique…"
+        rows={5}
+        className="w-full rounded-2xl bg-gray-50 px-4 py-3 text-[14.5px] text-gray-900 placeholder:text-gray-400 resize-none transition-all focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white"
+        style={{
+          border: '1px solid #E5E7EB',
+          fontSize: 16, /* anti-zoom iOS */
+          color: '#0F172A',
+          caretColor: '#10B981',
+        }}
+        maxLength={1500}
+      />
+
+      <div className="flex items-center justify-between mt-2 mb-5 text-[11.5px]">
+        <p className="text-gray-400">
+          Effectif dès la sauvegarde.
+        </p>
+        <p className="tabular-nums text-gray-400">
+          {precisions.length}/1500
+        </p>
+      </div>
+
+      {/* Bouton submit */}
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-2xl text-[15px] font-bold transition-transform active:scale-[0.98] disabled:opacity-60"
+        style={{
+          background: '#0F172A',
+          color: 'white',
+          boxShadow: '0 6px 20px rgba(15,23,42,0.30), 0 2px 6px rgba(0,0,0,0.06)',
+        }}
+      >
+        {saving ? (
+          'Mise à jour…'
+        ) : savedFlash ? (
+          <>
+            <Check size={16} strokeWidth={2.8} />
+            IA mise à jour
+          </>
+        ) : (
+          <>
+            Mettre à jour mon IA
+            <ArrowRight size={16} strokeWidth={2.6} />
+          </>
+        )}
+      </button>
+
+      {errorMsg && (
+        <div
+          className="mt-3 rounded-xl px-3 py-2 text-center text-[12.5px] font-medium"
+          style={{ background: '#FEF2F2', color: '#B91C1C', border: '1px solid rgba(220,38,38,0.20)' }}
+        >
+          {errorMsg}
+        </div>
+      )}
     </div>
   );
 }
