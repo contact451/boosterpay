@@ -2354,7 +2354,7 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
 /* ------------------------------------------------------------------ */
 const TwoApproachesSection = () => {
   return (
-    <section className="relative pt-20 pb-20 md:pt-24 md:pb-24 overflow-hidden bg-white">
+    <section className="relative pt-24 pb-28 md:pt-28 md:pb-32 overflow-hidden bg-white">
       {/* Ambient gradient orbs Apple-style — profondeur sans gris plat */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.08] blur-3xl"
@@ -2384,7 +2384,7 @@ const TwoApproachesSection = () => {
           </ScrollReveal>
           <ScrollReveal y={16} delay={0.18}>
             <p className="text-[18px] md:text-[20px] text-gray-500 mt-7 leading-[1.55] max-w-xl mx-auto">
-              Choisissez ce qui vous correspond. Ou cumulez les deux pour multiplier l'impact.
+              L'IA pour répondre. Les prospects pour vendre.
             </p>
           </ScrollReveal>
         </div>
@@ -2985,7 +2985,7 @@ const LeadsRGPDSection = () => {
   };
 
   return (
-    <section id="leads-rgpd" className="relative py-20 md:py-28 overflow-hidden scroll-mt-24"
+    <section id="leads-rgpd" className="relative py-28 md:py-36 overflow-hidden scroll-mt-24"
              style={{
                // Fond tinté vert très léger — charte unifiée
                background: 'linear-gradient(180deg, #F0FDF4 0%, #FAFEFB 30%, #F7FDF9 70%, #F0FDF4 100%)',
@@ -3000,22 +3000,19 @@ const LeadsRGPDSection = () => {
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6">
-        {/* Header centré (mobile + desktop) — typo premium */}
-        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
+        {/* Header centré épuré — typo premium Apple keynote */}
+        <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20">
           <ScrollReveal y={16}>
-            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-4 py-1.5 rounded-full mb-7 whitespace-nowrap">
+            <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-4 py-1.5 rounded-full mb-8 whitespace-nowrap">
               <span className="relative flex w-1.5 h-1.5">
                 <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
               </span>
-              {/* Mobile : version courte qui tient sur 1 ligne */}
-              <span className="sm:hidden">Prospects qualifiés</span>
-              {/* Desktop : version complète */}
-              <span className="hidden sm:inline">Service indépendant · Prospects qualifiés</span>
+              Prospects qualifiés
             </span>
           </ScrollReveal>
           <ScrollReveal y={24} delay={0.08}>
-            <h2 className="text-[36px] sm:text-[52px] md:text-[64px] lg:text-[72px] font-extrabold text-gray-900 leading-[0.98] tracking-[-0.03em]">
+            <h2 className="text-[44px] sm:text-[60px] md:text-[72px] lg:text-[80px] font-extrabold text-gray-900 leading-[0.96] tracking-[-0.035em]">
               Des clients qui veulent
               <br />
               <span className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 bg-clip-text text-transparent">
@@ -3024,183 +3021,15 @@ const LeadsRGPDSection = () => {
             </h2>
           </ScrollReveal>
           <ScrollReveal y={20} delay={0.18}>
-            <p className="text-[16.5px] md:text-[19px] text-gray-500 max-w-xl mx-auto mt-6 leading-[1.5]">
-              Pas du fichier froid. Des contacts qui ont rempli un formulaire pour demander à être rappelés — pour votre métier, dans votre zone.
+            <p className="text-[18px] md:text-[20px] text-gray-500 max-w-lg mx-auto mt-8 leading-[1.5]">
+              Ils ont rempli un formulaire pour être rappelés. Sur votre métier. Sur votre zone.
             </p>
-          </ScrollReveal>
-          {/* Trust strip — réduit l'anxiété AVANT le formulaire */}
-          <ScrollReveal y={14} delay={0.24}>
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-7">
-              {[
-                { icon: Shield, label: 'CNIL conforme' },
-                { icon: Target, label: 'Exclusif par zone' },
-                { icon: CheckCircle2, label: 'Sans engagement' },
-              ].map(({ icon: Icon, label }, i) => (
-                <span key={i} className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-gray-700">
-                  <Icon className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.4} />
-                  {label}
-                </span>
-              ))}
-            </div>
-          </ScrollReveal>
-
-          {/* CTA primaire visible dès le 1er écran — réserve la zone avant de scroller */}
-          <ScrollReveal y={16} delay={0.32}>
-            <div className="mt-8 flex flex-col items-center">
-              <a
-                href="#leads-form"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Scroll smooth vers le formulaire situé plus bas dans la section
-                  const section = document.getElementById('leads-rgpd');
-                  if (section) {
-                    const forms = section.querySelectorAll('form');
-                    const target = forms.length ? forms[0] : section;
-                    const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
-                  }
-                }}
-                className="group inline-flex items-center justify-center gap-2 text-[14.5px] font-bold text-white px-6 py-3.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.99]"
-                style={{
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  boxShadow: '0 16px 36px -10px rgba(16, 185, 129, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12) inset',
-                }}
-              >
-                Réserver ma zone
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.5} />
-              </a>
-              <p className="text-[11.5px] text-gray-500 mt-2.5">
-                Vérification de disponibilité sous 24 h ouvrées · Gratuit
-              </p>
-            </div>
           </ScrollReveal>
         </div>
 
-        {/* 4 chiffres clés — bande unifiée, séparateurs verticaux desktop */}
-        <ScrollReveal y={24} delay={0.22}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto mb-16 lg:mb-24 rounded-[28px] bg-white/85 backdrop-blur-md border border-gray-200/60 overflow-hidden"
-               style={{ boxShadow: '0 24px 48px -20px rgba(15, 23, 42, 0.08), 0 8px 16px -8px rgba(15, 23, 42, 0.04)' }}>
-            {[
-              { value: '1 sur 3', label: 'Prospects qui deviennent clients', accent: 'from-emerald-600 to-teal-500' },
-              { value: '24 h', label: 'Livraison après votre inscription', accent: 'from-emerald-600 to-teal-500' },
-              { value: '0 €', label: 'D\'abonnement · Payez à l\'unité', accent: 'from-emerald-600 to-teal-500' },
-              { value: '100%', label: 'Exclusivité dans votre zone', accent: 'from-emerald-600 to-teal-500' },
-            ].map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 18, scale: 0.92 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.08 }}
-                className={`text-center py-7 lg:py-9 px-4 ${
-                  i > 0 ? 'border-t lg:border-t-0 lg:border-l border-gray-200/70' : ''
-                } ${i === 1 ? 'border-l border-gray-200/70 lg:border-l' : ''}`}
-              >
-                <p className={`text-[40px] sm:text-[52px] lg:text-[60px] font-black tracking-[-0.035em] leading-none bg-gradient-to-br ${s.accent} bg-clip-text text-transparent`}>
-                  {s.value}
-                </p>
-                <p className="text-[12px] lg:text-[13px] text-gray-500 font-medium mt-3 leading-tight tracking-tight max-w-[180px] mx-auto">
-                  {s.label}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </ScrollReveal>
-
-        {/* Process 4 étapes — Apple feature flow avec connecteurs animés desktop */}
-        <ScrollReveal y={24} delay={0.05}>
-          <div className="max-w-5xl mx-auto mb-14 lg:mb-20">
-            <p className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-gray-400 text-center mb-10">
-              Comment ça marche
-            </p>
-            <div className="relative">
-              {/* Ligne de fond desktop qui relie les 4 étapes */}
-              <div className="hidden lg:block absolute top-[64px] left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent" aria-hidden="true" />
-
-              <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 lg:gap-x-6">
-                {[
-                  { num: '01', icon: Search,    title: 'On source',    desc: 'Campagnes ciblées sur votre secteur.' },
-                  { num: '02', icon: Shield,    title: 'On qualifie',  desc: 'Identité, téléphone et RGPD vérifiés.' },
-                  { num: '03', icon: Package,   title: 'On livre',     desc: 'Vos prospects sous 24 h max.' },
-                  { num: '04', icon: PhoneCall, title: 'Vous appelez', desc: 'Avant qu\'ils ne perdent l\'envie.' },
-                ].map((s, i) => {
-                  const Icon = s.icon;
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-50px' }}
-                      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.1 }}
-                      className="relative flex flex-col items-center text-center"
-                    >
-                      {/* Step number badge */}
-                      <span className="mb-3 inline-flex items-center justify-center w-7 h-7 rounded-full bg-white border border-gray-200 text-[11px] font-black tracking-tight text-gray-500 tabular-nums"
-                            style={{ boxShadow: '0 4px 12px -4px rgba(15, 23, 42, 0.08)' }}>
-                        {s.num}
-                      </span>
-                      {/* Icon circle — anchor point sur la ligne de connexion desktop */}
-                      <div className="relative w-14 h-14 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center mb-4 z-10"
-                           style={{ boxShadow: '0 12px 28px -10px rgba(99, 102, 241, 0.28), 0 4px 8px -4px rgba(99, 102, 241, 0.1)' }}>
-                        <Icon className="w-6 h-6 text-emerald-600" strokeWidth={1.9} />
-                        {/* Halo subtle */}
-                        <div className="absolute inset-0 rounded-2xl opacity-50 blur-md pointer-events-none -z-10"
-                             style={{ background: 'radial-gradient(circle, rgba(99, 102, 241, 0.18), transparent 70%)' }} />
-                      </div>
-                      <p className="text-[15px] font-bold text-gray-900 tracking-[-0.01em] leading-tight">{s.title}</p>
-                      <p className="text-[12.5px] text-gray-500 mt-2 leading-snug max-w-[180px]">{s.desc}</p>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        {/* Bandeau prix transparent — ticket premium qui débloque la décision */}
-        <ScrollReveal y={24} delay={0.08}>
-          <div className="max-w-2xl mx-auto mb-16 lg:mb-24">
-            <div className="relative rounded-[28px] bg-white overflow-hidden"
-                 style={{
-                   border: '1px solid rgba(15, 23, 42, 0.06)',
-                   boxShadow: '0 24px 48px -20px rgba(15, 23, 42, 0.08), 0 8px 16px -8px rgba(15, 23, 42, 0.04)',
-                 }}>
-              {/* Subtle gradient orb décoratif */}
-              <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full opacity-[0.06] blur-3xl pointer-events-none"
-                   style={{ background: 'radial-gradient(circle, #6366F1, transparent 70%)' }} />
-              <div className="relative px-7 py-7 lg:px-10 lg:py-9 text-center">
-                <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.18em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full mb-5">
-                  <Check className="w-3 h-3" strokeWidth={3} />
-                  Tarifs transparents
-                </span>
-                <div className="flex items-baseline justify-center gap-1.5 mb-1">
-                  <span className="text-[14px] font-semibold text-gray-500">À partir de</span>
-                  <span className="text-[52px] lg:text-[64px] font-black tracking-[-0.04em] leading-none bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 bg-clip-text text-transparent">15&nbsp;€</span>
-                </div>
-                <p className="text-[14.5px] lg:text-[15.5px] font-bold text-gray-900 tracking-[-0.01em]">
-                  le prospect qualifié
-                </p>
-                <p className="text-[12.5px] text-gray-500 mt-1.5">
-                  selon votre secteur et votre zone
-                </p>
-                {/* Séparateur ticket-style */}
-                <div className="my-5 flex items-center gap-3">
-                  <span className="w-2 h-2 rounded-full bg-gray-200" />
-                  <div className="flex-1 h-px border-t border-dashed border-gray-200" />
-                  <span className="w-2 h-2 rounded-full bg-gray-200" />
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-                  {['Pas d\'abonnement', 'Pas d\'engagement', 'Payez ce que vous recevez'].map((t, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 text-[12px] text-gray-600 font-medium">
-                      <Check className="w-3 h-3 text-emerald-500" strokeWidth={3} />
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
+        {/* ▶ ÉPURÉ : retiré 4 stats card + Process 4 étapes + Bandeau prix 15€
+              séparés. L'attention va direct sur le FORM (la conversion).
+              Le prix transparent est intégré sous le form sous forme de mini-pill. */}
 
         {/* Bloc 2 colonnes : Live feed | Form — alignés en haut, même importance visuelle */}
         <div className="grid lg:grid-cols-[1fr_minmax(0,460px)] gap-10 lg:gap-16 items-start mb-16 lg:mb-24">
@@ -3373,40 +3202,25 @@ const LeadsRGPDSection = () => {
           </div>
         </ScrollReveal>
 
-        {/* 4 bénéfices — eyebrow centré + cards premium */}
-        <ScrollReveal y={20} delay={0.04}>
-          <div className="text-center mb-10">
-            <p className="text-[10.5px] font-bold tracking-[0.18em] uppercase text-gray-400">
-              Pourquoi ça convertit
-            </p>
-          </div>
-        </ScrollReveal>
-        <ScrollReveal y={24} delay={0.08}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 max-w-5xl mx-auto">
-            {[
-              { icon: Target,    title: 'Intention d\'achat',     desc: 'Ils ont rempli un formulaire pour être recontactés.' },
-              { icon: Shield,    title: 'Exclusif par zone',       desc: 'Votre prospect n\'est jamais revendu ailleurs.' },
-              { icon: Zap,       title: 'Livrés en 24 h',          desc: 'À appeler quand l\'envie est encore fraîche.' },
-              { icon: CheckCircle2, title: '100% RGPD CNIL',       desc: 'Vous arrêtez quand vous voulez, sans frais.' },
-            ].map((b, i) => {
-              const Icon = b.icon;
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-50px' }}
-                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.05 + i * 0.06 }}
-                  className="relative rounded-2xl bg-white border border-gray-200/70 px-5 py-5 lg:px-6 lg:py-6 transition-all hover:border-emerald-200 hover:shadow-[0_12px_32px_-12px_rgba(16,185,129,0.18)]"
-                >
-                  <div className="inline-flex w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 items-center justify-center mb-3">
-                    <Icon className="w-[18px] h-[18px] text-emerald-600" strokeWidth={2.2} />
-                  </div>
-                  <p className="text-[14.5px] lg:text-[15.5px] font-bold text-gray-900 tracking-[-0.01em] leading-snug">{b.title}</p>
-                  <p className="text-[12.5px] lg:text-[13.5px] text-gray-500 leading-relaxed mt-1.5">{b.desc}</p>
-                </motion.div>
-              );
-            })}
+        {/* ▶ ÉPURÉ : retiré les 4 bénéfices "Pourquoi ça convertit" — info déjà
+              transmise par le wording du form + testimonials juste au-dessus.
+              Apple keynote : pas répéter, laisser le silence travailler. */}
+
+        {/* Mini trust bar finale — 3 promesses court format pour clore la section */}
+        <ScrollReveal y={16} delay={0.05}>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mt-4 text-[13px] font-semibold text-gray-600">
+            <span className="inline-flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.6} />
+              CNIL conforme
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.6} />
+              Exclusif par zone
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.6} />
+              Sans engagement
+            </span>
           </div>
         </ScrollReveal>
       </div>
@@ -4010,13 +3824,24 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* HERO                                         */}
       {/* ============================================ */}
-      <section className="relative pt-28 pb-16 md:pt-32 md:pb-24 overflow-hidden">
+      <section
+        className="relative overflow-hidden flex items-center justify-center"
+        style={{
+          /* Hero PLEIN viewport mobile — Apple keynote style.
+             100svh = small viewport (URL bar visible) sur iOS = plus stable que 100dvh
+             Padding compense le UrgencyBanner (28px) + Navbar (80px) en haut.
+             items-center + justify-center = contenu rigoureusement centré.            */
+          minHeight: '100svh',
+          paddingTop: '136px',
+          paddingBottom: '64px',
+        }}
+      >
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-50/60 via-white to-white" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-emerald-100/40 to-transparent rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-teal-100/30 to-transparent rounded-full blur-3xl" />
 
-        <div className="relative max-w-7xl mx-auto px-6">
+        <div className="relative max-w-7xl mx-auto px-6 w-full">
           {/* CSS keyframes for hero fade-in — zero JS overhead on mobile */}
           <style>{`
             @keyframes heroFadeUp {
@@ -4037,7 +3862,7 @@ export default function IAVocaleLanding() {
             .hero-fade-4 { animation-delay: 0.24s; }
             .hero-fade-5 { animation-delay: 0.4s; }
           `}</style>
-          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-16 items-center">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left — Pure CSS animations, no framer-motion overhead */}
             <div>
               {/* ════ HERO ULTRA ÉPURÉ — 4 éléments seulement (Apple keynote style) ════
@@ -4045,16 +3870,16 @@ export default function IAVocaleLanding() {
                   La nav contient déjà "Acheter prospects" → pas de double redirection ici.
                   Le titre porte tout le message — moins = plus. */}
 
-              {/* Titre ultra-premium */}
+              {/* Titre ultra-premium — mobile beaucoup plus grand pour occuper l'écran */}
               <h1 className="hero-fade hero-fade-2">
                 <span
-                  className="block text-[42px] sm:text-[56px] lg:text-[64px] font-extrabold leading-[1.04] tracking-[-0.035em]"
+                  className="block text-[52px] sm:text-[60px] lg:text-[64px] font-extrabold leading-[1.02] tracking-[-0.035em]"
                   style={{ color: '#86868B' }}
                 >
                   Occupé&nbsp;?
                 </span>
                 <span
-                  className="block mt-3 text-[60px] sm:text-[76px] lg:text-[92px] font-extrabold leading-[0.96] tracking-[-0.04em]"
+                  className="block mt-5 md:mt-4 text-[76px] sm:text-[84px] lg:text-[92px] font-extrabold leading-[0.94] tracking-[-0.045em]"
                   style={{ color: '#1D1D1F' }}
                 >
                   Votre IA{' '}
@@ -4068,30 +3893,30 @@ export default function IAVocaleLanding() {
                 </span>
               </h1>
 
-              {/* Sub-texte court 1 ligne — ce que l'IA fait concrètement */}
-              <p className="hero-fade hero-fade-3 mt-7 text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
+              {/* Sub-texte — taille augmentée + marge généreuse */}
+              <p className="hero-fade hero-fade-3 mt-10 md:mt-9 text-[19px] md:text-xl text-gray-500 leading-[1.5] max-w-xl">
                 Elle qualifie, prend le RDV, vous envoie le récap par SMS.
               </p>
 
-              {/* CTA principal */}
-              <div className="hero-fade hero-fade-4 mt-9 flex flex-col sm:flex-row gap-4">
+              {/* CTA principal — bouton plus généreux mobile + marge top respiration */}
+              <div className="hero-fade hero-fade-4 mt-12 md:mt-12 flex flex-col sm:flex-row gap-4">
                 <a
                   href="#" onClick={(e) => { e.preventDefault(); openPopup('cta', 'gratuit'); }}
-                  className="inline-flex items-center justify-center gap-2 text-base font-semibold text-white bg-emerald-500 hover:bg-emerald-600 px-8 py-4 rounded-full hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200"
+                  className="inline-flex items-center justify-center gap-2 text-[17px] md:text-base font-semibold text-white bg-emerald-500 hover:bg-emerald-600 px-8 py-[18px] md:py-4 rounded-full hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-200"
                   style={{ boxShadow: '0 16px 40px -8px rgba(16, 185, 129, 0.45)' }}
                 >
                   Démarrer mon essai 7 jours <ArrowRight className="w-5 h-5" />
                 </a>
               </div>
-              <p className="hero-fade hero-fade-4 mt-3 text-sm text-gray-400">
+              <p className="hero-fade hero-fade-4 mt-5 md:mt-4 text-[14px] md:text-sm text-gray-400">
                 7 jours offerts · Annulation libre · Opérationnel en 5 minutes
               </p>
 
               {/* Proof sociale ULTRA discrète sous le CTA — 1 ligne, pas d'avatars */}
-              <div className="hero-fade hero-fade-4 mt-6 inline-flex items-center gap-2 text-[13px] text-gray-500">
+              <div className="hero-fade hero-fade-4 mt-10 md:mt-8 inline-flex items-center gap-2 text-[14px] md:text-[13px] text-gray-500 flex-wrap">
                 <div className="flex gap-0.5">
                   {[1,2,3,4,5].map((s) => (
-                    <Star key={s} className="w-3.5 h-3.5 text-amber-400" fill="currentColor" strokeWidth={1} />
+                    <Star key={s} className="w-4 h-4 md:w-3.5 md:h-3.5 text-amber-400" fill="currentColor" strokeWidth={1} />
                   ))}
                 </div>
                 <span className="font-semibold text-gray-700">4,8/5</span>
@@ -4099,31 +3924,39 @@ export default function IAVocaleLanding() {
                 <span><strong className="text-gray-700">+250 pros</strong> nous font confiance</span>
               </div>
 
-              {/* Stats — sous un titre contextuel pour ancrer émotionnellement les chiffres */}
-              <div className="hero-fade hero-fade-5 mt-12 pt-8 border-t border-gray-200">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700 mb-1 text-center sm:text-left">
-                  Ce que ça change concrètement
-                </p>
-                <p className="text-[13px] text-gray-500 mb-5 text-center sm:text-left">
-                  Moyenne observée sur les commerçants BoosterPay après 30 jours.
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-0">
-                  {stats.map((s, i) => (
-                    <div key={i} className={`text-center sm:text-left px-4 ${i < stats.length - 1 ? 'sm:border-r sm:border-gray-200' : ''}`}>
-                      <p className="text-3xl md:text-4xl font-extrabold text-emerald-500 tracking-tight">
-                        <AnimatedNumber value={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
-                      </p>
-                      <p className="text-[12.5px] font-medium text-gray-500 mt-1.5 tracking-tight">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Right — Hero animation (desktop only) */}
             <div className="hero-fade hero-fade-4" style={{ transform: 'translateZ(0)' }}>
               <HeroAnimation />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================ */}
+      {/* STATS SECTION dédiée — sortie du hero pour respiration Apple keynote
+          (un seul message par écran). Affichée juste après le hero. */}
+      {/* ============================================ */}
+      <section className="relative py-24 md:py-32 bg-white overflow-hidden">
+        <div className="relative max-w-5xl mx-auto px-6">
+          <div className="text-center mb-14 md:mb-16">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700 mb-3">
+              Ce que ça change
+            </p>
+            <h2 className="text-[34px] md:text-[42px] font-extrabold text-gray-900 tracking-[-0.025em] leading-[1.1]">
+              Moyenne observée<br/>après 30 jours.
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-8 gap-x-4">
+            {stats.map((s, i) => (
+              <div key={i} className={`text-center ${i < stats.length - 1 ? 'sm:border-r sm:border-gray-200' : ''}`}>
+                <p className="text-4xl md:text-5xl font-extrabold text-emerald-500 tracking-tight">
+                  <AnimatedNumber value={s.value} suffix={s.suffix} prefix={s.prefix || ''} />
+                </p>
+                <p className="text-[12.5px] font-medium text-gray-500 mt-2 tracking-tight">{s.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -4142,7 +3975,7 @@ export default function IAVocaleLanding() {
 
       {/* ── Section Robot Personnalisé ── */}
       {/* ── Quatre services. Un seul outil. ── */}
-      <section className="relative pt-16 pb-28 md:pt-24 md:pb-32 bg-gradient-to-b from-[#FAFAFA] via-white to-[#FAFAFA] overflow-hidden">
+      <section className="relative pt-24 pb-32 md:pt-28 md:pb-36 bg-gradient-to-b from-[#FAFAFA] via-white to-[#FAFAFA] overflow-hidden">
         {/* Ambient gradients multicolores doux */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-20 left-[5%] w-[400px] h-[400px] rounded-full opacity-[0.05] blur-3xl"
@@ -4156,7 +3989,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Nos services"
             title="Votre secrétaire IA fait tout ça."
-            subtitle="Une seule plateforme. La Réception d'appels 24/7 est toujours active. Vous activez les modules dont vous avez besoin — tous sont inclus."
+            subtitle="Une seule plateforme. Tous les modules inclus."
           />
 
           {/* Nudge swipe AU-DESSUS du carousel (mobile only) — l'user comprend
@@ -4368,7 +4201,7 @@ export default function IAVocaleLanding() {
       {/* ============================================ */}
       {/* MÉTIER SELECTOR — Votre métier. Votre IA.    */}
       {/* ============================================ */}
-      <section id="metier" className="relative pt-12 pb-16 md:pt-20 md:pb-24 bg-white scroll-mt-24 overflow-hidden">
+      <section id="metier" className="relative pt-24 pb-24 md:pt-28 md:pb-32 bg-white scroll-mt-24 overflow-hidden">
         {/* Ambient emerald subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full opacity-[0.04] blur-3xl"
@@ -4378,7 +4211,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Votre métier. Votre IA."
             title="Découvrez comment l'IA s'adapte à votre quotidien."
-            subtitle="👇 Cliquez sur votre métier — on vous dit exactement ce que l'IA va faire pour vous et combien ça vous rapporte."
+            subtitle="Cliquez sur votre métier."
           />
           <MetierSelector openPopup={openPopup} />
         </div>
@@ -4388,7 +4221,7 @@ export default function IAVocaleLanding() {
       {/* Placé après les deep dives : "voilà comme c'est simple à démarrer" */}
       {/* Padding resserré : transition fluide MetierSelector → HowItWorks → Testimonials */}
       {/* ============================================ */}
-      <section className="relative pt-16 pb-20 md:pt-24 md:pb-24 bg-white overflow-hidden">
+      <section className="relative pt-24 pb-28 md:pt-28 md:pb-32 bg-white overflow-hidden">
         {/* Ambient gradient teal subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.04] blur-3xl"
@@ -4408,7 +4241,7 @@ export default function IAVocaleLanding() {
       {/* TESTIMONIALS — preuve sociale juste avant la conversion    */}
       {/* Padding-bottom réduit pour resserrer la transition vers Pricing */}
       {/* ============================================ */}
-      <section className="relative pt-16 pb-12 md:pt-20 md:pb-16 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
+      <section className="relative pt-24 pb-20 md:pt-28 md:pb-24 bg-gradient-to-b from-white via-gray-50/60 to-white overflow-hidden">
         {/* Ambient gradients premium */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-32 left-[10%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
@@ -4420,8 +4253,8 @@ export default function IAVocaleLanding() {
         <div className="relative max-w-7xl mx-auto px-6">
           <SectionHeading
             tag="Témoignages"
-            title="+250 professionnels font confiance à BoosterPay."
-            subtitle="Garagistes, cabinets médicaux, courtiers, salons, plombiers, avocats — ils ont automatisé leurs appels avec l'IA."
+            title="+250 pros ont déjà sauté le pas."
+            subtitle="Ils ne ratent plus un appel. Vous non plus."
           />
 
           {/* Trust strip — secteurs représentés */}
@@ -4444,7 +4277,7 @@ export default function IAVocaleLanding() {
       {/* PRICING IA — vient juste après la preuve sociale (témoignages)         */}
       {/* Padding-top réduit : transition fluide depuis les témoignages          */}
       {/* ============================================ */}
-      <section id="pricing" className="relative pt-16 pb-20 md:pt-20 md:pb-24 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+      <section id="pricing" className="relative pt-24 pb-28 md:pt-28 md:pb-32 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
         {/* Ambient gradient cyan/blue */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-32 right-[15%] w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl"
@@ -4456,7 +4289,7 @@ export default function IAVocaleLanding() {
           <SectionHeading
             tag="Tarif"
             title="Un seul plan. Tout inclus."
-            subtitle="L'IA Vocale BoosterPay au complet. Tous les modules, appels illimités, 7 jours pour tester."
+            subtitle="Tous les modules inclus. 7 jours pour tester."
           />
 
           {/* Plan unique 99€ HT/mois — card ultra premium border verte + ombre verte forte */}
@@ -4616,7 +4449,7 @@ export default function IAVocaleLanding() {
 
       {/* FAQ                                          */}
       {/* ============================================ */}
-      <section id="faq" className="relative pt-16 pb-16 md:pt-20 md:pb-20 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
+      <section id="faq" className="relative pt-24 pb-24 md:pt-28 md:pb-28 bg-gradient-to-b from-white via-gray-50/40 to-white overflow-hidden scroll-mt-24">
         {/* Ambient subtle */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.03] blur-3xl"
