@@ -1,61 +1,66 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="haloGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#10B981"/>
       <stop offset="100%" stop-color="#059669"/>
     </linearGradient>
-    <radialGradient id="halo" cx="0.85" cy="0.15" r="0.55">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="halo2" cx="0.15" cy="0.85" r="0.5">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 
-  <!-- Background gradient emerald -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#halo)"/>
-  <rect width="1200" height="630" fill="url(#halo2)"/>
+  <!-- ═══════════ Background pur blanc ═══════════ -->
+  <rect width="1200" height="630" fill="#FFFFFF"/>
 
-  <!-- Badge top : statut "En ligne 24/7" -->
-  <g transform="translate(80, 80)">
-    <rect x="0" y="0" width="195" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="1.5"/>
-    <circle cx="22" cy="22" r="5" fill="#FFFFFF"/>
-    <circle cx="22" cy="22" r="9" fill="#FFFFFF" fill-opacity="0.35"/>
-    <text x="40" y="29" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" letter-spacing="1.4">EN LIGNE · 24/7</text>
+  <!-- Grand cercle emerald flouté à droite — signature minimaliste -->
+  <circle cx="1100" cy="100" r="240" fill="#10B981" opacity="0.06"/>
+  <circle cx="1100" cy="100" r="180" fill="#10B981" opacity="0.05"/>
+  <circle cx="1100" cy="100" r="120" fill="#10B981" opacity="0.04"/>
+
+  <!-- Grand cercle emerald flouté bottom left — équilibre composition -->
+  <circle cx="0" cy="630" r="320" fill="#10B981" opacity="0.04"/>
+  <circle cx="0" cy="630" r="220" fill="#10B981" opacity="0.04"/>
+
+  <!-- Barre fine top emerald — signature Apple -->
+  <rect x="0" y="0" width="1200" height="5" fill="#10B981"/>
+
+  <!-- ═══════════ Logo BoosterPay ═══════════ -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif">
+    <text x="80" y="108" font-size="34" font-weight="800" fill="#0F172A">Booster<tspan fill="#10B981">Pay</tspan></text>
+
+    <!-- ═══════════ Tag pill ═══════════ -->
+    <rect x="80" y="170" width="266" height="42" rx="21" fill="#ECFDF5" stroke="#10B981" stroke-width="2"/>
+    <circle cx="103" cy="191" r="5" fill="#10B981"/>
+    <text x="120" y="198" font-size="16" font-weight="800" fill="#059669">IA Vocale · Made in France</text>
+
+    <!-- ═══════════ Headline géant ═══════════ -->
+    <text x="80" y="338" font-size="104" font-weight="900" fill="#0F172A">L'IA décroche</text>
+    <text x="80" y="448" font-size="104" font-weight="900" fill="#0F172A">à votre place<tspan fill="#10B981">.</tspan></text>
+
+    <!-- ═══════════ Sub-text ═══════════ -->
+    <text x="80" y="510" font-size="26" font-weight="500" fill="#475569">Quand vous êtes occupé, elle prend le relais 24/7.</text>
   </g>
 
-  <!-- Logo BoosterPay -->
-  <text x="80" y="240" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="56" font-weight="800" fill="#FFFFFF" letter-spacing="-1.5">BoosterPay</text>
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER — Bar épurée bottom
+       ═══════════════════════════════════════════════════════════ -->
 
-  <!-- Headline principal -->
-  <text x="80" y="345" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="78" font-weight="800" fill="#FFFFFF" letter-spacing="-2.5">L'IA qui décroche</text>
-  <text x="80" y="430" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="78" font-weight="800" fill="#FFFFFF" letter-spacing="-2.5">à votre place.</text>
+  <!-- Séparateur horizontal très fin -->
+  <rect x="80" y="558" width="1040" height="1" fill="#E2E8F0"/>
 
-  <!-- Sub-text bénéfices -->
-  <text x="80" y="500" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="26" font-weight="500" fill="#FFFFFF" fill-opacity="0.92" letter-spacing="-0.3">+250 pros nous font confiance · 99 € / mois · Essai 7 jours</text>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif">
 
-  <!-- Étoiles rating bottom right -->
-  <g transform="translate(900, 80)">
-    <rect x="0" y="0" width="220" height="60" rx="14" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="1.5"/>
-    <g transform="translate(18, 22)" fill="#FCD34D">
-      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2"/>
-      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(22, 0)"/>
-      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(44, 0)"/>
-      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(66, 0)"/>
-      <polygon points="9,0 11.4,6.2 18,6.6 12.8,10.8 14.6,17.2 9,13.4 3.4,17.2 5.2,10.8 0,6.6 6.6,6.2" transform="translate(88, 0)"/>
+    <!-- Étoiles ★★★★★ -->
+    <g fill="#F59E0B" transform="translate(80, 588)">
+      <polygon points="11,0 13.5,7.5 22,7.7 15.4,12.7 17.6,21 11,16.5 4.4,21 6.6,12.7 0,7.7 8.5,7.5"/>
+      <polygon points="11,0 13.5,7.5 22,7.7 15.4,12.7 17.6,21 11,16.5 4.4,21 6.6,12.7 0,7.7 8.5,7.5" transform="translate(28, 0)"/>
+      <polygon points="11,0 13.5,7.5 22,7.7 15.4,12.7 17.6,21 11,16.5 4.4,21 6.6,12.7 0,7.7 8.5,7.5" transform="translate(56, 0)"/>
+      <polygon points="11,0 13.5,7.5 22,7.7 15.4,12.7 17.6,21 11,16.5 4.4,21 6.6,12.7 0,7.7 8.5,7.5" transform="translate(84, 0)"/>
+      <polygon points="11,0 13.5,7.5 22,7.7 15.4,12.7 17.6,21 11,16.5 4.4,21 6.6,12.7 0,7.7 8.5,7.5" transform="translate(112, 0)"/>
     </g>
-    <text x="130" y="38" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="20" font-weight="800" fill="#FFFFFF">4.8 / 5</text>
-  </g>
 
-  <!-- Footer URL -->
-  <text x="80" y="570" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="20" font-weight="600" fill="#FFFFFF" fill-opacity="0.7" letter-spacing="0.5">www.booster-pay.com</text>
+    <!-- Rating value + proof -->
+    <text x="220" y="606" font-size="18" font-weight="900" fill="#0F172A">4.8/5</text>
+    <text x="262" y="606" font-size="18" font-weight="500" fill="#64748B"> · +250 pros nous font confiance</text>
 
-  <!-- Made in France discret -->
-  <g transform="translate(960, 555)">
-    <rect x="0" y="0" width="160" height="30" rx="6" fill="#FFFFFF" fill-opacity="0.12"/>
-    <text x="14" y="20" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="13" font-weight="700" fill="#FFFFFF" letter-spacing="0.8">🇫🇷 MADE IN FRANCE</text>
+    <!-- URL -->
+    <text x="1120" y="606" font-size="18" font-weight="700" fill="#94A3B8" text-anchor="end">booster-pay.com</text>
   </g>
 </svg>
