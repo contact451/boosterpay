@@ -17,7 +17,7 @@
       text-rendering: geometricPrecision;
     }
 
-    /* ───── Scène : fond gradient emerald saturé ───── */
+    /* Scène emerald gradient hero */
     .scene {
       position: relative;
       width: 1200px;
@@ -29,91 +29,51 @@
         linear-gradient(135deg, #10B981 0%, #059669 55%, #047857 100%);
       color: #FFFFFF;
       overflow: hidden;
-    }
-
-    /* Texture grain subtil pour relief premium */
-    .scene::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image:
-        radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.05) 100%);
-      pointer-events: none;
-    }
-
-    /* ───── Header ───── */
-    .header {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 36px;
+      flex-direction: column;
+    }
+
+    /* Header — brand seul */
+    .header {
       position: relative;
       z-index: 2;
     }
 
     .brand {
-      font-size: 32px;
+      font-size: 36px;
       font-weight: 800;
-      letter-spacing: -0.8px;
+      letter-spacing: -1px;
       color: #FFFFFF;
     }
 
-    .badge-fr {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(8px);
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 700;
-      color: #FFFFFF;
-      letter-spacing: 0.2px;
-    }
-
-    /* ───── Main ───── */
+    /* Main — headline géant + mockup chat à droite */
     .main {
+      flex: 1;
       display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 40px;
-      align-items: start;
+      grid-template-columns: 1fr 380px;
+      gap: 56px;
+      align-items: center;
       position: relative;
       z-index: 2;
+      margin-top: 24px;
     }
 
-    .left { padding-top: 8px; }
+    .left { padding-top: 0; }
 
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 18px;
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(8px);
-      border-radius: 999px;
-      font-size: 14.5px;
+    .question {
+      font-size: 28px;
       font-weight: 700;
-      color: #FFFFFF;
-      margin-bottom: 28px;
-      letter-spacing: 0.2px;
-    }
-
-    .tag-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #FFFFFF;
-      box-shadow: 0 0 0 4px rgba(255,255,255,0.25);
+      color: rgba(255, 255, 255, 0.85);
+      letter-spacing: -0.5px;
+      margin-bottom: 18px;
+      line-height: 1.2;
     }
 
     .headline {
-      font-size: 90px;
+      font-size: 96px;
       font-weight: 900;
-      letter-spacing: -2.8px;
-      line-height: 1.02;
+      letter-spacing: -3px;
+      line-height: 1;
       color: #FFFFFF;
     }
 
@@ -121,54 +81,14 @@
       color: #BBF7D0;
     }
 
-    .subhead {
-      font-size: 24px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.92);
-      margin-top: 22px;
-      line-height: 1.45;
-      letter-spacing: -0.3px;
-      max-width: 600px;
-    }
-
-    .badges-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 36px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      background: #FFFFFF;
-      border-radius: 999px;
-      font-size: 15px;
-      font-weight: 800;
-      color: #065F46;
-      letter-spacing: 0.1px;
-      box-shadow: 0 4px 14px rgba(15,23,42,0.10);
-    }
-
-    .pill-check {
-      color: #10B981;
-      font-size: 14px;
-      font-weight: 900;
-    }
-
-    /* ───── Mockup card chat ───── */
-    .right {
-      position: relative;
-    }
-
+    /* Mockup card chat compact */
     .mock-card {
       background: #FFFFFF;
-      border-radius: 24px;
-      padding: 20px;
+      border-radius: 26px;
+      padding: 22px;
       box-shadow:
-        0 20px 60px rgba(15, 23, 42, 0.25),
-        0 8px 20px rgba(15, 23, 42, 0.15),
+        0 24px 70px rgba(15, 23, 42, 0.30),
+        0 8px 24px rgba(15, 23, 42, 0.18),
         0 0 0 1px rgba(255, 255, 255, 0.8) inset;
       transform: rotate(-2deg);
     }
@@ -177,47 +97,47 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 4px 6px 14px 6px;
+      padding: 4px 6px 16px 6px;
       border-bottom: 1px solid #F1F5F9;
     }
 
     .status-dot-wrap {
       display: inline-flex;
       align-items: center;
-      gap: 9px;
-      font-size: 13px;
+      gap: 10px;
+      font-size: 14px;
       font-weight: 800;
       color: #047857;
       letter-spacing: 0.3px;
     }
 
     .status-dot {
-      width: 9px;
-      height: 9px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
       background: #10B981;
       box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
     }
 
     .mock-time {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       color: #94A3B8;
       font-variant-numeric: tabular-nums;
     }
 
     .messages {
-      padding: 14px 4px 4px 4px;
+      padding: 16px 4px 4px 4px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 11px;
     }
 
     .msg {
-      max-width: 84%;
-      padding: 11px 16px;
-      border-radius: 20px;
-      font-size: 14px;
+      max-width: 86%;
+      padding: 13px 18px;
+      border-radius: 22px;
+      font-size: 15.5px;
       font-weight: 600;
       line-height: 1.35;
       letter-spacing: -0.1px;
@@ -227,122 +147,60 @@
       align-self: flex-start;
       background: #ECFDF5;
       color: #064E3B;
-      border-bottom-left-radius: 6px;
+      border-bottom-left-radius: 7px;
     }
 
-    .msg-ia .check {
-      color: #10B981;
-      font-weight: 900;
-    }
+    .msg-ia .check { color: #10B981; font-weight: 900; }
 
     .msg-client {
       align-self: flex-end;
       background: #0F172A;
       color: #FFFFFF;
-      border-bottom-right-radius: 6px;
+      border-bottom-right-radius: 7px;
     }
 
     .mock-footer {
       display: flex;
       align-items: center;
-      gap: 9px;
-      margin-top: 14px;
-      padding: 12px 14px;
+      gap: 10px;
+      margin-top: 16px;
+      padding: 13px 15px;
       background: #F8FAFC;
-      border-radius: 14px;
-      font-size: 12.5px;
+      border-radius: 15px;
+      font-size: 13.5px;
       font-weight: 800;
       color: #475569;
       letter-spacing: 0.2px;
     }
 
-    /* ───── Footer ───── */
+    /* Footer — URL seul (épuré max) */
     .footer {
       position: absolute;
       left: 72px;
       right: 72px;
-      bottom: 48px;
+      bottom: 44px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       z-index: 2;
     }
 
-    .proof {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    .avatars { display: flex; }
-
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--c1), var(--c2));
-      border: 2.5px solid #FFFFFF;
-      color: #FFFFFF;
-      font-size: 14px;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      letter-spacing: -0.3px;
-      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
-    }
-    .avatar + .avatar { margin-left: -10px; }
-    .avatar:nth-child(1) { --c1: #FBBF24; --c2: #F59E0B; }
-    .avatar:nth-child(2) { --c1: #3B82F6; --c2: #2563EB; }
-    .avatar:nth-child(3) { --c1: #8B5CF6; --c2: #7C3AED; }
-    .avatar:nth-child(4) { --c1: #EC4899; --c2: #DB2777; }
-    .avatar:nth-child(5) { --c1: #06B6D4; --c2: #0891B2; }
-
-    .proof-text {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .proof-text-line1 {
-      font-size: 16px;
-      font-weight: 700;
-      color: #FFFFFF;
-      letter-spacing: -0.1px;
-    }
-
-    .proof-text-line1 strong {
-      font-weight: 900;
+    .url {
+      font-size: 18px;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.4px;
     }
 
     .rating {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding-left: 16px;
-      border-left: 1.5px solid rgba(255,255,255,0.4);
+      gap: 10px;
     }
 
-    .stars {
-      font-size: 15px;
-      letter-spacing: 1.5px;
-      color: #FCD34D;
-    }
-
-    .rating-value {
-      font-size: 16px;
-      font-weight: 900;
-      color: #FFFFFF;
-      letter-spacing: -0.2px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .url {
-      font-size: 16px;
-      font-weight: 800;
-      color: rgba(255, 255, 255, 0.8);
-      letter-spacing: 0.4px;
-    }
+    .stars { font-size: 17px; letter-spacing: 1.5px; color: #FCD34D; }
+    .rating-value { font-size: 18px; font-weight: 900; color: #FFFFFF; letter-spacing: -0.2px; font-variant-numeric: tabular-nums; }
+    .rating-meta { font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.85); margin-left: 4px; }
   </style>
 </head>
 <body>
@@ -350,31 +208,12 @@
 
     <div class="header">
       <div class="brand">BoosterPay</div>
-      <div class="badge-fr">
-        <span>🇫🇷</span>
-        <span>Made in France</span>
-      </div>
     </div>
 
     <div class="main">
       <div class="left">
-        <div class="tag">
-          <span class="tag-dot"></span>
-          <span>IA Vocale pour professionnels</span>
-        </div>
-
-        <h1 class="headline">
-          L'IA décroche<br/>à votre place<span class="headline-period">.</span>
-        </h1>
-
-        <p class="subhead">
-          Quand vous êtes occupé, elle prend le relais.
-        </p>
-
-        <div class="badges-row">
-          <span class="pill"><span class="pill-check">✓</span> 7 jours gratuits</span>
-          <span class="pill"><span class="pill-check">✓</span> Annulation libre</span>
-        </div>
+        <p class="question">Vous ne répondez pas&nbsp;?</p>
+        <h1 class="headline">L'IA décroche<br/>à votre place<span class="headline-period">.</span></h1>
       </div>
 
       <div class="right">
@@ -386,16 +225,10 @@
             </div>
             <div class="mock-time">14:32</div>
           </div>
-
           <div class="messages">
-            <div class="msg msg-ia">
-              RDV confirmé · Jeudi 9h <span class="check">✓</span>
-            </div>
-            <div class="msg msg-client">
-              Parfait, merci !
-            </div>
+            <div class="msg msg-ia">RDV confirmé · Jeudi 9h <span class="check">✓</span></div>
+            <div class="msg msg-client">Parfait, merci !</div>
           </div>
-
           <div class="mock-footer">
             <span>📱</span>
             <span>Récap SMS envoyé</span>
@@ -405,21 +238,10 @@
     </div>
 
     <div class="footer">
-      <div class="proof">
-        <div class="avatars">
-          <div class="avatar">T</div>
-          <div class="avatar">S</div>
-          <div class="avatar">M</div>
-          <div class="avatar">J</div>
-          <div class="avatar">C</div>
-        </div>
-        <div class="proof-text">
-          <span class="proof-text-line1"><strong>+250 pros</strong> nous font confiance</span>
-          <span class="rating">
-            <span class="stars">★★★★★</span>
-            <span class="rating-value">4.8/5</span>
-          </span>
-        </div>
+      <div class="rating">
+        <span class="stars">★★★★★</span>
+        <span class="rating-value">4.8/5</span>
+        <span class="rating-meta">· +250 pros</span>
       </div>
       <div class="url">booster-pay.com</div>
     </div>
