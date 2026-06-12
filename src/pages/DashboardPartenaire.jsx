@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, Component } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, ArrowLeft, AlertCircle, RefreshCw, Database } from 'lucide-react';
 import { AnimatedBackground } from '../components/DebtorLayout';
 import KPICards from '../components/dashboard/KPICards';
 import SearchFilters from '../components/dashboard/SearchFilters';
@@ -226,6 +226,14 @@ function DashboardPartenaireInner() {
           </div>
           <div className="flex items-center gap-2">
             <ExportButton dossiers={filteredDossiers} partnerName={data?.partner?.name || 'export'} kpis={kpis} />
+            <Link
+              to={`/admin/prompts?token=BP-ADM-7c4f9d1e-2b8a-4d6e-91c2-3e57f86a4b09`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-medium text-emerald-300 hover:bg-white/10 hover:text-emerald-200 transition-colors"
+              title="Vue temps réel BP-PROMPTS (n8n CallPilot)"
+            >
+              <Database className="w-4 h-4" />
+              <span className="hidden sm:inline">BP-Prompts</span>
+            </Link>
             <Link
               to={`/onboarding/step2?ref=${partnerId}`}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-sm font-medium text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-shadow"

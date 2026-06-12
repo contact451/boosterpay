@@ -54,6 +54,8 @@ import EspaceAbonne from './pages/EspaceAbonne';
 import MesModules from './pages/MesModules';
 import MesAppels from './pages/MesAppels';
 import MesProspects from './pages/MesProspects';
+import EspaceIA from './pages/EspaceIA';
+import AdminPrompts from './pages/AdminPrompts';
 import Connexion from './pages/Connexion';
 // Pages dédiées par service (mini landings Apple-style)
 import Reception247 from './pages/services/Reception247';
@@ -103,6 +105,10 @@ function App() {
         <Route path="/espace/appels" element={<MesAppels />} />
         {/* /espace/prospects?id=BP-XXX → configurateur d'achat prospects */}
         <Route path="/espace/prospects" element={<MesProspects />} />
+        {/* /espace/ia?id=BP-XXX → personnalisation IA : précisions + Q/R */}
+        <Route path="/espace/ia" element={<EspaceIA />} />
+        {/* /admin/prompts?token=BP-ADM-XXXX → vue temps réel BP-PROMPTS (admin only) */}
+        <Route path="/admin/prompts" element={<AdminPrompts />} />
         <Route path="/onboarding/step2" element={<OnboardingStep2 />} />
         <Route path="/onboarding/import" element={<OnboardingStep2 />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />

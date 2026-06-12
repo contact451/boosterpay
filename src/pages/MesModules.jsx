@@ -1036,11 +1036,52 @@ function AlwaysOnPanel({ module: m, numeroVirtuel, mobilePerso, commercantId }) 
       </div>
 
       {/* ═══════════════════════════════════════════════════════════ */}
-      {/*  Personnaliser mon IA — précisions custom envoyées à n8n     */}
+      {/*  Personnaliser mon IA — bouton vers page dédiée /espace/ia   */}
       {/* ═══════════════════════════════════════════════════════════ */}
-      <PersonnaliserMonIA commercantId={commercantId} />
+      <PersonnaliserIACTA commercantId={commercantId} />
 
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  PersonnaliserIACTA — card CTA propre vers /espace/ia
+// ─────────────────────────────────────────────────────────────────
+function PersonnaliserIACTA({ commercantId }) {
+  const href = commercantId ? `/espace/ia?id=${encodeURIComponent(commercantId)}` : '/espace/ia';
+  return (
+    <a
+      href={href}
+      className="block rounded-3xl p-6 md:p-7 transition-all hover:-translate-y-0.5 active:scale-[0.99]"
+      style={{
+        background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+        boxShadow: '0 12px 32px rgba(15,23,42,0.25), 0 2px 8px rgba(0,0,0,0.08)',
+      }}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            boxShadow: '0 6px 14px rgba(16,185,129,0.40)',
+          }}
+        >
+          <Sparkles className="w-5 h-5 text-white" strokeWidth={2.4} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-[0.10em] text-emerald-300 mb-1">
+            Configuration
+          </p>
+          <h3 className="text-[17px] font-bold text-white tracking-tight leading-tight">
+            Personnaliser mon IA
+          </h3>
+          <p className="text-[13px] text-gray-300 mt-1 leading-snug">
+            Précisions sur votre activité, questions fréquentes, réponses sur mesure.
+          </p>
+        </div>
+        <ArrowRight className="w-5 h-5 text-white/70 flex-shrink-0" strokeWidth={2.2} />
+      </div>
+    </a>
   );
 }
 

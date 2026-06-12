@@ -489,6 +489,22 @@ export default function MesAppels() {
           <p className="mt-2 text-[15px] text-gray-500 max-w-xl">
             Tous vos appels. Rappel en 1 tap.
           </p>
+          {/* Lien rapide vers "Personnaliser mon IA" — directement lié aux appels */}
+          {!isDemoMode && (
+            <a
+              href={`/espace/ia?id=${encodeURIComponent(commercantId)}`}
+              className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-bold rounded-full px-3.5 py-2 transition-all active:scale-95"
+              style={{
+                background: '#ECFDF5',
+                color: '#047857',
+                border: '1px solid rgba(16,185,129,0.30)',
+              }}
+            >
+              <Sparkles className="w-3.5 h-3.5" strokeWidth={2.6} />
+              Personnaliser mon IA
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.4} />
+            </a>
+          )}
         </div>
 
         {/* ════ Bandeau install PWA — variant TOAST en bas (mobile uniquement)
