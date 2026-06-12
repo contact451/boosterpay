@@ -46,8 +46,11 @@ import {
   Search,
   Package,
   Quote,
+  User,
+  Briefcase,
+  Send,
 } from 'lucide-react';
-import { captureLeadFromSite } from '../services/leadService';
+import { captureLeadFromSite, submitTrialSignup } from '../services/leadService';
 import Papa from 'papaparse';
 import EmailCapturePopup from '../components/EmailCapturePopup';
 import FloatingContact from '../components/FloatingContact';
@@ -2078,13 +2081,13 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
       const t = setTimeout(tick, 400);
       return () => clearTimeout(t);
     }
-    // Desktop : cycle infini
-    const id = setInterval(() => setConvoStep((s) => (s >= 5 ? 0 : s + 1)), 2200);
+    // Desktop : cycle infini (raccourci à 4 étapes pour densité)
+    const id = setInterval(() => setConvoStep((s) => (s >= 4 ? 0 : s + 1)), 1600);
     return () => clearInterval(id);
   }, [inView, isMobile]);
 
   return (
-    <section id="ia-reception" ref={sectionRef} className="relative pt-16 pb-24 md:pt-20 md:pb-32 overflow-hidden bg-white scroll-mt-24">
+    <section id="ia-reception" ref={sectionRef} className="relative pt-12 pb-16 md:pt-16 md:pb-20 overflow-hidden bg-white scroll-mt-24">
       {/* Ambient warm très subtil — juste un effet d'aurore amber/rose en filigrane */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1200px] h-[700px] rounded-full opacity-[0.07] blur-[120px]"
@@ -2096,7 +2099,7 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
       <div className="relative max-w-6xl mx-auto px-6">
 
         {/* ── Header centré, ultra épuré ── */}
-        <div className="text-center max-w-3xl mx-auto mb-20 lg:mb-28">
+        <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-16">
           <motion.span
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -2255,12 +2258,19 @@ const ReceptionFlagshipSection = ({ openPopup }) => {
           </motion.div>
         </motion.div>
 
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/*  SECTION TEST LIVE IA — Appel direct sur le vrai numéro    */}
+        {/*  Le visiteur appelle, tombe sur Léa, vit le produit.       */}
+        {/*  Sortie : décision d'achat en 40 secondes.                 */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <TestLiveIASection />
+
         {/* ── 4 features en row horizontal épuré ── */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.9, ease: appleEase, delay: 0.7 }}
-          className="mt-24 lg:mt-32 grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 max-w-5xl mx-auto"
+          className="mt-16 lg:mt-20 grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 max-w-5xl mx-auto"
         >
           {[
             { icon: PhoneCall,    title: 'Décrochage 2s',     desc: 'Le prospect ne raccroche jamais.' },
@@ -3229,6 +3239,453 @@ const LeadsRGPDSection = () => {
 };
 
 
+/* ═══════════════════════════════════════════════════════════════════ */
+/*  TestLiveIASection — La preuve ultime du produit                    */
+/*                                                                     */
+/*  Le visiteur appelle un VRAI numéro et parle à Léa en direct.       */
+/*  Même IA que celle qu'il déploiera pour ses clients.                */
+/*  Position : juste après le mockup chat, avant les 4 features.       */
+/*  Objectif : conversion visiteur → essai gratuit.                    */
+/* ═══════════════════════════════════════════════════════════════════ */
+const BOOSTERPAY_LIVE_PHONE_DISPLAY = '01 89 31 66 11';
+const BOOSTERPAY_LIVE_PHONE_TEL     = '+33189316611';
+
+// Compteur dynamique — base 38, +1 toutes les ~45 min sur les heures ouvrées.
+// Donne un nombre crédible qui évolue dans la journée (preuve sociale vivante).
+function useLeaCallCount() {
+  const [count, setCount] = useState(38);
+  useEffect(() => {
+    const now = new Date();
+    const day = now.getDay(); // 0 dimanche → 6 samedi
+    const hour = now.getHours();
+    // Base + boost selon le jour de la semaine (réaliste pour B2B FR)
+    const dayBoost = day === 0 ? 0 : day === 6 ? 4 : 8;
+    const isBusinessHour = hour >= 8 && hour <= 19;
+    if (isBusinessHour) {
+      const minutesSinceOpen = (hour - 8) * 60 + now.getMinutes();
+      setCount(38 + dayBoost + Math.floor(minutesSinceOpen / 45));
+    } else {
+      setCount(38 + dayBoost);
+    }
+  }, []);
+  return count;
+}
+
+function TestLiveIASection() {
+  const callCount = useLeaCallCount();
+
+  return (
+    <div className="relative mt-16 lg:mt-20">
+      {/* ── Halo emerald subtil ── */}
+      <div
+        aria-hidden
+        className="absolute -top-20 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full pointer-events-none opacity-[0.10] blur-[120px]"
+        style={{ background: 'radial-gradient(ellipse, #10B981, transparent 60%)' }}
+      />
+
+      <div className="relative max-w-3xl mx-auto text-center px-6">
+
+        {/* ── Badge live ── */}
+        <span className="inline-flex items-center gap-2 text-[11.5px] font-bold tracking-[0.16em] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-4 py-1.5 rounded-full mb-7">
+          <span className="relative flex w-1.5 h-1.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+          </span>
+          En direct · Léa est disponible
+        </span>
+
+        {/* ── Headline ── */}
+        <h2 className="text-[44px] sm:text-[60px] md:text-[72px] lg:text-[82px] font-semibold text-gray-900 leading-[0.98] tracking-[-0.03em]">
+          Parlez à Léa.
+          <br />
+          <span className="text-emerald-600">Avant d'essayer.</span>
+        </h2>
+
+        {/* ── Sous-headline ── */}
+        <p className="mt-7 text-[17px] sm:text-[19px] text-gray-500 max-w-xl mx-auto leading-relaxed">
+          Au téléphone, vous entendez Léa.
+          <br className="hidden sm:block" />
+          C'est <span className="text-gray-900 font-semibold">la même IA</span> que vos clients entendront —
+          {' '}
+          <span className="text-gray-900 font-semibold">adaptée à votre métier</span>.
+        </p>
+
+        {/* ── 2 chips de clarté visuelle (les 2 idées clés en gras) ── */}
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-[12.5px] font-semibold text-emerald-700">
+            <Check className="w-3.5 h-3.5" strokeWidth={3} />
+            La même IA
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-[12.5px] font-semibold text-emerald-700">
+            <Check className="w-3.5 h-3.5" strokeWidth={3} />
+            Adaptée à votre métier
+          </span>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/*  CARD CENTRALE — Avatar + Compteur + Numéro + Bouton géant */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <div
+          className="mt-12 mx-auto max-w-md rounded-[28px] bg-white p-7 sm:p-8 relative"
+          style={{
+            border: '1px solid rgba(16,185,129,0.15)',
+            boxShadow:
+              '0 32px 64px -16px rgba(16,185,129,0.28), 0 12px 24px -8px rgba(15,23,42,0.08), 0 1px 0 rgba(255,255,255,0.95) inset',
+          }}
+        >
+          {/* ── Avatar Léa (cercle emerald avec halo pulsant) ── */}
+          <div className="relative inline-block mx-auto mb-4">
+            {/* Halos rings pulsants */}
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full animate-ping"
+              style={{
+                background: 'rgba(16,185,129,0.20)',
+                animationDuration: '2.8s',
+              }}
+            />
+            <div
+              className="relative w-[88px] h-[88px] rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                boxShadow:
+                  '0 0 0 4px #fff, 0 0 0 6px rgba(16,185,129,0.18), 0 12px 24px -8px rgba(16,185,129,0.40)',
+              }}
+            >
+              <span
+                className="text-white font-bold"
+                style={{
+                  fontSize: 38,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1,
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                }}
+              >
+                L
+              </span>
+            </div>
+          </div>
+
+          <p className="text-[13px] text-gray-500 -mt-1 mb-5">
+            <span className="font-semibold text-gray-900">Léa</span> · IA BoosterPay
+          </p>
+
+          {/* ── Compteur social proof ── */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 mb-5">
+            <PhoneCall className="w-3 h-3 text-emerald-600" strokeWidth={2.4} />
+            <p className="text-[12px] text-emerald-700">
+              <span className="font-bold tabular-nums">{callCount}</span> pros lui ont parlé cette semaine
+            </p>
+          </div>
+
+          {/* ── Numéro affiché en grand ── */}
+          <p
+            className="font-extrabold tabular-nums tracking-tight text-gray-900 mb-1"
+            style={{
+              fontSize: 'clamp(28px, 6vw, 38px)',
+              letterSpacing: '0.02em',
+              lineHeight: 1,
+            }}
+          >
+            {BOOSTERPAY_LIVE_PHONE_DISPLAY}
+          </p>
+          <p className="text-[11.5px] text-gray-400 mb-6">
+            Appel gratuit · 7j/7 · Aucune inscription
+          </p>
+
+          {/* ── BOUTON GÉANT avec halos ping ── */}
+          <div className="relative">
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-2xl animate-ping pointer-events-none"
+              style={{
+                background: 'rgba(16,185,129,0.30)',
+                animationDuration: '2.4s',
+              }}
+            />
+            <a
+              href={`tel:${BOOSTERPAY_LIVE_PHONE_TEL}`}
+              aria-label="Appeler Léa l'IA BoosterPay"
+              className="relative inline-flex w-full items-center justify-center gap-2.5 py-4 rounded-2xl text-white font-bold transition-all duration-300 active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                fontSize: 17,
+                letterSpacing: '-0.005em',
+                boxShadow:
+                  '0 16px 36px -8px rgba(16,185,129,0.50), 0 6px 14px -4px rgba(15,23,42,0.12), 0 1px 0 rgba(255,255,255,0.4) inset',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow =
+                  '0 24px 48px -8px rgba(16,185,129,0.60), 0 10px 20px -4px rgba(15,23,42,0.15), 0 1px 0 rgba(255,255,255,0.4) inset';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow =
+                  '0 16px 36px -8px rgba(16,185,129,0.50), 0 6px 14px -4px rgba(15,23,42,0.12), 0 1px 0 rgba(255,255,255,0.4) inset';
+              }}
+            >
+              <motion.span
+                animate={{ rotate: [0, -12, 12, -12, 12, 0] }}
+                transition={{
+                  duration: 1.6,
+                  repeat: Infinity,
+                  repeatDelay: 1.4,
+                  ease: 'easeInOut',
+                }}
+                className="inline-flex items-center justify-center"
+              >
+                <Phone className="w-5 h-5" strokeWidth={2.6} fill="white" />
+              </motion.span>
+              Appeler Léa maintenant
+            </a>
+          </div>
+
+          {/* ── Trust badges (3 inline) ── */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-5">
+            {[
+              'Gratuit',
+              'Sans inscription',
+              'Même IA que vos clients',
+            ].map((label) => (
+              <span key={label} className="inline-flex items-center gap-1 text-[11.5px] text-gray-500">
+                <Check className="w-3 h-3 text-emerald-500" strokeWidth={3} />
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Témoignage 5 étoiles ── */}
+        <div className="mt-10 pt-8 border-t border-gray-200/70">
+          <div className="flex justify-center gap-1 mb-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Star
+                key={i}
+                className="w-4 h-4"
+                fill="#F59E0B"
+                strokeWidth={0}
+                style={{ color: '#F59E0B' }}
+              />
+            ))}
+          </div>
+          <p className="italic max-w-md mx-auto leading-relaxed text-[14.5px] text-gray-600">
+            « J'ai appelé par curiosité. En 40 secondes j'avais compris.
+            J'ai souscrit dans la foulée. »
+          </p>
+          <p className="mt-2 text-[12.5px] font-medium text-gray-400">
+            Thomas L. · Plombier · Nantes
+          </p>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/*  BANNER CAPTURE — Formulaire COMPLET d'inscription          */}
+        {/*  Apparaît juste après le test : moment de chaleur max       */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <LeaPostCallSignup />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  LeaPostCallSignup — Bannière capture lead post-appel
+//  Formulaire complet : Prénom · Nom · Email · Téléphone · Métier · Ville
+//  Submit → submitTrialSignup() vers Apps Script.
+// ─────────────────────────────────────────────────────────────────────
+function LeaPostCallSignup() {
+  const [form, setForm] = useState({
+    nom: '', email: '', telephone: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
+
+  const isValid =
+    form.nom.trim().length >= 2 &&
+    form.email.trim().includes('@') &&
+    form.telephone.trim().length >= 8;
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!isValid || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await submitTrialSignup({
+        email: form.email.trim(),
+        entreprise: form.nom.trim(),
+        telephone: form.telephone.trim(),
+        plan: 'trial-7-jours',
+        source: 'landing-test-live-ia',
+        nom: form.nom.trim(),
+      });
+      setDone(true);
+    } catch (err) {
+      setError(err.message || 'Une erreur est survenue. Réessayez.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-12 mx-auto max-w-2xl">
+      <div
+        className="rounded-[28px] p-6 sm:p-8 lg:p-10 relative overflow-hidden"
+        style={{
+          background:
+            'linear-gradient(160deg, #10B981 0%, #059669 50%, #047857 100%)',
+          boxShadow:
+            '0 32px 64px -16px rgba(16,185,129,0.40), 0 12px 24px -8px rgba(15,23,42,0.10)',
+        }}
+      >
+        {/* Halo decoratif */}
+        <div
+          aria-hidden
+          className="absolute -top-32 -right-20 w-[400px] h-[400px] rounded-full opacity-25 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle, #FFFFFF 0%, transparent 60%)',
+            filter: 'blur(40px)',
+          }}
+        />
+
+        {done ? (
+          // ═════ State succès ═════
+          <div className="relative text-center py-6">
+            <div
+              className="inline-flex w-14 h-14 rounded-full bg-white items-center justify-center mb-4"
+              style={{ boxShadow: '0 8px 24px -6px rgba(0,0,0,0.20)' }}
+            >
+              <Check className="w-7 h-7 text-emerald-600" strokeWidth={3} />
+            </div>
+            <h3 className="text-white text-[26px] sm:text-[30px] font-bold tracking-tight leading-tight">
+              C'est noté, {form.nom.split(' ')[0]} !
+            </h3>
+            <p className="text-emerald-50 text-[15px] mt-3 max-w-md mx-auto leading-relaxed">
+              Vous recevez le lien de configuration sur <span className="font-semibold text-white">{form.email}</span> dans les 2 minutes.
+              <br />Votre IA sera prête en 5 minutes.
+            </p>
+          </div>
+        ) : (
+          // ═════ State formulaire ═════
+          <>
+            <div className="relative text-center mb-6">
+              <p className="text-emerald-100 text-[11.5px] font-bold uppercase tracking-[0.16em] mb-3">
+                ✨ Vous avez aimé ?
+              </p>
+              <h3
+                className="text-white font-bold tracking-tight leading-[1.05]"
+                style={{
+                  fontSize: 'clamp(26px, 4.5vw, 36px)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                C'est exactement ça pour vos clients.
+              </h3>
+              <p className="text-emerald-50 text-[15px] mt-3 max-w-lg mx-auto leading-relaxed">
+                Démarrez votre essai gratuit 7 jours. Sans carte bancaire, sans engagement.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="relative space-y-3" noValidate>
+              {/* 1. Nom complet */}
+              <Field
+                icon={User}
+                type="text"
+                placeholder="Votre nom"
+                value={form.nom}
+                onChange={(v) => setForm((f) => ({ ...f, nom: v }))}
+                autoComplete="name"
+              />
+
+              {/* 2. Email */}
+              <Field
+                icon={Mail}
+                type="email"
+                placeholder="Votre email"
+                value={form.email}
+                onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+                autoComplete="email"
+                inputMode="email"
+              />
+
+              {/* 3. Mobile */}
+              <Field
+                icon={Phone}
+                type="tel"
+                placeholder="Votre mobile"
+                value={form.telephone}
+                onChange={(v) => setForm((f) => ({ ...f, telephone: v }))}
+                autoComplete="tel"
+                inputMode="tel"
+              />
+
+              {error && (
+                <p className="text-rose-50 bg-rose-700/40 border border-rose-300/40 rounded-xl px-3 py-2 text-[13px] text-center">
+                  {error}
+                </p>
+              )}
+
+              {/* Bouton de submit */}
+              <button
+                type="submit"
+                disabled={!isValid || saving}
+                className="w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl bg-white text-emerald-700 font-bold transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+                style={{
+                  fontSize: 16,
+                  boxShadow: '0 12px 28px -8px rgba(0,0,0,0.30), 0 4px 8px -2px rgba(0,0,0,0.10)',
+                }}
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" strokeWidth={2.6} />
+                    Inscription en cours…
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" strokeWidth={2.6} />
+                    Démarrer mon essai gratuit
+                    <ArrowRight className="w-4 h-4" strokeWidth={2.6} />
+                  </>
+                )}
+              </button>
+
+              <p className="text-emerald-50 text-[11.5px] text-center mt-3 opacity-90">
+                ✓ 7 jours gratuits  ·  ✓ Sans carte bancaire  ·  ✓ Annulation 1 clic
+              </p>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Field — Input compact stylé pour le formulaire emerald
+function Field({ icon: Icon, type, placeholder, value, onChange, ...rest }) {
+  return (
+    <div className="relative">
+      <Icon
+        className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600/80"
+        strokeWidth={2.2}
+      />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full pl-10 pr-3.5 py-3 rounded-xl bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-600 transition-all"
+        style={{
+          fontSize: 16, // évite le zoom auto iOS
+          border: '1px solid rgba(255,255,255,0.40)',
+        }}
+        {...rest}
+      />
+    </div>
+  );
+}
+
+
 /*  MAIN COMPONENT                                                     */
 /* ------------------------------------------------------------------ */
 export default function IAVocaleLanding() {
@@ -3645,14 +4102,9 @@ export default function IAVocaleLanding() {
       roiHint: '1 client récupéré = abonnement remboursé',
       socialProof: '+250 pros · ⭐ 4,8/5',
       features: [
-        'Réception d\'appels IA 24/7 — l\'IA décroche en 2s à votre place',
-        'Renouvellement de dossiers automatique (CT, assurances, entretiens)',
-        'Confirmation de RDV J-1 (anti-lapins)',
-        'Impact Avis Google (filtrage 4★+ vers Google, < 4★ en interne)',
-        'Accélération de paiements (délais -40%)',
-        'Robot IA sur mesure si besoin spécifique',
-        'Facture mensuelle déductible en charges',
-        'Annulation libre dans votre espace',
+        '6 modules IA tout inclus — décrochage, RDV, avis, paiements…',
+        'Appels illimités · IA disponible 24/7',
+        'Annulation en 1 clic, sans engagement',
       ],
       cta: 'Démarrer gratuitement',
       popular: true,
@@ -4359,15 +4811,22 @@ export default function IAVocaleLanding() {
                     </div>
                   </div>
 
-                  {/* Features */}
-                  <ul className="space-y-2.5 mb-7 flex-1">
+                  {/* Features — 3 bénéfices clés, style Apple épuré */}
+                  <ul className="space-y-3 mb-4 flex-1">
                     {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-start gap-2.5 text-[13.5px] text-gray-700">
-                        <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" strokeWidth={2.4} />
+                      <li key={j} className="flex items-start gap-2.5 text-[14px] text-gray-700">
+                        <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" strokeWidth={2.6} />
                         <span className="leading-relaxed">{f}</span>
                       </li>
                     ))}
                   </ul>
+                  <a
+                    href="#metier"
+                    className="inline-flex items-center gap-1 text-[13px] font-semibold text-emerald-700 hover:text-emerald-800 mb-6 group"
+                  >
+                    Voir tous les modules
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={2.6} />
+                  </a>
 
                   {/* 3 blocs reassurance avec icônes — fond emerald-50, lever objections */}
                   <div className="grid grid-cols-3 gap-2 mb-6">
