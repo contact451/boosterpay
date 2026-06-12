@@ -3247,8 +3247,8 @@ const LeadsRGPDSection = () => {
 /*  Position : juste après le mockup chat, avant les 4 features.       */
 /*  Objectif : conversion visiteur → essai gratuit.                    */
 /* ═══════════════════════════════════════════════════════════════════ */
-const BOOSTERPAY_LIVE_PHONE_DISPLAY = '01 89 31 66 11';
-const BOOSTERPAY_LIVE_PHONE_TEL     = '+33189316611';
+const BOOSTERPAY_LIVE_PHONE_DISPLAY = '01 89 61 70 77';
+const BOOSTERPAY_LIVE_PHONE_TEL     = '+33189617077';
 
 // Compteur dynamique — base 38, +1 toutes les ~45 min sur les heures ouvrées.
 // Donne un nombre crédible qui évolue dans la journée (preuve sociale vivante).
